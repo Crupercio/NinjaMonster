@@ -1,0 +1,893 @@
+{% extends "base.html" %}
+{% load battle_tags %}
+{% block title %}Battle #{{ battle.pk }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Reset / base ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Header strip ───────────────────────────────────────────── */
+.battle-header {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 0.75rem; margin-bottom: 1.25rem;
+}
+.battle-header h2 { margin: 0; }
+
+/* ── Winner banner ──────────────────────────────────────────── */
+.winner-banner {
+  background: #052e16; border: 1px solid #4ade80;
+  border-radius: 8px; padding: 0.75rem 1rem;
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;
+}
+
+/* ── Battlefield: two 2×2 grids flanking VS ─────────────────── */
+.battlefield {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  margin-bottom: 1.25rem;
+}
+.vs-label {
+  text-align: center; font-size: 1.4rem; font-weight: 800;
+  color: #e94560; padding-top: 1.5rem; align-self: center;
+}
+.team-side { display: flex; flex-direction: column; gap: 0.5rem; }
+.team-side-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: #9ca3af; margin-bottom: 0.25rem;
+}
+
+/* 2×2 pokemon grid */
+.pokemon-grid-2x2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+}
+
+/* ── Pokemon card ───────────────────────────────────────────── */
+.pokemon-card {
+  background: #16213e; border: 2px solid #1e3a6e;
+  border-radius: 8px; padding: 0.6rem 0.75rem;
+  cursor: default; transition: border-color 0.2s, opacity 0.3s;
+  position: relative; min-width: 0;
+}
+.pokemon-card.fainted {
+  opacity: 0.4; border-color: #374151; pointer-events: none;
+}
+.pokemon-card.selected-attacker {
+  border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96,165,250,0.3);
+}
+.pokemon-card.selected-target {
+  border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
+}
+.pokemon-card.enemy-card { cursor: pointer; }
+.pokemon-card.enemy-card:not(.fainted):hover {
+  border-color: #fb923c;
+}
+.pokemon-card.damage-flash { animation: damage-flash 0.5s ease-out; }
+@keyframes damage-flash {
+  0%, 60% { background: #7f1d1d; }
+  100%     { background: #16213e; }
+}
+
+.card-name {
+  font-size: 0.85rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-pos-label {
+  font-size: 0.65rem; color: #6b7280; text-transform: uppercase;
+}
+.card-hp-text { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+
+.hp-bar-wrap {
+  background: #374151; border-radius: 4px; height: 5px;
+  overflow: hidden; margin-top: 4px;
+}
+.hp-bar {
+  height: 100%; border-radius: 4px;
+  transition: width 0.6s ease-in-out;
+}
+.hp-green  { background: #4ade80; }
+.hp-yellow { background: #facc15; }
+.hp-red    { background: #f87171; }
+
+.status-badges { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 2px; }
+
+/* Selection indicator on player card */
+.card-selection-info {
+  margin-top: 5px; font-size: 0.65rem; color: #93c5fd; line-height: 1.3;
+}
+
+/* Bench row */
+.bench-row {
+  display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;
+}
+.bench-label {
+  font-size: 0.7rem; color: #6b7280; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 0.25rem;
+}
+.bench-card {
+  background: #0f1a2e; border: 1px dashed #374151;
+  border-radius: 6px; padding: 0.4rem 0.6rem;
+  font-size: 0.75rem; color: #9ca3af; min-width: 100px;
+}
+.bench-card.fainted { opacity: 0.35; }
+
+/* ── Action panel ────────────────────────────────────────────── */
+.action-panel {
+  background: #16213e; border: 1px solid #0f3460;
+  border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;
+}
+.action-panel-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1rem; flex-wrap: wrap;
+}
+.action-panel-title { font-weight: 700; font-size: 1rem; }
+
+/* Pokemon switcher tabs */
+.slot-tabs {
+  display: flex; gap: 0.4rem; flex-wrap: wrap;
+}
+.slot-tab {
+  background: #0f3460; border: 1px solid #1e3a6e;
+  border-radius: 20px; padding: 0.3rem 0.75rem;
+  font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+  color: #d1d5db; user-select: none;
+}
+.slot-tab:hover { border-color: #60a5fa; color: #93c5fd; }
+.slot-tab.active { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
+.slot-tab.fainted-tab { opacity: 0.4; cursor: not-allowed; }
+
+/* Per-slot action block */
+.slot-action-block { display: none; }
+.slot-action-block.visible { display: block; }
+
+.slot-action-info {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 0.75rem; flex-wrap: wrap;
+}
+.slot-action-name { font-size: 0.9rem; font-weight: 700; }
+.slot-action-hp   { font-size: 0.8rem; color: #9ca3af; }
+
+/* Move buttons */
+.move-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+
+.move-btn {
+  background: #0f3460; border: 2px solid #1e3a6e;
+  border-radius: 8px; padding: 0.5rem 0.85rem;
+  cursor: pointer; transition: all 0.15s; text-align: left;
+  min-width: 130px; max-width: 180px;
+}
+.move-btn:hover:not(.on-cooldown) { border-color: #3b82f6; background: #1a3a6e; }
+.move-btn.selected-move { border-color: #3b82f6; background: #1d4ed8; }
+.move-btn.on-cooldown {
+  opacity: 0.45; cursor: not-allowed;
+  border-color: #374151; background: #0f1a2e;
+}
+.move-btn-name  { font-size: 0.82rem; font-weight: 700; display: block; }
+.move-btn-meta  { font-size: 0.68rem; color: #9ca3af; display: block; margin-top: 1px; }
+.move-btn-cd    { font-size: 0.68rem; color: #f87171; display: block; }
+.move-btn-slot  {
+  display: inline-block; font-size: 0.6rem; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 10px; margin-bottom: 2px;
+}
+.slot-standard { background: #166534; color: #bbf7d0; }
+.slot-chase    { background: #1e3a8a; color: #bfdbfe; }
+.slot-special  { background: #581c87; color: #e9d5ff; }
+.slot-support  { background: #92400e; color: #fde68a; }
+
+/* Ninja Trait display */
+.passive-display {
+  background: #0f1a2e; border: 1px solid #1e3a6e;
+  border-radius: 6px; padding: 0.5rem 0.85rem;
+  font-size: 0.78rem; color: #9ca3af;
+}
+.passive-display strong { color: #d1d5db; }
+
+/* Target info */
+.target-info-line {
+  font-size: 0.78rem; color: #9ca3af; margin-bottom: 0.5rem;
+}
+.target-info-line span { color: #fb923c; font-weight: 700; }
+
+/* Execute button */
+.execute-btn {
+  width: 100%; padding: 0.75rem;
+  font-size: 1rem; font-weight: 700;
+  background: #1d4ed8; border: none; border-radius: 8px;
+  color: #fff; cursor: pointer; transition: background 0.15s;
+  margin-top: 0.75rem;
+}
+.execute-btn:hover:not(:disabled) { background: #2563eb; }
+.execute-btn:disabled { background: #374151; cursor: not-allowed; }
+
+/* ── Substitution panel ─────────────────────────────────────── */
+.sub-panel {
+  background: #1c1917; border: 2px solid #f97316;
+  border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;
+}
+.sub-panel h3 { color: #fb923c; margin-bottom: 0.75rem; }
+.sub-options { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.sub-option {
+  background: #0f1a2e; border: 1px solid #374151;
+  border-radius: 8px; padding: 0.75rem 1rem; min-width: 140px;
+}
+.sub-option-name { font-weight: 700; font-size: 0.9rem; }
+
+/* ── Combo log ──────────────────────────────────────────────── */
+.combo-log {
+  background: #0f3460; border: 1px solid #e94560;
+  border-radius: 8px; padding: 0.9rem; margin-bottom: 1.25rem;
+}
+.combo-log h3 { color: #e94560; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+.combo-entry {
+  font-size: 0.85rem; padding: 0.25rem 0;
+  border-bottom: 1px solid #1a3a6e;
+  opacity: 0; transform: translateX(-12px);
+  animation: slide-in 0.3s ease forwards;
+}
+.combo-entry:last-child { border-bottom: none; }
+.combo-entry:nth-child(1)  { animation-delay: 0.00s; }
+.combo-entry:nth-child(2)  { animation-delay: 0.20s; }
+.combo-entry:nth-child(3)  { animation-delay: 0.40s; }
+.combo-entry:nth-child(4)  { animation-delay: 0.60s; }
+.combo-entry:nth-child(5)  { animation-delay: 0.80s; }
+.combo-entry:nth-child(6)  { animation-delay: 1.00s; }
+.combo-entry:nth-child(7)  { animation-delay: 1.20s; }
+.combo-entry:nth-child(8)  { animation-delay: 1.40s; }
+.combo-entry:nth-child(9)  { animation-delay: 1.60s; }
+.combo-entry:nth-child(10) { animation-delay: 1.80s; }
+@keyframes slide-in { to { opacity: 1; transform: translateX(0); } }
+.combo-chain-label { font-weight: 700; color: #fbbf24; }
+
+/* ── COMBO banner ───────────────────────────────────────────── */
+.combo-banner {
+  display: none; position: fixed; top: 18%; left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e94560, #fbbf24);
+  color: #fff; font-size: 2.2rem; font-weight: 900;
+  padding: 0.6rem 2rem; border-radius: 12px;
+  z-index: 9999; pointer-events: none;
+  animation: banner-pop 2.5s ease forwards;
+}
+@keyframes banner-pop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  15%  { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  25%  { transform: translateX(-50%) scale(1.0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+}
+
+/* ── WS waiting spinner ─────────────────────────────────────── */
+.ws-waiting {
+  display: none; align-items: center; gap: 0.5rem;
+  color: #9ca3af; font-size: 0.82rem; margin-bottom: 0.5rem;
+}
+.ws-waiting.visible { display: flex; }
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid #374151; border-top-color: #e94560;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Round log ──────────────────────────────────────────────── */
+.round-log {
+  max-height: 220px; overflow-y: auto;
+  background: #0f1a2e; border-radius: 6px; padding: 0.65rem;
+}
+.log-entry { padding: 0.15rem 0; font-size: 0.82rem; }
+.log-action  { color: #d1d5db; }
+.log-combo   { color: #fbbf24; font-weight: 600; }
+.log-faint   { color: #f87171; }
+.log-status  { color: #a78bfa; }
+.log-info    { color: #9ca3af; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="combo-banner" id="combo-banner"></div>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<div class="battle-header">
+  <h2>Battle #{{ battle.pk }}</h2>
+  <span id="battle-status-badge" class="badge badge-{% if battle.status == 'active' %}info{% elif battle.status == 'finished' %}danger{% else %}secondary{% endif %}">
+    {{ battle.status|upper }}
+  </span>
+  <span id="round-label" style="color:#9ca3af;font-size:0.85rem;">Round {{ battle.current_round }}</span>
+  {% if battle.is_ai_battle %}
+    <span class="badge badge-warning" style="background:#78350f;color:#fcd34d;">vs AI ({{ battle.ai_difficulty|upper }})</span>
+  {% endif %}
+  {% if battle.max_combo_chain > 0 %}
+    <span style="color:#fbbf24;font-size:0.8rem;">Best chain: x{{ battle.max_combo_chain }}</span>
+  {% endif %}
+</div>
+
+{% if battle.winner %}
+<div class="winner-banner">
+  <strong style="color:#4ade80;">🏆 {{ battle.winner }} wins!</strong>
+  <span style="color:#9ca3af;">Max combo: x{{ battle.max_combo_chain }}</span>
+  <a href="{% url 'game:battle_log' battle.pk %}" class="btn btn-secondary btn-sm" style="margin-left:auto;">Full Log</a>
+</div>
+{% endif %}
+
+<div class="ws-waiting" id="ws-waiting">
+  <div class="spinner"></div><span>Processing round…</span>
+</div>
+
+{% if combo_logs %}
+<div class="combo-log" id="combo-log">
+  <h3>Combo Chain Log</h3>
+  <div id="combo-log-entries">
+    {% for log in combo_logs %}
+      <div class="combo-entry">
+        <span class="combo-chain-label">{{ log.message }}</span>
+        {% if log.chain_total %}<span style="color:#9ca3af;font-size:0.72rem;margin-left:0.4rem;">({{ log.chain_total }} moves)</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="combo-log" id="combo-log" style="display:none">
+  <h3>Combo Chain Log</h3>
+  <div id="combo-log-entries"></div>
+</div>
+{% endif %}
+
+<!-- ── Battlefield ──────────────────────────────────────────── -->
+<div class="battlefield">
+
+  <!-- Player side -->
+  <div class="team-side">
+    <div class="team-side-label">Your Team ({{ battle.player_one }})</div>
+    <div class="pokemon-grid-2x2" id="player-grid">
+      {% for slot in player_active_slots %}
+        <div class="pokemon-card {% if slot.is_fainted %}fainted{% endif %}"
+             id="slot-{{ slot.pk }}"
+             data-slot="{{ slot.pk }}"
+             onclick="focusSlot({{ slot.pk }})"
+             style="cursor:pointer;">
+          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+          <div class="card-name">{{ slot.pokemon.name }}</div>
+          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
+                 id="hp-bar-{{ slot.pk }}"
+                 style="width:{{ slot.hp_percentage }}%"></div>
+          </div>
+          <div class="status-badges" id="status-badges-{{ slot.pk }}">
+            {% for active in slot.active_statuses.all %}
+              <span class="badge {{ active.status.name|status_badge_class }}">
+                {{ active.status.get_name_display }}{% if active.remaining_turns %} ({{ active.remaining_turns }}){% endif %}
+              </span>
+            {% endfor %}
+          </div>
+          <div class="card-selection-info" id="sel-info-{{ slot.pk }}">
+            {% if slot.selected_move %}→ {% if slot.selected_move.themed_name %}{{ slot.selected_move.themed_name }}{% else %}{{ slot.selected_move.name }}{% endif %}{% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="color:#6b7280;font-size:0.85rem;grid-column:span 2;">No active pokemon.</div>
+      {% endfor %}
+    </div>
+
+    {% if player_bench_slots %}
+    <div>
+      <div class="bench-label">Bench</div>
+      <div class="bench-row">
+        {% for slot in player_bench_slots %}
+          <div class="bench-card {% if slot.is_fainted %}fainted{% endif %}" id="slot-{{ slot.pk }}">
+            <div style="font-weight:700;font-size:0.8rem;">{{ slot.pokemon.name }}</div>
+            <div style="font-size:0.7rem;color:#9ca3af;" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+            <div class="hp-bar-wrap" style="margin-top:3px;">
+              <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
+                   id="hp-bar-{{ slot.pk }}"
+                   style="width:{{ slot.hp_percentage }}%"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="vs-label">VS</div>
+
+  <!-- Opponent side -->
+  <div class="team-side">
+    <div class="team-side-label">Opponent ({% if battle.player_two %}{{ battle.player_two }}{% else %}AI{% endif %})</div>
+    <div class="pokemon-grid-2x2" id="opponent-grid">
+      {% for slot in opponent_active_slots %}
+        <div class="pokemon-card enemy-card {% if slot.is_fainted %}fainted{% endif %}"
+             id="slot-{{ slot.pk }}"
+             data-slot="{{ slot.pk }}"
+             onclick="selectTarget({{ slot.pk }}, '{{ slot.pokemon.name }}')">
+          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+          <div class="card-name">{{ slot.pokemon.name }}</div>
+          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
+                 id="hp-bar-{{ slot.pk }}"
+                 style="width:{{ slot.hp_percentage }}%"></div>
+          </div>
+          <div class="status-badges" id="status-badges-{{ slot.pk }}">
+            {% for active in slot.active_statuses.all %}
+              <span class="badge {{ active.status.name|status_badge_class }}">
+                {{ active.status.get_name_display }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="color:#6b7280;font-size:0.85rem;grid-column:span 2;">No active pokemon.</div>
+      {% endfor %}
+    </div>
+
+    {% if opponent_bench_slots %}
+    <div>
+      <div class="bench-label">Bench</div>
+      <div class="bench-row">
+        {% for slot in opponent_bench_slots %}
+          <div class="bench-card {% if slot.is_fainted %}fainted{% endif %}">
+            <div style="font-weight:700;font-size:0.8rem;">{{ slot.pokemon.name }}</div>
+            <div style="font-size:0.7rem;color:#9ca3af;">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div><!-- /battlefield -->
+
+<!-- ── Substitution panel ──────────────────────────────────── -->
+{% if substitution_needed %}
+<div class="sub-panel" id="sub-panel">
+  <h3>Substitution Available</h3>
+  {% for fainted in fainted_active_slots %}
+    <p style="font-size:0.85rem;margin-bottom:0.5rem;">
+      <strong style="color:#f87171;">{{ fainted.pokemon.name }}</strong> has fainted — send in a replacement:
+    </p>
+    <form method="post" action="{% url 'game:battle_substitute' battle.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="fainted_slot_id" value="{{ fainted.pk }}">
+      <div class="sub-options">
+        {% for bench in bench_alive_slots %}
+          <div class="sub-option">
+            <div class="sub-option-name">{{ bench.pokemon.name }}</div>
+            <div style="font-size:0.75rem;color:#9ca3af;">HP: {{ bench.current_hp }}/{{ bench.max_hp }}</div>
+            <button type="submit" name="bench_slot_id" value="{{ bench.pk }}"
+                    class="btn btn-primary btn-sm" style="margin-top:0.5rem;width:100%;">
+              Send Out
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    </form>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── Action panel (active battle only) ───────────────────── -->
+{% if battle.status == 'active' and player_team and not substitution_needed %}
+<div class="action-panel" id="action-form-wrap">
+  <div class="action-panel-header">
+    <span class="action-panel-title">Select Actions</span>
+    <div class="slot-tabs" id="slot-tabs">
+      {% for slot in player_active_slots %}
+        {% if not slot.is_fainted %}
+          <div class="slot-tab{% if forloop.first %} active{% endif %}"
+               data-slot="{{ slot.pk }}"
+               onclick="focusSlot({{ slot.pk }})">
+            {{ slot.pokemon.name }}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'game:battle_action' battle.pk %}" id="battle-form">
+    {% csrf_token %}
+
+    {% for slot in player_active_slots %}
+      {% if not slot.is_fainted %}
+        {# Persist selections as hidden inputs — updated by JS #}
+        <input type="hidden"
+               id="move-input-{{ slot.pk }}"
+               name="move_{{ slot.pk }}"
+               value="{% if slot.selected_move %}{{ slot.selected_move.pk }}{% endif %}">
+        <input type="hidden"
+               id="target-input-{{ slot.pk }}"
+               name="target_{{ slot.pk }}"
+               value="{% if slot.selected_target %}{{ slot.selected_target.pk }}{% endif %}">
+
+        <div class="slot-action-block {% if forloop.first %}visible{% endif %}"
+             id="action-block-{{ slot.pk }}"
+             data-slot="{{ slot.pk }}">
+
+          <div class="slot-action-info">
+            <span class="slot-action-name">{{ slot.pokemon.name }}</span>
+            <span class="slot-action-hp">HP: {{ slot.current_hp }}/{{ slot.max_hp }}</span>
+            <span class="target-info-line" id="target-label-{{ slot.pk }}">
+              Target:
+              {% if slot.selected_target and not slot.selected_target.is_fainted %}
+                <span>{{ slot.selected_target.pokemon.name }}</span>
+              {% else %}
+                <span style="color:#6b7280;">— click an enemy —</span>
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Move buttons -->
+          <div class="move-buttons">
+            {% if slot.owned_pokemon %}
+              {% get_owned_active_moves slot.owned_pokemon as active_moves %}
+              {% for move in active_moves %}
+                {% with cd=cooldown_map|get_item:slot.pk|get_item:move.pk %}
+                  {% with is_cd=cd|is_on_cooldown %}
+                    <button type="button"
+                            class="move-btn {% if slot.selected_move and slot.selected_move.pk == move.pk %}selected-move{% endif %} {% if is_cd %}on-cooldown{% endif %}"
+                            id="move-btn-{{ slot.pk }}-{{ move.pk }}"
+                            data-slot="{{ slot.pk }}"
+                            data-move="{{ move.pk }}"
+                            {% if is_cd %}disabled{% endif %}
+                            onclick="selectMove({{ slot.pk }}, {{ move.pk }}, this)">
+                      <span class="move-btn-slot slot-{{ move.slot_type }}">{{ move.get_slot_type_display }}</span>
+                      <span class="move-btn-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</span>
+                      <span class="move-btn-meta">
+                        {% if move.power %}{{ move.power }} pwr{% endif %}
+                        {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
+                        {% if move.trigger_status %} · COMBO{% endif %}
+                      </span>
+                      {% if is_cd %}
+                        <span class="move-btn-cd">Cooldown: {{ cd }}r</span>
+                      {% elif move.cooldown > 0 %}
+                        <span class="move-btn-meta">CD: {{ move.cooldown }}r</span>
+                      {% endif %}
+                    </button>
+                  {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            {% else %}
+              {# Fallback for AI / legacy slots without OwnedPokemon #}
+              {% for move in slot.pokemon.moves.all %}
+                {% if move.slot_type != 'passive' %}
+                  {% with cd=cooldown_map|get_item:slot.pk|get_item:move.pk %}
+                    {% with is_cd=cd|is_on_cooldown %}
+                      <button type="button"
+                              class="move-btn {% if slot.selected_move and slot.selected_move.pk == move.pk %}selected-move{% endif %} {% if is_cd %}on-cooldown{% endif %}"
+                              id="move-btn-{{ slot.pk }}-{{ move.pk }}"
+                              data-slot="{{ slot.pk }}"
+                              data-move="{{ move.pk }}"
+                              {% if is_cd %}disabled{% endif %}
+                              onclick="selectMove({{ slot.pk }}, {{ move.pk }}, this)">
+                        <span class="move-btn-slot slot-{{ move.slot_type }}">{{ move.get_slot_type_display }}</span>
+                        <span class="move-btn-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</span>
+                        <span class="move-btn-meta">
+                          {% if move.power %}{{ move.power }} pwr{% endif %}
+                          {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
+                          {% if move.trigger_status %} · COMBO{% endif %}
+                        </span>
+                        {% if is_cd %}
+                          <span class="move-btn-cd">Cooldown: {{ cd }}r</span>
+                        {% elif move.cooldown > 0 %}
+                          <span class="move-btn-meta">CD: {{ move.cooldown }}r</span>
+                        {% endif %}
+                      </button>
+                    {% endwith %}
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <!-- Ninja Trait display -->
+          {% if slot.owned_pokemon %}
+            {% if slot.owned_pokemon.move_passive %}
+              {% with move=slot.owned_pokemon.move_passive %}
+                <div class="passive-display">
+                  <strong>Ninja Trait — {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}:</strong>
+                  {% if move.description %}{{ move.description }}{% else %}{{ move.move_type }} · {{ move.power }} pwr{% endif %}
+                </div>
+              {% endwith %}
+            {% endif %}
+          {% else %}
+            {# Fallback for AI / legacy slots without OwnedPokemon #}
+            {% for move in slot.pokemon.moves.all %}
+              {% if move.slot_type == 'passive' %}
+                <div class="passive-display">
+                  <strong>Ninja Trait — {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}:</strong>
+                  {% if move.description %}{{ move.description }}{% else %}{{ move.move_type }} · {{ move.power }} pwr{% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+        </div><!-- /slot-action-block -->
+      {% endif %}
+    {% endfor %}
+
+    <button type="submit" class="execute-btn" id="execute-btn">
+      Execute Round →
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- ── Round log ───────────────────────────────────────────── -->
+<div style="margin-bottom:1.25rem;">
+  <h3 style="font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;margin-bottom:0.5rem;">
+    Round Log
+  </h3>
+  <div class="round-log" id="round-log">
+    {% for log in logs %}
+      <div class="log-entry log-{{ log.log_type }}">
+        {% if log.log_type == 'combo' %}⚡ {% elif log.log_type == 'faint' %}💀 {% elif log.log_type == 'status' %}✦ {% endif %}
+        {{ log.message }}
+      </div>
+    {% empty %}
+      <div style="color:#6b7280;font-size:0.82rem;">No log entries yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+  <a href="{% url 'game:battle_log' battle.pk %}" class="btn btn-secondary btn-sm">Full Log</a>
+  <a href="{% url 'game:battle_list' %}" class="btn btn-secondary btn-sm">Back to Battles</a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const BATTLE_PK = {{ battle.pk }};
+  const IS_ACTIVE = {% if battle.status == 'active' %}true{% else %}false{% endif %};
+
+  // ── State ────────────────────────────────────────────────────
+  // focusedSlot: the slot pk whose move buttons are currently shown
+  let focusedSlot = null;
+
+  // selectedTargetPk: the currently chosen enemy pk (applied to focusedSlot)
+  // Per-slot persistent state (pre-loaded from Django context)
+  const slotState = {};  // { slotPk: { movePk, targetPk, targetName } }
+
+  // Initialise from hidden inputs already present in the DOM
+  document.querySelectorAll("input[id^='move-input-']").forEach(function (inp) {
+    const slotPk = parseInt(inp.id.replace("move-input-", ""));
+    slotState[slotPk] = slotState[slotPk] || {};
+    if (inp.value) slotState[slotPk].movePk = parseInt(inp.value);
+  });
+  document.querySelectorAll("input[id^='target-input-']").forEach(function (inp) {
+    const slotPk = parseInt(inp.id.replace("target-input-", ""));
+    slotState[slotPk] = slotState[slotPk] || {};
+    if (inp.value) slotState[slotPk].targetPk = parseInt(inp.value);
+  });
+
+  // Focus the first non-fainted slot on load
+  const firstTab = document.querySelector(".slot-tab:not(.fainted-tab)");
+  if (firstTab) {
+    focusedSlot = parseInt(firstTab.dataset.slot);
+  }
+
+  // ── focusSlot ────────────────────────────────────────────────
+  window.focusSlot = function (slotPk) {
+    const tab = document.querySelector(`.slot-tab[data-slot="${slotPk}"]`);
+    if (!tab || tab.classList.contains("fainted-tab")) return;
+
+    focusedSlot = slotPk;
+
+    // Update tab highlight
+    document.querySelectorAll(".slot-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    // Update player card border
+    document.querySelectorAll("#player-grid .pokemon-card").forEach(c => c.classList.remove("selected-attacker"));
+    const card = document.querySelector(`#player-grid [data-slot="${slotPk}"]`);
+    if (card) card.classList.add("selected-attacker");
+
+    // Show correct action block
+    document.querySelectorAll(".slot-action-block").forEach(b => b.classList.remove("visible"));
+    const block = document.getElementById("action-block-" + slotPk);
+    if (block) block.classList.add("visible");
+  };
+
+  // ── selectMove ───────────────────────────────────────────────
+  window.selectMove = function (slotPk, movePk, btn) {
+    if (btn.disabled) return;
+
+    // Update hidden input
+    const inp = document.getElementById("move-input-" + slotPk);
+    if (inp) inp.value = movePk;
+
+    // Update state
+    slotState[slotPk] = slotState[slotPk] || {};
+    slotState[slotPk].movePk = movePk;
+
+    // Highlight selected button within this slot
+    document.querySelectorAll(`.move-btn[data-slot="${slotPk}"]`).forEach(b => b.classList.remove("selected-move"));
+    btn.classList.add("selected-move");
+
+    // Update selection info on battlefield card
+    const selInfo = document.getElementById("sel-info-" + slotPk);
+    if (selInfo) selInfo.textContent = "→ " + btn.querySelector(".move-btn-name").textContent;
+  };
+
+  // ── selectTarget ─────────────────────────────────────────────
+  window.selectTarget = function (targetPk, targetName) {
+    if (focusedSlot === null) return;
+    const targetCard = document.querySelector(`#opponent-grid [data-slot="${targetPk}"]`);
+    if (targetCard && targetCard.classList.contains("fainted")) return;
+
+    // Update hidden input for the focused slot
+    const inp = document.getElementById("target-input-" + focusedSlot);
+    if (inp) inp.value = targetPk;
+
+    slotState[focusedSlot] = slotState[focusedSlot] || {};
+    slotState[focusedSlot].targetPk = targetPk;
+    slotState[focusedSlot].targetName = targetName;
+
+    // Highlight selected enemy card
+    document.querySelectorAll("#opponent-grid .enemy-card").forEach(c => c.classList.remove("selected-target"));
+    if (targetCard) targetCard.classList.add("selected-target");
+
+    // Update target label in action block
+    const label = document.getElementById("target-label-" + focusedSlot);
+    if (label) label.innerHTML = `Target: <span>${targetName}</span>`;
+  };
+
+  // ── Re-highlight target when switching focused slot ──────────
+  const origFocus = window.focusSlot;
+  window.focusSlot = function (slotPk) {
+    origFocus(slotPk);
+    // Restore target highlight for this slot
+    const state = slotState[slotPk];
+    document.querySelectorAll("#opponent-grid .enemy-card").forEach(c => c.classList.remove("selected-target"));
+    if (state && state.targetPk) {
+      const tc = document.querySelector(`#opponent-grid [data-slot="${state.targetPk}"]`);
+      if (tc && !tc.classList.contains("fainted")) tc.classList.add("selected-target");
+    }
+  };
+
+  // ── WebSocket ────────────────────────────────────────────────
+  let ws = null, wsConnected = false, fallbackTimer = null;
+
+  function connectWS() {
+    if (!IS_ACTIVE) return;
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${proto}://${location.host}/ws/battle/${BATTLE_PK}/`);
+
+    ws.onopen = function () { wsConnected = true; clearTimeout(fallbackTimer); };
+    ws.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      if (data.type === "battle_update") applyBattleUpdate(data.payload);
+      else if (data.type === "battle_end") location.reload();
+    };
+    ws.onerror = function () { startFallbackPoll(); };
+    ws.onclose = function () {
+      wsConnected = false;
+      if (IS_ACTIVE) startFallbackPoll();
+    };
+    fallbackTimer = setTimeout(function () { if (!wsConnected) startFallbackPoll(); }, 4000);
+  }
+
+  function startFallbackPoll() {
+    clearTimeout(fallbackTimer);
+    if (!IS_ACTIVE) return;
+    fallbackTimer = setTimeout(function () { location.reload(); }, 5000);
+  }
+
+  // ── Apply WS update ──────────────────────────────────────────
+  function applyBattleUpdate(payload) {
+    const roundLabel = document.getElementById("round-label");
+    if (roundLabel) roundLabel.textContent = "Round " + payload.current_round;
+
+    payload.teams.forEach(function (team) {
+      team.slots.forEach(function (slot) { updateSlot(slot); });
+    });
+
+    if (payload.combo_logs && payload.combo_logs.length > 0) {
+      renderComboLog(payload.combo_logs);
+      const maxChain = payload.combo_logs.reduce((m, l) => Math.max(m, l.chain_total || 0), 0);
+      if (maxChain >= 5) showComboBanner(maxChain);
+    }
+
+    if (payload.status === "finished") {
+      setTimeout(function () { location.reload(); }, 1500);
+    }
+  }
+
+  function updateSlot(slot) {
+    const card = document.getElementById("slot-" + slot.pk);
+    if (!card) return;
+
+    const hpTextEl = document.getElementById("hp-text-" + slot.pk);
+    const oldHp = hpTextEl ? parseInt(hpTextEl.textContent.split("/")[0]) : slot.current_hp;
+
+    if (hpTextEl) hpTextEl.textContent = slot.current_hp + "/" + slot.max_hp;
+
+    const bar = document.getElementById("hp-bar-" + slot.pk);
+    if (bar) {
+      bar.style.width = slot.hp_percentage + "%";
+      bar.className = "hp-bar " + hpColorClass(slot.hp_percentage);
+    }
+
+    if (slot.current_hp < oldHp) {
+      card.classList.remove("damage-flash");
+      void card.offsetWidth;
+      card.classList.add("damage-flash");
+      setTimeout(function () { card.classList.remove("damage-flash"); }, 600);
+    }
+
+    if (slot.is_fainted) card.classList.add("fainted");
+
+    const badgesEl = document.getElementById("status-badges-" + slot.pk);
+    if (badgesEl) {
+      badgesEl.innerHTML = (slot.statuses || []).map(function (s) {
+        return `<span class="badge badge-info">${s.display}</span>`;
+      }).join("");
+    }
+  }
+
+  function hpColorClass(pct) {
+    if (pct > 50) return "hp-green";
+    if (pct > 20) return "hp-yellow";
+    return "hp-red";
+  }
+
+  function renderComboLog(logs) {
+    const container = document.getElementById("combo-log");
+    const entries = document.getElementById("combo-log-entries");
+    if (!container || !entries) return;
+    entries.innerHTML = logs.map(function (log) {
+      const chainSpan = log.chain_total
+        ? `<span style="color:#9ca3af;font-size:0.72rem;margin-left:0.4rem;">(${log.chain_total} moves)</span>`
+        : "";
+      return `<div class="combo-entry"><span class="combo-chain-label">${log.message}</span>${chainSpan}</div>`;
+    }).join("");
+    container.style.display = "";
+  }
+
+  function showComboBanner(chainLen) {
+    const banner = document.getElementById("combo-banner");
+    if (!banner) return;
+    banner.textContent = "COMBO x" + chainLen + "!";
+    banner.style.display = "block";
+    setTimeout(function () { banner.style.display = "none"; }, 2600);
+  }
+
+  // ── Form submit spinner ──────────────────────────────────────
+  const form = document.getElementById("battle-form");
+  const waiting = document.getElementById("ws-waiting");
+  if (form && waiting) {
+    form.addEventListener("submit", function () {
+      waiting.classList.add("visible");
+      const btn = document.getElementById("execute-btn");
+      if (btn) btn.disabled = true;
+    });
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────
+  // Apply initial focus highlight
+  if (focusedSlot) {
+    const card = document.querySelector(`#player-grid [data-slot="${focusedSlot}"]`);
+    if (card) card.classList.add("selected-attacker");
+    // Restore stored target highlight
+    const state = slotState[focusedSlot];
+    if (state && state.targetPk) {
+      const tc = document.querySelector(`#opponent-grid [data-slot="${state.targetPk}"]`);
+      if (tc) tc.classList.add("selected-target");
+    }
+  }
+
+  connectWS();
+
+  {% if combo_logs %}
+    const initialMax = Math.max({% for log in combo_logs %}{{ log.chain_total|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %});
+    if (initialMax >= 5) showComboBanner(initialMax);
+  {% endif %}
+})();
+</script>
+{% endblock %}

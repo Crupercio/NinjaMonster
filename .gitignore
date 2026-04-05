@@ -1,0 +1,46 @@
+# 🔐 Secrets
+.env
+.env.*
+!.env.example
+
+# Python / Django
+__pycache__/
+*.py[cod]
+venv/
+env/
+v-env/
+.venv/
+db.sqlite3
+media/
+staticfiles/
+*.log
+
+# Node
+node_modules/
+
+# Claude / temp
+.claude/
+.claude-cache/
+tmp/
+temp/
+scratch/
+
+# Unity
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+
+# OS / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Misc
+*.sqlite3
+*.db
+dist/
+build/

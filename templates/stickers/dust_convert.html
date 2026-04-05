@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Convert Duplicate Stickers{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+  <h2>Convert Duplicates</h2>
+  <span style="color:#a78bfa;font-size:1.1rem;">{{ sticker_dust }} dust</span>
+</div>
+{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+<p style="color:#9ca3af;margin-bottom:1rem;">Convert duplicate stickers into sticker dust you can spend to craft specific stickers.</p>
+
+{% if duplicates %}
+  {% for dup in duplicates %}
+    {# dup is a values() annotation with pokemon, rarity, variant, count #}
+    <div class="pokemon-card" style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+      <div style="flex:1;">
+        <span class="pokemon-name">{{ dup.pokemon__name|default:"Pokemon" }}</span>
+        <span style="color:#9ca3af;font-size:0.8rem;margin-left:0.5rem;">[{{ dup.rarity }}] {{ dup.variant }}</span>
+        <span style="color:#6b7280;font-size:0.75rem;margin-left:0.5rem;">×{{ dup.count }}</span>
+      </div>
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        {# We need the actual sticker pk — show a select of duplicates #}
+        <input type="hidden" name="sticker_id" value="{{ dup.id }}">
+        <button type="submit" class="btn btn-secondary btn-sm">Convert 1</button>
+      </form>
+    </div>
+  {% endfor %}
+{% else %}
+  <p style="color:#6b7280;">No duplicates found — every sticker you own is unique!</p>
+{% endif %}
+
+<div style="margin-top:1rem;">
+  <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Back to Album</a>
+</div>
+{% endblock %}

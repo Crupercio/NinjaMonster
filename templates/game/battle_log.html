@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Battle #{{ battle.pk }} Full Log{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">Battle #{{ battle.pk }} — Full Log</h2>
+
+{% if combo_logs %}
+<div class="combo-log" style="margin-bottom:1rem;">
+  <h3>Combo Chains in this Battle</h3>
+  {% for log in combo_logs %}
+    <div class="combo-entry">
+      <span class="combo-chain-label">{{ log.message }}</span>
+      <span style="color:#9ca3af;font-size:0.75rem;margin-left:0.5rem;">Round {{ log.round_number }}</span>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div style="background:#0f1a2e;border-radius:8px;padding:1rem;">
+  {% for log in logs %}
+    <div style="padding:0.25rem 0;font-size:0.85rem;border-bottom:1px solid #1f2937;
+      {% if log.log_type == 'combo' %}color:#fbbf24;font-weight:600;
+      {% elif log.log_type == 'faint' %}color:#f87171;
+      {% elif log.log_type == 'status' %}color:#a78bfa;
+      {% else %}color:#d1d5db;{% endif %}">
+      <span style="color:#6b7280;font-size:0.75rem;margin-right:0.5rem;">[R{{ log.round_number }}]</span>
+      {% if log.log_type == 'combo' %}⚡ {% elif log.log_type == 'faint' %}💀 {% elif log.log_type == 'status' %}✨ {% endif %}
+      {{ log.message }}
+    </div>
+  {% empty %}
+    <div style="color:#6b7280;">No log entries.</div>
+  {% endfor %}
+</div>
+
+<div style="margin-top:1rem;">
+  <a href="{% url 'game:battle_detail' battle.pk %}" class="btn btn-secondary btn-sm">Back to Battle</a>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "pokemon-battle-game"
+version = "0.1.0"
+description = "A 6v6 turn-based Pokemon battle game with Naruto-inspired combo chains"
+requires-python = ">=3.12"
+
+# ---------------------------------------------------------------------------
+# Black
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  migrations
+)/
+'''
+
+# ---------------------------------------------------------------------------
+# isort
+# ---------------------------------------------------------------------------
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["apps", "config"]
+known_django = ["django"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+skip = ["migrations"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = ["migrations", ".venv", "staticfiles"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "S",   # flake8-bandit (security)
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "PTH", # flake8-use-pathlib
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "S101",  # assert is fine in test code
+    "S311",  # random is OK for non-crypto use
+    "B008",  # do not perform function calls in default arguments (Django default= is fine)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S106"]
+"config/settings/*" = ["F401", "F403", "F811"]
+
+# ---------------------------------------------------------------------------
+# mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+exclude = ["migrations/", "staticfiles/"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "smoke: fast smoke tests",
+    "regression: full regression suite",
+    "effects: status effect tests",
+    "combo: combo chain tests",
+    "battle: battle system tests",
+    "stickers: sticker system tests",
+    "trade: trading system tests",
+]
+testpaths = ["tests"]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*", "manage.py"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false

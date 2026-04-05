@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Trade #{{ offer.pk }}{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">Trade Offer #{{ offer.pk }}</h2>
+{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+
+<div class="pokemon-card" style="max-width:500px;margin-bottom:1rem;">
+  <div style="font-size:0.75rem;color:#9ca3af;">Offered by {{ offer.offered_by }}</div>
+  <div class="pokemon-name" style="font-size:1.1rem;margin-top:0.25rem;">
+    {{ offer.offered_sticker.pokemon.name }} [{{ offer.offered_sticker.rarity }}] {{ offer.offered_sticker.variant }}
+  </div>
+  {% if offer.looking_for_note %}
+    <div style="color:#a78bfa;margin-top:0.25rem;font-size:0.85rem;">Looking for: {{ offer.looking_for_note }}</div>
+  {% endif %}
+  {% if offer.requested_pokemon %}
+    <div style="color:#9ca3af;font-size:0.8rem;">Wants: {{ offer.requested_pokemon.name }}</div>
+  {% endif %}
+  <div style="margin-top:0.5rem;">
+    <span class="badge badge-{% if offer.status == 'pending' %}info{% elif offer.status == 'accepted' %}secondary{% else %}danger{% endif %}">
+      {{ offer.status }}
+    </span>
+  </div>
+</div>
+
+{% if offer.status == 'pending' %}
+  {% if request.user != offer.offered_by %}
+    <!-- Accept trade -->
+    <form method="post" style="margin-bottom:1rem;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="accept">
+      <div style="margin-bottom:0.5rem;">
+        <label>Your sticker to offer in exchange:</label>
+        <select name="accepting_sticker_id" style="display:block;margin-top:0.25rem;max-width:400px;">
+          {% for sticker in my_stickers %}
+            <option value="{{ sticker.pk }}">{{ sticker.pokemon.name }} [{{ sticker.rarity }}] {{ sticker.variant }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Accept Trade</button>
+    </form>
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <button type="submit" class="btn btn-secondary btn-sm">Reject</button>
+    </form>
+  {% else %}
+    <!-- Cancel own offer -->
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="cancel">
+      <button type="submit" class="btn btn-secondary btn-sm">Cancel Offer</button>
+    </form>
+  {% endif %}
+{% endif %}
+
+<div style="margin-top:1rem;">
+  <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Back to Trade Board</a>
+</div>
+{% endblock %}

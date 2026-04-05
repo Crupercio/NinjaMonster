@@ -1,0 +1,20 @@
+[
+  {"model": "pokemon.pokemontype", "pk": 1,  "fields": {"name": "Normal"}},
+  {"model": "pokemon.pokemontype", "pk": 2,  "fields": {"name": "Fire"}},
+  {"model": "pokemon.pokemontype", "pk": 3,  "fields": {"name": "Water"}},
+  {"model": "pokemon.pokemontype", "pk": 4,  "fields": {"name": "Electric"}},
+  {"model": "pokemon.pokemontype", "pk": 5,  "fields": {"name": "Grass"}},
+  {"model": "pokemon.pokemontype", "pk": 6,  "fields": {"name": "Ice"}},
+  {"model": "pokemon.pokemontype", "pk": 7,  "fields": {"name": "Fighting"}},
+  {"model": "pokemon.pokemontype", "pk": 8,  "fields": {"name": "Poison"}},
+  {"model": "pokemon.pokemontype", "pk": 9,  "fields": {"name": "Ground"}},
+  {"model": "pokemon.pokemontype", "pk": 10, "fields": {"name": "Flying"}},
+  {"model": "pokemon.pokemontype", "pk": 11, "fields": {"name": "Psychic"}},
+  {"model": "pokemon.pokemontype", "pk": 12, "fields": {"name": "Bug"}},
+  {"model": "pokemon.pokemontype", "pk": 13, "fields": {"name": "Rock"}},
+  {"model": "pokemon.pokemontype", "pk": 14, "fields": {"name": "Ghost"}},
+  {"model": "pokemon.pokemontype", "pk": 15, "fields": {"name": "Dragon"}},
+  {"model": "pokemon.pokemontype", "pk": 16, "fields": {"name": "Dark"}},
+  {"model": "pokemon.pokemontype", "pk": 17, "fields": {"name": "Steel"}},
+  {"model": "pokemon.pokemontype", "pk": 18, "fields": {"name": "Fairy"}}
+]

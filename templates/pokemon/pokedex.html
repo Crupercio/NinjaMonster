@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Pokedex{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+  <h2>Pokedex</h2>
+  <form method="get" style="display:flex;gap:0.5rem;align-items:center;">
+    <select name="type" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      {% for ptype in types %}
+        <option value="{{ ptype.name }}" {% if selected_type == ptype.name %}selected{% endif %}>{{ ptype.name }}</option>
+      {% endfor %}
+    </select>
+    {% if selected_type %}
+      <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;">
+  {% for pokemon in pokemon_list %}
+    <a href="{% url 'pokemon:detail' pokemon.pk %}" style="text-decoration:none;">
+      <div class="pokemon-card" style="transition:border-color 0.2s;text-align:center;" onmouseover="this.style.borderColor='#e94560'" onmouseout="this.style.borderColor='#0f3460'">
+        {% if pokemon.pokedex_number %}
+          <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
+               alt="{{ pokemon.name }}"
+               width="80" height="80"
+               style="display:block;margin:0 auto 4px;image-rendering:pixelated;"
+               onerror="this.style.display='none'">
+          <div style="font-size:0.65rem;color:#6b7280;">#{{ pokemon.pokedex_number }}</div>
+        {% endif %}
+        <div class="pokemon-name">{{ pokemon.name }}</div>
+        <div style="font-size:0.75rem;color:#9ca3af;">
+          {{ pokemon.primary_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}
+        </div>
+        <div style="font-size:0.7rem;color:#6b7280;margin-top:2px;">
+          HP:{{ pokemon.base_hp }} SPD:{{ pokemon.base_speed }}
+        </div>
+      </div>
+    </a>
+  {% empty %}
+    <div style="grid-column:1/-1;color:#6b7280;text-align:center;padding:2rem;">No Pokemon found.</div>
+  {% endfor %}
+</div>
+
+{% if is_paginated %}
+  <div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
+    {% endif %}
+    <span style="color:#9ca3af;font-size:0.85rem;align-self:center;">Page {{ page_obj.number }} of {{ page_obj.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

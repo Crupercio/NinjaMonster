@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Buy Sticker Pack{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:2rem auto;">
+  <h2 style="margin-bottom:1.5rem;">Sticker Shop</h2>
+
+  {% if error %}
+    <div class="msg-error" style="margin-bottom:1rem;">{{ error }}</div>
+  {% endif %}
+
+  <div class="combo-log" style="margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <div style="font-size:0.75rem;color:#9ca3af;">Your Balance</div>
+        <div style="font-size:1.75rem;font-weight:700;color:#fbbf24;">{{ request.user.ryo }} Ryo</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;color:#9ca3af;">Pack Price</div>
+        <div style="font-size:1.75rem;font-weight:700;color:#4ade80;">{{ pack_price }} Ryo</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pokemon-card" style="text-align:center;padding:1.5rem;margin-bottom:1.5rem;">
+    <div style="font-size:2rem;margin-bottom:0.5rem;">📦</div>
+    <div style="font-weight:700;font-size:1.1rem;margin-bottom:0.25rem;">Standard Pack</div>
+    <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">
+      5 stickers · 1 guaranteed Rare or better · random variants
+    </div>
+
+    {% if can_afford %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Buy for {{ pack_price }} Ryo</button>
+      </form>
+    {% else %}
+      <div class="msg-error" style="margin-bottom:0.75rem;">
+        Not enough Ryo — need {{ pack_price }}, you have {{ request.user.ryo }}.
+      </div>
+      <a href="{% url 'users:daily_claim' %}" class="btn btn-secondary">Claim Daily Reward</a>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'stickers:album' %}" style="font-size:0.85rem;color:#9ca3af;">← Back to Album</a>
+</div>
+{% endblock %}

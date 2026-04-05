@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Open Sticker Pack{% endblock %}
+{% block extra_css %}
+<style>
+  .pack-card { background:#16213e; border:2px solid #e94560; border-radius:12px; padding:1.5rem; text-align:center; min-width:130px; transition:transform 0.3s; }
+  .pack-card:hover { transform:scale(1.05); }
+  .rarity-common { color:#9ca3af; }
+  .rarity-uncommon { color:#4ade80; }
+  .rarity-rare { color:#60a5fa; }
+  .rarity-epic { color:#a78bfa; }
+  .rarity-holographic { color:#fbbf24; }
+  .rarity-full_art { color:#f97316; }
+  .rarity-secret_rare { color:#e94560; }
+  .reveal-grid { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin:1.5rem 0; }
+  @keyframes revealCard { from{opacity:0;transform:scale(0.5) rotateY(90deg)} to{opacity:1;transform:scale(1) rotateY(0)} }
+  .pack-card { animation: revealCard 0.4s ease forwards; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">Sticker Pack</h2>
+
+{% if not pack.opened %}
+  <div style="text-align:center;padding:3rem;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🎴</div>
+    <p style="color:#9ca3af;margin-bottom:1.5rem;">You have an unopened sticker pack! Ready to reveal 5 stickers?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">Open Pack!</button>
+    </form>
+  </div>
+{% else %}
+  <p style="color:#4ade80;margin-bottom:1rem;">Pack opened on {{ pack.opened_at|date:"M d, Y H:i" }}</p>
+  <div class="reveal-grid">
+    {% for sticker in revealed_stickers %}
+      <div class="pack-card" style="animation-delay:{{ forloop.counter0 }}00ms;">
+        <div class="pokemon-name" style="font-size:1rem;">{{ sticker.pokemon.name }}</div>
+        <div class="rarity-{{ sticker.rarity }}" style="font-size:0.85rem;font-weight:700;margin:0.25rem 0;">
+          {{ sticker.get_rarity_display }}
+        </div>
+        <div style="font-size:0.75rem;color:#9ca3af;">{{ sticker.get_variant_display }}</div>
+        <div style="font-size:0.7rem;color:#6b7280;margin-top:0.25rem;">
+          {{ sticker.pokemon.primary_type }}
+        </div>
+      </div>
+    {% empty %}
+      {% for sticker in pack.stickers.all %}
+        <div class="pack-card">
+          <div class="pokemon-name">{{ sticker.pokemon.name }}</div>
+          <div class="rarity-{{ sticker.rarity }}" style="font-size:0.85rem;font-weight:700;">{{ sticker.get_rarity_display }}</div>
+          <div style="font-size:0.75rem;color:#9ca3af;">{{ sticker.get_variant_display }}</div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+  <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Craft a Sticker{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+  <h2>Craft a Sticker</h2>
+  <span style="color:#a78bfa;font-size:1.1rem;">{{ sticker_dust }} dust available</span>
+</div>
+{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+
+<form method="post" style="max-width:500px;">
+  {% csrf_token %}
+  <div style="margin-bottom:1rem;">
+    <label>Pokemon:</label>
+    <select name="pokemon_id" style="display:block;margin-top:0.25rem;width:100%;">
+      {% for pokemon in pokemon_list %}
+        <option value="{{ pokemon.pk }}">{{ pokemon.name }} ({{ pokemon.primary_type }})</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:1rem;">
+    <label>Rarity:</label>
+    <select name="rarity" style="display:block;margin-top:0.25rem;width:100%;" id="rarity-select" onchange="updateCost()">
+      {% for rarity, cost in craft_costs.items %}
+        <option value="{{ rarity }}" data-cost="{{ cost }}">{{ rarity|title }} — {{ cost }} dust</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:1rem;">
+    <label>Variant:</label>
+    <select name="variant" style="display:block;margin-top:0.25rem;width:100%;">
+      {% for val, label in variants %}
+        <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:1rem;color:#fbbf24;" id="cost-display"></div>
+  <button type="submit" class="btn btn-primary">Craft Sticker</button>
+  <a href="{% url 'stickers:album' %}" class="btn btn-secondary" style="margin-left:0.5rem;">Cancel</a>
+</form>
+
+<script>
+  function updateCost() {
+    const sel = document.getElementById('rarity-select');
+    const cost = sel.options[sel.selectedIndex].dataset.cost;
+    document.getElementById('cost-display').textContent = 'Cost: ' + cost + ' dust';
+  }
+  updateCost();
+</script>
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block title %}{{ pokemon.name }} — Pokedex{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── DETAIL HERO ── */
+  .detail-hero {
+    background: radial-gradient(ellipse at 60% 0%, #0f3460 0%, #1a1a2e 65%);
+    border-bottom: 1px solid #0f3460;
+    padding: 2.5rem 0 0;
+  }
+  .detail-hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: flex-end;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .detail-hero-inner { grid-template-columns: 1fr; text-align: center; }
+    .detail-hero-img { order: -1; }
+  }
+  .detail-dex-id { font-size: 0.85rem; color: #6b7280; font-weight: 700; margin-bottom: 0.25rem; }
+  .detail-name { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin-bottom: 0.75rem; line-height: 1.1; }
+  .detail-types { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .type-pill {
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .type-fire    { background: #7f1d1d; color: #fca5a5; }
+  .type-water   { background: #1e3a5f; color: #93c5fd; }
+  .type-grass   { background: #14532d; color: #86efac; }
+  .type-electric{ background: #78350f; color: #fcd34d; }
+  .type-psychic { background: #4a044e; color: #f0abfc; }
+  .type-dragon  { background: #1e1b4b; color: #a5b4fc; }
+  .type-ice     { background: #164e63; color: #a5f3fc; }
+  .type-ghost   { background: #2d1b69; color: #c4b5fd; }
+  .type-dark    { background: #1c1917; color: #a8a29e; }
+  .type-steel   { background: #374151; color: #d1d5db; }
+  .type-poison  { background: #3b0764; color: #e879f9; }
+  .type-fighting{ background: #7c2d12; color: #fdba74; }
+  .type-rock    { background: #292524; color: #d6d3d1; }
+  .type-ground  { background: #451a03; color: #fcd34d; }
+  .type-flying  { background: #1e1b4b; color: #c7d2fe; }
+  .type-bug     { background: #1a2e05; color: #bef264; }
+  .type-normal  { background: #374151; color: #f3f4f6; }
+  .type-fairy   { background: #500724; color: #fda4af; }
+
+  .detail-hero-img {
+    text-align: center;
+    padding-bottom: 0;
+  }
+  .detail-hero-img img {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 30px rgba(233,69,96,0.35));
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ── BODY LAYOUT ── */
+  .detail-body { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+  @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  /* ── CARD PANEL ── */
+  .panel {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .panel-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #e94560;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── STAT BARS ── */
+  .stat-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .stat-label { font-size: 0.75rem; color: #9ca3af; width: 80px; flex-shrink: 0; }
+  .stat-val { font-size: 0.9rem; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+  .stat-bar-track { flex: 1; background: #0f3460; border-radius: 4px; height: 8px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 4px; }
+  .stat-hp      { background: #4ade80; }
+  .stat-atk     { background: #f87171; }
+  .stat-def     { background: #60a5fa; }
+  .stat-spatk   { background: #f97316; }
+  .stat-spdef   { background: #a78bfa; }
+  .stat-speed   { background: #fbbf24; }
+
+  /* ── COMBO PANEL ── */
+  .combo-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #0f3460; font-size: 0.875rem; }
+  .combo-row:last-child { border-bottom: none; }
+  .combo-label { color: #9ca3af; }
+  .combo-val { font-weight: 700; color: #fbbf24; }
+  .no-combo { color: #4b5563; font-size: 0.85rem; }
+
+  /* ── MOVES TABLE ── */
+  .moves-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .moves-table th { color: #9ca3af; text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #374151; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+  .moves-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #1f2937; vertical-align: middle; }
+  .moves-table tr:last-child td { border-bottom: none; }
+  .moves-table tr:hover td { background: #1a2744; }
+  .move-name { font-weight: 600; }
+  .badge-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+  .badge-applies { background: #7f1d1d; color: #fca5a5; }
+  .badge-trigger { background: #78350f; color: #fcd34d; }
+  .dash { color: #4b5563; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="detail-hero">
+  <div class="detail-hero-inner">
+    <div>
+      <div class="detail-dex-id">
+        {% if pokemon.pokedex_number %}#{{ pokemon.pokedex_number|stringformat:"03d" }}{% endif %}
+      </div>
+      <div class="detail-name">{{ pokemon.name }}</div>
+      <div class="detail-types">
+        <span class="type-pill type-{{ pokemon.primary_type.name|lower }}">{{ pokemon.primary_type.name }}</span>
+        {% if pokemon.secondary_type %}
+          <span class="type-pill type-{{ pokemon.secondary_type.name|lower }}">{{ pokemon.secondary_type.name }}</span>
+        {% endif %}
+      </div>
+      <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">&larr; Back to Pokedex</a>
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'pokemon:catch' pokemon.pk %}" style="display:inline;margin-left:0.5rem;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-sm">Catch {{ pokemon.name }}</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="detail-hero-img">
+      {% if pokemon.sprite_url %}
+        <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
+      {% elif pokemon.pokedex_number %}
+        <img src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
+             alt="{{ pokemon.name }}">
+      {% else %}
+        <div style="font-size:8rem;line-height:1;padding-bottom:1rem;">&#10067;</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="detail-body">
+
+  <div class="detail-grid">
+
+    <!-- BASE STATS -->
+    <div class="panel">
+      <div class="panel-title">Base Stats</div>
+
+      <div class="stat-row">
+        <span class="stat-label">HP</span>
+        <span class="stat-val" style="color:#4ade80;">{{ pokemon.base_hp }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-hp" style="width:{{ pokemon.base_hp|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Attack</span>
+        <span class="stat-val" style="color:#f87171;">{{ pokemon.base_attack }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-atk" style="width:{{ pokemon.base_attack|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Defense</span>
+        <span class="stat-val" style="color:#60a5fa;">{{ pokemon.base_defense }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-def" style="width:{{ pokemon.base_defense|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sp. Atk</span>
+        <span class="stat-val" style="color:#f97316;">{{ pokemon.base_sp_attack }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-spatk" style="width:{{ pokemon.base_sp_attack|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sp. Def</span>
+        <span class="stat-val" style="color:#a78bfa;">{{ pokemon.base_sp_defense }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-spdef" style="width:{{ pokemon.base_sp_defense|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Speed</span>
+        <span class="stat-val" style="color:#fbbf24;">{{ pokemon.base_speed }}</span>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill stat-speed" style="width:{{ pokemon.base_speed|floatformat:0 }}%;max-width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMBO CHAIN INFO -->
+    <div class="panel">
+      <div class="panel-title">&#9889; Combo Chain</div>
+      {% if combo_moves %}
+        {% for move in combo_moves %}
+          {% if move.applies_status %}
+            <div class="combo-row">
+              <span class="combo-label">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %} applies</span>
+              <span class="combo-val">{{ move.applies_status.get_name_display }}</span>
+            </div>
+          {% endif %}
+          {% if move.trigger_status %}
+            <div class="combo-row">
+              <span class="combo-label">Triggers when ally inflicts</span>
+              <span class="combo-val" style="color:#e94560;">{{ move.trigger_status.get_name_display }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p class="no-combo">No combo moves in this pool.</p>
+      {% endif %}
+      {% if not is_battle_ready %}
+        <div style="margin-top:1rem;padding:0.5rem 0.75rem;background:#450a0a;border-radius:6px;font-size:0.78rem;color:#fca5a5;">
+          &#9888; Move pool incomplete — species is not battle-ready.
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- BATTLE MOVE POOL (organized by slot type) -->
+  <div class="panel">
+    <div class="panel-title">Battle Move Pool</div>
+    {% if move_pool_by_slot %}
+      {% for slot_label, slot_moves in move_pool_by_slot %}
+        {% if slot_moves %}
+        <div style="margin-bottom:1.5rem;">
+          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.5rem;">
+            {{ slot_label }}
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="moves-table">
+              <thead>
+                <tr>
+                  <th>Move</th>
+                  <th>Type</th>
+                  <th>Power</th>
+                  <th>Acc</th>
+                  <th>PP</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for move in slot_moves %}
+                <tr>
+                  <td class="move-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</td>
+                  <td>
+                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
+                      {{ move.move_type.name }}
+                    </span>
+                  </td>
+                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
+                  <td>{{ move.accuracy }}%</td>
+                  <td>{{ move.pp }}</td>
+                  <td>
+                    {% if move.applies_status %}
+                      <span class="badge-status badge-applies">{{ move.applies_status.get_name_display }}</span>
+                    {% elif move.trigger_status %}
+                      <span class="badge-status badge-trigger">&#9889; {{ move.trigger_status.get_name_display }}</span>
+                    {% else %}
+                      <span class="dash">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% else %}
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.25rem;">
+            {{ slot_label }}
+          </div>
+          <p style="color:#4b5563;font-size:0.85rem;margin:0;">No moves assigned for this slot.</p>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <p style="color:#6b7280;">No move pool data for this species yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

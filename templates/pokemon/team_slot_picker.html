@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Assign Pokémon — Slot {{ position }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  .picker-card {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    text-align: center;
+  }
+  .picker-card:hover { border-color: #e94560; transform: translateY(-2px); }
+  .picker-card.already-assigned { border-color: #78350f; opacity: 0.7; }
+  .picker-card.current-slot { border-color: #4ade80; }
+  .picker-card img {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+  .picker-card .pname { font-weight: 700; font-size: 0.9rem; margin: 0.25rem 0; }
+  .picker-card .plevel { font-size: 0.8rem; color: #e94560; font-weight: 700; }
+  .picker-card .ptypes { font-size: 0.7rem; color: #93c5fd; margin-top: 0.2rem; }
+  .picker-card .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+  .tag-assigned { background: #78350f; color: #fcd34d; }
+  .tag-current { background: #14532d; color: #4ade80; }
+  .tag-training { background: #374151; color: #9ca3af; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem;">
+  <a href="{% url 'pokemon:team' %}" style="color:#9ca3af;font-size:0.9rem;">← My Team</a>
+</div>
+
+<h2 style="margin-bottom:0.25rem;">
+  Assign Pokémon to Slot {{ position }}
+</h2>
+
+{% if current_slot %}
+  <p style="color:#9ca3af;margin-bottom:1rem;">
+    Currently: <strong style="color:#eee;">{{ current_slot.pokemon.species.name }}</strong> — click another to replace it, or
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="remove">
+      <button type="submit" style="background:none;border:none;color:#e94560;cursor:pointer;font-size:1rem;padding:0;text-decoration:underline;">remove it</button>.
+    </form>
+  </p>
+{% else %}
+  <p style="color:#9ca3af;margin-bottom:1rem;">Click a Pokémon to assign it to this slot.</p>
+{% endif %}
+
+<div class="picker-grid">
+  {% for op in available_pokemon %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="owned_id" value="{{ op.pk }}">
+      <button type="submit" class="picker-card {% if op.is_current %}current-slot{% elif op.is_assigned %}already-assigned{% endif %}"
+              style="width:100%;font-family:inherit;">
+        {% if op.species.sprite_url %}
+          <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}">
+        {% else %}
+          <div style="width:64px;height:64px;display:inline-flex;align-items:center;justify-content:center;color:#4b5563;font-size:1.5rem;">?</div>
+        {% endif %}
+        <div class="pname">{{ op.species.name }}</div>
+        <div class="plevel">Lv.{{ op.level }}</div>
+        <div class="ptypes">
+          {{ op.species.primary_type }}{% if op.species.secondary_type %} / {{ op.species.secondary_type }}{% endif %}
+        </div>
+        {% if op.is_current %}
+          <div class="tag tag-current">Current</div>
+        {% elif op.is_assigned %}
+          <div class="tag tag-assigned">In team</div>
+        {% endif %}
+        {% if op.is_training %}
+          <div class="tag tag-training">Training</div>
+        {% endif %}
+      </button>
+    </form>
+  {% empty %}
+    <p style="color:#9ca3af;grid-column:1/-1;">You have no Pokémon yet.</p>
+  {% endfor %}
+</div>
+
+<a href="{% url 'pokemon:team' %}" class="btn btn-secondary">Cancel</a>
+{% endblock %}

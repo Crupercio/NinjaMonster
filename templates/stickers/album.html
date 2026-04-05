@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}My Sticker Album{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+  <h2>Sticker Album</h2>
+  <div style="display:flex;gap:0.5rem;">
+    <a href="{% url 'stickers:buy_pack' %}" class="btn btn-primary btn-sm">Buy Pack</a>
+    <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Trade Board</a>
+    <a href="{% url 'stickers:craft' %}" class="btn btn-secondary btn-sm">Craft ({{ request.user.sticker_dust }} dust)</a>
+    <a href="{% url 'stickers:dust_convert' %}" class="btn btn-secondary btn-sm">Convert Dupes</a>
+  </div>
+</div>
+
+<!-- Pokedex Completion -->
+<div class="combo-log" style="margin-bottom:1rem;">
+  <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:0.75rem;color:#9ca3af;">Pokedex Completion</div>
+      <div style="font-size:2rem;font-weight:700;color:#4ade80;">{{ completion_percentage }}%</div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem;color:#9ca3af;">Total Stickers</div>
+      <div style="font-size:2rem;font-weight:700;">{{ total_stickers }}</div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem;color:#9ca3af;">Unique Pokemon</div>
+      <div style="font-size:2rem;font-weight:700;">{{ unique_pokemon }}</div>
+    </div>
+    {% if unopened_packs > 0 %}
+    <div>
+      <div style="font-size:0.75rem;color:#fbbf24;">Unopened Packs</div>
+      <div style="font-size:2rem;font-weight:700;color:#fbbf24;">{{ unopened_packs }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Rarity Breakdown -->
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+  {% for rarity, count in rarity_breakdown.items %}
+    <div class="pokemon-card" style="min-width:100px;text-align:center;">
+      <div style="font-size:0.7rem;color:#9ca3af;">{{ rarity|title }}</div>
+      <div style="font-size:1.5rem;font-weight:700;">{{ count }}</div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Showcase -->
+{% if showcase %}
+<div style="margin-bottom:1.5rem;">
+  <h3 style="margin-bottom:0.5rem;">Showcase</h3>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+    {% for sticker in showcase %}
+      <div class="pokemon-card" style="text-align:center;min-width:100px;">
+        <div class="pokemon-name">{{ sticker.pokemon.name }}</div>
+        <div style="font-size:0.7rem;color:#fbbf24;">{{ sticker.rarity }} · {{ sticker.variant }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Pokemon Grid by Type -->
+{% for type_name, type_data in by_type.items %}
+<div style="margin-bottom:1.5rem;">
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+    <h3>{{ type_name }}</h3>
+    <div class="hp-bar-wrap" style="width:100px;">
+      <div class="hp-bar hp-green" style="width:{{ type_data.completion }}%"></div>
+    </div>
+    <span style="font-size:0.8rem;color:#9ca3af;">{{ type_data.owned }}/{{ type_data.total }} ({{ type_data.completion }}%)</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:0.3rem;">
+    {% for pokemon in all_pokemon %}
+      {% if pokemon.primary_type.name == type_name %}
+        <div class="pokemon-card" style="text-align:center;padding:0.5rem;
+          {% if pokemon.pk not in owned_pokemon_ids %}opacity:0.3;filter:grayscale(100%);{% endif %}">
+          <div style="font-size:0.75rem;font-weight:600;">
+            {% if pokemon.pk not in owned_pokemon_ids %}???{% else %}{{ pokemon.name }}{% endif %}
+          </div>
+          {% if pokemon.pokedex_number %}<div style="font-size:0.65rem;color:#6b7280;">#{{ pokemon.pokedex_number }}</div>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

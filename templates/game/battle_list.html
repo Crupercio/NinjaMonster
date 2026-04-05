@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}My Battles{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+  <h2>My Battles</h2>
+  <a href="{% url 'game:battle_create' %}" class="btn btn-primary">New Battle</a>
+</div>
+<table style="width:100%;border-collapse:collapse;">
+  <thead>
+    <tr style="color:#9ca3af;font-size:0.8rem;text-align:left;border-bottom:1px solid #374151;">
+      <th style="padding:0.5rem;">#</th>
+      <th style="padding:0.5rem;">Players</th>
+      <th style="padding:0.5rem;">Status</th>
+      <th style="padding:0.5rem;">Round</th>
+      <th style="padding:0.5rem;">Winner</th>
+      <th style="padding:0.5rem;">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for battle in battles %}
+      <tr style="border-bottom:1px solid #1f2937;">
+        <td style="padding:0.5rem;"><a href="{% url 'game:battle_detail' battle.pk %}">#{{ battle.pk }}</a></td>
+        <td style="padding:0.5rem;">{{ battle.player_one }} vs {{ battle.player_two|default:"AI" }}</td>
+        <td style="padding:0.5rem;">
+          <span class="badge badge-{% if battle.status == 'active' %}info{% elif battle.status == 'finished' %}secondary{% else %}warning{% endif %}">
+            {{ battle.status }}
+          </span>
+        </td>
+        <td style="padding:0.5rem;">{{ battle.current_round }}</td>
+        <td style="padding:0.5rem;">{{ battle.winner|default:"—" }}</td>
+        <td style="padding:0.5rem;font-size:0.8rem;color:#9ca3af;">{{ battle.created_at|date:"M d, Y" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" style="padding:1rem;color:#6b7280;text-align:center;">No battles yet. Start one!</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

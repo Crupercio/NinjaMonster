@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokemon Combo Battle — Train. Chain. Conquer.</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
+    a { color: #e94560; text-decoration: none; }
+
+    /* ── NAV ── */
+    nav {
+      background: #16213e;
+      border-bottom: 2px solid #e94560;
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { font-size: 1.25rem; font-weight: 700; color: #e94560; letter-spacing: 1px; }
+    .nav-actions { display: flex; gap: 0.75rem; }
+    .btn { display: inline-block; padding: 0.45rem 1.1rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
+    .btn-primary { background: #e94560; color: #fff; }
+    .btn-primary:hover { background: #c73652; }
+    .btn-outline { background: transparent; color: #e94560; border: 2px solid #e94560; }
+    .btn-outline:hover { background: #e94560; color: #fff; }
+    .btn-lg { padding: 0.75rem 2rem; font-size: 1.05rem; }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+      background: radial-gradient(ellipse at 50% 0%, #0f3460 0%, #1a1a2e 70%);
+      border-bottom: 1px solid #0f3460;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: #0f3460;
+      color: #e94560;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      border: 1px solid #e94560;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; }
+    .hero h1 span { color: #e94560; }
+    .hero p { font-size: 1.1rem; color: #9ca3af; max-width: 520px; margin: 0 auto 2.5rem; line-height: 1.6; }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 4rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #e94560;
+      margin-bottom: 0.5rem;
+    }
+    .section-title { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 800; margin-bottom: 1rem; }
+    .section-body { color: #9ca3af; line-height: 1.7; max-width: 560px; }
+
+    /* ── FEATURED POKEMON ── */
+    .featured { background: #16213e; border-top: 1px solid #0f3460; border-bottom: 1px solid #0f3460; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-top: 2.5rem; }
+    .poke-card {
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .poke-card:hover { border-color: #e94560; transform: translateY(-4px); }
+    a.poke-card { color: inherit; display: block; }
+    .poke-card img.sprite { width: 120px; height: 120px; object-fit: contain; margin-bottom: 0.75rem; filter: drop-shadow(0 4px 12px rgba(233,69,96,0.25)); transition: filter 0.2s; }
+    .poke-card:hover img.sprite { filter: drop-shadow(0 6px 18px rgba(233,69,96,0.5)); }
+    .poke-card .poke-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .poke-card .poke-types { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .type-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .type-fire { background: #7f1d1d; color: #fca5a5; }
+    .type-water { background: #1e3a5f; color: #93c5fd; }
+    .type-grass { background: #14532d; color: #86efac; }
+    .type-electric { background: #78350f; color: #fcd34d; }
+    .type-psychic { background: #4a044e; color: #f0abfc; }
+    .type-dragon { background: #1e1b4b; color: #a5b4fc; }
+    .poke-card .poke-stat { font-size: 0.8rem; color: #9ca3af; }
+    .poke-card .poke-stat span { color: #e94560; font-weight: 700; }
+
+    /* ── COMBO SECTION ── */
+    .combo-section { background: #1a1a2e; }
+    .combo-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+    @media (max-width: 680px) { .combo-layout { grid-template-columns: 1fr; } }
+    .combo-chain-demo {
+      background: #0f3460;
+      border: 1px solid #e94560;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .combo-chain-demo h4 { color: #e94560; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; }
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #1a3a6e;
+      font-size: 0.9rem;
+    }
+    .chain-step:last-child { border-bottom: none; }
+    .chain-num { background: #e94560; color: #fff; font-weight: 700; font-size: 0.75rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chain-text { flex: 1; }
+    .chain-text strong { color: #fbbf24; }
+    .chain-arrow { color: #e94560; font-size: 1.2rem; }
+    .combo-features { list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .combo-features li { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.95rem; color: #ccc; }
+    .combo-features li::before { content: "⚡"; flex-shrink: 0; }
+
+    /* ── POKEDEX PREVIEW ── */
+    .pokedex-section { background: #16213e; border-top: 1px solid #0f3460; border-bottom: 1px solid #0f3460; }
+    .pokedex-frame {
+      background: #e94560;
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 420px;
+      margin: 2.5rem auto 0;
+      box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
+    }
+    .pokedex-screen {
+      background: #1a1a2e;
+      border: 3px solid #0f3460;
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .pokedex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .pokedex-header .dex-id { font-size: 0.8rem; color: #e94560; font-weight: 700; }
+    .pokedex-header .dex-name { font-size: 1.1rem; font-weight: 700; }
+    .pokedex-sprite { font-size: 5rem; text-align: center; margin: 0.5rem 0 1rem; }
+    .dex-stat-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.3rem 0; border-bottom: 1px solid #0f3460; color: #9ca3af; }
+    .dex-stat-row:last-child { border-bottom: none; }
+    .dex-stat-row span { color: #eee; font-weight: 600; }
+    .pokedex-dots { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+    .pokedex-dots span { width: 10px; height: 10px; border-radius: 50%; background: #0f3460; }
+    .pokedex-dots span.active { background: #e94560; }
+
+    /* ── TRAINING SECTION ── */
+    .training-section { background: #1a1a2e; }
+    .progression-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 2.5rem; }
+    .prog-step {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .prog-step .step-icon { font-size: 2.25rem; margin-bottom: 0.75rem; }
+    .prog-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .prog-step p { font-size: 0.875rem; color: #9ca3af; line-height: 1.6; }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      background: radial-gradient(ellipse at 50% 100%, #0f3460 0%, #1a1a2e 70%);
+      text-align: center;
+      padding: 5rem 2rem;
+      border-top: 1px solid #0f3460;
+    }
+    .cta-banner h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; margin-bottom: 1rem; }
+    .cta-banner p { color: #9ca3af; margin-bottom: 2rem; font-size: 1rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #16213e;
+      border-top: 1px solid #0f3460;
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">&#9889; Pokemon Combo Battle</span>
+  <div class="nav-actions">
+    <a href="{% url 'login' %}" class="btn btn-outline">Login</a>
+    <a href="{% url 'users:register' %}" class="btn btn-primary">Sign Up Free</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Now in Beta</div>
+    <h1>Battle Smarter.<br><span>Chain Harder.</span></h1>
+    <p>
+      A 6v6 turn-based Pokemon battle game where your victories come from chaining
+      status combos — not just brute force. Build a team. Master the chain. Dominate.
+    </p>
+    <div class="hero-cta">
+      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Start Your Journey</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-lg">I Have an Account</a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED POKEMON -->
+<section class="featured">
+  <div class="container">
+    <div class="section-label">Your Team Awaits</div>
+    <div class="section-title">Choose Your Fighters</div>
+    <div class="section-body">
+      Every Pokemon has moves that apply status effects — and teammates who can trigger off those
+      statuses to chain devastating combos.
+    </div>
+    <div class="cards-grid">
+      {% for pokemon in featured_pokemon %}
+      <a class="poke-card" href="/pokemon/{{ pokemon.pk }}/">
+        {% if pokemon.pokedex_number %}
+          <img class="sprite"
+               src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
+               alt="{{ pokemon.name }}">
+        {% elif pokemon.sprite_url %}
+          <img class="sprite" src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
+        {% else %}
+          <div class="sprite" style="font-size:4rem;">&#10067;</div>
+        {% endif %}
+        <div class="poke-name">{{ pokemon.name }}</div>
+        <div class="poke-types">
+          <span class="type-badge type-{{ pokemon.primary_type.name|lower }}">{{ pokemon.primary_type.name }}</span>
+          {% if pokemon.secondary_type %}
+            <span class="type-badge type-{{ pokemon.secondary_type.name|lower }}">{{ pokemon.secondary_type.name }}</span>
+          {% endif %}
+        </div>
+        {% with trigger=pokemon.moves.all %}
+          {% for move in trigger %}
+            {% if move.trigger_status %}
+              <div class="poke-stat">Combo Trigger: <span>{{ move.trigger_status.get_name_display }}</span></div>
+              {% if True %}{% comment %}break after first{% endcomment %}{% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endwith %}
+      </a>
+      {% empty %}
+        <p style="color:#9ca3af;grid-column:1/-1;">No featured Pokemon found in the database yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- COMBO BATTLE SYSTEM -->
+<section class="combo-section">
+  <div class="container">
+    <div class="combo-layout">
+      <div>
+        <div class="section-label">The Core Mechanic</div>
+        <div class="section-title">The Combo Chain System</div>
+        <div class="section-body">
+          Every move that applies a status effect can trigger a teammate whose ability
+          matches that status. Chains can cascade up to 10 deep — turning a single
+          well-placed move into a team-wide assault.
+        </div>
+        <ul class="combo-features">
+          <li>30 unique status effects across 3 categories</li>
+          <li>Chains cascade automatically — up to 10 links deep</li>
+          <li>Anti-loop guard prevents the same pair from firing twice</li>
+          <li>AI opponent reads your team and counters your chain strategy</li>
+        </ul>
+      </div>
+      <div class="combo-chain-demo">
+        <h4>&#9889; Live Combo Example</h4>
+        <div class="chain-step">
+          <div class="chain-num">1</div>
+          <div class="chain-text">Jolteon uses <strong>Thunder Wave</strong> — applies Paralysis</div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-num">2</div>
+          <div class="chain-text">Gengar triggers on Paralysis — uses <strong>Shadow Ball</strong></div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-num">3</div>
+          <div class="chain-text">Espeon triggers — uses <strong>Psybeam</strong> → Confusion</div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-num">4</div>
+          <div class="chain-text">Alakazam triggers on Confusion — <strong>Psychic</strong> finisher</div>
+        </div>
+        <div style="text-align:center; margin-top: 1rem; color: #fbbf24; font-weight: 700; font-size: 0.9rem;">
+          &#128293; COMBO x4 — 247% damage amplification
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- POKEDEX PREVIEW -->
+<section class="pokedex-section">
+  <div class="container" style="text-align: center;">
+    <div class="section-label" style="text-align: center;">Browse &amp; Strategize</div>
+    <div class="section-title" style="text-align: center;">Built-In Pokedex</div>
+    <div class="section-body" style="margin: 0 auto;">
+      Every Pokemon, every move, every status trigger — documented in your in-game Pokedex.
+      Plan your chain team before you battle.
+    </div>
+    <div class="pokedex-frame">
+      <div class="pokedex-screen">
+        <div class="pokedex-header">
+          <span class="dex-id">#006</span>
+          <span class="dex-name">Charizard</span>
+          <span class="type-badge type-fire">Fire</span>
+        </div>
+        <div class="pokedex-sprite">
+          {% with charizard=featured_pokemon.0 %}
+            {% if charizard and charizard.pokedex_number %}
+              <img src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/{{ charizard.pokedex_number|stringformat:'03d' }}.png"
+                   alt="{{ charizard.name }}"
+                   style="width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(233,69,96,0.4));">
+            {% else %}
+              <img src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/006.png"
+                   alt="Charizard"
+                   style="width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(233,69,96,0.4));">
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div class="dex-stat-row">Type <span>Fire / Flying</span></div>
+        <div class="dex-stat-row">Base HP <span>78</span></div>
+        <div class="dex-stat-row">Base Attack <span>84</span></div>
+        <div class="dex-stat-row">Applies Status <span>Burn</span></div>
+        <div class="dex-stat-row">Triggers On <span>Paralysis</span></div>
+        <div class="dex-stat-row">Signature Move <span>Flamethrower</span></div>
+      </div>
+      <div class="pokedex-dots">
+        <span class="active"></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRAINING & PROGRESSION -->
+<section class="training-section">
+  <div class="container">
+    <div class="section-label">Get Better Over Time</div>
+    <div class="section-title">Training &amp; Progression</div>
+    <div class="section-body">
+      Every battle makes you stronger. Track your stats, collect stickers,
+      and climb the rankings as you master deeper combo chains.
+    </div>
+    <div class="progression-steps">
+      <div class="prog-step">
+        <div class="step-icon">&#127941;</div>
+        <h3>Battle &amp; Earn</h3>
+        <p>Win battles to earn Sticker Dust. Lose and still learn — every battle logs
+           your longest combo chain.</p>
+      </div>
+      <div class="prog-step">
+        <div class="step-icon">&#128218;</div>
+        <h3>Collect Stickers</h3>
+        <p>Open packs, craft rare stickers, and trade with other trainers.
+           7 rarity tiers, 6 variants each.</p>
+      </div>
+      <div class="prog-step">
+        <div class="step-icon">&#129504;</div>
+        <h3>Master the AI</h3>
+        <p>Three AI difficulty levels — Easy, Medium, and Hard. Hard mode reads your
+           team and actively counters your chain strategy.</p>
+      </div>
+      <div class="prog-step">
+        <div class="step-icon">&#128202;</div>
+        <h3>Track Your Stats</h3>
+        <p>Battles won, win rate, longest combo chain, sticker dust —
+           all on your trainer dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <div class="container">
+    <h2>Ready to Build Your Chain?</h2>
+    <p>Join trainers already chaining combos and climbing the ranks.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Create Free Account</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-lg">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  &copy; 2025 Pokemon Combo Battle &mdash; Fan project, not affiliated with Nintendo or Game Freak.
+</footer>
+
+</body>
+</html>

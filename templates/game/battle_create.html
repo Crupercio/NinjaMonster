@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Create Battle{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">Start a New Battle</h2>
+<form method="post">
+  {% csrf_token %}
+  <p style="color:#9ca3af;margin-bottom:1rem;">You will face an AI opponent with a randomly selected team. You will choose your 6 Pokemon in the next step.</p>
+  <button type="submit" class="btn btn-primary">Create Battle &amp; Select Team</button>
+  <a href="{% url 'game:battle_list' %}" class="btn btn-secondary" style="margin-left:0.5rem;">Cancel</a>
+</form>
+{% endblock %}

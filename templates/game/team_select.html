@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Select Your Team{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:0.5rem;">Select Your Team (6 Pokemon)</h2>
+<p style="color:#9ca3af;margin-bottom:1rem;">Choose exactly 6 of your Pokemon to bring into battle. Training Pokemon cannot be selected.</p>
+
+{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+
+<form method="post" id="team-form">
+  {% csrf_token %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.5rem;margin-bottom:1rem;">
+    {% for op in owned_pokemon %}
+      <label class="pokemon-card{% if op.is_training %} fainted{% endif %}"
+             style="cursor:{% if op.is_training %}not-allowed{% else %}pointer{% endif %};"
+             id="card-{{ op.pk }}">
+        <input type="checkbox" name="owned_ids" value="{{ op.pk }}"
+               {% if op.is_training %}disabled{% endif %}
+               style="display:none;" onchange="toggleCard(this, 'card-{{ op.pk }}')">
+        <div class="pokemon-name">{{ op.species.name }}</div>
+        <div style="font-size:0.75rem;color:#a78bfa;">Lv.{{ op.level }}</div>
+        <div style="font-size:0.7rem;color:#6b7280;">
+          EXP {{ op.experience }}/{{ op.exp_to_next_level }}
+        </div>
+        <div style="font-size:0.75rem;color:#9ca3af;">
+          {{ op.species.primary_type }}{% if op.species.secondary_type %}/{{ op.species.secondary_type }}{% endif %}
+        </div>
+        <div style="font-size:0.75rem;color:#6b7280;">HP: {{ op.species.base_hp }} | SPD: {{ op.species.base_speed }}</div>
+        {% if op.is_training %}
+          <div style="font-size:0.7rem;color:#f59e0b;margin-top:4px;">⏳ Training</div>
+        {% else %}
+          {% for move in op.species.moves.all|slice:":2" %}
+            <div style="font-size:0.7rem;color:#a78bfa;">
+              {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}
+              {% if move.applies_status %}→{% endif %}
+              {% if move.trigger_status %}⚡{% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+      </label>
+    {% empty %}
+      <p style="color:#9ca3af;">You have no Pokemon yet. Try registering again or contact support.</p>
+    {% endfor %}
+  </div>
+  <div style="position:sticky;bottom:0;background:#1a1a2e;padding:0.75rem 0;display:flex;align-items:center;gap:1rem;">
+    <span id="counter" style="color:#9ca3af;">0 / 6 selected</span>
+    <button type="submit" class="btn btn-primary">Confirm Team</button>
+    <a href="{% url 'game:battle_list' %}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+  let count = 0;
+  function toggleCard(checkbox, cardId) {
+    const card = document.getElementById(cardId);
+    if (checkbox.checked) {
+      if (count >= 6) { checkbox.checked = false; return; }
+      count++;
+      card.style.border = '2px solid #e94560';
+    } else {
+      count--;
+      card.style.border = '1px solid #0f3460';
+    }
+    document.getElementById('counter').textContent = count + ' / 6 selected';
+  }
+</script>
+{% endblock %}

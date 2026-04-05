@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Battle Action{% endblock %}
+{% block content %}
+{# This template is a fallback — the action form lives inline on battle_detail.html #}
+<p>Redirecting…</p>
+<script>window.location = "{% url 'game:battle_detail' battle.pk %}";</script>
+{% endblock %}

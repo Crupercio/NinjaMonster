@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Daily Reward{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:3rem auto;">
+  <h2 style="margin-bottom:0.25rem;">Daily Reward</h2>
+  <p style="color:#9ca3af;margin-bottom:1.5rem;font-size:0.9rem;">
+    Come back every day to collect your Ryo bonus.
+  </p>
+
+  {% for message in messages %}
+    {% if message.tags == 'success' %}
+      <div style="background:#14532d;color:#86efac;padding:0.6rem 1rem;border-radius:6px;margin-bottom:1rem;font-weight:600;">
+        {{ message }}
+      </div>
+    {% else %}
+      <div class="msg-error">{{ message }}</div>
+    {% endif %}
+  {% endfor %}
+
+  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.5rem;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem;">💰</div>
+    <div style="font-size:1.1rem;color:#fbbf24;font-weight:700;margin-bottom:0.25rem;">
+      {{ daily_amount }} Ryo
+    </div>
+    <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:1.25rem;">daily bonus</div>
+
+    <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:1.25rem;">
+      Current balance: <strong style="color:#fbbf24;">{{ ryo }} Ryo</strong>
+    </div>
+
+    {% if can_claim %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:0.6rem 2rem;">
+          Claim {{ daily_amount }} Ryo
+        </button>
+      </form>
+    {% else %}
+      <div style="background:#0f3460;border-radius:6px;padding:0.6rem 1rem;display:inline-block;font-size:0.9rem;color:#9ca3af;">
+        ✅ Already claimed today
+        {% if last_claim %}
+          &mdash; come back tomorrow!
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

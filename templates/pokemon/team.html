@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}My Team{% endblock %}
+
+{% block extra_css %}
+<style>
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 640px) {
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .slot-card {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 10px;
+    padding: 1rem;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    position: relative;
+  }
+  .slot-card.filled { border-color: #e94560; }
+  .slot-number {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .slot-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #4b5563;
+  }
+  .slot-empty-icon { font-size: 2rem; }
+  .sprite-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 0.25rem 0;
+  }
+  .sprite-wrap img {
+    width: 72px;
+    height: 72px;
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+  .type-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: #1e3a5f;
+    color: #93c5fd;
+    margin-right: 3px;
+  }
+  .slot-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 0.4rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:0.4rem;">
+  <h2>My Team</h2>
+  <span style="color:#9ca3af;font-size:0.9rem;">
+    {{ slots|length }} slots &mdash;
+    {% with filled=0 %}
+      {% for s in slots %}{% if s.slot %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+    {% endwith %}
+  </span>
+</div>
+<p style="color:#9ca3af;margin-bottom:1.5rem;">
+  Your saved team is used automatically in battles. Click a slot to assign or change a Pokémon.
+</p>
+
+<div class="team-grid">
+  {% for entry in slots %}
+    <div class="slot-card {% if entry.slot %}filled{% endif %}">
+      <div class="slot-number">Slot {{ entry.position }}</div>
+
+      {% if entry.slot %}
+        {% with op=entry.slot.pokemon %}
+          <div class="sprite-wrap">
+            {% if op.species.sprite_url %}
+              <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}">
+            {% else %}
+              <div style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;color:#4b5563;font-size:2rem;">?</div>
+            {% endif %}
+          </div>
+
+          <div class="pokemon-name">{{ op.species.name }}</div>
+          <div style="font-size:0.8rem;color:#e94560;font-weight:700;">Lv.{{ op.level }}</div>
+
+          <div>
+            <span class="type-badge">{{ op.species.primary_type }}</span>
+            {% if op.species.secondary_type %}
+              <span class="type-badge">{{ op.species.secondary_type }}</span>
+            {% endif %}
+          </div>
+
+          <div class="slot-actions">
+            <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-secondary btn-sm">Change</a>
+            <form method="post" action="{% url 'pokemon:team_slot' entry.position %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove">
+              <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;">Remove</button>
+            </form>
+          </div>
+        {% endwith %}
+      {% else %}
+        <div class="slot-empty">
+          <div class="slot-empty-icon">＋</div>
+          <div style="font-size:0.8rem;">Empty slot</div>
+          <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-primary btn-sm">Assign</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<div style="display:flex;gap:1rem;">
+  <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary">My Pokémon</a>
+  <a href="{% url 'game:home' %}" class="btn btn-secondary">Back to Home</a>
+</div>
+{% endblock %}

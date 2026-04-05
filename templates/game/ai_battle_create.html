@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Play vs AI — Pokemon Combo Battle{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">Play vs AI</h2>
+<form method="post" style="max-width:400px;">
+  {% csrf_token %}
+  <div style="margin-bottom:1rem;">
+    <label style="display:block;margin-bottom:0.4rem;color:#9ca3af;">Select Difficulty</label>
+    <select name="difficulty" style="width:100%;padding:0.5rem;">
+      <option value="easy">Easy — AI picks moves at random</option>
+      <option value="medium" selected>Medium — AI uses status strategy and combo setups</option>
+      <option value="hard">Hard — AI reads your team and counters your combos</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Start Battle</button>
+  <a href="{% url 'game:home' %}" class="btn btn-secondary" style="margin-left:0.5rem;">Cancel</a>
+</form>
+{% endblock %}

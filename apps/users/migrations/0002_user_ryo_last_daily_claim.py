@@ -1,0 +1,21 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("users", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="user",
+            name="ryo",
+            field=models.PositiveIntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="user",
+            name="last_daily_claim",
+            field=models.DateField(blank=True, null=True),
+        ),
+    ]

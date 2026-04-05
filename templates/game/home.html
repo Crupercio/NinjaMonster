@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Home — Pokemon Combo Battle{% endblock %}
+{% block content %}
+<h1 style="margin-bottom:1.5rem;">Welcome, {{ user.display_name|default:user.username }}!</h1>
+
+<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:2rem;">
+  <!-- Play vs AI card -->
+  <div style="background:#16213e;border:2px solid #e94560;border-radius:10px;padding:1.25rem;min-width:240px;">
+    <div style="font-size:1rem;font-weight:700;color:#e94560;margin-bottom:0.75rem;">⚔️ Play vs AI</div>
+    <form method="post" action="{% url 'game:ai_battle_create' %}">
+      {% csrf_token %}
+      <div style="margin-bottom:0.75rem;">
+        <label style="display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:0.3rem;">Difficulty</label>
+        <select name="difficulty" style="width:100%;">
+          <option value="easy">Easy — random moves</option>
+          <option value="medium" selected>Medium — tactical</option>
+          <option value="hard">Hard — reads your team</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Start AI Battle</button>
+    </form>
+  </div>
+
+  <!-- PvP card -->
+  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.25rem;min-width:180px;">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">🎮 PvP Battle</div>
+    <a href="{% url 'game:battle_create' %}" class="btn btn-secondary" style="display:block;text-align:center;">Start PvP Battle</a>
+  </div>
+
+  <!-- Quick links -->
+  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.25rem;min-width:180px;">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">📋 Quick Links</div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem;">
+      <a href="{% url 'game:battle_list' %}" class="btn btn-secondary btn-sm">My Battles</a>
+      <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
+      <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">Pokedex</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+  <div class="pokemon-card">
+    <div class="pokemon-name">Battles Won</div>
+    <div style="font-size:2rem;color:#e94560;">{{ user.battles_won }}</div>
+  </div>
+  <div class="pokemon-card">
+    <div class="pokemon-name">Win Rate</div>
+    <div style="font-size:2rem;color:#4ade80;">{{ user.win_rate }}%</div>
+  </div>
+  <div class="pokemon-card">
+    <div class="pokemon-name">Longest Combo</div>
+    <div style="font-size:2rem;color:#fbbf24;">x{{ user.longest_combo_chain }}</div>
+  </div>
+  <div class="pokemon-card">
+    <div class="pokemon-name">Sticker Dust</div>
+    <div style="font-size:2rem;color:#a78bfa;">{{ user.sticker_dust }}</div>
+  </div>
+</div>
+{% endblock %}

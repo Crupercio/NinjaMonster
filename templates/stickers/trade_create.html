@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Create Trade Offer{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:1rem;">List a Sticker for Trade</h2>
+{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+<form method="post">
+  {% csrf_token %}
+  <div style="margin-bottom:1rem;">
+    <label>Sticker to trade:</label>
+    <select name="sticker_id" style="display:block;margin-top:0.25rem;width:100%;max-width:400px;">
+      {% for sticker in my_stickers %}
+        <option value="{{ sticker.pk }}">{{ sticker.pokemon.name }} [{{ sticker.rarity }}] {{ sticker.variant }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div style="margin-bottom:1rem;">
+    <label>Looking for (optional Pokemon):</label>
+    <select name="requested_pokemon_id" style="display:block;margin-top:0.25rem;width:100%;max-width:400px;">
+      <option value="">— Any —</option>
+      {% for pokemon in all_pokemon %}
+        <option value="{{ pokemon.pk }}">{{ pokemon.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div style="margin-bottom:1rem;">
+    <label>Note (optional):</label>
+    <input type="text" name="looking_for_note" placeholder="e.g. looking for holographic Charizard"
+           style="display:block;margin-top:0.25rem;width:100%;max-width:400px;">
+  </div>
+  <button type="submit" class="btn btn-primary">Post Trade Offer</button>
+  <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary" style="margin-left:0.5rem;">Cancel</a>
+</form>
+{% endblock %}

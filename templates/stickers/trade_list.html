@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Trade Board{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+  <h2>Trade Board</h2>
+  <a href="{% url 'stickers:trade_create' %}" class="btn btn-primary btn-sm">List a Sticker</a>
+</div>
+
+{% if my_offers %}
+<div style="margin-bottom:1.5rem;">
+  <h3 style="margin-bottom:0.5rem;">Your Active Offers</h3>
+  {% for offer in my_offers %}
+    <div class="pokemon-card" style="display:flex;align-items:center;gap:1rem;margin-bottom:0.25rem;">
+      <span>{{ offer.offered_sticker.pokemon.name }} [{{ offer.offered_sticker.rarity }}]</span>
+      <a href="{% url 'stickers:trade_detail' offer.pk %}" class="btn btn-secondary btn-sm">View</a>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h3 style="margin-bottom:0.5rem;">Open Offers</h3>
+{% for offer in offers %}
+  <div class="pokemon-card" style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+    <div style="flex:1;">
+      <div class="pokemon-name">{{ offer.offered_sticker.pokemon.name }} [{{ offer.offered_sticker.rarity }}] {{ offer.offered_sticker.variant }}</div>
+      <div style="font-size:0.8rem;color:#9ca3af;">By {{ offer.offered_by }} · {{ offer.created_at|date:"M d" }}</div>
+      {% if offer.looking_for_note %}<div style="font-size:0.8rem;color:#a78bfa;">Looking for: {{ offer.looking_for_note }}</div>{% endif %}
+    </div>
+    <a href="{% url 'stickers:trade_detail' offer.pk %}" class="btn btn-secondary btn-sm">Details</a>
+  </div>
+{% empty %}
+  <div style="color:#6b7280;">No open trade offers right now.</div>
+{% endfor %}
+{% endblock %}
