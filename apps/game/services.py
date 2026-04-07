@@ -30,6 +30,7 @@ from .models import (
     BattleSlot,
     BattleStatus,
     BattleTeam,
+    GridPosition,
     LogType,
     MoveCooldown,
 )
@@ -297,7 +298,7 @@ class ComboChainEngine:
     def _calculate_damage(
         self, attacker: BattleSlot, move: Move, defender: BattleSlot
     ) -> int:
-        """Standard damage formula with type effectiveness and status modifiers."""
+        """Standard damage formula with type effectiveness, status, and positional modifiers."""
         if move.power == 0:
             return 0
 
@@ -320,6 +321,10 @@ class ComboChainEngine:
 
         if "damage_output" in atk_modifiers:
             damage = int(damage * atk_modifiers["damage_output"])
+
+        # Positional modifier: back-row targets take 80% damage from direct attacks
+        if defender.grid_position in (GridPosition.BACK_LEFT, GridPosition.BACK_RIGHT):
+            damage = int(damage * 0.80)
 
         damage = int(damage * random.randint(85, 100) / 100)
         return max(1, damage)
@@ -369,7 +374,12 @@ class ComboChainEngine:
     def _select_target(
         self, enemy_team: BattleTeam, _move: Move
     ) -> BattleSlot | None:
-        """Select the best active target on the enemy team (lowest HP non-fainted)."""
+        """
+        Select the best active target on the enemy team.
+
+        Enforces front-row-first: if any front-row slot is alive, the AI must
+        target it. Selects the lowest-HP target within the valid pool.
+        """
         alive_slots = list(
             BattleSlot.objects.filter(
                 team=enemy_team, is_fainted=False, is_active=True
@@ -377,6 +387,11 @@ class ComboChainEngine:
         )
         if not alive_slots:
             return None
+
+        front_positions = {GridPosition.FRONT_LEFT, GridPosition.FRONT_RIGHT}
+        front_alive = [s for s in alive_slots if s.grid_position in front_positions]
+        if front_alive:
+            return min(front_alive, key=lambda s: s.current_hp)
         return alive_slots[0]
 
     def _log_combo_chain(
@@ -986,12 +1001,36 @@ class BattleService:
         target_id: int | None,
         alive_enemies: list[BattleSlot],
     ) -> BattleSlot | None:
+        """
+        Resolve the intended target, enforcing front-row-first targeting.
+
+        If the player targets a back-row slot but a living front-row ally exists
+        on the same side, the attack is redirected to the lowest-HP front-row slot.
+        This mirrors physical card-game rules: you must clear the front before
+        hitting the back.
+        """
         if target_id is None:
             return None
+        intended: BattleSlot | None = None
         for slot in alive_enemies:
             if slot.pk == target_id:
-                return slot
-        return None
+                intended = slot
+                break
+        if intended is None:
+            return None
+
+        # If target is in back row, check whether any front-row ally is still alive
+        back_positions = {GridPosition.BACK_LEFT, GridPosition.BACK_RIGHT}
+        front_positions = {GridPosition.FRONT_LEFT, GridPosition.FRONT_RIGHT}
+        if intended.grid_position in back_positions:
+            living_front = [
+                s for s in alive_enemies if s.grid_position in front_positions
+            ]
+            if living_front:
+                # Redirect to lowest-HP front-row target
+                return min(living_front, key=lambda s: s.current_hp)
+
+        return intended
 
     def _sort_actions(self, actions: list[dict]) -> list[dict]:
         """
