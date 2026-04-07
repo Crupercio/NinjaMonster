@@ -1,25 +1,107 @@
 {% extends "base.html" %}
 {% block title %}Open Sticker Pack{% endblock %}
+
 {% block extra_css %}
 <style>
-  .pack-card { background:#16213e; border:2px solid #e94560; border-radius:12px; padding:1.5rem; text-align:center; min-width:130px; transition:transform 0.3s; }
-  .pack-card:hover { transform:scale(1.05); }
-  .rarity-common { color:#9ca3af; }
-  .rarity-uncommon { color:#4ade80; }
-  .rarity-rare { color:#60a5fa; }
-  .rarity-epic { color:#a78bfa; }
-  .rarity-holographic { color:#fbbf24; }
-  .rarity-full_art { color:#f97316; }
-  .rarity-secret_rare { color:#e94560; }
-  .reveal-grid { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin:1.5rem 0; }
-  @keyframes revealCard { from{opacity:0;transform:scale(0.5) rotateY(90deg)} to{opacity:1;transform:scale(1) rotateY(0)} }
-  .pack-card { animation: revealCard 0.4s ease forwards; }
+  /* ── Card flip container ──────────────────────────────────────────────── */
+  .reveal-grid {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 2rem 0;
+  }
+
+  .card-scene {
+    width: 140px;
+    height: 200px;
+    perspective: 600px;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.55s cubic-bezier(.4,0,.2,1);
+    transform-style: preserve-3d;
+  }
+
+  .card-inner.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  /* ── Back of card (face-down) ─────────────────────────────────────────── */
+  .card-back {
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border: 2px solid #e94560;
+    cursor: pointer;
+    font-size: 2.5rem;
+  }
+
+  .card-back:hover {
+    border-color: #fbbf24;
+    box-shadow: 0 0 16px rgba(251,191,36,0.4);
+  }
+
+  /* ── Front of card (revealed) ─────────────────────────────────────────── */
+  .card-front {
+    background: #16213e;
+    border: 2px solid #2d3748;
+    transform: rotateY(180deg);
+  }
+
+  /* ── Rarity colour classes ────────────────────────────────────────────── */
+  .rarity-common    { color: #9ca3af; }
+  .rarity-uncommon  { color: #4ade80; }
+  .rarity-rare      { color: #60a5fa; }
+  .rarity-epic      { color: #a78bfa; }
+  .rarity-holographic { color: #fbbf24; border-color: #fbbf24 !important; }
+  .rarity-full_art    { color: #f97316; border-color: #f97316 !important; }
+  .rarity-secret_rare { color: #e94560; border-color: #e94560 !important; }
+
+  /* ── Shimmer for premium pulls ────────────────────────────────────────── */
+  @keyframes shimmer {
+    0%   { box-shadow: 0 0 0   rgba(251,191,36,0); }
+    40%  { box-shadow: 0 0 28px rgba(251,191,36,0.8); }
+    100% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+  }
+  .premium-shimmer {
+    animation: shimmer 0.7s ease forwards;
+  }
+
+  /* ── "Tap to reveal" hint ─────────────────────────────────────────────── */
+  .tap-hint {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  /* ── CTA appears after all revealed ──────────────────────────────────── */
+  [x-cloak] { display: none !important; }
 </style>
 {% endblock %}
+
 {% block content %}
-<h2 style="margin-bottom:1rem;">Sticker Pack</h2>
+<h2 style="margin-bottom:0.5rem;">Sticker Pack</h2>
 
 {% if not pack.opened %}
+  {# ── Pre-open state ─────────────────────────────────────────────────── #}
   <div style="text-align:center;padding:3rem;">
     <div style="font-size:4rem;margin-bottom:1rem;">🎴</div>
     <p style="color:#9ca3af;margin-bottom:1.5rem;">You have an unopened sticker pack! Ready to reveal 5 stickers?</p>
@@ -28,30 +110,119 @@
       <button type="submit" class="btn btn-primary">Open Pack!</button>
     </form>
   </div>
+
 {% else %}
-  <p style="color:#4ade80;margin-bottom:1rem;">Pack opened on {{ pack.opened_at|date:"M d, Y H:i" }}</p>
-  <div class="reveal-grid">
-    {% for sticker in revealed_stickers %}
-      <div class="pack-card" style="animation-delay:{{ forloop.counter0 }}00ms;">
-        <div class="pokemon-name" style="font-size:1rem;">{{ sticker.pokemon.name }}</div>
-        <div class="rarity-{{ sticker.rarity }}" style="font-size:0.85rem;font-weight:700;margin:0.25rem 0;">
-          {{ sticker.get_rarity_display }}
+  {# ── Post-open: Alpine.js card-by-card reveal ───────────────────────── #}
+
+  {# Build JSON array of sticker data for Alpine ─────────────────────── #}
+  {% if revealed_stickers %}
+    {% with stickers=revealed_stickers %}
+      <div
+        x-data="{
+          cards: [
+            {% for s in stickers %}
+            {
+              name: '{{ s.pokemon.name|escapejs }}',
+              rarity: '{{ s.rarity|escapejs }}',
+              rarityLabel: '{{ s.get_rarity_display|escapejs }}',
+              variant: '{{ s.get_variant_display|escapejs }}',
+              ptype: '{{ s.pokemon.primary_type|escapejs }}',
+              premium: {% if s.rarity == 'holographic' or s.rarity == 'full_art' or s.rarity == 'secret_rare' %}true{% else %}false{% endif %},
+              flipped: false,
+              shimmer: false
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ],
+          get allFlipped() { return this.cards.every(c => c.flipped); },
+          flip(i) {
+            if (this.cards[i].flipped) return;
+            this.cards[i].flipped = true;
+            if (this.cards[i].premium) {
+              this.cards[i].shimmer = true;
+              setTimeout(() => { this.cards[i].shimmer = false; }, 900);
+            }
+          },
+          flipAll() {
+            this.cards.forEach((c, i) => {
+              setTimeout(() => this.flip(i), i * 200);
+            });
+          }
+        }"
+        x-cloak
+      >
+        <p style="color:#9ca3af;margin-bottom:0.25rem;">
+          Tap each card to reveal — or
+          <button @click="flipAll()" class="btn btn-primary" style="padding:0.2rem 0.8rem;font-size:0.85rem;">Reveal All</button>
+        </p>
+
+        <div class="reveal-grid">
+          <template x-for="(card, i) in cards" :key="i">
+            <div class="card-scene">
+              <div
+                class="card-inner"
+                :class="{ flipped: card.flipped }"
+                @click="flip(i)"
+              >
+                {# Back face #}
+                <div class="card-face card-back">
+                  <span>🎴</span>
+                  <span class="tap-hint" x-show="!card.flipped">tap</span>
+                </div>
+
+                {# Front face #}
+                <div
+                  class="card-face card-front"
+                  :class="[`rarity-${card.rarity.replace('_', '-')}`, { 'premium-shimmer': card.shimmer }]"
+                  :style="card.premium ? 'box-shadow: 0 0 8px currentColor;' : ''"
+                >
+                  <div style="font-size:1rem;font-weight:700;margin-bottom:0.4rem;" x-text="card.name"></div>
+                  <div style="font-size:0.8rem;font-weight:700;margin:0.2rem 0;" x-text="card.rarityLabel"></div>
+                  <div style="font-size:0.75rem;color:#9ca3af;" x-text="card.variant"></div>
+                  <div style="font-size:0.7rem;color:#6b7280;margin-top:0.3rem;" x-text="card.ptype"></div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
-        <div style="font-size:0.75rem;color:#9ca3af;">{{ sticker.get_variant_display }}</div>
-        <div style="font-size:0.7rem;color:#6b7280;margin-top:0.25rem;">
-          {{ sticker.pokemon.primary_type }}
+
+        {# CTA only visible once all cards are revealed #}
+        <div x-show="allFlipped" x-transition style="text-align:center;margin-top:1rem;">
+          <p style="color:#4ade80;margin-bottom:0.75rem;">All stickers revealed!</p>
+          <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
         </div>
+
       </div>
-    {% empty %}
+
+      {# Fallback if Alpine doesn't load (noscript) #}
+      <noscript>
+        <div class="reveal-grid">
+          {% for s in stickers %}
+            <div style="background:#16213e;border:2px solid #2d3748;border-radius:12px;padding:1.25rem;text-align:center;min-width:130px;">
+              <div style="font-weight:700;">{{ s.pokemon.name }}</div>
+              <div class="rarity-{{ s.rarity }}" style="font-size:0.85rem;font-weight:700;">{{ s.get_rarity_display }}</div>
+              <div style="font-size:0.75rem;color:#9ca3af;">{{ s.get_variant_display }}</div>
+              <div style="font-size:0.7rem;color:#6b7280;margin-top:0.3rem;">{{ s.pokemon.primary_type }}</div>
+            </div>
+          {% endfor %}
+        </div>
+        <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
+      </noscript>
+    {% endwith %}
+
+  {% else %}
+    {# Viewing an already-opened pack (no revealed_stickers in context) #}
+    <p style="color:#4ade80;margin-bottom:1rem;">Pack opened on {{ pack.opened_at|date:"M d, Y H:i" }}</p>
+    <div class="reveal-grid">
       {% for sticker in pack.stickers.all %}
-        <div class="pack-card">
-          <div class="pokemon-name">{{ sticker.pokemon.name }}</div>
+        <div style="background:#16213e;border:2px solid #2d3748;border-radius:12px;padding:1.25rem;text-align:center;min-width:130px;">
+          <div style="font-weight:700;">{{ sticker.pokemon.name }}</div>
           <div class="rarity-{{ sticker.rarity }}" style="font-size:0.85rem;font-weight:700;">{{ sticker.get_rarity_display }}</div>
           <div style="font-size:0.75rem;color:#9ca3af;">{{ sticker.get_variant_display }}</div>
         </div>
       {% endfor %}
-    {% endfor %}
-  </div>
-  <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
+    </div>
+    <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
+  {% endif %}
+
 {% endif %}
 {% endblock %}
