@@ -53,15 +53,15 @@ The 11 failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, 
 
 ## Phase 1 — Critical Fixes (GDD Section 24, Phase 1)
 
-**Next task to start:** P1-1 — Wire sticker award to battle wins
+**Phase 1 COMPLETE ✅ — Next: Phase 2**
 
 | # | Task | Status | GDD Reference | Notes |
 |---|------|--------|--------------|-------|
-| P1-1 | Wire sticker award to battle wins | 🔲 Not started | Section 12.4, 20.5 | `StickerService.award_sticker()` exists; wire into `BattleService._finish_battle()` |
-| P1-2 | Add pity system to sticker packs | 🔲 Not started | Section 12.4 | Track cumulative packs without Holographic/Full Art/Secret Rare per user; guarantee on threshold |
-| P1-3 | Implement positional damage rules | 🔲 Not started | Section 5.2 | Back row takes 80% direct attack damage; front row must be cleared before back can be targeted |
-| P1-4 | Add combo chain damage amplification | 🔲 Not started | Section 6.3 | Link 2 = ×1.10, scaling to Link 10 = ×2.50; modify `ComboChainEngine` |
-| P1-5 | Pack opening animation | 🔲 Not started | Section 12.5 | Card-by-card reveal on `/stickers/packs/open/<id>/`; Alpine.js driven |
+| P1-1 | Wire sticker award to battle wins | ✅ Done | Section 12.4, 20.5 | Commit `dc99025`; 6 new tests; also fixed loser `battles_played` bug |
+| P1-2 | Add pity system to sticker packs | ✅ Done | Section 12.4 | Commit `69b7412`; 7 new tests; pity_holographic/full_art/secret_rare on User |
+| P1-3 | Implement positional damage rules | ✅ Done | Section 5.2 | Commit `585ffdd`; 8 new tests; ×0.80 back-row; front-row-first targeting + AI |
+| P1-4 | Add combo chain damage amplification | ✅ Done | Section 6.3 | Commit `1725f63`; 6 new tests; COMBO_AMP table in services.py |
+| P1-5 | Pack opening animation | ✅ Done | Section 12.5 | Commit `1612a6a`; Alpine.js card flip; premium shimmer; Reveal All; noscript fallback |
 
 ---
 
