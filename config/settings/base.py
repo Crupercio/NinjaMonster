@@ -12,6 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # ---------------------------------------------------------------------------
 # Production deployments MUST set SECRET_KEY in the environment.
 # Development and test settings override this below with safe fallbacks.
+# Production deployments MUST override SECRET_KEY, ALLOWED_HOSTS, and DEBUG.
+# The empty string here ensures production.py raises RuntimeError if not set.
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 ALLOWED_HOSTS: list[str] = []
 DEBUG = False
@@ -75,11 +77,25 @@ ASGI_APPLICATION = "config.asgi.application"
 # ---------------------------------------------------------------------------
 # Django Channels
 # ---------------------------------------------------------------------------
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+# Use Redis channel layer when REDIS_URL is set; fall back to in-memory for
+# single-process development without Redis running.
+_redis_url = os.environ.get("REDIS_URL", "")
+
+if _redis_url:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [_redis_url],
+            },
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
 
 # ---------------------------------------------------------------------------
 # Database — PostgreSQL via DATABASE_URL env var

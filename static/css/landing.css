@@ -1,0 +1,181 @@
+/* ============================================================
+   Pokemon Combo Battle — Landing Page Stylesheet
+   Used only on the public landing page (not authenticated)
+   ============================================================ */
+
+/* NAV */
+nav {
+  background: #16213e;
+  border-bottom: 2px solid #e94560;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand { font-size: 1.25rem; font-weight: 700; color: #e94560; letter-spacing: 1px; }
+.nav-actions { display: flex; gap: 0.75rem; }
+.btn { display: inline-block; padding: 0.45rem 1.1rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; }
+.btn-primary { background: #e94560; color: #fff; }
+.btn-primary:hover { background: #c73652; }
+.btn-outline { background: transparent; color: #e94560; border: 2px solid #e94560; }
+.btn-outline:hover { background: #e94560; color: #fff; }
+.btn-lg { padding: 0.75rem 2rem; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  background: radial-gradient(ellipse at 50% 0%, #0f3460 0%, #1a1a2e 70%);
+  border-bottom: 1px solid #0f3460;
+}
+.hero-eyebrow {
+  display: inline-block;
+  background: #0f3460;
+  color: #e94560;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid #e94560;
+  margin-bottom: 1.5rem;
+}
+.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; }
+.hero h1 span { color: #e94560; }
+.hero p { font-size: 1.1rem; color: #9ca3af; max-width: 520px; margin: 0 auto 2.5rem; line-height: 1.6; }
+.hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* SECTION SHARED */
+section { padding: 4rem 2rem; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #e94560;
+  margin-bottom: 0.5rem;
+}
+.section-title { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 800; margin-bottom: 1rem; }
+.section-body { color: #9ca3af; line-height: 1.7; max-width: 560px; }
+
+/* FEATURED POKEMON */
+.featured { background: #16213e; border-top: 1px solid #0f3460; border-bottom: 1px solid #0f3460; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-top: 2.5rem; }
+.poke-card {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.poke-card:hover { border-color: #e94560; transform: translateY(-4px); }
+a.poke-card { color: inherit; display: block; }
+.poke-card img.sprite { width: 120px; height: 120px; object-fit: contain; margin-bottom: 0.75rem; filter: drop-shadow(0 4px 12px rgba(233,69,96,0.25)); transition: filter 0.2s; }
+.poke-card:hover img.sprite { filter: drop-shadow(0 6px 18px rgba(233,69,96,0.5)); }
+.poke-card .poke-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+.poke-card .poke-types { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.type-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.type-fire { background: #7f1d1d; color: #fca5a5; }
+.type-water { background: #1e3a5f; color: #93c5fd; }
+.type-grass { background: #14532d; color: #86efac; }
+.type-electric { background: #78350f; color: #fcd34d; }
+.type-psychic { background: #4a044e; color: #f0abfc; }
+.type-dragon { background: #1e1b4b; color: #a5b4fc; }
+.poke-card .poke-stat { font-size: 0.8rem; color: #9ca3af; }
+.poke-card .poke-stat span { color: #e94560; font-weight: 700; }
+
+/* COMBO SECTION */
+.combo-section { background: #1a1a2e; }
+.combo-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+@media (max-width: 680px) { .combo-layout { grid-template-columns: 1fr; } }
+.combo-chain-demo {
+  background: #0f3460;
+  border: 1px solid #e94560;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.combo-chain-demo h4 { color: #e94560; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; }
+.chain-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #1a3a6e;
+  font-size: 0.9rem;
+}
+.chain-step:last-child { border-bottom: none; }
+.chain-num { background: #e94560; color: #fff; font-weight: 700; font-size: 0.75rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chain-text { flex: 1; }
+.chain-text strong { color: #fbbf24; }
+.combo-features { list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.combo-features li { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.95rem; color: #ccc; }
+.combo-features li::before { content: "⚡"; flex-shrink: 0; }
+
+/* POKEDEX PREVIEW */
+.pokedex-section { background: #16213e; border-top: 1px solid #0f3460; border-bottom: 1px solid #0f3460; }
+.pokedex-frame {
+  background: #e94560;
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 420px;
+  margin: 2.5rem auto 0;
+  box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
+}
+.pokedex-screen {
+  background: #1a1a2e;
+  border: 3px solid #0f3460;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+.pokedex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.pokedex-header .dex-id { font-size: 0.8rem; color: #e94560; font-weight: 700; }
+.pokedex-header .dex-name { font-size: 1.1rem; font-weight: 700; }
+.dex-stat-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.3rem 0; border-bottom: 1px solid #0f3460; color: #9ca3af; }
+.dex-stat-row:last-child { border-bottom: none; }
+.dex-stat-row span { color: #eee; font-weight: 600; }
+.pokedex-dots { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+.pokedex-dots span { width: 10px; height: 10px; border-radius: 50%; background: #0f3460; }
+.pokedex-dots span.active { background: #e94560; }
+
+/* TRAINING SECTION */
+.training-section { background: #1a1a2e; }
+.progression-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 2.5rem; }
+.prog-step {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.prog-step .step-icon { font-size: 2.25rem; margin-bottom: 0.75rem; }
+.prog-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.prog-step p { font-size: 0.875rem; color: #9ca3af; line-height: 1.6; }
+
+/* CTA BANNER */
+.cta-banner {
+  background: radial-gradient(ellipse at 50% 100%, #0f3460 0%, #1a1a2e 70%);
+  text-align: center;
+  padding: 5rem 2rem;
+  border-top: 1px solid #0f3460;
+}
+.cta-banner h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; margin-bottom: 1rem; }
+.cta-banner p { color: #9ca3af; margin-bottom: 2rem; font-size: 1rem; }
+
+/* FOOTER */
+footer {
+  background: #16213e;
+  border-top: 1px solid #0f3460;
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.8rem;
+  color: #4b5563;
+}

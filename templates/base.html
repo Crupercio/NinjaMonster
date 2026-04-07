@@ -5,65 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Pokemon Combo Battle{% endblock %}</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
-    a { color: #e94560; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* Layout */
-    nav { background: #16213e; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; border-bottom: 2px solid #e94560; }
-    nav .brand { display: flex; align-items: center; }
-    nav .brand img { height: 150px; width: 150px; display: block; }
-    nav a { color: #ccc; font-size: 0.9rem; }
-    nav a:hover { color: #e94560; text-decoration: none; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-
-    /* HP bars */
-    .hp-bar-wrap { background: #333; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
-    .hp-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
-    .hp-green { background: #4ade80; }
-    .hp-yellow { background: #facc15; }
-    .hp-red { background: #ef4444; }
-
-    /* Status badges */
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin: 1px; }
-    .badge-danger { background: #7f1d1d; color: #fca5a5; }
-    .badge-warning { background: #78350f; color: #fcd34d; }
-    .badge-info { background: #1e3a5f; color: #93c5fd; }
-    .badge-secondary { background: #374151; color: #d1d5db; }
-
-    /* Pokemon card */
-    .pokemon-card { background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 0.75rem; margin: 0.25rem; }
-    .pokemon-card.fainted { opacity: 0.4; }
-    .pokemon-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .pokemon-hp { font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; }
-
-    /* Battle grid */
-    .battle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-
-    /* Combo chain log */
-    .combo-log { background: #0f3460; border: 1px solid #e94560; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
-    .combo-log h3 { color: #e94560; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
-    .combo-entry { font-size: 0.9rem; padding: 0.3rem 0; border-bottom: 1px solid #1a3a6e; }
-    .combo-entry:last-child { border-bottom: none; }
-    .combo-chain-label { font-weight: 700; color: #fbbf24; }
-
-    /* Buttons */
-    .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
-    .btn-primary { background: #e94560; color: #fff; }
-    .btn-primary:hover { background: #c73652; }
-    .btn-secondary { background: #374151; color: #fff; }
-    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-
-    /* Forms */
-    select, input { background: #0f3460; color: #eee; border: 1px solid #374151; border-radius: 4px; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
-    label { font-size: 0.85rem; color: #9ca3af; }
-
-    /* Messages */
-    .msg-error { background: #7f1d1d; color: #fca5a5; padding: 0.5rem 1rem; border-radius: 6px; margin: 0.5rem 0; font-size: 0.85rem; }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
   {% block extra_css %}{% endblock %}
+  {# Alpine.js — defer so it doesn't block render; must come before body scripts #}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
 <nav>
@@ -94,6 +39,17 @@
 <div class="container">
   {% block content %}{% endblock %}
 </div>
+
+{# HTMX — loaded at end of body for progressive enhancement #}
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous"></script>
+{# Wire HTMX to include Django CSRF token on all non-GET requests #}
+<script>
+  document.body.addEventListener('htmx:configRequest', (e) => {
+    e.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+  });
+</script>
 
 {% block extra_js %}{% endblock %}
 </body>
