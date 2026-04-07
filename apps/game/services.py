@@ -44,6 +44,22 @@ logger = logging.getLogger(__name__)
 # Maximum combo chain depth to prevent infinite loops
 MAX_CHAIN_DEPTH = 10
 
+# Damage amplification multiplier per chain link (GDD Section 6.3).
+# Index = chain_position (0 = initial move, 1 = link 2, …, 9 = link 10).
+# Beyond index 9, the max ×2.50 is used.
+COMBO_AMP: tuple[float, ...] = (
+    1.00,  # Link 1 — initial move, no amplification
+    1.10,  # Link 2
+    1.20,  # Link 3
+    1.35,  # Link 4
+    1.50,  # Link 5
+    1.65,  # Link 6
+    1.80,  # Link 7
+    2.00,  # Link 8
+    2.25,  # Link 9
+    2.50,  # Link 10 (maximum)
+)
+
 _effect_engine = StatusEffectEngine()
 
 
@@ -255,7 +271,7 @@ class ComboChainEngine:
         status_applied = None
 
         if not target_slot.is_fainted:
-            damage = self._calculate_damage(attacker_slot, move, target_slot)
+            damage = self._calculate_damage(attacker_slot, move, target_slot, chain_position)
             if damage > 0:
                 target_slot.current_hp = max(0, target_slot.current_hp - damage)
                 if target_slot.current_hp == 0:
@@ -296,9 +312,9 @@ class ComboChainEngine:
         return action
 
     def _calculate_damage(
-        self, attacker: BattleSlot, move: Move, defender: BattleSlot
+        self, attacker: BattleSlot, move: Move, defender: BattleSlot, chain_position: int = 0
     ) -> int:
-        """Standard damage formula with type effectiveness, status, and positional modifiers."""
+        """Standard damage formula with type effectiveness, status, positional, and combo modifiers."""
         if move.power == 0:
             return 0
 
@@ -325,6 +341,11 @@ class ComboChainEngine:
         # Positional modifier: back-row targets take 80% damage from direct attacks
         if defender.grid_position in (GridPosition.BACK_LEFT, GridPosition.BACK_RIGHT):
             damage = int(damage * 0.80)
+
+        # Combo chain amplification (GDD Section 6.3): Link 1 = ×1.00, Link 10 = ×2.50
+        amp = COMBO_AMP[min(chain_position, len(COMBO_AMP) - 1)]
+        if amp != 1.0:
+            damage = int(damage * amp)
 
         damage = int(damage * random.randint(85, 100) / 100)
         return max(1, damage)
