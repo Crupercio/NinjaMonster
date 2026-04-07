@@ -14,7 +14,10 @@ from django.db import transaction
 from apps.effects.engine import StatusEffectEngine
 from apps.pokemon.models import Move, MoveSlotType, OwnedPokemon, Pokemon, Team
 from apps.pokemon.services import award_battle_exp as _award_battle_exp  # noqa: F401
+from apps.stickers.services import StickerService
 from apps.users.services import BATTLE_LOSS_RYO, BATTLE_WIN_RYO, award_ryo
+
+_sticker_service = StickerService()
 
 from .models import (
     ACTIVE_GRID_POSITIONS,
@@ -1080,16 +1083,24 @@ class BattleService:
                         )
 
     def _end_battle(self, battle: Battle, winner: User) -> None:
-        """Finalise the battle — set status, record winner, award EXP and Ryo."""
+        """Finalise the battle — set status, record winner, award EXP, Ryo, and stickers."""
         battle.status = BattleStatus.FINISHED
         battle.winner = winner
         battle.save(update_fields=["status", "winner"])
 
+        # Update winner stats
         winner.battles_won += 1
         winner.battles_played += 1
         if battle.max_combo_chain > winner.longest_combo_chain:
             winner.longest_combo_chain = battle.max_combo_chain
         winner.save(update_fields=["battles_won", "battles_played", "longest_combo_chain"])
+
+        # Update loser battles_played (previously not tracked)
+        AI_USERNAME = "__ai_trainer__"
+        for team in battle.teams.select_related("owner"):
+            if team.owner_id != winner.pk and team.owner.username != AI_USERNAME:
+                team.owner.battles_played += 1
+                team.owner.save(update_fields=["battles_played"])
 
         BattleLog.objects.create(
             battle=battle,
@@ -1100,7 +1111,56 @@ class BattleService:
 
         self._award_exp_to_teams(battle, winner)
         self._award_ryo_to_teams(battle, winner)
+        self._award_stickers(battle, winner)
         logger.info("Battle #%d ended. Winner: %s", battle.pk, winner)
+
+    def _award_stickers(self, battle: Battle, winner: User) -> None:
+        """
+        Award stickers to the winner after a battle.
+
+        Two possible awards (both checked independently):
+        1. Sticker pack — granted every 10 wins via grant_pack_if_eligible().
+        2. Full Art sticker — granted if the battle's max combo chain >= 5
+           via award_on_combo_win().
+        """
+        # Award 1: sticker pack every 10 wins
+        pack = _sticker_service.grant_pack_if_eligible(winner)
+        if pack:
+            BattleLog.objects.create(
+                battle=battle,
+                round_number=battle.current_round,
+                message=f"🎁 {winner} earned a sticker pack! (Win #{winner.battles_won})",
+                log_type=LogType.INFO,
+            )
+            logger.info(
+                "Sticker pack granted to %s (battle #%d, win #%d)",
+                winner,
+                battle.pk,
+                winner.battles_won,
+            )
+
+        # Award 2: Full Art sticker for long combo chains
+        if battle.max_combo_chain >= 5:
+            sticker = _sticker_service.award_on_combo_win(
+                player=winner,
+                chain_length=battle.max_combo_chain,
+            )
+            if sticker:
+                BattleLog.objects.create(
+                    battle=battle,
+                    round_number=battle.current_round,
+                    message=(
+                        f"⚡ Combo chain of {battle.max_combo_chain}! "
+                        f"{winner} earned a Full Art {sticker.pokemon.name} sticker!"
+                    ),
+                    log_type=LogType.COMBO,
+                )
+                logger.info(
+                    "Full Art sticker awarded to %s for %d-chain (battle #%d)",
+                    winner,
+                    battle.max_combo_chain,
+                    battle.pk,
+                )
 
     def _award_ryo_to_teams(self, battle: Battle, winner: User) -> None:
         """Award Ryo to every real (non-AI) player based on win/loss."""
