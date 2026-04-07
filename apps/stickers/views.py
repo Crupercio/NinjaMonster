@@ -7,7 +7,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
 
-from .models import Sticker, StickerPack, TradeOffer
+from .models import DISMANTLE_VALUES, Sticker, StickerPack, StickerRarity, TradeOffer
 from .services import PACK_PRICE_RYO, StickerService, TradeService
 
 logger = logging.getLogger(__name__)
@@ -223,6 +223,44 @@ class DustConvertView(LoginRequiredMixin, TemplateView):
         sticker = get_object_or_404(Sticker, pk=sticker_id, owner=request.user)
         try:
             dust = _sticker_service.convert_duplicate(request.user, sticker)
+        except ValueError as exc:
+            context = self.get_context_data(error=str(exc), **kwargs)
+            return self.render_to_response(context)
+        return redirect("stickers:album")
+
+
+class DismantleView(LoginRequiredMixin, TemplateView):
+    """
+    Album sub-view: shows all owned stickers with a Dismantle button.
+
+    GET  → renders the dismantle page with owned stickers + dust values.
+    POST → calls dismantle_sticker() and redirects back to album.
+    """
+
+    template_name = "stickers/dismantle.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stickers = list(
+            Sticker.objects.filter(owner=self.request.user)
+            .select_related("pokemon__primary_type")
+            .order_by("rarity", "pokemon__name")
+        )
+        # Pair each sticker with its dismantle dust value for easy template access
+        context["sticker_rows"] = [
+            (s, DISMANTLE_VALUES.get(s.rarity, 5)) for s in stickers
+        ]
+        context["dust_values"] = DISMANTLE_VALUES
+        context["rarity_labels"] = dict(StickerRarity.choices)
+        context["sticker_dust"] = self.request.user.sticker_dust
+        return context
+
+    def post(self, request, *args, **kwargs):
+        sticker_id = request.POST.get("sticker_id")
+        if not sticker_id:
+            return redirect("stickers:dismantle")
+        try:
+            dust = _sticker_service.dismantle_sticker(request.user, int(sticker_id))
         except ValueError as exc:
             context = self.get_context_data(error=str(exc), **kwargs)
             return self.render_to_response(context)

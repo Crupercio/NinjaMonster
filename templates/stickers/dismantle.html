@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dismantle Stickers{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+  <h2>Dismantle Stickers</h2>
+  <div style="display:flex;gap:0.5rem;align-items:center;">
+    <span style="color:#fbbf24;font-weight:700;">{{ sticker_dust }} dust</span>
+    <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Back to Album</a>
+  </div>
+</div>
+
+{% if error %}
+<div class="badge" style="background:#ef4444;color:#fff;padding:0.5rem 1rem;margin-bottom:1rem;display:block;">
+  {{ error }}
+</div>
+{% endif %}
+
+<p style="color:#9ca3af;margin-bottom:1rem;font-size:0.85rem;">
+  Dismantling permanently destroys a sticker and awards dust. Favourited and trade-listed stickers are protected.
+</p>
+
+<!-- Dust value reference -->
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+  {% for rarity, dust in dust_values.items %}
+  <div class="pokemon-card" style="min-width:90px;text-align:center;padding:0.4rem;">
+    <div style="font-size:0.65rem;color:#9ca3af;">{{ rarity_labels|default_if_none:rarity }}</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#fbbf24;">{{ dust }} dust</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if sticker_rows %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.5rem;">
+  {% for sticker, dust in sticker_rows %}
+  <div class="pokemon-card" style="text-align:center;padding:0.6rem;
+    {% if sticker.is_favorite %}border:1px solid #fbbf24;{% endif %}
+    {% if sticker.is_trading %}opacity:0.5;{% endif %}">
+    <div class="pokemon-name" style="font-size:0.85rem;">{{ sticker.pokemon.name }}</div>
+    <div style="font-size:0.65rem;color:#9ca3af;margin:0.2rem 0;">
+      {{ sticker.get_rarity_display }} · {{ sticker.get_variant_display }}
+    </div>
+    <div style="font-size:0.75rem;color:#fbbf24;margin-bottom:0.4rem;">+{{ dust }} dust</div>
+    {% if sticker.is_favorite %}
+      <span class="badge" style="background:#78350f;color:#fbbf24;">Favourite</span>
+    {% elif sticker.is_trading %}
+      <span class="badge" style="background:#1e3a5f;color:#93c5fd;">In Trade</span>
+    {% else %}
+    <form method="post" onsubmit="return confirm('Dismantle {{ sticker.pokemon.name }} [{{ sticker.get_rarity_display }}]?');">
+      {% csrf_token %}
+      <input type="hidden" name="sticker_id" value="{{ sticker.pk }}">
+      <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;width:100%;">
+        Dismantle (+{{ dust }} dust)
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p style="color:#6b7280;">You have no stickers yet.</p>
+{% endif %}
+{% endblock %}

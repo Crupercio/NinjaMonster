@@ -5,6 +5,7 @@ from .views import (
     AlbumView,
     BuyPackView,
     CraftView,
+    DismantleView,
     DustConvertView,
     PackOpenView,
     TradeCreateView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path("trade/", TradeListView.as_view(), name="trade_list"),
     path("trade/create/", TradeCreateView.as_view(), name="trade_create"),
     path("trade/<int:pk>/", TradeDetailView.as_view(), name="trade_detail"),
+    path("dismantle/", DismantleView.as_view(), name="dismantle"),
     path("dust/", DustConvertView.as_view(), name="dust_convert"),
     path("craft/", CraftView.as_view(), name="craft"),
 ]
