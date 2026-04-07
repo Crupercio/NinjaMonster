@@ -29,6 +29,13 @@ class User(AbstractUser):
     battles_played = models.PositiveIntegerField(default=0)
     longest_combo_chain = models.PositiveIntegerField(default=0)
 
+    # Sticker pack pity counters — number of packs opened without that rarity tier.
+    # Guaranteed pull triggers at: Holographic=10, Full Art=50, Secret Rare=200.
+    # Resets to 0 when that rarity (or higher) is pulled.
+    pity_holographic = models.PositiveIntegerField(default=0)
+    pity_full_art = models.PositiveIntegerField(default=0)
+    pity_secret_rare = models.PositiveIntegerField(default=0)
+
     objects: UserManager = UserManager()  # type: ignore[assignment]
 
     REQUIRED_FIELDS = ["email"]

@@ -85,6 +85,11 @@ _FULL_ART_MIN_CHAIN = 5
 # Battles won required to earn a sticker pack
 _BATTLES_PER_PACK = 10
 
+# Pity thresholds — packs opened without that rarity before a guaranteed pull
+_PITY_HOLOGRAPHIC = 10
+_PITY_FULL_ART = 50
+_PITY_SECRET_RARE = 200
+
 # ── Shop pricing — change here to affect the whole feature ──────────────────
 PACK_PRICE_RYO: int = 500  # cost of one sticker pack
 # ────────────────────────────────────────────────────────────────────────────
@@ -244,8 +249,16 @@ class StickerService:
 
         Pack contents:
           Slots 1-3: common or uncommon (weighted)
-          Slot 4: guaranteed rare or above
+          Slot 4: guaranteed rare or above (may be overridden by pity)
           Slot 5: any rarity (full weighted table)
+
+        Pity system — counters track packs opened without each premium rarity.
+        When a threshold is reached, slot 4 is guaranteed that rarity (highest
+        threshold wins). Counters reset when that rarity (or higher) is pulled.
+
+          Holographic: guaranteed after 10 packs without one
+          Full Art:    guaranteed after 50 packs without one
+          Secret Rare: guaranteed after 200 packs without one
 
         Returns the list of 5 Sticker instances.
         """
@@ -254,9 +267,21 @@ class StickerService:
         if pack.opened:
             raise ValueError("This pack has already been opened")
 
+        # Lock player row so pity counters update atomically across concurrent opens
+        player = User.objects.select_for_update().get(pk=player.pk)
+
         all_pokemon = list(Pokemon.objects.all())
         if not all_pokemon:
             raise ValueError("No Pokemon in database to generate stickers from")
+
+        # Determine pity override for slot 4 (highest triggered threshold wins)
+        pity_override: str | None = None
+        if player.pity_secret_rare >= _PITY_SECRET_RARE:
+            pity_override = StickerRarity.SECRET_RARE
+        elif player.pity_full_art >= _PITY_FULL_ART:
+            pity_override = StickerRarity.FULL_ART
+        elif player.pity_holographic >= _PITY_HOLOGRAPHIC:
+            pity_override = StickerRarity.HOLOGRAPHIC
 
         stickers: list[Sticker] = []
 
@@ -266,8 +291,8 @@ class StickerService:
             sticker = self._create_random_sticker(player, all_pokemon, rarity, "pack")
             stickers.append(sticker)
 
-        # Slot 4: guaranteed rare+
-        rarity = _weighted_choice(_GUARANTEED_RARE_WEIGHTS)
+        # Slot 4: guaranteed rare+ (or pity-guaranteed rarity)
+        rarity = pity_override if pity_override is not None else _weighted_choice(_GUARANTEED_RARE_WEIGHTS)
         stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
         # Slot 5: any rarity
@@ -278,6 +303,24 @@ class StickerService:
         pack.opened = True
         pack.opened_at = datetime.now(tz=timezone.utc)
         pack.save(update_fields=["opened", "opened_at"])
+
+        # Update pity counters — higher rarities also satisfy lower thresholds
+        rarities_obtained = {s.rarity for s in stickers}
+        got_secret_rare = StickerRarity.SECRET_RARE in rarities_obtained
+        got_full_art = got_secret_rare or StickerRarity.FULL_ART in rarities_obtained
+        got_holographic = got_full_art or StickerRarity.HOLOGRAPHIC in rarities_obtained
+
+        player.pity_holographic = 0 if got_holographic else player.pity_holographic + 1
+        player.pity_full_art = 0 if got_full_art else player.pity_full_art + 1
+        player.pity_secret_rare = 0 if got_secret_rare else player.pity_secret_rare + 1
+        player.save(update_fields=["pity_holographic", "pity_full_art", "pity_secret_rare"])
+
+        if pity_override is not None:
+            logger.info(
+                "Pity trigger: %s guaranteed %s in pack (counters reset)",
+                player,
+                pity_override,
+            )
 
         logger.info("Player %s opened a sticker pack — got %d stickers", player, len(stickers))
         return stickers
