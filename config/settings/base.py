@@ -39,6 +39,9 @@ LOCAL_APPS = [
     "apps.effects",
     "apps.game",
     "apps.stickers",
+    "apps.quests",
+    "apps.ranked",
+    "apps.events",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

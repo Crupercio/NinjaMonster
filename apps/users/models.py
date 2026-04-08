@@ -36,6 +36,17 @@ class User(AbstractUser):
     pity_full_art = models.PositiveIntegerField(default=0)
     pity_secret_rare = models.PositiveIntegerField(default=0)
 
+    # Tutorial progress
+    tutorial_complete = models.BooleanField(default=False)
+    tutorial_starter = models.CharField(max_length=50, blank=True, null=True)
+
+    # Achievement badge tracking (GDD §14.4)
+    perfect_victories = models.PositiveIntegerField(default=0)
+    hard_ai_wins = models.PositiveIntegerField(default=0)
+    daily_claim_streak = models.PositiveIntegerField(default=0)
+    max_daily_claim_streak = models.PositiveIntegerField(default=0)
+    trades_completed = models.PositiveIntegerField(default=0)
+
     objects: UserManager = UserManager()  # type: ignore[assignment]
 
     REQUIRED_FIELDS = ["email"]

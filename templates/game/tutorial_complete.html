@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Training Complete — Ketsurai Pokemon Institute{% endblock %}
+
+{% block extra_css %}
+<style>
+.complete-hero {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.complete-hero h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #4ade80;
+  margin-bottom: 0.75rem;
+}
+.complete-hero .subtitle {
+  color: #9ca3af;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.kira-seal {
+  background: #0f1a2e;
+  border: 2px solid #4ade80;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  max-width: 560px;
+  margin: 0 auto 2rem;
+  font-style: italic;
+  color: #d1d5db;
+  line-height: 1.7;
+}
+.kira-seal cite {
+  display: block;
+  margin-top: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  color: #4ade80;
+  font-size: 0.85rem;
+}
+
+.next-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  max-width: 700px;
+  margin: 0 auto 2.5rem;
+}
+.next-step-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: #d1d5db;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.next-step-card:hover {
+  border-color: #60a5fa;
+  transform: translateY(-2px);
+  color: #fff;
+  text-decoration: none;
+}
+.next-step-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+.next-step-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+.next-step-desc {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="complete-hero">
+  <h1>Training Complete!</h1>
+  <p class="subtitle">
+    You and {{ starter_name }} have mastered the basics of the Kizuna Method.
+    A bond between trainer and Pokemon — that is where true power comes from.
+  </p>
+</div>
+
+<div class="kira-seal">
+  "You have taken your first step. You understand now that the chain is not just technique —
+  it is trust. {{ starter_name }} trusted you, and you trusted it back.
+  Go now, trainer. The Institute's doors are open to you."
+  <cite>— Sensei Kira</cite>
+</div>
+
+<div class="next-steps">
+  <a href="{% url 'game:ai_battle_create' %}" class="next-step-card">
+    <div class="next-step-icon">⚔️</div>
+    <div class="next-step-title">Battle vs AI</div>
+    <div class="next-step-desc">Test your Kizuna chain against Easy, Medium, or Hard opponents.</div>
+  </a>
+  <a href="{% url 'pokemon:my_pokemon' %}" class="next-step-card">
+    <div class="next-step-icon">🎴</div>
+    <div class="next-step-title">Your Pokemon</div>
+    <div class="next-step-desc">View your roster and assign moves to build the perfect chain.</div>
+  </a>
+  <a href="{% url 'stickers:album' %}" class="next-step-card">
+    <div class="next-step-icon">📖</div>
+    <div class="next-step-title">Sticker Album</div>
+    <div class="next-step-desc">Collect rare sticker cards by winning battles and opening packs.</div>
+  </a>
+</div>
+{% endblock %}

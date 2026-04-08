@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Ranked PvP{% endblock %}
+
+{% block extra_css %}
+<style>
+.ranked-header { margin-bottom: 1.5rem; }
+.ranked-header h2 { margin: 0 0 0.25rem; }
+
+.tier-card {
+  background: #16213e; border: 2px solid #0f3460;
+  border-radius: 10px; padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.tier-badge {
+  font-size: 2rem; font-weight: 900; letter-spacing: 1px;
+  padding: 0.4rem 1rem; border-radius: 8px;
+}
+.tier-bronze   { background: #78350f; color: #fcd34d; border: 2px solid #d97706; }
+.tier-silver   { background: #1f2937; color: #d1d5db; border: 2px solid #6b7280; }
+.tier-gold     { background: #78350f; color: #fbbf24; border: 2px solid #f59e0b; }
+.tier-platinum { background: #1e3a5f; color: #93c5fd; border: 2px solid #3b82f6; }
+.tier-diamond  { background: #1e1b4b; color: #a5b4fc; border: 2px solid #6366f1; }
+.tier-champion { background: #7f1d1d; color: #fca5a5; border: 2px solid #e94560; }
+
+.rank-pts { font-size: 1.4rem; font-weight: 700; color: #fbbf24; }
+.rank-pts-label { font-size: 0.78rem; color: #9ca3af; }
+
+.season-info { font-size: 0.85rem; color: #9ca3af; }
+.season-info strong { color: #d1d5db; }
+
+/* Progress bar toward next tier */
+.tier-progress-wrap {
+  background: #0f3460; border-radius: 6px; height: 8px;
+  overflow: hidden; flex: 1; min-width: 120px;
+}
+.tier-progress-bar {
+  height: 100%; border-radius: 6px; background: #e94560;
+  transition: width 0.5s ease;
+}
+
+/* Queue panel */
+.queue-panel {
+  background: #16213e; border: 1px solid #0f3460;
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+}
+.queue-panel h3 { margin: 0 0 0.75rem; font-size: 1rem; }
+
+.queue-status {
+  font-size: 0.85rem; color: #9ca3af; margin-bottom: 0.75rem;
+}
+.queue-status strong { color: #d1d5db; }
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+}
+.stat-item { text-align: center; }
+.stat-value { font-size: 1.4rem; font-weight: 700; color: #f1f5f9; }
+.stat-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+
+/* No-season placeholder */
+.no-season {
+  background: #1c1917; border: 1px solid #78350f;
+  border-radius: 10px; padding: 1.25rem; text-align: center;
+  color: #9ca3af;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ranked-header">
+  <h2>Ranked PvP</h2>
+  <p style="color:#9ca3af;font-size:0.9rem;margin:0;">
+    Compete against other trainers and climb the seasonal leaderboard.
+  </p>
+</div>
+
+{% if not season %}
+<div class="no-season">
+  <p style="font-size:1rem;font-weight:700;color:#d1d5db;margin-bottom:0.5rem;">No Active Season</p>
+  <p style="margin:0;">There is no ranked season running right now. Check back soon!</p>
+</div>
+
+{% else %}
+
+<!-- Season banner -->
+<div style="background:#0f3460;border-radius:8px;padding:0.6rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+  <span style="font-weight:700;color:#e94560;">Season {{ season.number }}</span>
+  <span style="color:#d1d5db;font-size:0.9rem;">{{ season.name }}</span>
+  <span style="color:#9ca3af;font-size:0.78rem;margin-left:auto;">
+    {{ season.start_date }} — {{ season.end_date }}
+  </span>
+</div>
+
+{% if profile %}
+<!-- Tier card -->
+<div class="tier-card">
+  <div class="tier-badge tier-{{ profile.tier }}">
+    {{ profile.get_tier_display|upper }} {{ profile.sub_tier }}
+  </div>
+  <div>
+    <div class="rank-pts">{{ profile.rank_points }} <span style="font-size:1rem;color:#9ca3af;">pts</span></div>
+    <div class="rank-pts-label">Rank Points</div>
+  </div>
+  {% if profile.win_streak >= 3 %}
+  <div style="background:#78350f;border:1px solid #f59e0b;border-radius:6px;padding:0.3rem 0.7rem;font-size:0.82rem;color:#fcd34d;">
+    🔥 {{ profile.win_streak }}-win streak
+  </div>
+  {% endif %}
+</div>
+
+<!-- Season stats -->
+<div class="stats-row">
+  <div class="stat-item">
+    <div class="stat-value">{{ profile.season_wins }}</div>
+    <div class="stat-label">Wins</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value">{{ profile.season_losses }}</div>
+    <div class="stat-label">Losses</div>
+  </div>
+  <div class="stat-item">
+    {% if profile.season_wins or profile.season_losses %}
+      {% widthratio profile.season_wins profile.season_wins|add:profile.season_losses 100 as win_rate %}
+      <div class="stat-value">{{ win_rate }}%</div>
+    {% else %}
+      <div class="stat-value">—</div>
+    {% endif %}
+    <div class="stat-label">Win Rate</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value">{{ profile.win_streak }}</div>
+    <div class="stat-label">Streak</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Matchmaking queue -->
+<div class="queue-panel">
+  <h3>Find an Opponent</h3>
+  <div class="queue-status">
+    <strong>{{ queue_size }}</strong> trainer{{ queue_size|pluralize }} currently searching.
+  </div>
+
+  {% if in_queue %}
+  <div id="queue-status-fragment"
+       hx-get="{% url 'ranked:queue_status' %}"
+       hx-trigger="every 3s"
+       hx-swap="outerHTML"
+       style="margin-bottom:0.75rem;font-size:0.85rem;">
+    <span style="color:#fcd34d;">Searching for opponent…</span>
+  </div>
+  <form method="post" action="{% url 'ranked:queue_leave' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary btn-sm">Leave Queue</button>
+  </form>
+
+  {% else %}
+  <p style="font-size:0.85rem;color:#9ca3af;margin-bottom:0.75rem;">
+    Join the matchmaking queue to be automatically paired with a similarly-ranked trainer.
+    While waiting, you can browse other pages — you'll be redirected when a match is found.
+  </p>
+  <form method="post" action="{% url 'ranked:queue_join' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Find Match</button>
+  </form>
+  {% endif %}
+</div>
+
+<!-- Tier reference table -->
+<div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;">
+  <h3 style="font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;margin-bottom:0.75rem;">Season Tiers</h3>
+  <table style="width:100%;font-size:0.82rem;border-collapse:collapse;">
+    <thead>
+      <tr style="color:#6b7280;text-align:left;">
+        <th style="padding:0.3rem 0.5rem;">Tier</th>
+        <th style="padding:0.3rem 0.5rem;">Points</th>
+        <th style="padding:0.3rem 0.5rem;">Win Bonus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:0.3rem 0.5rem;color:#fcd34d;">Bronze</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">0–299</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">—</td></tr>
+      <tr><td style="padding:0.3rem 0.5rem;color:#d1d5db;">Silver</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">300–799</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">+50 Ryo</td></tr>
+      <tr><td style="padding:0.3rem 0.5rem;color:#fbbf24;">Gold</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">800–1,499</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">+100 Ryo</td></tr>
+      <tr><td style="padding:0.3rem 0.5rem;color:#93c5fd;">Platinum</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">1,500–2,499</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">+150 Ryo</td></tr>
+      <tr><td style="padding:0.3rem 0.5rem;color:#a5b4fc;">Diamond</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">2,500–3,999</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">+200 Ryo</td></tr>
+      <tr><td style="padding:0.3rem 0.5rem;color:#fca5a5;">Champion</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">4,000+ (Top 100)</td><td style="padding:0.3rem 0.5rem;color:#9ca3af;">+300 Ryo</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.75rem;color:#6b7280;margin-top:0.5rem;">
+    Win: +20 pts · Loss: −10 pts · Win streak ≥3: +5 bonus per win
+  </p>
+</div>
+
+{% endif %}
+
+<a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+{% endblock %}

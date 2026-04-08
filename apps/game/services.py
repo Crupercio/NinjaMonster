@@ -14,15 +14,20 @@ from django.db import transaction
 from apps.effects.engine import StatusEffectEngine
 from apps.pokemon.models import Move, MoveSlotType, OwnedPokemon, Pokemon, Team
 from apps.pokemon.services import award_battle_exp as _award_battle_exp  # noqa: F401
+from apps.events.services import SeasonalEventService
+from apps.quests.services import QuestService
 from apps.stickers.services import StickerService
 from apps.users.services import BATTLE_LOSS_RYO, BATTLE_WIN_RYO, award_ryo
 
 _sticker_service = StickerService()
+_quest_service = QuestService()
+_event_service = SeasonalEventService()
 
 from .models import (
     ACTIVE_GRID_POSITIONS,
     GRID_TURN_ORDER,
     POSITION_TO_GRID,
+    AIDifficulty,
     Battle,
     BattleAction,
     BattleLog,
@@ -823,6 +828,71 @@ class BattleService:
             log_type=LogType.INFO,
         )
 
+    @transaction.atomic
+    def bench_switch(
+        self,
+        battle: Battle,
+        team: BattleTeam,
+        active_slot: BattleSlot,
+        bench_slot: BattleSlot,
+    ) -> None:
+        """
+        Voluntarily swap an active Pokemon to the bench, bringing a bench Pokemon
+        to the field.
+
+        GDD §5.6 rules:
+        - Switching is an action — the slot passes its attack turn this round.
+        - The switch happens at the START of the round (called before execute_round).
+        - Volatile statuses are CLEARED from the switching-out Pokemon.
+        - Persistent statuses are KEPT on both Pokemon.
+        - Cannot switch into a fainted slot.
+        """
+        if active_slot.is_fainted:
+            raise ValueError(f"{active_slot.pokemon.name} has already fainted.")
+        if bench_slot.is_fainted:
+            raise ValueError(
+                f"{bench_slot.pokemon.name} has already fainted — cannot switch in."
+            )
+        if active_slot.team_id != team.pk or bench_slot.team_id != team.pk:
+            raise ValueError("Both slots must belong to the same team.")
+        if not active_slot.is_active:
+            raise ValueError(f"{active_slot.pokemon.name} is not on the field.")
+        if bench_slot.is_active:
+            raise ValueError(f"{bench_slot.pokemon.name} is already on the field.")
+
+        outgoing_name = active_slot.pokemon.name
+        incoming_name = bench_slot.pokemon.name
+
+        # Swap is_active and grid_position; position (1-6) stays fixed.
+        active_grid = active_slot.grid_position
+        bench_grid = bench_slot.grid_position
+
+        active_slot.is_active = False
+        active_slot.grid_position = bench_grid
+        active_slot.selected_move = None
+        active_slot.selected_target = None
+        active_slot.save(update_fields=[
+            "is_active", "grid_position", "selected_move", "selected_target",
+        ])
+
+        bench_slot.is_active = True
+        bench_slot.grid_position = active_grid
+        bench_slot.selected_move = None
+        bench_slot.selected_target = None
+        bench_slot.save(update_fields=[
+            "is_active", "grid_position", "selected_move", "selected_target",
+        ])
+
+        # Clear volatile statuses from the switching-out Pokemon (GDD §5.6).
+        _effect_engine.remove_volatile_statuses(active_slot)
+
+        BattleLog.objects.create(
+            battle=battle,
+            round_number=battle.current_round,
+            message=f"{outgoing_name} is recalled! {incoming_name} enters the field!",
+            log_type=LogType.INFO,
+        )
+
     def get_battle_state(self, battle: Battle) -> dict:
         """Return a complete snapshot of the current battle state for the UI."""
         teams = list(
@@ -1153,7 +1223,20 @@ class BattleService:
         winner.battles_played += 1
         if battle.max_combo_chain > winner.longest_combo_chain:
             winner.longest_combo_chain = battle.max_combo_chain
-        winner.save(update_fields=["battles_won", "battles_played", "longest_combo_chain"])
+
+        # Badge: Perfect Victory — win with no fainted Pokemon on winner's team
+        winner_team = battle.teams.filter(owner=winner).first()
+        if winner_team and not winner_team.slots.filter(is_fainted=True).exists():
+            winner.perfect_victories += 1
+
+        # Badge: AI Breaker — beat Hard AI
+        if battle.ai_difficulty == AIDifficulty.HARD:
+            winner.hard_ai_wins += 1
+
+        winner.save(update_fields=[
+            "battles_won", "battles_played", "longest_combo_chain",
+            "perfect_victories", "hard_ai_wins",
+        ])
 
         # Update loser battles_played (previously not tracked)
         AI_USERNAME = "__ai_trainer__"
@@ -1171,7 +1254,14 @@ class BattleService:
 
         self._award_exp_to_teams(battle, winner)
         self._award_ryo_to_teams(battle, winner)
+        self._award_event_bonuses(battle, winner)
         self._award_stickers(battle, winner)
+        _quest_service.on_battle_won(winner, battle)
+
+        # Award ranked points for PvP (non-AI, non-tutorial) battles.
+        if not battle.is_ai_battle and not battle.is_tutorial:
+            self._award_ranked_points(battle, winner)
+
         logger.info("Battle #%d ended. Winner: %s", battle.pk, winner)
 
     def _award_stickers(self, battle: Battle, winner: User) -> None:
@@ -1221,6 +1311,51 @@ class BattleService:
                     battle.max_combo_chain,
                     battle.pk,
                 )
+
+    def _award_event_bonuses(self, battle: Battle, winner: User) -> None:
+        """Apply any active seasonal event bonuses to the winner (GDD §20.11)."""
+        from .models import BattleLog, LogType
+
+        summary = _event_service.apply_battle_win_bonus(winner, battle)
+        if not summary:
+            return
+
+        parts = []
+        if "ryo" in summary:
+            parts.append(f"+{summary['ryo']} Ryo (event bonus)")
+        if "sticker_dust" in summary:
+            parts.append(f"+{summary['sticker_dust']} Dust (event bonus)")
+
+        BattleLog.objects.create(
+            battle=battle,
+            round_number=battle.current_round,
+            message="🎉 " + " · ".join(parts),
+            log_type=LogType.INFO,
+        )
+
+    def _award_ranked_points(self, battle: Battle, winner: User) -> None:
+        """Update ranked profiles for both players in a PvP battle (GDD §15.3)."""
+        from apps.ranked.services import RankedSeasonService
+
+        loser = None
+        for team in battle.teams.select_related("owner"):
+            if team.owner_id != winner.pk:
+                loser = team.owner
+                break
+
+        if loser is None:
+            logger.warning("Battle #%d has no loser team — skipping ranked award.", battle.pk)
+            return
+
+        ranked_svc = RankedSeasonService()
+        winner_profile, pts = ranked_svc.record_win(winner, loser)
+        if winner_profile is not None:
+            BattleLog.objects.create(
+                battle=battle,
+                round_number=battle.current_round,
+                message=f"Ranked: {winner} +{pts} pts → {winner_profile.get_tier_display()} {winner_profile.sub_tier}",
+                log_type=LogType.INFO,
+            )
 
     def _award_ryo_to_teams(self, battle: Battle, winner: User) -> None:
         """Award Ryo to every real (non-AI) player based on win/loss."""

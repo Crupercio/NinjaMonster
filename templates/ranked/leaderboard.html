@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.lb-header { margin-bottom: 1.25rem; }
+.lb-header h2 { margin: 0 0 0.25rem; }
+
+/* Tab bar */
+.lb-tabs {
+  display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.lb-tab {
+  background: #0f3460; border: 1px solid #1e3a6e;
+  border-radius: 20px; padding: 0.35rem 1rem;
+  font-size: 0.82rem; color: #9ca3af;
+  text-decoration: none; transition: all 0.15s;
+}
+.lb-tab:hover { border-color: #e94560; color: #f1f5f9; }
+.lb-tab.active { background: #e94560; border-color: #e94560; color: #fff; font-weight: 700; }
+
+/* Table */
+.lb-table {
+  width: 100%; border-collapse: collapse;
+  background: #16213e; border-radius: 10px; overflow: hidden;
+  font-size: 0.85rem;
+}
+.lb-table th {
+  background: #0f3460; color: #9ca3af; font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 0.6rem 1rem; text-align: left;
+}
+.lb-table td { padding: 0.55rem 1rem; border-bottom: 1px solid #0f3460; }
+.lb-table tr:last-child td { border-bottom: none; }
+.lb-table tr:hover td { background: #1e3a6e; }
+
+/* Rank medal */
+.rank-medal { font-weight: 900; font-size: 1rem; }
+.rank-1 { color: #fbbf24; }
+.rank-2 { color: #d1d5db; }
+.rank-3 { color: #d97706; }
+.rank-other { color: #6b7280; font-size: 0.82rem; }
+
+/* Highlight own row */
+.lb-table tr.own-row td { background: #0f3460; }
+
+.lb-stat-main { font-weight: 700; color: #f1f5f9; }
+.lb-stat-sub  { font-size: 0.72rem; color: #6b7280; margin-top: 1px; }
+
+.tier-pill {
+  display: inline-block; font-size: 0.65rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px; text-transform: uppercase;
+}
+.tier-bronze   { background: #78350f; color: #fcd34d; }
+.tier-silver   { background: #1f2937; color: #d1d5db; }
+.tier-gold     { background: #78350f; color: #fbbf24; }
+.tier-platinum { background: #1e3a5f; color: #93c5fd; }
+.tier-diamond  { background: #1e1b4b; color: #a5b4fc; }
+.tier-champion { background: #7f1d1d; color: #fca5a5; }
+
+.empty-state {
+  text-align: center; padding: 2.5rem; color: #6b7280; font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lb-header">
+  <h2>Leaderboard</h2>
+  <p style="color:#9ca3af;font-size:0.85rem;margin:0;">Top 100 trainers by category.</p>
+</div>
+
+<!-- Tab navigation -->
+<div class="lb-tabs">
+  <a href="?tab=wins"
+     class="lb-tab {% if tab == 'wins' %}active{% endif %}">
+    Most Wins
+  </a>
+  <a href="?tab=combo"
+     class="lb-tab {% if tab == 'combo' %}active{% endif %}">
+    Longest Combo Chain
+  </a>
+  <a href="?tab=season"
+     class="lb-tab {% if tab == 'season' %}active{% endif %}">
+    Season Rank
+    {% if tab == 'season' and season %}<span style="color:rgba(255,255,255,0.6);font-weight:400;"> · S{{ season.number }}</span>{% endif %}
+  </a>
+</div>
+
+<!-- ── Most Wins ────────────────────────────────────────────── -->
+{% if tab == 'wins' %}
+  {% if rows %}
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th style="width:48px;">#</th>
+        <th>Trainer</th>
+        <th>Wins</th>
+        <th>Win Rate</th>
+        <th>Best Chain</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr {% if row.username == request.user.username %}class="own-row"{% endif %}>
+        <td>
+          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
+          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
+          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
+          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'users:profile' row.username %}" style="color:#93c5fd;text-decoration:none;">
+            {{ row.username }}
+          </a>
+          {% if row.username == request.user.username %}
+            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
+          {% endif %}
+        </td>
+        <td><span class="lb-stat-main">{{ row.battles_won }}</span></td>
+        <td>
+          {% if row.battles_played %}
+            <span class="lb-stat-main">
+              {% widthratio row.battles_won row.battles_played 100 %}%
+            </span>
+            <div class="lb-stat-sub">{{ row.battles_played }} played</div>
+          {% else %}
+            <span style="color:#6b7280;">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if row.longest_combo_chain %}
+            <span style="color:#fbbf24;">×{{ row.longest_combo_chain }}</span>
+          {% else %}
+            <span style="color:#6b7280;">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No battles have been played yet. Be the first!</div>
+  {% endif %}
+
+<!-- ── Longest Combo Chain ─────────────────────────────────── -->
+{% elif tab == 'combo' %}
+  {% if rows %}
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th style="width:48px;">#</th>
+        <th>Trainer</th>
+        <th>Best Chain</th>
+        <th>Total Wins</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr {% if row.username == request.user.username %}class="own-row"{% endif %}>
+        <td>
+          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
+          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
+          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
+          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'users:profile' row.username %}" style="color:#93c5fd;text-decoration:none;">
+            {{ row.username }}
+          </a>
+          {% if row.username == request.user.username %}
+            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
+          {% endif %}
+        </td>
+        <td><span class="lb-stat-main" style="color:#fbbf24;">×{{ row.longest_combo_chain }}</span></td>
+        <td><span style="color:#9ca3af;">{{ row.battles_won }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No combo chains recorded yet. Build a team with trigger moves!</div>
+  {% endif %}
+
+<!-- ── Season Rank ─────────────────────────────────────────── -->
+{% elif tab == 'season' %}
+  {% if not season %}
+  <div class="empty-state">No ranked season is currently active.</div>
+  {% elif rows %}
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th style="width:48px;">#</th>
+        <th>Trainer</th>
+        <th>Tier</th>
+        <th>Points</th>
+        <th>W / L</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in rows %}
+      <tr {% if profile.user.username == request.user.username %}class="own-row"{% endif %}>
+        <td>
+          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
+          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
+          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
+          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'users:profile' profile.user.username %}" style="color:#93c5fd;text-decoration:none;">
+            {{ profile.user.username }}
+          </a>
+          {% if profile.user.username == request.user.username %}
+            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="tier-pill tier-{{ profile.tier }}">
+            {{ profile.get_tier_display }} {{ profile.sub_tier }}
+          </span>
+        </td>
+        <td><span class="lb-stat-main">{{ profile.rank_points }}</span></td>
+        <td>
+          <span style="color:#4ade80;">{{ profile.season_wins }}</span>
+          <span style="color:#6b7280;"> / </span>
+          <span style="color:#f87171;">{{ profile.season_losses }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No ranked matches played this season yet. Be the first!</div>
+  {% endif %}
+{% endif %}
+
+<div style="margin-top:1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+  <a href="{% url 'ranked:home' %}" class="btn btn-secondary btn-sm">← Ranked Home</a>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
+</div>
+{% endblock %}

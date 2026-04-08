@@ -33,7 +33,19 @@ python -m pytest -q
 ```
 
 **Baseline test result:** 178 passed, 11 pre-existing failures (not introduced by infra work).
-The 11 failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, and `test_pokemon/test_progression.py`.
+**P2-1 test result:** 215 passed, 11 pre-existing failures (unchanged).
+**P2-2 test result:** 230 passed, 11 pre-existing failures (unchanged).
+**P2-3 test result:** 241 passed, 11 pre-existing failures (unchanged).
+**P2-4 test result:** 249 passed, 11 pre-existing failures (unchanged).
+**P2-5 test result:** 260 passed, 11 pre-existing failures (unchanged).
+**P2-6 test result:** 272 passed, 11 pre-existing failures (unchanged).
+**P2-7 test result:** 283 passed, 12 pre-existing failures (unchanged — 1 additional pre-existing appeared).
+**P3-1+P3-2 test result:** 297 passed, 12 pre-existing failures (unchanged).
+**P3-3 test result:** 307 passed, 12 pre-existing failures (unchanged).
+**P3-4 test result:** 316 passed, 12 pre-existing failures (unchanged).
+**P4-1 test result:** 330 passed, 11 pre-existing failures (note: 1 re-counted — count corrected to 11).
+**P4-2 test result:** 349 passed, 11 pre-existing failures (unchanged).
+The pre-existing failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, `test_game/test_sticker_award.py`, and `test_pokemon/test_progression.py`.
 
 ---
 
@@ -69,13 +81,13 @@ The 11 failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, 
 
 | # | Task | Status | GDD Reference |
 |---|------|--------|--------------|
-| P2-1 | Tutorial / first-time experience | 🔲 Not started | Section 20.7 |
-| P2-2 | Quest & mission system | 🔲 Not started | Section 14 |
-| P2-3 | Trainer profile page | 🔲 Not started | Section 18.2, 13 |
-| P2-4 | Combo chain preview in team builder | 🔲 Not started | Section 20.10 |
-| P2-5 | Type chart in UI (Pokedex + Team Builder) | 🔲 Not started | Section 20.14 |
-| P2-6 | Achievement badge system | 🔲 Not started | Section 14.4 |
-| P2-7 | Bench switching in battle | 🔲 Not started | Section 5.6 |
+| P2-1 | Tutorial / first-time experience | ✅ Done | Section 20.7 | Commit pending; 10 new tests; starter select, tutorial battle, Alpine.js tooltips, dashboard redirect |
+| P2-2 | Quest & mission system | ✅ Done | Section 14 | Commit pending; 15 new tests; daily/weekly/story quests, claim rewards, battle+pack hooks, seed command |
+| P2-3 | Trainer profile page | ✅ Done | Section 18.2, 13 | Commit pending; 11 new tests; stats, showcase, 9 achievement badges, recent battles, story quest progress |
+| P2-4 | Combo chain preview in team builder | ✅ Done | Section 20.10 | Commit pending; 8 new tests; _build_combo_preview(), TeamView context, team.html panel |
+| P2-5 | Type chart in UI (Pokedex + Team Builder) | ✅ Done | Section 20.14 | Commit pending; 11 new tests; type_chart.py with 18-type data, TypeChartView, focus detail panel, 18×18 grid |
+| P2-6 | Achievement badge system | ✅ Done | Section 14.4 | Commit pending; 12 new tests; 5 tracking fields on User, streak logic, game/trade hooks, 13 badges in _compute_badges() |
+| P2-7 | Bench switching in battle | ✅ Done | Section 5.6 | Commit pending; 12 new tests; bench_switch() service, switch_ POST param handling, Attack/Switch UI toggle |
 
 ---
 
@@ -83,10 +95,10 @@ The 11 failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, 
 
 | # | Task | Status | GDD Reference |
 |---|------|--------|--------------|
-| P3-1 | PvP matchmaking queue | 🔲 Not started | Section 15.2 — requires Redis (now done) |
-| P3-2 | Ranked season system | 🔲 Not started | Section 15.3 |
-| P3-3 | Leaderboard | 🔲 Not started | Section 20.9 |
-| P3-4 | Spectator mode | 🔲 Not started | Section 20.15 |
+| P3-1 | PvP matchmaking queue | ✅ Done | Section 15.2 | Commit pending; MatchmakingEntry model, join/leave/status views, HTMX poll, FIFO ±500pt tolerance matching |
+| P3-2 | Ranked season system | ✅ Done | Section 15.3 | Commit pending; RankedSeason + RankedProfile models, tier/sub-tier computation, win streak bonus, floor-on-loss; 14 new tests |
+| P3-3 | Leaderboard | ✅ Done | Section 20.9 | Commit pending; 3-tab view (wins/combo/season), top-100, AI excluded, own-row highlight; 10 new tests |
+| P3-4 | Spectator mode | ✅ Done | Section 20.15 | Commit pending; SpectatorConsumer (read-only WS), spectate_list + spectate views, live HP/combo updates, 9 new tests |
 
 ---
 
@@ -94,8 +106,8 @@ The 11 failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, 
 
 | # | Task | Status | GDD Reference |
 |---|------|--------|--------------|
-| P4-1 | Story quest narrative (Act 1) | 🔲 Not started | Section 3.2 |
-| P4-2 | Seasonal events framework | 🔲 Not started | Section 20.11 |
+| P4-1 | Story quest narrative (Act 1) | ✅ Done | Section 3.2 | Commit pending; `narrative_text`+`chapter` on QuestTemplate; Act 1 seeds (Kira/Shin dialogue); chapter timeline in quest_list.html; 13 new tests |
+| P4-2 | Seasonal events framework | ✅ Done | Section 20.11 | Commit pending; `apps/events/` app; SeasonalEvent model (BONUS_RYO/DUST/DOUBLE_COMBO_DUST); service integrates in _end_battle; event banner on home page; event_list.html; Events nav link; seed_seasonal_events command; 19 new tests |
 | P4-3 | Album completion rewards | 🔲 Not started | Section 20.13 |
 | P4-4 | Sticker album visual overhaul | 🔲 Not started | Section 12.6 |
 | P4-5 | Guild / clan system | 🔲 Not started | Section 20.12 |

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Type Chart — Pokemon Combo Battle{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero ─────────────────────────────────────────────────────── */
+.tc-hero { margin-bottom: 1.25rem; }
+.tc-hero h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem; }
+.tc-hero p  { color: #9ca3af; font-size: 0.85rem; }
+
+/* ── Legend ───────────────────────────────────────────────────── */
+.tc-legend {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+  margin-bottom: 1rem; font-size: 0.78rem;
+}
+.legend-item { display: flex; align-items: center; gap: 0.35rem; }
+.legend-swatch {
+  width: 22px; height: 22px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800;
+}
+
+/* ── Type pill selector ───────────────────────────────────────── */
+.type-selector {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem;
+}
+.type-pill-btn {
+  display: inline-block;
+  padding: 0.25rem 0.75rem; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; text-decoration: none;
+  border: 2px solid transparent; transition: border-color 0.15s;
+}
+.type-pill-btn.active  { border-color: #fff; }
+.type-pill-btn.clear-btn {
+  background: #1e3a6e; color: #9ca3af; border-color: #1e3a6e;
+}
+
+/* ── Focus detail panel ───────────────────────────────────────── */
+.focus-panel {
+  background: #16213e; border: 1px solid #1e3a6e;
+  border-radius: 10px; padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.focus-panel h2 { font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem; }
+.focus-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.5rem; }
+.focus-label { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; min-width: 110px; }
+.focus-types { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ft { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+
+/* ── Grid table ───────────────────────────────────────────────── */
+.tc-scroll { overflow-x: auto; margin-bottom: 1.5rem; }
+.tc-table {
+  border-collapse: collapse;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+.tc-table th, .tc-table td {
+  border: 1px solid #0f1a2e;
+  width: 28px; height: 28px;
+  text-align: center; vertical-align: middle;
+}
+.tc-header-att {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  padding: 6px 2px;
+  font-size: 0.6rem; font-weight: 700;
+}
+.tc-header-def {
+  padding: 4px 6px;
+  font-size: 0.6rem; font-weight: 700;
+}
+.tc-corner { background: #0f0f1a; }
+/* Cell colours */
+.chart-se      { background: #14532d; color: #86efac; font-weight: 800; }
+.chart-nve     { background: #7f1d1d; color: #fca5a5; font-weight: 700; }
+.chart-immune  { background: #1c1917; color: #4b5563; font-weight: 700; }
+.chart-neutral { background: #0f1a2e; color: #374151; }
+
+/* Highlight focused row/col */
+.tc-table .row-focused  { background: #1e3a6e !important; }
+.tc-table .col-focused  { background: #1e3a6e !important; }
+
+/* Type label cells */
+.tc-att-label {
+  background: #16213e; text-align: right;
+  padding: 0 6px; font-weight: 700; font-size: 0.65rem;
+}
+.tc-def-labels th { background: #16213e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tc-hero">
+  <h1>Type Chart</h1>
+  <p>
+    Shows damage multipliers: attacker (rows) vs. defender (columns).
+    Click a type pill to see its full matchup breakdown.
+  </p>
+</div>
+
+{# ── Legend ──────────────────────────────────────────────────────────────── #}
+<div class="tc-legend">
+  <div class="legend-item"><div class="legend-swatch chart-se">2×</div> Super effective</div>
+  <div class="legend-item"><div class="legend-swatch chart-nve">½</div> Not very effective</div>
+  <div class="legend-item"><div class="legend-swatch chart-immune">0</div> Immune</div>
+  <div class="legend-item"><div class="legend-swatch chart-neutral">1</div> Normal</div>
+</div>
+
+{# ── Type selector pills ─────────────────────────────────────────────────── #}
+<div class="type-selector">
+  {% if focus_type %}<a href="{% url 'pokemon:type_chart' %}" class="type-pill-btn clear-btn">✕ Clear</a>{% endif %}
+  {% for t in all_types %}
+  {% with color=type_colors|default:t %}
+  <a
+    href="{% url 'pokemon:type_chart' %}?focus={{ t }}"
+    class="type-pill-btn {% if focus_type == t %}active{% endif %}"
+    style="background:{{ type_colors|default_if_none:'' }};{% with c=type_colors %}{% if c %}background:{% for k,v in c.items %}{% if k == t %}{{ v.bg }}{% endif %}{% endfor %};color:{% for k,v in c.items %}{% if k == t %}{{ v.text }}{% endif %}{% endfor %}{% endif %}{% endwith %};"
+  >{{ t }}</a>
+  {% endwith %}
+  {% endfor %}
+</div>
+
+{# ── Focus detail panel ──────────────────────────────────────────────────── #}
+{% if focus_type and focus_detail %}
+<div class="focus-panel">
+  <h2>{{ focus_type }} — Type Matchups</h2>
+
+  <div class="focus-row">
+    <span class="focus-label">Super effective vs</span>
+    <div class="focus-types">
+      {% for t in focus_detail.super_effective_vs %}
+      <span class="ft" style="background:#14532d;color:#86efac;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="focus-row">
+    <span class="focus-label">Not very effective vs</span>
+    <div class="focus-types">
+      {% for t in focus_detail.not_very_vs %}
+      <span class="ft" style="background:#7f1d1d;color:#fca5a5;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="focus-row">
+    <span class="focus-label">No effect vs</span>
+    <div class="focus-types">
+      {% for t in focus_detail.immune_vs %}
+      <span class="ft" style="background:#1c1917;color:#6b7280;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #1e3a6e;margin:0.75rem 0;"></div>
+
+  <div class="focus-row">
+    <span class="focus-label">Weak to</span>
+    <div class="focus-types">
+      {% for t in focus_detail.weak_to %}
+      <span class="ft" style="background:#7f1d1d;color:#fca5a5;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="focus-row">
+    <span class="focus-label">Resists</span>
+    <div class="focus-types">
+      {% for t in focus_detail.resists %}
+      <span class="ft" style="background:#14532d;color:#86efac;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="focus-row">
+    <span class="focus-label">Immune to</span>
+    <div class="focus-types">
+      {% for t in focus_detail.immune_to %}
+      <span class="ft" style="background:#1c1917;color:#6b7280;">{{ t }}</span>
+      {% empty %}<span style="color:#6b7280;font-size:0.75rem;">—</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Full 18×18 matrix ───────────────────────────────────────────────────── #}
+<div class="tc-scroll">
+  <table class="tc-table">
+    {# Defender headers (columns) #}
+    <thead>
+      <tr class="tc-def-labels">
+        <th class="tc-corner" style="min-width:60px;font-size:0.6rem;color:#6b7280;padding:4px;">ATK ↓ / DEF →</th>
+        {% for t in all_types %}
+        <th class="tc-header-def {% if focus_type == t %}col-focused{% endif %}">
+          <a href="{% url 'pokemon:type_chart' %}?focus={{ t }}" style="color:inherit;text-decoration:none;">{{ t }}</a>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in chart %}
+      <tr>
+        {# Attacker label #}
+        <td class="tc-att-label {% if focus_type == row.attacker %}row-focused{% endif %}">
+          <a href="{% url 'pokemon:type_chart' %}?focus={{ row.attacker }}" style="color:inherit;text-decoration:none;">{{ row.attacker }}</a>
+        </td>
+        {% for cell in row.cells %}
+        <td class="{{ cell.css }} {% if focus_type == row.attacker or focus_type == cell.defender %}{% if focus_type == row.attacker and focus_type == cell.defender %}chart-se{% elif focus_type == row.attacker or focus_type == cell.defender %}{% endif %}{% endif %}">
+          {{ cell.label }}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── Navigation links ────────────────────────────────────────────────────── #}
+<div style="display:flex;gap:1rem;flex-wrap:wrap;">
+  <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary">Pokedex</a>
+  {% if user.is_authenticated %}
+  <a href="{% url 'pokemon:team' %}" class="btn btn-secondary">My Team</a>
+  {% endif %}
+</div>
+{% endblock %}

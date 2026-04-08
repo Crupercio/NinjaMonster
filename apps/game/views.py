@@ -14,6 +14,8 @@ from django.views.generic import (
     View,
 )
 
+from .tutorial_service import STARTER_INFO, STARTER_NAMES, TutorialService
+
 from apps.pokemon.models import OwnedPokemon
 
 from .ai import BattleAIService
@@ -27,9 +29,15 @@ _ai_service = BattleAIService()
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
-    """Landing page — shows stats and battle start options."""
+    """Landing page — shows stats, active events, and battle start options."""
 
     template_name = "game/home.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.events.services import SeasonalEventService
+        context = super().get_context_data(**kwargs)
+        context["active_events"] = list(SeasonalEventService().get_active_events())
+        return context
 
 
 class BattleListView(LoginRequiredMixin, ListView):
@@ -260,10 +268,17 @@ class BattleActionView(LoginRequiredMixin, FormView):
         if player_team is None:
             return redirect(self.get_success_url())
 
-        # Parse per-slot submissions: move_{slot_pk} and target_{slot_pk}
+        # Parse per-slot submissions: move_{slot_pk}, target_{slot_pk}, switch_{slot_pk}
         submitted: dict[int, dict] = {}
+        switches: dict[int, int] = {}
         for key, value in request.POST.items():
-            if key.startswith("move_"):
+            if key.startswith("switch_"):
+                try:
+                    active_slot_id = int(key[7:])
+                    switches[active_slot_id] = int(value)
+                except (ValueError, TypeError):
+                    pass
+            elif key.startswith("move_"):
                 try:
                     slot_id = int(key[5:])
                     submitted.setdefault(slot_id, {})["move_id"] = int(value)
@@ -275,6 +290,24 @@ class BattleActionView(LoginRequiredMixin, FormView):
                     submitted.setdefault(slot_id, {})["target_id"] = int(value)
                 except (ValueError, TypeError):
                     pass
+
+        # Process voluntary bench switches BEFORE round execution (GDD §5.6).
+        # Switched slots pass their attack turn — exclude them from player_actions.
+        switched_slot_ids: set[int] = set()
+        for active_slot_id, bench_slot_id in switches.items():
+            try:
+                active_slot = BattleSlot.objects.get(pk=active_slot_id, team=player_team)
+                bench_slot = BattleSlot.objects.get(pk=bench_slot_id, team=player_team)
+                _battle_service.bench_switch(battle, player_team, active_slot, bench_slot)
+                switched_slot_ids.add(active_slot_id)
+            except BattleSlot.DoesNotExist:
+                pass
+            except ValueError as exc:
+                logger.warning("Bench switch error in Battle #%d: %s", battle.pk, exc)
+
+        # Remove switched slots from submitted so they don't contribute an action.
+        for sid in switched_slot_ids:
+            submitted.pop(sid, None)
 
         player_actions = _battle_service.prepare_player_actions(
             battle, player_team, submitted
@@ -406,4 +439,129 @@ class BattleLogView(LoginRequiredMixin, DetailView):
         context["combo_logs"] = [
             log for log in context["logs"] if log.log_type == "combo"
         ]
+        return context
+
+
+# ── Tutorial views ───────────────────────────────────────────────────────────
+
+class TutorialView(LoginRequiredMixin, View):
+    """Entry point: skip to home if tutorial is already complete."""
+
+    def get(self, request, *args, **kwargs):
+        if request.user.tutorial_complete:
+            return redirect("game:home")
+        return redirect("game:tutorial_starter_select")
+
+
+class TutorialStarterSelectView(LoginRequiredMixin, TemplateView):
+    """Select one of the three starter Pokemon to begin the tutorial."""
+
+    template_name = "game/tutorial_starter_select.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["starters"] = STARTER_INFO
+        return context
+
+    def post(self, request, *args, **kwargs):
+        starter_name = request.POST.get("starter", "")
+        if starter_name not in STARTER_NAMES:
+            return self.render_to_response(
+                self.get_context_data(error="Please select a valid starter.")
+            )
+
+        tutorial_svc = TutorialService()
+        try:
+            owned_pks = tutorial_svc.assign_starter_team(request.user, starter_name)
+            battle = tutorial_svc.create_tutorial_battle(request.user, owned_pks)
+        except ValueError as exc:
+            return self.render_to_response(
+                self.get_context_data(error=str(exc))
+            )
+
+        return redirect("game:battle_detail", pk=battle.pk)
+
+
+# ── Spectator views ──────────────────────────────────────────────────────────
+
+class ActiveBattleListView(LoginRequiredMixin, ListView):
+    """List of all currently active battles available to spectate (GDD §20.15)."""
+
+    model = Battle
+    template_name = "game/spectate_list.html"
+    context_object_name = "battles"
+    paginate_by = 20
+
+    def get_queryset(self):
+        return (
+            Battle.objects.filter(status=BattleStatus.ACTIVE, is_tutorial=False)
+            .select_related("player_one", "player_two")
+            .order_by("-current_round", "-created_at")
+        )
+
+
+class SpectatorView(LoginRequiredMixin, DetailView):
+    """Read-only battle view for spectators (GDD §20.15)."""
+
+    model = Battle
+    template_name = "game/spectate.html"
+    context_object_name = "battle"
+
+    def get_queryset(self):
+        return Battle.objects.filter(
+            status=BattleStatus.ACTIVE
+        ).select_related(
+            "player_one", "player_two", "winner"
+        ).prefetch_related(
+            "teams__slots__pokemon__primary_type",
+            "teams__slots__pokemon__secondary_type",
+            "teams__slots__active_statuses__status",
+            "teams__slots__move_cooldowns__move",
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        battle = self.object
+        state = _battle_service.get_battle_state(battle)
+        context.update(state)
+
+        for team in state["teams"]:
+            if team.owner == battle.player_one:
+                context["team_one"] = team
+            else:
+                context["team_two"] = team
+
+        context["team_one_active"] = [
+            s for s in context.get("team_one", battle.teams.first()).slots.all()
+            if s.is_active
+        ] if context.get("team_one") else []
+        context["team_two_active"] = [
+            s for s in context.get("team_two", battle.teams.last()).slots.all()
+            if s.is_active
+        ] if context.get("team_two") else []
+
+        context["combo_logs"] = list(
+            battle.logs.filter(log_type="combo").order_by("-created_at")[:10]
+        )
+        return context
+
+
+class TutorialCompleteView(LoginRequiredMixin, TemplateView):
+    """Celebration page shown after winning the tutorial battle."""
+
+    template_name = "game/tutorial_complete.html"
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.tutorial_complete:
+            user.tutorial_complete = True
+            user.save(update_fields=["tutorial_complete"])
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["starter_name"] = self.request.user.tutorial_starter or "your starter"
+        context["starter_info"] = STARTER_INFO.get(
+            self.request.user.tutorial_starter or "", {}
+        )
         return context

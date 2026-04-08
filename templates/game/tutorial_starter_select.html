@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Choose Your Starter — Ketsurai Pokemon Institute{% endblock %}
+
+{% block extra_css %}
+<style>
+.tutorial-hero {
+  text-align: center;
+  padding: 2rem 1rem 1.5rem;
+}
+.tutorial-hero h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+.tutorial-hero p {
+  color: #9ca3af;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.starter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  max-width: 860px;
+  margin: 2rem auto;
+}
+
+.starter-card {
+  background: #16213e;
+  border: 2px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 1.5rem 1.25rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  text-align: center;
+  position: relative;
+}
+.starter-card:hover,
+.starter-card.selected {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.starter-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.starter-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+.starter-type {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}
+.starter-role {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+}
+.starter-description {
+  font-size: 0.85rem;
+  color: #d1d5db;
+  line-height: 1.5;
+  margin-bottom: 0.6rem;
+}
+.starter-playstyle {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.sensei-quote {
+  background: #0f1a2e;
+  border-left: 3px solid #e94560;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  max-width: 640px;
+  margin: 0 auto 1.5rem;
+  font-style: italic;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.sensei-quote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-weight: 700;
+  color: #e94560;
+  font-size: 0.8rem;
+}
+
+.submit-row {
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tutorial-hero">
+  <h1>Welcome to the Ketsurai Pokemon Institute</h1>
+  <p>
+    Sensei Kira is waiting for you. Before your first battle, you must choose a partner —
+    a starter Pokemon who will anchor your Kizuna chain.
+  </p>
+</div>
+
+<div class="sensei-quote">
+  "A single fist can break stone. But ten fists, striking as one? That breaks mountains.
+  The Kizuna Method is not about making your Pokemon stronger — it is about making your
+  team move as a single living thing. Now choose your first partner wisely."
+  <cite>— Sensei Kira, Ketsurai Pokemon Institute</cite>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" style="max-width:640px;margin:0 auto 1rem;">
+  {{ error }}
+</div>
+{% endif %}
+
+<form method="post" id="starter-form">
+  {% csrf_token %}
+  <div class="starter-grid" x-data="{ chosen: '' }">
+    {% for name, info in starters.items %}
+    <label
+      class="starter-card"
+      :class="{ selected: chosen === '{{ name }}' }"
+      :style="chosen === '{{ name }}' ? 'border-color: {{ info.color }};' : ''"
+      @click="chosen = '{{ name }}'"
+    >
+      <input type="radio" name="starter" value="{{ name }}" :checked="chosen === '{{ name }}'">
+      <div class="starter-name" style="color: {{ info.color }};">{{ name }}</div>
+      <div class="starter-type" style="color: {{ info.color }};">{{ info.type }}</div>
+      <div class="starter-role" style="background: {{ info.color }}22; color: {{ info.color }};">
+        {{ info.role }}
+      </div>
+      <p class="starter-description">{{ info.description }}</p>
+      <p class="starter-playstyle">{{ info.playstyle }}</p>
+    </label>
+    {% endfor %}
+  </div>
+
+  <div class="submit-row" x-data="{ chosen: '' }" @starter-chosen.window="chosen = $event.detail">
+    <button
+      type="submit"
+      class="btn btn-primary"
+      style="font-size:1rem;padding:0.75rem 2.5rem;"
+    >
+      Begin Training
+    </button>
+  </div>
+</form>
+
+<script>
+// Keep the submit button in sync with the Alpine radio selection
+document.getElementById('starter-form').addEventListener('change', function(e) {
+  if (e.target.name === 'starter') {
+    document.querySelectorAll('.starter-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    e.target.closest('.starter-card').classList.add('selected');
+  }
+});
+</script>
+{% endblock %}

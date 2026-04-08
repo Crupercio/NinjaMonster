@@ -113,6 +113,30 @@
 }
 .bench-card.fainted { opacity: 0.35; }
 
+/* Switch mode */
+.switch-mode-btn {
+  background: #1c1917; border: 1px solid #78350f;
+  border-radius: 20px; padding: 0.3rem 0.75rem;
+  font-size: 0.78rem; cursor: pointer; color: #fcd34d;
+  transition: all 0.15s; user-select: none;
+}
+.switch-mode-btn:hover { border-color: #f59e0b; }
+.switch-mode-btn.active { background: #78350f; border-color: #f59e0b; }
+.switch-panel { display: none; margin-top: 0.5rem; }
+.switch-panel.visible { display: block; }
+.switch-option {
+  display: inline-block; background: #0f1a2e; border: 2px solid #374151;
+  border-radius: 8px; padding: 0.5rem 0.85rem;
+  cursor: pointer; transition: all 0.15s; margin: 0.25rem 0.25rem 0 0;
+  min-width: 120px; text-align: left;
+}
+.switch-option:hover:not(.switch-fainted) { border-color: #f59e0b; background: #1c1917; }
+.switch-option.selected-switch { border-color: #f59e0b; background: #78350f; }
+.switch-option.switch-fainted { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.switch-pending-label {
+  font-size: 0.72rem; color: #fcd34d; margin-top: 0.4rem; display: none;
+}
+
 /* ── Action panel ────────────────────────────────────────────── */
 .action-panel {
   background: #16213e; border: 1px solid #0f3460;
@@ -288,6 +312,38 @@
 {% block content %}
 <div class="combo-banner" id="combo-banner"></div>
 
+{% if battle.is_tutorial %}
+<div
+  x-data="{
+    step: 0,
+    steps: [
+      { title: 'Welcome to your first battle!', body: 'This is a training match arranged by Sensei Kira. Defeat the AI opponent to complete your tutorial.' },
+      { title: 'The Battlefield', body: 'Each side has 4 active Pokemon on a 2×2 grid. Front-row Pokemon deal full damage. Back-row Pokemon deal 80% — but they&rsquo;re harder to target first.' },
+      { title: 'Combo Chains (Kizuna Method)', body: 'When one Pokemon applies a status (Burn, Poison…), another Pokemon with a matching trigger move fires automatically. That&rsquo;s a Combo Chain! Each link boosts damage up to ×2.50.' },
+      { title: 'Your Turn', body: 'Select a move and a target for each of your active Pokemon, then click Submit. Close this guide whenever you&rsquo;re ready.' }
+    ]
+  }"
+  style="background:#0f1a2e;border:1px solid #e94560;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;"
+>
+  <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;">
+    <span style="color:#e94560;font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;">Sensei Kira</span>
+    <span style="color:#6b7280;font-size:0.78rem;" x-text="`(${step + 1} / ${steps.length})`"></span>
+    <button @click="step = 999" style="margin-left:auto;background:none;border:none;color:#6b7280;cursor:pointer;font-size:0.8rem;">Dismiss</button>
+  </div>
+  <template x-if="step < steps.length">
+    <div>
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;" x-text="steps[step].title"></div>
+      <div style="color:#9ca3af;font-size:0.85rem;line-height:1.5;" x-html="steps[step].body"></div>
+      <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+        <button x-show="step > 0" @click="step--" class="btn btn-secondary btn-sm">Back</button>
+        <button x-show="step < steps.length - 1" @click="step++" class="btn btn-primary btn-sm">Next</button>
+        <button x-show="step === steps.length - 1" @click="step = 999" class="btn btn-primary btn-sm">Got it!</button>
+      </div>
+    </div>
+  </template>
+</div>
+{% endif %}
+
 <!-- ── Header ──────────────────────────────────────────────── -->
 <div class="battle-header">
   <h2>Battle #{{ battle.pk }}</h2>
@@ -307,7 +363,13 @@
 <div class="winner-banner">
   <strong style="color:#4ade80;">🏆 {{ battle.winner }} wins!</strong>
   <span style="color:#9ca3af;">Max combo: x{{ battle.max_combo_chain }}</span>
+  {% if battle.is_tutorial and battle.winner == request.user %}
+  <a href="{% url 'game:tutorial_complete' %}" class="btn btn-primary btn-sm" style="margin-left:auto;">
+    Complete Training &rarr;
+  </a>
+  {% else %}
   <a href="{% url 'game:battle_log' battle.pk %}" class="btn btn-secondary btn-sm" style="margin-left:auto;">Full Log</a>
+  {% endif %}
 </div>
 {% endif %}
 
@@ -500,6 +562,8 @@
                id="target-input-{{ slot.pk }}"
                name="target_{{ slot.pk }}"
                value="{% if slot.selected_target %}{{ slot.selected_target.pk }}{% endif %}">
+        {# Switch input — set by JS when player chooses to switch this slot #}
+        <input type="hidden" id="switch-input-{{ slot.pk }}" name="switch_{{ slot.pk }}" value="" disabled>
 
         <div class="slot-action-block {% if forloop.first %}visible{% endif %}"
              id="action-block-{{ slot.pk }}"
@@ -518,8 +582,25 @@
             </span>
           </div>
 
+          <!-- Attack / Switch mode toggle -->
+          {% if player_bench_slots %}
+          <div style="display:flex;gap:0.4rem;margin-bottom:0.6rem;align-items:center;">
+            <button type="button" class="switch-mode-btn" id="attack-mode-btn-{{ slot.pk }}"
+                    onclick="setAttackMode({{ slot.pk }})" style="background:#1d4ed8;border-color:#3b82f6;color:#fff;">
+              Attack
+            </button>
+            <button type="button" class="switch-mode-btn" id="switch-mode-btn-{{ slot.pk }}"
+                    onclick="setSwitchMode({{ slot.pk }})">
+              Switch
+            </button>
+            <span class="switch-pending-label" id="switch-pending-{{ slot.pk }}">
+              Switching out this round
+            </span>
+          </div>
+          {% endif %}
+
           <!-- Move buttons -->
-          <div class="move-buttons">
+          <div class="move-buttons" id="move-buttons-{{ slot.pk }}">
             {% if slot.owned_pokemon %}
               {% get_owned_active_moves slot.owned_pokemon as active_moves %}
               {% for move in active_moves %}
@@ -580,6 +661,23 @@
               {% endfor %}
             {% endif %}
           </div>
+
+          <!-- Switch panel — shown when player selects Switch mode for this slot -->
+          {% if player_bench_slots %}
+          <div class="switch-panel" id="switch-panel-{{ slot.pk }}">
+            <div style="font-size:0.78rem;color:#fcd34d;margin-bottom:0.4rem;">
+              Send in from bench — this slot will not attack this round:
+            </div>
+            {% for bench in player_bench_slots %}
+              <div class="switch-option {% if bench.is_fainted %}switch-fainted{% endif %}"
+                   id="switch-opt-{{ slot.pk }}-{{ bench.pk }}"
+                   onclick="selectSwitch({{ slot.pk }}, {{ bench.pk }}, '{{ bench.pokemon.name }}')">
+                <div style="font-weight:700;font-size:0.82rem;">{{ bench.pokemon.name }}</div>
+                <div style="font-size:0.7rem;color:#9ca3af;">HP: {{ bench.current_hp }}/{{ bench.max_hp }}</div>
+              </div>
+            {% endfor %}
+          </div>
+          {% endif %}
 
           <!-- Ninja Trait display -->
           {% if slot.owned_pokemon %}
@@ -857,6 +955,82 @@
     banner.style.display = "block";
     setTimeout(function () { banner.style.display = "none"; }, 2600);
   }
+
+  // ── Bench switching ──────────────────────────────────────────
+  // switchingSlots: set of active slot PKs that are in switch mode
+  const switchingSlots = new Set();
+
+  window.setSwitchMode = function (slotPk) {
+    switchingSlots.add(slotPk);
+
+    const switchBtn = document.getElementById("switch-mode-btn-" + slotPk);
+    const attackBtn = document.getElementById("attack-mode-btn-" + slotPk);
+    const moveButtons = document.getElementById("move-buttons-" + slotPk);
+    const switchPanel = document.getElementById("switch-panel-" + slotPk);
+
+    if (attackBtn) { attackBtn.style.background = ""; attackBtn.style.borderColor = ""; attackBtn.style.color = ""; }
+    if (switchBtn) { switchBtn.style.background = "#78350f"; switchBtn.style.borderColor = "#f59e0b"; switchBtn.style.color = "#fcd34d"; }
+    if (moveButtons) moveButtons.style.display = "none";
+    if (switchPanel) switchPanel.classList.add("visible");
+
+    // Disable move/target inputs for this slot (they are excluded from round).
+    const moveInp = document.getElementById("move-input-" + slotPk);
+    const targetInp = document.getElementById("target-input-" + slotPk);
+    if (moveInp) moveInp.disabled = true;
+    if (targetInp) targetInp.disabled = true;
+
+    // Show pending label
+    const pending = document.getElementById("switch-pending-" + slotPk);
+    if (pending) pending.style.display = "inline";
+  };
+
+  window.setAttackMode = function (slotPk) {
+    switchingSlots.delete(slotPk);
+
+    const switchBtn = document.getElementById("switch-mode-btn-" + slotPk);
+    const attackBtn = document.getElementById("attack-mode-btn-" + slotPk);
+    const moveButtons = document.getElementById("move-buttons-" + slotPk);
+    const switchPanel = document.getElementById("switch-panel-" + slotPk);
+
+    if (attackBtn) { attackBtn.style.background = "#1d4ed8"; attackBtn.style.borderColor = "#3b82f6"; attackBtn.style.color = "#fff"; }
+    if (switchBtn) { switchBtn.style.background = ""; switchBtn.style.borderColor = ""; switchBtn.style.color = ""; }
+    if (moveButtons) moveButtons.style.display = "";
+    if (switchPanel) switchPanel.classList.remove("visible");
+
+    // Re-enable move/target inputs.
+    const moveInp = document.getElementById("move-input-" + slotPk);
+    const targetInp = document.getElementById("target-input-" + slotPk);
+    if (moveInp) moveInp.disabled = false;
+    if (targetInp) targetInp.disabled = false;
+
+    // Clear switch input.
+    const switchInp = document.getElementById("switch-input-" + slotPk);
+    if (switchInp) { switchInp.value = ""; switchInp.disabled = true; }
+
+    // Clear selection
+    document.querySelectorAll(`[id^="switch-opt-${slotPk}-"]`).forEach(function (el) {
+      el.classList.remove("selected-switch");
+    });
+
+    const pending = document.getElementById("switch-pending-" + slotPk);
+    if (pending) pending.style.display = "none";
+  };
+
+  window.selectSwitch = function (activeSlotPk, benchSlotPk, benchName) {
+    // Highlight selection
+    document.querySelectorAll(`[id^="switch-opt-${activeSlotPk}-"]`).forEach(function (el) {
+      el.classList.remove("selected-switch");
+    });
+    const opt = document.getElementById("switch-opt-" + activeSlotPk + "-" + benchSlotPk);
+    if (opt) opt.classList.add("selected-switch");
+
+    // Enable the switch hidden input with the bench slot pk.
+    const switchInp = document.getElementById("switch-input-" + activeSlotPk);
+    if (switchInp) { switchInp.value = benchSlotPk; switchInp.disabled = false; }
+
+    const pending = document.getElementById("switch-pending-" + activeSlotPk);
+    if (pending) pending.textContent = "Switching in: " + benchName;
+  };
 
   // ── Form submit spinner ──────────────────────────────────────
   const form = document.getElementById("battle-form");

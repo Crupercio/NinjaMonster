@@ -1,6 +1,6 @@
 """Currency services for the Ryo wallet system."""
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -64,13 +64,21 @@ def claim_daily_reward(user: "User") -> int:  # type: ignore[name-defined]
     Returns the amount awarded.
     Raises ValueError if already claimed today.
     """
-    user.refresh_from_db(fields=["last_daily_claim", "ryo"])
+    user.refresh_from_db(fields=["last_daily_claim", "ryo", "daily_claim_streak", "max_daily_claim_streak"])
     if not can_claim_daily(user):
         raise ValueError("Daily reward already claimed today.")
+
+    # Streak tracking: consecutive = claimed yesterday, else reset to 1
+    yesterday = date.today() - timedelta(days=1)
+    new_streak = (user.daily_claim_streak + 1) if user.last_daily_claim == yesterday else 1
+    new_max = max(user.max_daily_claim_streak, new_streak)
+
     User.objects.filter(pk=user.pk).update(
         ryo=F("ryo") + DAILY_REWARD_RYO,
         last_daily_claim=date.today(),
+        daily_claim_streak=new_streak,
+        max_daily_claim_streak=new_max,
     )
-    user.refresh_from_db(fields=["ryo", "last_daily_claim"])
-    logger.info("Daily reward claimed by %s (+%d Ryo)", user, DAILY_REWARD_RYO)
+    user.refresh_from_db(fields=["ryo", "last_daily_claim", "daily_claim_streak", "max_daily_claim_streak"])
+    logger.info("Daily reward claimed by %s (+%d Ryo, streak=%d)", user, DAILY_REWARD_RYO, new_streak)
     return DAILY_REWARD_RYO

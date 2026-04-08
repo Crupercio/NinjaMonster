@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, F
 
 from apps.pokemon.models import Pokemon
 from apps.users.services import deduct_ryo
@@ -323,6 +323,10 @@ class StickerService:
             )
 
         logger.info("Player %s opened a sticker pack — got %d stickers", player, len(stickers))
+
+        from apps.quests.services import QuestService
+        QuestService().on_pack_opened(player)
+
         return stickers
 
     @transaction.atomic
@@ -632,6 +636,11 @@ class TradeService:
             to_user=receiver,
             sticker_given=offered_sticker,
             sticker_received=accepting_sticker,
+        )
+
+        # Badge tracking: increment trades_completed for both parties
+        User.objects.filter(pk__in=[original_sender.pk, receiver.pk]).update(
+            trades_completed=F("trades_completed") + 1
         )
 
         logger.info(

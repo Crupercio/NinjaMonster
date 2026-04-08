@@ -104,6 +104,7 @@ class Battle(models.Model):
         default=AIDifficulty.MEDIUM,
         blank=True,
     )
+    is_tutorial = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

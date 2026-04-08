@@ -129,8 +129,45 @@
   {% endfor %}
 </div>
 
-<div style="display:flex;gap:1rem;">
+{# ── Combo chain preview ─────────────────────────────────────────────────── #}
+<div style="margin-bottom:2rem;">
+  <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid #1e3a6e;">
+    Combo Chain Preview
+  </div>
+
+  {% if combo_links %}
+  <p style="color:#9ca3af;font-size:0.8rem;margin-bottom:0.75rem;">
+    Your team can trigger the following Kizuna combos. Each link fires automatically when the status is applied.
+  </p>
+  <div style="display:flex;flex-direction:column;gap:0.5rem;">
+    {% for link in combo_links %}
+    <div style="background:#0f1a2e;border:1px solid #1e3a6e;border-radius:8px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;font-size:0.82rem;">
+      <span style="font-weight:700;color:#60a5fa;">{{ link.from_name }}</span>
+      <span style="color:#6b7280;">uses</span>
+      <span style="color:#fbbf24;font-weight:600;">{{ link.from_move }}</span>
+      <span style="color:#6b7280;">→ applies</span>
+      <span style="background:#1e3a6e;color:#a5b4fc;border-radius:20px;padding:1px 8px;font-size:0.72rem;font-weight:700;">{{ link.status_name }}</span>
+      <span style="color:#6b7280;">→</span>
+      <span style="font-weight:700;color:#4ade80;">{{ link.to_name }}</span>
+      <span style="color:#6b7280;">triggers</span>
+      <span style="color:#fbbf24;font-weight:600;">{{ link.to_move }}</span>
+      <span style="margin-left:auto;background:#052e16;color:#4ade80;border:1px solid #4ade80;border-radius:20px;padding:1px 8px;font-size:0.72rem;font-weight:700;">{{ link.amp }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#0f1a2e;border:1px dashed #1e3a6e;border-radius:8px;padding:1.25rem;text-align:center;color:#6b7280;font-size:0.875rem;">
+    {% if slots|length == 0 or combo_links is not None %}
+    No combo chains detected yet.<br>
+    <span style="font-size:0.78rem;">Assign Pokemon with Chase Techniques that trigger on statuses applied by teammates to see combos here.</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div style="display:flex;gap:1rem;flex-wrap:wrap;">
   <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary">My Pokémon</a>
+  <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary">Type Chart</a>
   <a href="{% url 'game:home' %}" class="btn btn-secondary">Back to Home</a>
 </div>
 {% endblock %}

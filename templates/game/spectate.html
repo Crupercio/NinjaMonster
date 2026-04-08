@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% load battle_tags %}
+{% block title %}Watching Battle #{{ battle.pk }}{% endblock %}
+
+{% block extra_css %}
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+.spectate-banner {
+  background: #0f3460; border: 1px solid #e94560;
+  border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.spectate-badge {
+  background: #e94560; color: #fff; font-weight: 700;
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+  padding: 2px 8px; border-radius: 10px;
+}
+
+/* Reuse battle_detail card styles */
+.battlefield {
+  display: grid; grid-template-columns: 1fr 48px 1fr;
+  gap: 0.75rem; align-items: start; margin-bottom: 1.25rem;
+}
+.vs-label { text-align:center; font-size:1.4rem; font-weight:800; color:#e94560; padding-top:1.5rem; align-self:center; }
+.team-side { display:flex; flex-direction:column; gap:0.5rem; }
+.team-side-label { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; margin-bottom:0.25rem; }
+.pokemon-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+.pokemon-card { background:#16213e; border:2px solid #1e3a6e; border-radius:8px; padding:0.6rem 0.75rem; position:relative; min-width:0; }
+.pokemon-card.fainted { opacity:0.4; border-color:#374151; }
+.pokemon-card.damage-flash { animation:damage-flash 0.5s ease-out; }
+@keyframes damage-flash { 0%,60% { background:#7f1d1d; } 100% { background:#16213e; } }
+.card-name { font-size:0.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-pos-label { font-size:0.65rem; color:#6b7280; text-transform:uppercase; }
+.card-hp-text { font-size:0.7rem; color:#9ca3af; margin-top:2px; }
+.hp-bar-wrap { background:#374151; border-radius:4px; height:5px; overflow:hidden; margin-top:4px; }
+.hp-bar { height:100%; border-radius:4px; transition:width 0.6s ease-in-out; }
+.hp-green { background:#4ade80; } .hp-yellow { background:#facc15; } .hp-red { background:#f87171; }
+.status-badges { margin-top:4px; display:flex; flex-wrap:wrap; gap:2px; }
+.bench-row { display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap; }
+.bench-label { font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.25rem; }
+.bench-card { background:#0f1a2e; border:1px dashed #374151; border-radius:6px; padding:0.4rem 0.6rem; font-size:0.75rem; color:#9ca3af; min-width:100px; }
+.bench-card.fainted { opacity:0.35; }
+.combo-log { background:#0f3460; border:1px solid #e94560; border-radius:8px; padding:0.9rem; margin-bottom:1.25rem; }
+.combo-log h3 { color:#e94560; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem; }
+.combo-entry { font-size:0.85rem; padding:0.25rem 0; border-bottom:1px solid #1a3a6e; opacity:0; transform:translateX(-12px); animation:slide-in 0.3s ease forwards; }
+.combo-entry:last-child { border-bottom:none; }
+@keyframes slide-in { to { opacity:1; transform:translateX(0); } }
+.combo-chain-label { font-weight:700; color:#fbbf24; }
+.round-log { max-height:200px; overflow-y:auto; background:#0f1a2e; border-radius:6px; padding:0.65rem; }
+.log-entry { padding:0.15rem 0; font-size:0.82rem; }
+.log-action { color:#d1d5db; } .log-combo { color:#fbbf24; font-weight:600; }
+.log-faint { color:#f87171; } .log-status { color:#a78bfa; } .log-info { color:#9ca3af; font-style:italic; }
+.combo-banner { display:none; position:fixed; top:18%; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#e94560,#fbbf24); color:#fff; font-size:2.2rem; font-weight:900; padding:0.6rem 2rem; border-radius:12px; z-index:9999; pointer-events:none; animation:banner-pop 2.5s ease forwards; }
+@keyframes banner-pop { 0% { opacity:0; transform:translateX(-50%) scale(0.5); } 15% { opacity:1; transform:translateX(-50%) scale(1.1); } 25% { transform:translateX(-50%) scale(1.0); } 75% { opacity:1; } 100% { opacity:0; transform:translateX(-50%) scale(0.9); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="combo-banner" id="combo-banner"></div>
+
+<!-- Spectator banner -->
+<div class="spectate-banner">
+  <span class="spectate-badge">Spectating</span>
+  <span style="color:#d1d5db;">Battle #{{ battle.pk }}</span>
+  <span id="round-label" style="color:#9ca3af;">Round {{ battle.current_round }}</span>
+  {% if battle.is_ai_battle %}
+    <span class="badge badge-warning" style="background:#78350f;color:#fcd34d;">vs AI ({{ battle.ai_difficulty|upper }})</span>
+  {% endif %}
+  <a href="{% url 'game:spectate_list' %}" style="margin-left:auto;font-size:0.78rem;color:#9ca3af;">← All battles</a>
+</div>
+
+{% if battle.winner %}
+<div style="background:#052e16;border:1px solid #4ade80;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
+  <strong style="color:#4ade80;">🏆 {{ battle.winner }} wins!</strong>
+  <span style="color:#9ca3af;">Max combo: ×{{ battle.max_combo_chain }}</span>
+</div>
+{% endif %}
+
+{% if combo_logs %}
+<div class="combo-log" id="combo-log">
+  <h3>Combo Chain Log</h3>
+  <div id="combo-log-entries">
+    {% for log in combo_logs %}
+      <div class="combo-entry">
+        <span class="combo-chain-label">{{ log.message }}</span>
+        {% if log.chain_total %}<span style="color:#9ca3af;font-size:0.72rem;margin-left:0.4rem;">({{ log.chain_total }} moves)</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="combo-log" id="combo-log" style="display:none">
+  <h3>Combo Chain Log</h3>
+  <div id="combo-log-entries"></div>
+</div>
+{% endif %}
+
+<!-- Battlefield (read-only) -->
+<div class="battlefield">
+
+  <!-- Team One -->
+  <div class="team-side">
+    <div class="team-side-label">{{ battle.player_one }}</div>
+    <div class="pokemon-grid-2x2" id="team-one-grid">
+      {% for slot in team_one_active %}
+        <div class="pokemon-card {% if slot.is_fainted %}fainted{% endif %}" id="slot-{{ slot.pk }}">
+          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+          <div class="card-name">{{ slot.pokemon.name }}</div>
+          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar {{ slot.hp_percentage|hp_color }}" id="hp-bar-{{ slot.pk }}" style="width:{{ slot.hp_percentage }}%"></div>
+          </div>
+          <div class="status-badges" id="status-badges-{{ slot.pk }}">
+            {% for active in slot.active_statuses.all %}
+              <span class="badge {{ active.status.name|status_badge_class }}">{{ active.status.get_name_display }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="color:#6b7280;font-size:0.85rem;grid-column:span 2;">No active slots.</div>
+      {% endfor %}
+    </div>
+    {% if team_one %}
+      {% with bench=team_one.slots.all %}
+        {% if bench %}
+        <div>
+          <div class="bench-label">Bench</div>
+          <div class="bench-row">
+            {% for slot in bench %}
+              {% if not slot.is_active %}
+              <div class="bench-card {% if slot.is_fainted %}fainted{% endif %}" id="slot-{{ slot.pk }}">
+                <div style="font-weight:700;font-size:0.8rem;">{{ slot.pokemon.name }}</div>
+                <div style="font-size:0.7rem;color:#9ca3af;" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+                <div class="hp-bar-wrap" style="margin-top:3px;">
+                  <div class="hp-bar {{ slot.hp_percentage|hp_color }}" id="hp-bar-{{ slot.pk }}" style="width:{{ slot.hp_percentage }}%"></div>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+  </div>
+
+  <div class="vs-label">VS</div>
+
+  <!-- Team Two -->
+  <div class="team-side">
+    <div class="team-side-label">{% if battle.player_two %}{{ battle.player_two }}{% else %}AI{% endif %}</div>
+    <div class="pokemon-grid-2x2" id="team-two-grid">
+      {% for slot in team_two_active %}
+        <div class="pokemon-card {% if slot.is_fainted %}fainted{% endif %}" id="slot-{{ slot.pk }}">
+          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+          <div class="card-name">{{ slot.pokemon.name }}</div>
+          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar {{ slot.hp_percentage|hp_color }}" id="hp-bar-{{ slot.pk }}" style="width:{{ slot.hp_percentage }}%"></div>
+          </div>
+          <div class="status-badges" id="status-badges-{{ slot.pk }}">
+            {% for active in slot.active_statuses.all %}
+              <span class="badge {{ active.status.name|status_badge_class }}">{{ active.status.get_name_display }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="color:#6b7280;font-size:0.85rem;grid-column:span 2;">No active slots.</div>
+      {% endfor %}
+    </div>
+    {% if team_two %}
+      {% with bench=team_two.slots.all %}
+        {% if bench %}
+        <div>
+          <div class="bench-label">Bench</div>
+          <div class="bench-row">
+            {% for slot in bench %}
+              {% if not slot.is_active %}
+              <div class="bench-card {% if slot.is_fainted %}fainted{% endif %}" id="slot-{{ slot.pk }}">
+                <div style="font-weight:700;font-size:0.8rem;">{{ slot.pokemon.name }}</div>
+                <div style="font-size:0.7rem;color:#9ca3af;">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Round log -->
+<div style="margin-bottom:1.25rem;">
+  <h3 style="font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;margin-bottom:0.5rem;">Round Log</h3>
+  <div class="round-log" id="round-log">
+    {% for log in logs %}
+      <div class="log-entry log-{{ log.log_type }}">
+        {% if log.log_type == 'combo' %}⚡ {% elif log.log_type == 'faint' %}💀 {% elif log.log_type == 'status' %}✦ {% endif %}
+        {{ log.message }}
+      </div>
+    {% empty %}
+      <div style="color:#6b7280;font-size:0.82rem;">Waiting for the first action…</div>
+    {% endfor %}
+  </div>
+</div>
+
+<a href="{% url 'game:spectate_list' %}" class="btn btn-secondary btn-sm">← Back to live battles</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const BATTLE_PK = {{ battle.pk }};
+
+  // ── WebSocket ────────────────────────────────────────────────
+  let ws = null;
+
+  function connectWS() {
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${proto}://${location.host}/ws/battle/${BATTLE_PK}/spectate/`);
+
+    ws.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      if (data.type === "battle_update") applyUpdate(data.payload);
+      else if (data.type === "battle_end") location.reload();
+    };
+    ws.onclose = function () {
+      // Reconnect after 3s
+      setTimeout(connectWS, 3000);
+    };
+  }
+
+  connectWS();
+
+  // ── Apply update ─────────────────────────────────────────────
+  function applyUpdate(payload) {
+    const roundLabel = document.getElementById("round-label");
+    if (roundLabel) roundLabel.textContent = "Round " + payload.current_round;
+
+    payload.teams.forEach(function (team) {
+      team.slots.forEach(function (slot) { updateSlot(slot); });
+    });
+
+    if (payload.combo_logs && payload.combo_logs.length > 0) {
+      renderComboLog(payload.combo_logs);
+      const maxChain = payload.combo_logs.reduce((m, l) => Math.max(m, l.chain_total || 0), 0);
+      if (maxChain >= 5) showComboBanner(maxChain);
+    }
+
+    if (payload.status === "finished") {
+      setTimeout(function () { location.reload(); }, 1500);
+    }
+  }
+
+  function updateSlot(slot) {
+    const card = document.getElementById("slot-" + slot.pk);
+    if (!card) return;
+
+    const hpTextEl = document.getElementById("hp-text-" + slot.pk);
+    const oldHp = hpTextEl ? parseInt(hpTextEl.textContent.split("/")[0]) : slot.current_hp;
+    if (hpTextEl) hpTextEl.textContent = slot.current_hp + "/" + slot.max_hp;
+
+    const bar = document.getElementById("hp-bar-" + slot.pk);
+    if (bar) {
+      bar.style.width = slot.hp_percentage + "%";
+      bar.className = "hp-bar " + hpColorClass(slot.hp_percentage);
+    }
+
+    if (slot.current_hp < oldHp) {
+      card.classList.remove("damage-flash");
+      void card.offsetWidth;
+      card.classList.add("damage-flash");
+      setTimeout(function () { card.classList.remove("damage-flash"); }, 600);
+    }
+
+    if (slot.is_fainted) card.classList.add("fainted");
+
+    const badgesEl = document.getElementById("status-badges-" + slot.pk);
+    if (badgesEl) {
+      badgesEl.innerHTML = (slot.statuses || []).map(function (s) {
+        return `<span class="badge badge-info">${s.display}</span>`;
+      }).join("");
+    }
+  }
+
+  function hpColorClass(pct) {
+    if (pct > 50) return "hp-green";
+    if (pct > 20) return "hp-yellow";
+    return "hp-red";
+  }
+
+  function renderComboLog(logs) {
+    const container = document.getElementById("combo-log");
+    const entries = document.getElementById("combo-log-entries");
+    if (!container || !entries) return;
+    entries.innerHTML = logs.map(function (log) {
+      const chainSpan = log.chain_total
+        ? `<span style="color:#9ca3af;font-size:0.72rem;margin-left:0.4rem;">(${log.chain_total} moves)</span>`
+        : "";
+      return `<div class="combo-entry"><span class="combo-chain-label">${log.message}</span>${chainSpan}</div>`;
+    }).join("");
+    container.style.display = "";
+  }
+
+  function showComboBanner(chainLen) {
+    const banner = document.getElementById("combo-banner");
+    if (!banner) return;
+    banner.textContent = "COMBO x" + chainLen + "!";
+    banner.style.display = "block";
+    setTimeout(function () { banner.style.display = "none"; }, 2600);
+  }
+})();
+</script>
+{% endblock %}

@@ -11,6 +11,7 @@ from apps.users.services import award_ryo, sell_value_for_level
 
 from .models import OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
 from .services import claim_training, create_owned_pokemon, start_training, stop_training
+from .type_chart import ALL_TYPES, TYPE_COLORS, build_chart_matrix, get_effectiveness
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,63 @@ class MyPokemonView(LoginRequiredMixin, TemplateView):
         return redirect("pokemon:my_pokemon")
 
 
+def _build_combo_preview(owned_pokemon_list: list) -> list[dict]:
+    """
+    Analyse a list of OwnedPokemon and return all combo chain links present.
+
+    Each link dict:
+      {
+        "from_name": str,          # attacker species name
+        "from_move": str,          # move that applies the status
+        "status_name": str,        # the status being applied
+        "to_name": str,            # triggered pokemon species name
+        "to_move": str,            # chase move that fires
+        "amp": str,                # e.g. "×1.10"
+      }
+
+    Only OwnedPokemon with all four move slots assigned are considered
+    (they must be battle-ready).
+    """
+    from apps.game.services import COMBO_AMP
+
+    # Gather pokemon that have a chase move with trigger_status
+    links: list[dict] = []
+
+    for op in owned_pokemon_list:
+        # Skip pokemon without all required moves
+        if not (op.move_standard and op.move_chase and op.move_special and op.move_support):
+            continue
+
+        # Does this pokemon's standard/special/support move apply a status?
+        for applier_move in (op.move_standard, op.move_special, op.move_support):
+            if applier_move is None or applier_move.applies_status_id is None:
+                continue
+            applied_status = applier_move.applies_status
+
+            # Find other team members whose chase move triggers on that status
+            for other_op in owned_pokemon_list:
+                if other_op.pk == op.pk:
+                    continue
+                if not (other_op.move_chase and other_op.move_chase.trigger_status_id is not None):
+                    continue
+                if other_op.move_chase.trigger_status_id != applied_status.pk:
+                    continue
+
+                # Link 2 is always ×1.10 (the first triggered link)
+                amp = f"×{COMBO_AMP[1]:.2f}"
+
+                links.append({
+                    "from_name": op.species.name,
+                    "from_move": str(applier_move),
+                    "status_name": applied_status.name,
+                    "to_name": other_op.species.name,
+                    "to_move": str(other_op.move_chase),
+                    "amp": amp,
+                })
+
+    return links
+
+
 class TeamView(LoginRequiredMixin, TemplateView):
     """Show the trainer's persistent 6-slot team with assign/remove controls."""
 
@@ -139,18 +197,26 @@ class TeamView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs: object) -> dict:
         context = super().get_context_data(**kwargs)
         team = Team.get_team(self.request.user)
-        slots_by_position = {
-            s.position: s
-            for s in team.slots.select_related(
+        team_slots = list(
+            team.slots.select_related(
                 "pokemon__species__primary_type",
                 "pokemon__species__secondary_type",
+                "pokemon__move_standard__applies_status",
+                "pokemon__move_chase__trigger_status",
+                "pokemon__move_special__applies_status",
+                "pokemon__move_support__applies_status",
             )
-        }
+        )
+        slots_by_position = {s.position: s for s in team_slots}
         context["team"] = team
         context["slots"] = [
             {"position": i, "slot": slots_by_position.get(i)}
             for i in range(1, 7)
         ]
+
+        # Combo chain preview — only for filled slots
+        owned_pokemon = [s.pokemon for s in team_slots if s.pokemon is not None]
+        context["combo_links"] = _build_combo_preview(owned_pokemon)
         return context
 
 
@@ -302,4 +368,36 @@ class OwnedPokemonDetailView(LoginRequiredMixin, DetailView):
             ("Support Technique", "support", op.move_support),
             ("Ninja Trait", "passive", op.move_passive),
         ]
+        return context
+
+
+class TypeChartView(TemplateView):
+    """
+    Full 18×18 type effectiveness chart, accessible from the Pokedex and Team Builder.
+
+    GET /pokemon/types/
+    GET /pokemon/types/?focus=Fire  — pre-highlight a specific type column/row
+    """
+
+    template_name = "pokemon/type_chart.html"
+
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["chart"] = build_chart_matrix()
+        context["all_types"] = ALL_TYPES
+        context["type_colors"] = TYPE_COLORS
+        focus = self.request.GET.get("focus", "").strip().title()
+        context["focus_type"] = focus if focus in ALL_TYPES else ""
+
+        # Per-type detail for the focused type (strengths / weaknesses / immunities)
+        if context["focus_type"]:
+            ft = context["focus_type"]
+            context["focus_detail"] = {
+                "super_effective_vs": [d for d in ALL_TYPES if get_effectiveness(ft, d) == 2.0],
+                "not_very_vs":        [d for d in ALL_TYPES if get_effectiveness(ft, d) == 0.5],
+                "immune_vs":          [d for d in ALL_TYPES if get_effectiveness(ft, d) == 0.0],
+                "weak_to":            [a for a in ALL_TYPES if get_effectiveness(a, ft) == 2.0],
+                "resists":            [a for a in ALL_TYPES if get_effectiveness(a, ft) == 0.5],
+                "immune_to":          [a for a in ALL_TYPES if get_effectiveness(a, ft) == 0.0],
+            }
         return context

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Seasonal Events{% endblock %}
+
+{% block extra_css %}
+<style>
+.events-hero { margin-bottom: 1.5rem; }
+.events-hero h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+.events-hero p  { color: #9ca3af; font-size: 0.875rem; }
+
+.events-section { margin-bottom: 2rem; }
+.events-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #1e3a6e;
+}
+
+.event-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.event-card.active   { border-color: #f59e0b; background: linear-gradient(135deg,#1a1a4e,#0f3460); }
+.event-card.upcoming { border-color: #3b82f6; }
+.event-card.ended    { opacity: 0.5; }
+
+.event-icon { font-size: 1.5rem; flex-shrink: 0; }
+.event-info { flex: 1; min-width: 200px; }
+.event-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fbbf24;
+  margin-bottom: 0.2rem;
+}
+.event-card.upcoming .event-name { color: #93c5fd; }
+.event-card.ended    .event-name { color: #9ca3af; }
+.event-desc { color: #d1d5db; font-size: 0.8rem; margin-bottom: 0.3rem; }
+.event-flavor {
+  color: #93c5fd;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+.event-meta { text-align: right; min-width: 110px; flex-shrink: 0; }
+.event-bonus {
+  background: #0f3460;
+  color: #4ade80;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  display: inline-block;
+}
+.event-dates { color: #6b7280; font-size: 0.7rem; }
+
+.empty-state {
+  background: #0f1a2e;
+  border: 1px dashed #1e3a6e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="events-hero">
+  <h1>Seasonal Events</h1>
+  <p>Limited-time events grant bonus rewards. Win battles during an active event to earn extra Ryo, Sticker Dust, and more.</p>
+</div>
+
+{# ── Active Events ────────────────────────────────────────────── #}
+<div class="events-section">
+  <div class="events-section-title">Active Now</div>
+  {% if active_events %}
+    {% for event in active_events %}
+    <div class="event-card active">
+      <div class="event-icon">🎉</div>
+      <div class="event-info">
+        <div class="event-name">{{ event.name }}</div>
+        <div class="event-desc">{{ event.description }}</div>
+        {% if event.flavor_text %}<div class="event-flavor">{{ event.flavor_text }}</div>{% endif %}
+      </div>
+      <div class="event-meta">
+        <div class="event-bonus">+{{ event.bonus_value }} {{ event.get_event_type_display }}</div>
+        <div class="event-dates">
+          Ends {{ event.end_at|date:"M j" }}<br>
+          <span style="color:#fbbf24;">{{ event.end_at|timeuntil }} left</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">No events are running right now. Check back soon!</div>
+  {% endif %}
+</div>
+
+{# ── Upcoming Events ──────────────────────────────────────────── #}
+<div class="events-section">
+  <div class="events-section-title">Coming Soon</div>
+  {% if upcoming_events %}
+    {% for event in upcoming_events %}
+    <div class="event-card upcoming">
+      <div class="event-icon">📅</div>
+      <div class="event-info">
+        <div class="event-name">{{ event.name }}</div>
+        <div class="event-desc">{{ event.description }}</div>
+      </div>
+      <div class="event-meta">
+        <div class="event-bonus">+{{ event.bonus_value }} {{ event.get_event_type_display }}</div>
+        <div class="event-dates">
+          Starts {{ event.start_at|date:"M j" }}<br>
+          in {{ event.start_at|timeuntil }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">No upcoming events scheduled.</div>
+  {% endif %}
+</div>
+
+{# ── Recently Ended ───────────────────────────────────────────── #}
+{% if ended_events %}
+<div class="events-section">
+  <div class="events-section-title">Recently Ended</div>
+  {% for event in ended_events %}
+  <div class="event-card ended">
+    <div class="event-icon">📜</div>
+    <div class="event-info">
+      <div class="event-name">{{ event.name }}</div>
+      <div class="event-desc">{{ event.description }}</div>
+    </div>
+    <div class="event-meta">
+      <div class="event-bonus" style="opacity:0.6;">+{{ event.bonus_value }} {{ event.get_event_type_display }}</div>
+      <div class="event-dates">Ended {{ event.end_at|date:"M j" }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

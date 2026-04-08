@@ -15,6 +15,9 @@ urlpatterns = [
     path("pokemon/", include("apps.pokemon.urls", namespace="pokemon")),
     path("battle/", include("apps.game.urls", namespace="game")),
     path("stickers/", include("apps.stickers.urls", namespace="stickers")),
+    path("quests/", include("apps.quests.urls", namespace="quests")),
+    path("ranked/", include("apps.ranked.urls", namespace="ranked")),
+    path("events/", include("apps.events.urls", namespace="events")),
 ]
 
 if settings.DEBUG:

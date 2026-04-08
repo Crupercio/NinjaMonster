@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.display_name|default:profile_user.username }} — Trainer Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Header ───────────────────────────────────────────────────── */
+.profile-header {
+  display: flex; align-items: flex-start; gap: 1.5rem;
+  background: #16213e; border: 1px solid #1e3a6e;
+  border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: #0f3460; border: 2px solid #e94560;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; flex-shrink: 0;
+}
+.profile-info { flex: 1; min-width: 160px; }
+.profile-name {
+  font-size: 1.4rem; font-weight: 800; margin-bottom: 0.15rem;
+}
+.profile-username { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.75rem; }
+
+/* ── Stats row ────────────────────────────────────────────────── */
+.stat-row {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+}
+.stat-box {
+  background: #16213e; border: 1px solid #1e3a6e;
+  border-radius: 10px; padding: 0.9rem 1.25rem;
+  text-align: center; flex: 1; min-width: 110px;
+}
+.stat-value {
+  font-size: 1.5rem; font-weight: 800; color: #60a5fa;
+  line-height: 1.2; margin-bottom: 0.2rem;
+}
+.stat-label { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Section header ───────────────────────────────────────────── */
+.section-title {
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px; color: #6b7280;
+  margin-bottom: 0.75rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid #1e3a6e;
+}
+
+/* ── Showcase ─────────────────────────────────────────────────── */
+.showcase-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.6rem; margin-bottom: 1.5rem;
+}
+.showcase-card {
+  background: #0f1a2e; border: 1px solid #1e3a6e;
+  border-radius: 8px; padding: 0.75rem 0.5rem;
+  text-align: center; font-size: 0.72rem;
+}
+.showcase-card .s-name { font-weight: 700; margin-bottom: 0.2rem; }
+.showcase-card .s-rarity { color: #6b7280; font-size: 0.65rem; }
+.showcase-empty {
+  color: #4b5563; font-size: 0.875rem; font-style: italic;
+  padding: 0.75rem 0; margin-bottom: 1.5rem;
+}
+
+/* ── Badges ───────────────────────────────────────────────────── */
+.badge-grid {
+  display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem;
+}
+.badge-item {
+  background: #0f1a2e; border: 1px solid #1e3a6e;
+  border-radius: 8px; padding: 0.5rem 0.75rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; opacity: 0.4; transition: opacity 0.2s;
+}
+.badge-item.earned { opacity: 1; border-color: #4ade80; }
+.badge-icon { font-size: 1.1rem; }
+.badge-info .badge-name { font-weight: 700; font-size: 0.78rem; }
+.badge-info .badge-desc { color: #9ca3af; font-size: 0.68rem; }
+
+/* ── Recent battles ───────────────────────────────────────────── */
+.battle-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: #16213e; border: 1px solid #1e3a6e;
+  border-radius: 8px; padding: 0.6rem 0.9rem;
+  margin-bottom: 0.4rem; font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+.battle-result {
+  font-weight: 800; font-size: 0.75rem;
+  text-transform: uppercase; min-width: 42px;
+}
+.result-win  { color: #4ade80; }
+.result-loss { color: #f87171; }
+.battle-opponent { flex: 1; color: #9ca3af; }
+.battle-chain { color: #fbbf24; font-size: 0.75rem; }
+.battle-link { color: #6b7280; font-size: 0.72rem; margin-left: auto; }
+.battle-link a { color: #60a5fa; }
+
+/* ── Story quests ─────────────────────────────────────────────── */
+.story-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  font-size: 0.82rem; padding: 0.35rem 0;
+  border-bottom: 1px solid #1e3a6e;
+}
+.story-row:last-child { border-bottom: none; }
+.story-check { font-size: 0.9rem; }
+.story-name { flex: 1; }
+.story-name.done { color: #4ade80; }
+.story-name.pending { color: #6b7280; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Profile header ───────────────────────────────────────────────────────── #}
+<div class="profile-header">
+  <div class="profile-avatar">🥷</div>
+  <div class="profile-info">
+    <div class="profile-name">{{ profile_user.display_name|default:profile_user.username }}</div>
+    <div class="profile-username">@{{ profile_user.username }}</div>
+    {% if is_own_profile %}
+    <a href="{% url 'quests:quest_list' %}" class="btn btn-secondary btn-sm" style="margin-right:0.5rem;">Quests</a>
+    <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Stats row ────────────────────────────────────────────────────────────── #}
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="stat-value">{{ profile_user.battles_won }}</div>
+    <div class="stat-label">Wins</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">{{ profile_user.battles_played }}</div>
+    <div class="stat-label">Battles</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">{{ profile_user.win_rate }}%</div>
+    <div class="stat-label">Win Rate</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">{{ profile_user.longest_combo_chain }}</div>
+    <div class="stat-label">Best Chain</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">{{ stickers_total }}</div>
+    <div class="stat-label">Stickers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">{{ profile_user.ryo }}</div>
+    <div class="stat-label">Ryo</div>
+  </div>
+</div>
+
+{# ── Showcase stickers ────────────────────────────────────────────────────── #}
+<div class="section-title">Showcase</div>
+{% if showcase_stickers %}
+<div class="showcase-grid">
+  {% for sticker in showcase_stickers %}
+  <div class="showcase-card" style="border-color:
+    {% if sticker.rarity == 'secret_rare' %}#a78bfa
+    {% elif sticker.rarity == 'full_art' %}#f97316
+    {% elif sticker.rarity == 'holographic' %}#38bdf8
+    {% elif sticker.rarity == 'epic' %}#c084fc
+    {% elif sticker.rarity == 'rare' %}#facc15
+    {% else %}#1e3a6e{% endif %};">
+    <div class="s-name">{{ sticker.pokemon.name }}</div>
+    <div class="s-rarity">{{ sticker.get_rarity_display }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="showcase-empty">
+  {% if is_own_profile %}
+    No showcase stickers yet — mark stickers as "showcase" in your album.
+  {% else %}
+    This trainer hasn't pinned any stickers to their showcase.
+  {% endif %}
+</div>
+{% endif %}
+
+{# ── Achievement badges ───────────────────────────────────────────────────── #}
+<div class="section-title">Achievement Badges</div>
+<div class="badge-grid" style="margin-bottom:1.5rem;">
+  {% for badge in badges %}
+  <div class="badge-item{% if badge.earned %} earned{% endif %}" title="{{ badge.description }}">
+    <span class="badge-icon">{{ badge.icon }}</span>
+    <div class="badge-info">
+      <div class="badge-name">{{ badge.name }}</div>
+      <div class="badge-desc">{{ badge.rarity }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Story quest progress ──────────────────────────────────────────────────── #}
+{% if story_quests %}
+<div class="section-title">Story Progress</div>
+<div style="background:#16213e;border:1px solid #1e3a6e;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.5rem;">
+  {% for uq in story_quests %}
+  <div class="story-row">
+    <span class="story-check">{% if uq.completed %}✅{% else %}⬜{% endif %}</span>
+    <span class="story-name {% if uq.completed %}done{% else %}pending{% endif %}">{{ uq.template.name }}</span>
+    {% if not uq.completed %}
+    <span style="color:#6b7280;font-size:0.72rem;">{{ uq.progress }}/{{ uq.template.condition_value }}</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ── Recent battles ───────────────────────────────────────────────────────── #}
+<div class="section-title">Recent Battles</div>
+{% if recent_battles %}
+{% for battle in recent_battles %}
+<div class="battle-row">
+  {% if battle.winner_id == profile_user.pk %}
+    <span class="battle-result result-win">WIN</span>
+  {% elif battle.winner_id %}
+    <span class="battle-result result-loss">LOSS</span>
+  {% else %}
+    <span class="battle-result" style="color:#9ca3af;">–</span>
+  {% endif %}
+
+  <span class="battle-opponent">
+    {% if battle.is_ai_battle %}
+      vs AI ({{ battle.ai_difficulty|upper }})
+    {% elif battle.player_one_id == profile_user.pk and battle.player_two %}
+      vs {{ battle.player_two.display_name|default:battle.player_two.username }}
+    {% elif battle.player_two_id == profile_user.pk %}
+      vs {{ battle.player_one.display_name|default:battle.player_one.username }}
+    {% else %}
+      Battle #{{ battle.pk }}
+    {% endif %}
+  </span>
+
+  {% if battle.max_combo_chain > 0 %}
+  <span class="battle-chain">⛓ x{{ battle.max_combo_chain }}</span>
+  {% endif %}
+
+  <span class="battle-link">
+    <a href="{% url 'game:battle_detail' battle.pk %}">View</a>
+  </span>
+</div>
+{% endfor %}
+
+{% else %}
+<div style="color:#4b5563;font-size:0.875rem;font-style:italic;padding:0.75rem 0;">
+  No battles recorded yet.
+</div>
+{% endif %}
+
+{% endblock %}

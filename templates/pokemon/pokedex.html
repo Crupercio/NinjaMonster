@@ -3,6 +3,8 @@
 {% block content %}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
   <h2>Pokedex</h2>
+  <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+  <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary btn-sm">Type Chart</a>
   <form method="get" style="display:flex;gap:0.5rem;align-items:center;">
     <select name="type" onchange="this.form.submit()">
       <option value="">All Types</option>
@@ -14,6 +16,7 @@
       <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">Clear</a>
     {% endif %}
   </form>
+  </div>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;">
