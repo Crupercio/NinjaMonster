@@ -7,8 +7,15 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
 
-from .models import DISMANTLE_VALUES, Sticker, StickerPack, StickerRarity, TradeOffer
-from .services import PACK_PRICE_RYO, StickerService, TradeService
+from .models import DISMANTLE_VALUES, Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
+from .services import (
+    PACK_PRICE_RYO,
+    POKEMON_COMPLETION_SLOTS,
+    StickerService,
+    TradeService,
+    _COMPLETION_RARITIES,
+    _COMPLETION_VARIANTS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +54,67 @@ class AlbumView(LoginRequiredMixin, TemplateView):
         context["unopened_packs"] = StickerPack.objects.filter(
             owner=self.request.user, opened=False
         ).count()
+        completion = _sticker_service.get_completion_rewards_for_album(self.request.user)
+        context.update(completion)
+        context["pokemon_completion_slots"] = POKEMON_COMPLETION_SLOTS
+        return context
+
+
+class PokemonAlbumDetailView(LoginRequiredMixin, TemplateView):
+    """
+    Per-Pokemon album page — 7×6 rarity/variant grid showing owned vs missing slots.
+
+    GET /stickers/album/<pokemon_pk>/
+    """
+
+    template_name = "stickers/pokemon_album.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pokemon = get_object_or_404(Pokemon, pk=kwargs["pokemon_pk"])
+        user = self.request.user
+
+        # Build a set of (rarity, variant) tuples the player owns for this pokemon
+        owned_slots: set[tuple[str, str]] = set(
+            Sticker.objects.filter(owner=user, pokemon=pokemon)
+            .values_list("rarity", "variant")
+            .distinct()
+        )
+
+        # Count copies per slot (for duplicate display)
+        from django.db.models import Count as _Count
+        copy_counts: dict[tuple[str, str], int] = {
+            (row["rarity"], row["variant"]): row["count"]
+            for row in Sticker.objects.filter(owner=user, pokemon=pokemon)
+            .values("rarity", "variant")
+            .annotate(count=_Count("id"))
+        }
+
+        # Build the grid: list[dict] ordered rarity-major, variant-minor
+        grid = []
+        for rarity in _COMPLETION_RARITIES:
+            for variant in _COMPLETION_VARIANTS:
+                slot = (rarity, variant)
+                grid.append({
+                    "rarity": rarity,
+                    "rarity_label": StickerRarity(rarity).label,
+                    "variant": variant,
+                    "variant_label": StickerVariant(variant).label,
+                    "owned": slot in owned_slots,
+                    "copies": copy_counts.get(slot, 0),
+                })
+
+        # Completion check
+        is_complete = _sticker_service.check_pokemon_completion(user, pokemon)
+        slots_owned = len(owned_slots & {(r, v) for r in _COMPLETION_RARITIES for v in _COMPLETION_VARIANTS})
+
+        context["pokemon"] = pokemon
+        context["grid"] = grid
+        context["is_complete"] = is_complete
+        context["slots_owned"] = slots_owned
+        context["slots_total"] = POKEMON_COMPLETION_SLOTS
+        context["rarities"] = _COMPLETION_RARITIES
+        context["variants"] = _COMPLETION_VARIANTS
         return context
 
 

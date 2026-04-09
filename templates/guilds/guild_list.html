@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Guilds{% endblock %}
+
+{% block extra_css %}
+<style>
+.guilds-hero { margin-bottom: 1.5rem; }
+.guilds-hero h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+.guilds-hero p  { color: #9ca3af; font-size: 0.875rem; }
+
+.guild-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.guild-tag {
+  background: #0f3460;
+  color: #93c5fd;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: center;
+}
+.guild-info { flex: 1; min-width: 160px; }
+.guild-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.15rem; }
+.guild-desc { color: #9ca3af; font-size: 0.78rem; }
+.guild-meta { font-size: 0.75rem; color: #6b7280; white-space: nowrap; }
+.guild-actions { display: flex; gap: 0.4rem; }
+.badge-full {
+  background: #1f2937;
+  color: #6b7280;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+}
+.my-guild-badge {
+  background: #052e16;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="guilds-hero">
+  <h1>Guilds</h1>
+  <p>Join a guild to train alongside other trainers and compete as a team.</p>
+</div>
+
+<div style="display:flex;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center;">
+  {% if my_membership %}
+  <a href="{% url 'guilds:detail' my_membership.guild.pk %}" class="btn btn-secondary btn-sm">
+    My Guild: [{{ my_membership.guild.tag }}] {{ my_membership.guild.name }}
+  </a>
+  {% else %}
+  <a href="{% url 'guilds:create' %}" class="btn btn-primary btn-sm">Create Guild</a>
+  {% endif %}
+</div>
+
+{% if messages %}
+<div style="margin-bottom:1rem;">
+  {% for msg in messages %}
+  <div style="padding:0.6rem 0.9rem;border-radius:8px;font-size:0.875rem;
+    background:{% if msg.tags == 'error' %}#450a0a{% else %}#052e16{% endif %};
+    color:{% if msg.tags == 'error' %}#fca5a5{% else %}#4ade80{% endif %};">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if guilds %}
+{% for guild in guilds %}
+<div class="guild-card">
+  <div class="guild-tag">{{ guild.tag }}</div>
+  <div class="guild-info">
+    <div class="guild-name">
+      {{ guild.name }}
+      {% if my_membership and my_membership.guild_id == guild.pk %}
+      <span class="my-guild-badge">Your Guild</span>
+      {% endif %}
+    </div>
+    {% if guild.description %}<div class="guild-desc">{{ guild.description|truncatechars:80 }}</div>{% endif %}
+  </div>
+  <div class="guild-meta">
+    {{ guild.member_count }}/20 members
+    {% if not guild.is_recruiting %}&nbsp;· Closed{% endif %}
+  </div>
+  <div class="guild-actions">
+    <a href="{% url 'guilds:detail' guild.pk %}" class="btn btn-secondary btn-sm">View</a>
+    {% if not my_membership and guild.is_recruiting and not guild.is_full %}
+    <form method="post" action="{% url 'guilds:join' guild.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-sm">Join</button>
+    </form>
+    {% elif guild.is_full %}
+    <span class="badge-full">Full</span>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div style="background:#0f1a2e;border:1px dashed #1e3a6e;border-radius:8px;padding:2rem;text-align:center;color:#6b7280;">
+  No guilds yet. <a href="{% url 'guilds:create' %}">Create the first one!</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -42,6 +42,7 @@ LOCAL_APPS = [
     "apps.quests",
     "apps.ranked",
     "apps.events",
+    "apps.guilds",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

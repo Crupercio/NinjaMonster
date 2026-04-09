@@ -8,6 +8,7 @@ from .views import (
     DismantleView,
     DustConvertView,
     PackOpenView,
+    PokemonAlbumDetailView,
     TradeCreateView,
     TradeDetailView,
     TradeListView,
@@ -17,6 +18,7 @@ app_name = "stickers"
 
 urlpatterns = [
     path("album/", AlbumView.as_view(), name="album"),
+    path("album/<int:pokemon_pk>/", PokemonAlbumDetailView.as_view(), name="pokemon_album"),
     path("shop/buy/", BuyPackView.as_view(), name="buy_pack"),
     path("pack/<int:pk>/open/", PackOpenView.as_view(), name="pack_open"),
     path("trade/", TradeListView.as_view(), name="trade_list"),

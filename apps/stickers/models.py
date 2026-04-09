@@ -253,6 +253,50 @@ class TradeOffer(models.Model):
         return f"Trade #{self.pk}: {self.offered_by} offers {self.offered_sticker} ({self.status})"
 
 
+class AlbumRewardType(models.TextChoices):
+    POKEMON_COMPLETE = "pokemon_complete", "Pokemon Collection Complete"
+    FULL_DEX = "full_dex", "Full Pokedex Complete"
+
+
+class AlbumCompletionReward(models.Model):
+    """
+    Records a completion reward that was automatically granted to a player.
+
+    Prevents duplicate awards: unique_together on (user, reward_type, pokemon).
+    pokemon is NULL for the FULL_DEX reward.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="album_completion_rewards",
+        db_index=True,
+    )
+    reward_type = models.TextField(choices=AlbumRewardType.choices, db_index=True)
+    pokemon = models.ForeignKey(
+        "pokemon.Pokemon",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="completion_rewards",
+        db_index=True,
+    )
+    dust_awarded = models.PositiveIntegerField(default=0)
+    ryo_awarded = models.PositiveIntegerField(default=0)
+    packs_awarded = models.PositiveIntegerField(default=0)
+    claimed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "reward_type", "pokemon")]
+        ordering = ["-claimed_at"]
+        verbose_name = "album completion reward"
+        verbose_name_plural = "album completion rewards"
+
+    def __str__(self) -> str:
+        label = self.pokemon.name if self.pokemon else "Full Dex"
+        return f"{self.user} — {label} ({self.reward_type})"
+
+
 class TradeHistory(models.Model):
     """Immutable record of a completed trade."""
 

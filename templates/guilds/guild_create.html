@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Create a Guild{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;">
+  <a href="{% url 'guilds:list' %}" style="color:#6b7280;font-size:0.8rem;text-decoration:none;">← All Guilds</a>
+  <h1 style="font-size:1.4rem;font-weight:800;margin:0.75rem 0 0.25rem;">Create a Guild</h1>
+  <p style="color:#9ca3af;font-size:0.85rem;margin-bottom:1.2rem;">
+    Costs <span style="color:#fbbf24;font-weight:700;">{{ create_cost }} Ryo</span>.
+    You have <span style="color:#fbbf24;font-weight:700;">{{ request.user.ryo }} Ryo</span>.
+  </p>
+
+  {% if messages %}
+  <div style="margin-bottom:1rem;">
+    {% for msg in messages %}
+    <div style="padding:0.6rem 0.9rem;border-radius:8px;font-size:0.875rem;
+      background:#450a0a;color:#fca5a5;">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom:0.9rem;">
+      <label style="display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:0.3rem;">Guild Name *</label>
+      <input type="text" name="name" required maxlength="40"
+             style="width:100%;background:#16213e;border:1px solid #1e3a6e;border-radius:6px;padding:0.5rem 0.7rem;color:#e2e8f0;font-size:0.9rem;"
+             placeholder="Kizuna Order">
+    </div>
+    <div style="margin-bottom:0.9rem;">
+      <label style="display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:0.3rem;">Tag (2–4 letters/digits) *</label>
+      <input type="text" name="tag" required maxlength="4" minlength="2"
+             style="width:100%;background:#16213e;border:1px solid #1e3a6e;border-radius:6px;padding:0.5rem 0.7rem;color:#93c5fd;font-size:1rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;"
+             placeholder="KIZN">
+      <div style="font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">Shown in brackets next to your name, e.g. [KIZN]</div>
+    </div>
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:0.3rem;">Description (optional)</label>
+      <textarea name="description" rows="3" maxlength="200"
+                style="width:100%;background:#16213e;border:1px solid #1e3a6e;border-radius:6px;padding:0.5rem 0.7rem;color:#e2e8f0;font-size:0.85rem;resize:vertical;"
+                placeholder="A guild dedicated to mastering the Kizuna Method..."></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">
+      Create Guild for {{ create_cost }} Ryo
+    </button>
+  </form>
+</div>
+{% endblock %}

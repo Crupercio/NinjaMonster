@@ -1,156 +1,234 @@
 {% extends "base.html" %}
-{% block title %}My Pokemon{% endblock %}
+{% block title %}My Pokémon{% endblock %}
+
+{% block extra_css %}
+<style>
+.mypoke-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem; margin-bottom: .4rem;
+}
+.mypoke-search {
+  flex: 1; min-width: 180px; max-width: 320px;
+  background: var(--border-lo); border: 1px solid #2d4a7a;
+  border-radius: var(--radius-sm); padding: .4rem .85rem;
+  font-size: .9rem; color: var(--text-1); outline: none;
+  transition: border-color .2s;
+}
+.mypoke-search:focus { border-color: var(--accent-red); }
+
+.poke-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.poke-card {
+  background: var(--bg-card); border: 1px solid var(--border-md);
+  border-radius: var(--radius-md); padding: .9rem;
+  display: flex; flex-direction: column; position: relative;
+  transition: border-color .2s;
+}
+.poke-card.is-training { border-color: #f59e0b; }
+.poke-card.is-ready    { border-color: #4ade80; }
+
+/* Sprite container */
+.poke-sprite-link { display: block; text-decoration: none; color: inherit; text-align: center; }
+.poke-sprite-wrap { display: flex; justify-content: center; margin-bottom: .5rem; }
+.poke-sprite-wrap img {
+  width: 108px; height: 108px; object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
+  transition: transform .2s;
+}
+.poke-card:hover .poke-sprite-wrap img { transform: scale(1.06) translateY(-3px); }
+
+/* Name / meta */
+.poke-name { font-weight: 800; font-size: 1rem; text-align: center; margin-bottom: .15rem; }
+.poke-meta { font-size: .75rem; color: var(--text-2); text-align: center; margin-bottom: .5rem; }
+
+/* Level + EXP */
+.poke-level-row {
+  display: flex; align-items: baseline; gap: .4rem; margin-bottom: .25rem;
+}
+.poke-level { font-size: .95rem; font-weight: 700; color: var(--accent-red); }
+.poke-exp-label { font-size: .72rem; color: var(--text-3); margin-left: auto; }
+.poke-exp-bar-bg { background: #1e3a6e; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: .75rem; }
+.poke-exp-bar-fill { height: 100%; border-radius: 4px; background: #7c3aed; }
+
+/* Training state */
+.training-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .75rem; font-weight: 700; padding: .2rem .6rem;
+  border-radius: 20px; margin-bottom: .5rem;
+}
+.training-badge.in-progress { background: #78350f; color: #fcd34d; }
+.training-badge.complete    { background: #052e16; color: #4ade80; border: 1px solid #4ade80; }
+
+.countdown { font-size: .72rem; color: #f59e0b; margin-bottom: .5rem; }
+
+/* Duration radio pills */
+.dur-row { display: flex; gap: .4rem; margin-bottom: .6rem; flex-wrap: wrap; }
+.dur-label {
+  font-size: .72rem; padding: .2rem .55rem; border-radius: 20px;
+  border: 1px solid #374151; cursor: pointer; color: var(--text-2);
+  transition: border-color .15s, color .15s;
+}
+.dur-label input { display: none; }
+.dur-label:has(input:checked) { border-color: var(--accent-red); color: var(--text-1); }
+
+.poke-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: auto; }
+.sell-btn { font-size: .72rem; color: #fbbf24; background: none; border: 1px solid #374151; border-radius: var(--radius-sm); padding: .25rem .6rem; cursor: pointer; margin-top: .4rem; width: 100%; transition: border-color .15s; }
+.sell-btn:hover { border-color: #fbbf24; }
+
+/* Empty / no-match state */
+.empty-state {
+  grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-3);
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 style="margin-bottom:0.5rem;">My Pokemon</h2>
-<p style="color:#9ca3af;margin-bottom:1.5rem;">
-  Send a Pokémon to training to earn bonus EXP — training Pokémon cannot battle until you claim them.
-</p>
+<div x-data="{ search: '' }">
 
-{% if request.GET.sold %}
-  <div style="background:#14532d;color:#86efac;padding:0.6rem 1rem;border-radius:6px;margin-bottom:1rem;font-weight:600;">
-    Sold {{ request.GET.sold }} for {{ request.GET.ryo }} Ryo!
+  <div class="mypoke-header">
+    <div>
+      <h2 style="margin-bottom:.2rem;">My Pokémon</h2>
+      <p style="color:var(--text-2);font-size:.85rem;">Train Pokémon to earn bonus EXP — they can't battle while training.</p>
+    </div>
+    <input class="mypoke-search" x-model="search" type="search"
+           placeholder="Search by name…" autocomplete="off">
   </div>
-{% endif %}
-{% if request.GET.error %}
-  <div class="msg-error">{{ request.GET.error }}</div>
-{% endif %}
 
-{% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+  {% if request.GET.sold %}
+    <div class="msg-success" style="margin-bottom:1rem;">
+      Sold {{ request.GET.sold }} for {{ request.GET.ryo }} Ryo!
+    </div>
+  {% endif %}
+  {% if request.GET.error %}
+    <div class="msg-error">{{ request.GET.error }}</div>
+  {% endif %}
+  {% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
 
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
-  {% for op in owned_pokemon %}
-    <div class="pokemon-card{% if op.is_training %} fainted{% endif %}" style="position:relative;">
+  <div class="poke-grid">
+    {% for op in owned_pokemon %}
+    <div class="poke-card {% if op.is_training %}{% if op.training_complete %}is-ready{% else %}is-training{% endif %}{% endif %}"
+         x-show="!search || '{{ op.species.name|lower }}'.includes(search.toLowerCase())">
 
-      <!-- clickable header area -->
-      <a href="{% url 'pokemon:owned_detail' op.pk %}"
-         style="display:block;text-decoration:none;color:inherit;margin-bottom:8px;">
-        {% if op.species.pokedex_number %}
-          <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
-               alt="{{ op.species.name }}"
-               style="width:80px;height:80px;image-rendering:pixelated;display:block;margin:0 auto 6px;"
-               onerror="this.src='{{ op.species.sprite_url|default:'' }}';this.onerror=function(){this.style.display='none'};">
-        {% elif op.species.sprite_url %}
-          <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
-               style="width:80px;height:80px;image-rendering:pixelated;display:block;margin:0 auto 6px;"
-               onerror="this.style.display='none';">
-        {% endif %}
-        <div class="pokemon-name" style="text-align:center;">{{ op.species.name }}</div>
-        <div style="font-size:0.8rem;color:#a78bfa;margin-bottom:4px;text-align:center;">
-          #{{ op.species.pokedex_number }} &mdash;
-          {{ op.species.primary_type }}{% if op.species.secondary_type %}/{{ op.species.secondary_type }}{% endif %}
+      {# Sprite + name (clickable → owned detail) #}
+      <a href="{% url 'pokemon:owned_detail' op.pk %}" class="poke-sprite-link">
+        <div class="poke-sprite-wrap">
+          {% if op.species.pokedex_number %}
+            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
+                 alt="{{ op.species.name }}"
+                 onerror="this.style.opacity='.2'">
+          {% elif op.species.sprite_url %}
+            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
+                 onerror="this.style.opacity='.2'">
+          {% else %}
+            <div style="width:108px;height:108px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:3rem;">?</div>
+          {% endif %}
+        </div>
+        <div class="poke-name">{{ op.species.name }}</div>
+        <div class="poke-meta">
+          #{{ op.species.pokedex_number }} &nbsp;·&nbsp;
+          {{ op.species.primary_type }}{% if op.species.secondary_type %} / {{ op.species.secondary_type }}{% endif %}
         </div>
       </a>
 
-      <div style="margin-bottom:6px;">
-        <span style="font-size:0.9rem;font-weight:700;color:#e94560;">Lv.{{ op.level }}</span>
-        <span style="font-size:0.75rem;color:#9ca3af;margin-left:8px;">
-          EXP {{ op.experience }} / {{ op.exp_to_next_level }}
-        </span>
+      {# Level + EXP #}
+      <div class="poke-level-row">
+        <span class="poke-level">Lv.{{ op.level }}</span>
+        <span class="poke-exp-label">{{ op.experience }} / {{ op.exp_to_next_level }} EXP</span>
+      </div>
+      <div class="poke-exp-bar-bg">
+        <div class="poke-exp-bar-fill"
+             style="width:{% widthratio op.experience op.exp_to_next_level 100 %}%;"></div>
       </div>
 
-      <!-- EXP progress bar -->
-      <div class="hp-bar-wrap" style="margin-bottom:10px;">
-        <div class="hp-bar hp-bar-exp"
-             style="width:{% widthratio op.experience op.exp_to_next_level 100 %}%;background:#7c3aed;"></div>
-      </div>
-
-      <div style="font-size:0.75rem;color:#6b7280;margin-bottom:8px;">
-        HP {{ op.species.base_hp }} · ATK {{ op.species.base_attack }} · DEF {{ op.species.base_defense }}
-      </div>
-
+      {# Training / idle state #}
       {% if op.is_training %}
-        <!-- ── TRAINING STATE ── -->
         {% if op.training_complete %}
-          <!-- Training finished — ready to claim -->
-          <div style="font-size:0.8rem;color:#22c55e;font-weight:700;margin-bottom:8px;">
-            ✅ Training complete!
-          </div>
-          <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:8px;">
-            Duration: {{ op.training_duration_minutes }} min
-          </div>
-          <form method="post" style="display:inline;">
+          <span class="training-badge complete">✅ Training Complete!</span>
+          <form method="post">
             {% csrf_token %}
             <input type="hidden" name="owned_id" value="{{ op.pk }}">
             <input type="hidden" name="action" value="claim">
-            <button type="submit" class="btn btn-primary btn-sm">Claim Reward</button>
+            <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Claim EXP Reward</button>
           </form>
         {% else %}
-          <!-- Still training — show countdown via JS -->
-          <div style="font-size:0.8rem;color:#f59e0b;margin-bottom:4px;">
-            ⏳ In Training
+          <span class="training-badge in-progress">⏳ In Training ({{ op.training_duration_minutes }} min)</span>
+          <div class="countdown">
+            Finishes at {{ op.training_ends_at|date:"H:i" }}
+            <span id="cd-{{ op.pk }}" data-ends="{{ op.training_ends_at|date:'U' }}"></span>
           </div>
-          <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:4px;">
-            Duration: {{ op.training_duration_minutes }} min
-          </div>
-          <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:8px;">
-            Finishes: {{ op.training_ends_at|date:"H:i" }}
-            <span id="countdown-{{ op.pk }}"
-                  data-ends="{{ op.training_ends_at|date:'U' }}"
-                  style="color:#f59e0b;"></span>
-          </div>
-          <form method="post" style="display:inline;">
+          <form method="post">
             {% csrf_token %}
             <input type="hidden" name="owned_id" value="{{ op.pk }}">
             <input type="hidden" name="action" value="cancel">
             <button type="submit" class="btn btn-secondary btn-sm"
-                    onclick="return confirm('Cancel training? No XP will be awarded.')">
-              Cancel
+                    onclick="return confirm('Cancel training? No EXP awarded.')">
+              Cancel Training
             </button>
           </form>
         {% endif %}
 
       {% else %}
-        <!-- ── IDLE STATE — show duration picker ── -->
+        {# Idle — show duration picker #}
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="owned_id" value="{{ op.pk }}">
           <input type="hidden" name="action" value="start">
-          <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:6px;">Training duration:</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-            <label style="font-size:0.75rem;color:#d1d5db;cursor:pointer;">
+          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:.35rem;">Training duration:</div>
+          <div class="dur-row">
+            <label class="dur-label">
               <input type="radio" name="duration" value="30" checked> 30 min
             </label>
-            <label style="font-size:0.75rem;color:#d1d5db;cursor:pointer;">
-              <input type="radio" name="duration" value="60"> 1 hr <span style="color:#22c55e;">(+10%)</span>
+            <label class="dur-label">
+              <input type="radio" name="duration" value="60"> 1 hr <span style="color:#4ade80;">(+10%)</span>
             </label>
-            <label style="font-size:0.75rem;color:#d1d5db;cursor:pointer;">
+            <label class="dur-label">
               <input type="radio" name="duration" value="240"> 4 hr <span style="color:#f59e0b;">(+50%)</span>
             </label>
           </div>
-          <button type="submit" class="btn btn-primary btn-sm">Start Training</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Start Training</button>
         </form>
+
         <form method="post" action="{% url 'pokemon:sell' op.pk %}"
-              style="margin-top:6px;"
               onsubmit="return confirm('Sell {{ op.species.name }} for {{ op.sell_value }} Ryo?');">
           {% csrf_token %}
-          <button type="submit" class="btn btn-secondary btn-sm"
-                  style="font-size:0.72rem;color:#fbbf24;">
-            Sell for {{ op.sell_value }} Ryo
-          </button>
+          <button type="submit" class="sell-btn">Sell for {{ op.sell_value }} Ryo</button>
         </form>
       {% endif %}
 
     </div>
-  {% empty %}
-    <p style="color:#9ca3af;">You have no Pokemon yet.</p>
-  {% endfor %}
+    {% empty %}
+    <div class="empty-state">
+      <div style="font-size:3rem;margin-bottom:.75rem;">🌱</div>
+      <div>No Pokémon yet — visit the <a href="{% url 'pokemon:pokedex' %}">Pokédex</a> to catch some!</div>
+    </div>
+    {% endfor %}
+
+    <div class="empty-state" x-show="search && !{{ owned_pokemon|length }} > 0" style="display:none;">
+      No Pokémon match your search.
+    </div>
+
+  </div>
 </div>
 
-<!-- Countdown timers for in-progress training -->
+{# Countdown timers #}
 <script>
 (function () {
   function updateCountdowns() {
-    document.querySelectorAll('[id^="countdown-"]').forEach(function (el) {
-      var endsAt = parseInt(el.dataset.ends, 10) * 1000;
-      var remaining = endsAt - Date.now();
+    document.querySelectorAll('[id^="cd-"]').forEach(function (el) {
+      var remaining = parseInt(el.dataset.ends, 10) * 1000 - Date.now();
       if (remaining <= 0) {
-        el.textContent = ' (done — refresh to claim)';
-        el.style.color = '#22c55e';
+        el.textContent = ' — done! Refresh to claim.';
+        el.style.color = '#4ade80';
       } else {
         var h = Math.floor(remaining / 3600000);
         var m = Math.floor((remaining % 3600000) / 60000);
         var s = Math.floor((remaining % 60000) / 1000);
-        el.textContent = ' (' + (h ? h + 'h ' : '') + m + 'm ' + s + 's remaining)';
+        el.textContent = ' — ' + (h ? h + 'h ' : '') + m + 'm ' + s + 's left';
       }
     });
   }

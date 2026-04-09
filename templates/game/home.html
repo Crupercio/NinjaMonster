@@ -1,84 +1,139 @@
 {% extends "base.html" %}
 {% block title %}Home — Pokemon Combo Battle{% endblock %}
-{% block content %}
-<h1 style="margin-bottom:1.5rem;">Welcome, {{ user.display_name|default:user.username }}!</h1>
 
+{% block extra_css %}
+<style>
+.home-greeting { font-size: 1.6rem; font-weight: 800; margin-bottom: 1.5rem; }
+.home-greeting span { color: var(--accent-red); }
+
+/* Difficulty button-group */
+.diff-group { display: flex; border: 1px solid #374151; border-radius: var(--radius-sm); overflow: hidden; }
+.diff-btn {
+  flex: 1; text-align: center; padding: .45rem .5rem;
+  font-size: .8rem; font-weight: 600; cursor: pointer;
+  color: var(--text-2); background: none; border: none;
+  border-right: 1px solid #374151; line-height: 1.3;
+  transition: background .15s, color .15s;
+}
+.diff-btn:last-child { border-right: none; }
+.diff-btn.sel-easy   { background: #14532d; color: #86efac; }
+.diff-btn.sel-medium { background: #78350f; color: #fcd34d; }
+.diff-btn.sel-hard   { background: #7f1d1d; color: #fca5a5; }
+
+/* Play cards row */
+.play-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start; margin-bottom: 2rem; }
+.play-card {
+  background: var(--bg-card); border-radius: var(--radius-md);
+  padding: 1.25rem; min-width: 240px; flex: 1;
+}
+.play-card-title { font-size: 1rem; font-weight: 700; margin-bottom: .85rem; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="home-greeting">Welcome back, <span>{{ user.display_name|default:user.username }}</span>!</h1>
+
+{# Active events banner #}
 {% if active_events %}
 <div style="margin-bottom:1.5rem;">
   {% for event in active_events %}
-  <div style="background:linear-gradient(135deg,#1a1a4e,#0f3460);border:1px solid #f59e0b;border-radius:10px;padding:0.85rem 1.1rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+  <div style="background:linear-gradient(135deg,#1a1a4e,#0f3460);border:1px solid #f59e0b;border-radius:var(--radius-md);padding:.85rem 1.1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <span style="font-size:1.2rem;">🎉</span>
     <div style="flex:1;min-width:180px;">
-      <div style="font-weight:700;color:#fbbf24;font-size:0.9rem;">{{ event.name }}</div>
-      <div style="color:#d1d5db;font-size:0.78rem;margin-top:0.15rem;">{{ event.description }}</div>
+      <div style="font-weight:700;color:#fbbf24;font-size:.9rem;">{{ event.name }}</div>
+      <div style="color:#d1d5db;font-size:.78rem;margin-top:.15rem;">{{ event.description }}</div>
       {% if event.flavor_text %}
-      <div style="color:#93c5fd;font-size:0.72rem;font-style:italic;margin-top:0.3rem;">{{ event.flavor_text|truncatechars:120 }}</div>
+      <div style="color:#93c5fd;font-size:.72rem;font-style:italic;margin-top:.3rem;">{{ event.flavor_text|truncatechars:120 }}</div>
       {% endif %}
     </div>
     <div style="text-align:right;white-space:nowrap;">
-      <div style="font-size:0.7rem;color:#9ca3af;">Ends</div>
-      <div style="font-size:0.78rem;color:#fbbf24;">{{ event.end_at|date:"M j, g:i A" }}</div>
+      <div style="font-size:.68rem;color:var(--text-3);">Ends</div>
+      <div style="font-size:.78rem;color:#fbbf24;font-weight:700;">{{ event.end_at|date:"M j, g:i A" }}</div>
+      <div style="font-size:.68rem;color:#f59e0b;">{{ event.end_at|timeuntil }} left</div>
     </div>
   </div>
   {% endfor %}
-  <div style="text-align:right;margin-top:0.25rem;">
-    <a href="{% url 'events:event_list' %}" style="font-size:0.72rem;color:#6b7280;">View all events →</a>
+  <div style="text-align:right;margin-top:.2rem;">
+    <a href="{% url 'events:event_list' %}" style="font-size:.72rem;color:var(--text-3);">All events →</a>
   </div>
 </div>
 {% endif %}
 
-<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:2rem;">
-  <!-- Play vs AI card -->
-  <div style="background:#16213e;border:2px solid #e94560;border-radius:10px;padding:1.25rem;min-width:240px;">
-    <div style="font-size:1rem;font-weight:700;color:#e94560;margin-bottom:0.75rem;">⚔️ Play vs AI</div>
+{# Play options #}
+<div class="play-row">
+  {# VS AI #}
+  <div class="play-card" style="border:2px solid var(--accent-red);" x-data="{diff:'medium'}">
+    <div class="play-card-title">⚔️ Play vs AI</div>
     <form method="post" action="{% url 'game:ai_battle_create' %}">
       {% csrf_token %}
-      <div style="margin-bottom:0.75rem;">
-        <label style="display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:0.3rem;">Difficulty</label>
-        <select name="difficulty" style="width:100%;">
-          <option value="easy">Easy — random moves</option>
-          <option value="medium" selected>Medium — tactical</option>
-          <option value="hard">Hard — reads your team</option>
-        </select>
+      <input type="hidden" name="difficulty" :value="diff">
+      <div style="margin-bottom:.85rem;">
+        <label style="display:block;font-size:.75rem;color:var(--text-2);margin-bottom:.4rem;">Difficulty</label>
+        <div class="diff-group">
+          <button type="button" class="diff-btn" :class="diff==='easy'   ? 'sel-easy'   : ''" @click="diff='easy'">
+            Easy<br><span style="font-size:.65rem;font-weight:400;">random</span>
+          </button>
+          <button type="button" class="diff-btn" :class="diff==='medium' ? 'sel-medium' : ''" @click="diff='medium'">
+            Medium<br><span style="font-size:.65rem;font-weight:400;">tactical</span>
+          </button>
+          <button type="button" class="diff-btn" :class="diff==='hard'   ? 'sel-hard'   : ''" @click="diff='hard'">
+            Hard<br><span style="font-size:.65rem;font-weight:400;">reads team</span>
+          </button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;">Start AI Battle</button>
     </form>
   </div>
 
-  <!-- PvP card -->
-  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.25rem;min-width:180px;">
-    <div style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">🎮 PvP Battle</div>
+  {# PvP #}
+  <div class="play-card" style="border:1px solid #1e3a8a;">
+    <div class="play-card-title">🎮 PvP Battle</div>
+    <p style="font-size:.8rem;color:var(--text-2);margin-bottom:.85rem;">Challenge another trainer to a live match.</p>
     <a href="{% url 'game:battle_create' %}" class="btn btn-secondary" style="display:block;text-align:center;">Start PvP Battle</a>
   </div>
 
-  <!-- Quick links -->
-  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.25rem;min-width:180px;">
-    <div style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">📋 Quick Links</div>
-    <div style="display:flex;flex-direction:column;gap:0.5rem;">
-      <a href="{% url 'game:battle_list' %}" class="btn btn-secondary btn-sm">My Battles</a>
-      <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
-      <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">Pokedex</a>
+  {# Quick links #}
+  <div class="play-card" style="border:1px solid var(--border-md);">
+    <div class="play-card-title">📋 Quick Links</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;">
+      <a href="{% url 'game:battle_list' %}"  class="btn btn-secondary btn-sm">My Battles</a>
+      <a href="{% url 'stickers:album' %}"    class="btn btn-secondary btn-sm">Sticker Album</a>
+      <a href="{% url 'pokemon:pokedex' %}"   class="btn btn-secondary btn-sm">Pokédex</a>
+      <a href="{% url 'ranked:leaderboard' %}" class="btn btn-secondary btn-sm">Leaderboard</a>
     </div>
   </div>
 </div>
 
-<!-- Stats row -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
-  <div class="pokemon-card">
-    <div class="pokemon-name">Battles Won</div>
-    <div style="font-size:2rem;color:#e94560;">{{ user.battles_won }}</div>
+{# Trainer stats #}
+<div class="section-label">Your Stats</div>
+<div class="stats-grid">
+  <div class="stat-widget">
+    <span class="stat-widget-icon">⚔️</span>
+    <span class="stat-widget-val" style="color:var(--accent-red);">{{ user.battles_won }}</span>
+    <span class="stat-widget-lbl">Battles Won</span>
   </div>
-  <div class="pokemon-card">
-    <div class="pokemon-name">Win Rate</div>
-    <div style="font-size:2rem;color:#4ade80;">{{ user.win_rate }}%</div>
+  <div class="stat-widget">
+    <span class="stat-widget-icon">📊</span>
+    <span class="stat-widget-val" style="color:#4ade80;">{{ user.win_rate }}%</span>
+    <span class="stat-widget-lbl">Win Rate</span>
   </div>
-  <div class="pokemon-card">
-    <div class="pokemon-name">Longest Combo</div>
-    <div style="font-size:2rem;color:#fbbf24;">x{{ user.longest_combo_chain }}</div>
+  <div class="stat-widget">
+    <span class="stat-widget-icon">⛓</span>
+    <span class="stat-widget-val" style="color:#fbbf24;">×{{ user.longest_combo_chain }}</span>
+    <span class="stat-widget-lbl">Best Combo</span>
   </div>
-  <div class="pokemon-card">
-    <div class="pokemon-name">Sticker Dust</div>
-    <div style="font-size:2rem;color:#a78bfa;">{{ user.sticker_dust }}</div>
+  <div class="stat-widget">
+    <span class="stat-widget-icon">✨</span>
+    <span class="stat-widget-val" style="color:#a78bfa;">{{ user.sticker_dust }}</span>
+    <span class="stat-widget-lbl">Sticker Dust</span>
+  </div>
+  <div class="stat-widget">
+    <span class="stat-widget-icon">💰</span>
+    <span class="stat-widget-val" style="color:var(--accent-gold);">{{ user.ryo }}</span>
+    <span class="stat-widget-lbl">Ryo</span>
   </div>
 </div>
 {% endblock %}

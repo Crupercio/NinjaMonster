@@ -1,59 +1,317 @@
 {% extends "base.html" %}
-{% block title %}Pokedex{% endblock %}
+{% block title %}Pokédex{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Type accent: vivid RGB used for card gradients & glow shadows ─────── */
+.tc-Normal   {--tc:156,163,175} .tc-Fire     {--tc:239, 68, 68}
+.tc-Water    {--tc: 59,130,246} .tc-Electric {--tc:234,179,  8}
+.tc-Grass    {--tc: 34,197, 94} .tc-Ice      {--tc:103,232,249}
+.tc-Fighting {--tc:245,158, 11} .tc-Poison   {--tc:168, 85,247}
+.tc-Ground   {--tc:202,138,  4} .tc-Flying   {--tc:147,197,253}
+.tc-Psychic  {--tc:236, 72,153} .tc-Bug      {--tc:132,204, 22}
+.tc-Rock     {--tc:120,113,108} .tc-Ghost    {--tc:139, 92,246}
+.tc-Dragon   {--tc:124, 58,237} .tc-Dark     {--tc: 82, 82, 91}
+.tc-Steel    {--tc:148,163,184} .tc-Fairy    {--tc:249,168,212}
+
+/* ── Type pill colours (chip + card pill share same class) ──────────────── */
+.tp-Normal   {background:#374151;color:#e5e7eb} .tp-Fire     {background:#7f1d1d;color:#fca5a5}
+.tp-Water    {background:#1e3a5f;color:#93c5fd} .tp-Electric {background:#78350f;color:#fcd34d}
+.tp-Grass    {background:#14532d;color:#86efac} .tp-Ice      {background:#164e63;color:#a5f3fc}
+.tp-Fighting {background:#7c2d12;color:#fdba74} .tp-Poison   {background:#581c87;color:#d8b4fe}
+.tp-Ground   {background:#713f12;color:#fde68a} .tp-Flying   {background:#1e3a8a;color:#c7d2fe}
+.tp-Psychic  {background:#4a044e;color:#f0abfc} .tp-Bug      {background:#365314;color:#bef264}
+.tp-Rock     {background:#44403c;color:#d6d3d1} .tp-Ghost    {background:#312e81;color:#c4b5fd}
+.tp-Dragon   {background:#1e3a8a;color:#93c5fd} .tp-Dark     {background:#1c1917;color:#a8a29e}
+.tp-Steel    {background:#334155;color:#cbd5e1} .tp-Fairy    {background:#831843;color:#fbcfe8}
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+.pdex-header {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem;
+}
+.pdex-title {font-size:1.75rem;font-weight:800;letter-spacing:-.5px}
+
+.pdex-controls {
+  background:#16213e;border:1px solid #1e3a6e;border-radius:14px;
+  padding:1rem 1.25rem;margin-bottom:1.25rem;
+  display:flex;flex-direction:column;gap:.85rem;
+}
+.pdex-top-row {display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}
+
+.pdex-search {
+  flex:1;min-width:180px;background:#0f3460;border:1px solid #2d4a7a;
+  border-radius:8px;padding:.45rem .85rem;font-size:.9rem;color:#eee;
+  outline:none;transition:border-color .2s;
+}
+.pdex-search:focus {border-color:#e94560}
+.pdex-select {
+  background:#0f3460;border:1px solid #2d4a7a;border-radius:8px;
+  padding:.45rem .75rem;font-size:.85rem;color:#eee;cursor:pointer;
+  transition:border-color .2s;
+}
+.pdex-select:focus {border-color:#e94560;outline:none}
+
+/* ── Type chips ─────────────────────────────────────────────────────────── */
+.type-chips {display:flex;flex-wrap:wrap;gap:.4rem}
+.type-chip {
+  padding:.3rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700;
+  cursor:pointer;border:2px solid transparent;transition:all .18s;
+  letter-spacing:.3px;user-select:none;
+}
+.type-chip:hover {transform:translateY(-1px);filter:brightness(1.18)}
+.type-chip.active {
+  border-color:#fff;transform:translateY(-2px);
+  box-shadow:0 3px 14px rgba(255,255,255,.28);
+}
+
+/* ── Meta / count ───────────────────────────────────────────────────────── */
+.pdex-meta {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;
+}
+.pdex-count {font-size:.82rem;color:#9ca3af}
+.pdex-count strong {color:#eee;font-weight:700}
+.pdex-clear {
+  font-size:.78rem;color:#e94560;cursor:pointer;background:none;
+  border:none;padding:0;text-decoration:underline;
+}
+
+/* ── Card grid ──────────────────────────────────────────────────────────── */
+.pdex-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:1rem;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+.pdex-card {
+  background:linear-gradient(160deg,rgba(var(--tc,30,58,95),.16) 0%,#16213e 60%);
+  border:1px solid rgba(var(--tc,30,58,95),.3);
+  border-radius:16px;padding:1rem 1rem .85rem;
+  display:flex;flex-direction:column;align-items:center;
+  text-decoration:none;color:inherit;
+  transition:transform .22s,box-shadow .22s,border-color .22s;
+  position:relative;overflow:hidden;
+}
+.pdex-card::before {
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:radial-gradient(circle at 50% 30%,rgba(var(--tc,30,58,95),.1) 0%,transparent 68%);
+  pointer-events:none;
+}
+.pdex-card:hover {
+  transform:translateY(-7px);
+  box-shadow:0 16px 44px rgba(var(--tc,30,58,95),.38);
+  border-color:rgba(var(--tc,30,58,95),.8);
+  text-decoration:none;
+}
+
+.pdex-num {
+  align-self:flex-start;font-size:.68rem;font-weight:600;
+  color:rgba(255,255,255,.32);letter-spacing:.5px;margin-bottom:.2rem;
+}
+.pdex-img-wrap {
+  width:160px;height:160px;display:flex;align-items:center;justify-content:center;
+  margin:.25rem 0 .75rem;
+  filter:drop-shadow(0 6px 20px rgba(var(--tc,30,58,95),.5));
+  transition:filter .22s,transform .22s;
+}
+.pdex-card:hover .pdex-img-wrap {
+  filter:drop-shadow(0 12px 32px rgba(var(--tc,30,58,95),.7));
+  transform:scale(1.07) translateY(-4px);
+}
+.pdex-img-wrap img {width:160px;height:160px;object-fit:contain}
+.pdex-img-wrap img[style*="opacity"] {font-size:3rem;display:flex;align-items:center;justify-content:center}
+
+.pdex-name {
+  font-size:1rem;font-weight:800;text-align:center;
+  margin-bottom:.45rem;letter-spacing:-.2px;line-height:1.2;
+}
+.pdex-types {
+  display:flex;gap:.3rem;flex-wrap:wrap;justify-content:center;margin-bottom:.4rem;
+}
+.pdex-type-pill {
+  font-size:.67rem;font-weight:700;padding:.2rem .55rem;
+  border-radius:10px;letter-spacing:.4px;text-transform:uppercase;
+}
+.pdex-gen {
+  font-size:.65rem;color:rgba(255,255,255,.35);margin-top:.15rem;
+  letter-spacing:.3px;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.pdex-empty {
+  grid-column:1/-1;text-align:center;padding:4rem 1rem;color:#4b5563;
+}
+.pdex-empty-icon {font-size:3rem;margin-bottom:.75rem}
+.pdex-empty-msg  {font-size:1rem}
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-  <h2>Pokedex</h2>
-  <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-  <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary btn-sm">Type Chart</a>
-  <form method="get" style="display:flex;gap:0.5rem;align-items:center;">
-    <select name="type" onchange="this.form.submit()">
-      <option value="">All Types</option>
+
+<script>
+const REGIONS = {1:'Kanto',2:'Johto',3:'Hoenn',4:'Sinnoh',5:'Unova',6:'Kalos',7:'Alola',8:'Galar'};
+
+function pokedex() {
+  return {
+    search: '',
+    activeTypes: [],
+    activeGen: '',
+    activeRole: '',
+    visibleCount: {{ pokemon_list|length }},
+    totalCount:   {{ pokemon_list|length }},
+
+    init() {
+      ['search','activeTypes','activeGen','activeRole'].forEach(k => {
+        this.$watch(k, () => this.$nextTick(() => this.recount()));
+      });
+    },
+
+    toggleType(t) {
+      this.activeTypes = this.activeTypes.includes(t)
+        ? this.activeTypes.filter(x => x !== t)
+        : [...this.activeTypes, t];
+    },
+
+    matches(el) {
+      if (this.search && !(el.dataset.name || '').includes(this.search.toLowerCase())) return false;
+      if (this.activeTypes.length) {
+        const p = el.dataset.primary, s = el.dataset.secondary;
+        if (!this.activeTypes.some(t => t === p || t === s)) return false;
+      }
+      if (this.activeGen  && el.dataset.gen  !== this.activeGen)  return false;
+      if (this.activeRole && el.dataset.role !== this.activeRole)  return false;
+      return true;
+    },
+
+    recount() {
+      this.visibleCount = [...document.querySelectorAll('.pdex-link')]
+        .filter(el => this.matches(el)).length;
+    },
+
+    clearAll() {
+      this.search = ''; this.activeTypes = []; this.activeGen = ''; this.activeRole = '';
+    },
+
+    genLabel(n) {
+      return n ? `Gen\u00a0${n}\u00a0\u00b7\u00a0${REGIONS[n] || ''}` : '';
+    },
+  };
+}
+</script>
+
+<div x-data="pokedex()" x-init="init()">
+
+  {# Header #}
+  <div class="pdex-header">
+    <h2 class="pdex-title">Pokédex</h2>
+    <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary btn-sm">Type Chart →</a>
+  </div>
+
+  {# Filter controls #}
+  <div class="pdex-controls">
+    <div class="pdex-top-row">
+      <input class="pdex-search" x-model="search" type="search"
+             placeholder="Search by name…" autocomplete="off" spellcheck="false">
+
+      <select class="pdex-select" x-model="activeGen">
+        <option value="">All Generations</option>
+        {% for gen in generations %}
+        <option value="{{ gen.number }}">Gen {{ gen.number }} — {{ gen.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select class="pdex-select" x-model="activeRole">
+        <option value="">All Roles</option>
+        <option value="dps">DPS</option>
+        <option value="assassin">Assassin</option>
+        <option value="tank">Tank</option>
+        <option value="support">Support</option>
+        <option value="control">Control</option>
+        <option value="bruiser">Bruiser</option>
+      </select>
+    </div>
+
+    <div class="type-chips">
       {% for ptype in types %}
-        <option value="{{ ptype.name }}" {% if selected_type == ptype.name %}selected{% endif %}>{{ ptype.name }}</option>
+      <button type="button"
+              class="type-chip tp-{{ ptype.name }}"
+              :class="activeTypes.includes('{{ ptype.name }}') ? 'active' : ''"
+              @click="toggleType('{{ ptype.name }}')">
+        {{ ptype.name }}
+      </button>
       {% endfor %}
-    </select>
-    {% if selected_type %}
-      <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">Clear</a>
-    {% endif %}
-  </form>
+    </div>
   </div>
-</div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;">
-  {% for pokemon in pokemon_list %}
-    <a href="{% url 'pokemon:detail' pokemon.pk %}" style="text-decoration:none;">
-      <div class="pokemon-card" style="transition:border-color 0.2s;text-align:center;" onmouseover="this.style.borderColor='#e94560'" onmouseout="this.style.borderColor='#0f3460'">
-        {% if pokemon.pokedex_number %}
-          <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
-               alt="{{ pokemon.name }}"
-               width="80" height="80"
-               style="display:block;margin:0 auto 4px;image-rendering:pixelated;"
+  {# Count / clear row #}
+  <div class="pdex-meta">
+    <p class="pdex-count">
+      Showing <strong x-text="visibleCount"></strong> of <strong>{{ pokemon_list|length }}</strong> Pokémon
+    </p>
+    <button type="button" class="pdex-clear"
+            x-show="search || activeTypes.length || activeGen || activeRole"
+            style="display:none"
+            @click="clearAll()">
+      ✕ Clear filters
+    </button>
+  </div>
+
+  {# Card grid #}
+  <div class="pdex-grid">
+
+    {% for pokemon in pokemon_list %}
+    <a href="{% url 'pokemon:detail' pokemon.pk %}"
+       class="pdex-card pdex-link tc-{{ pokemon.primary_type.name }}"
+       x-show="matches($el)"
+       data-name="{{ pokemon.name|lower }}"
+       data-primary="{{ pokemon.primary_type.name }}"
+       data-secondary="{{ pokemon.secondary_type.name|default:'' }}"
+       data-gen="{{ pokemon.primary_gen|default:'' }}"
+       data-role="{{ pokemon.primary_role }}">
+
+      {% if pokemon.pokedex_number %}
+        <span class="pdex-num">#{{ pokemon.pokedex_number|stringformat:"03d" }}</span>
+        <div class="pdex-img-wrap">
+          <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:"03d" }}.png"
+               alt="{{ pokemon.name }}" loading="lazy"
                onerror="this.style.display='none'">
-          <div style="font-size:0.65rem;color:#6b7280;">#{{ pokemon.pokedex_number }}</div>
-        {% endif %}
-        <div class="pokemon-name">{{ pokemon.name }}</div>
-        <div style="font-size:0.75rem;color:#9ca3af;">
-          {{ pokemon.primary_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}
         </div>
-        <div style="font-size:0.7rem;color:#6b7280;margin-top:2px;">
-          HP:{{ pokemon.base_hp }} SPD:{{ pokemon.base_speed }}
-        </div>
-      </div>
-    </a>
-  {% empty %}
-    <div style="grid-column:1/-1;color:#6b7280;text-align:center;padding:2rem;">No Pokemon found.</div>
-  {% endfor %}
-</div>
+      {% else %}
+        <div class="pdex-img-wrap" style="opacity:.2;font-size:4rem;color:#fff">?</div>
+      {% endif %}
 
-{% if is_paginated %}
-  <div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
-    {% endif %}
-    <span style="color:#9ca3af;font-size:0.85rem;align-self:center;">Page {{ page_obj.number }} of {{ page_obj.num_pages }}</span>
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
-    {% endif %}
+      <span class="pdex-name">{{ pokemon.name }}</span>
+
+      <div class="pdex-types">
+        <span class="pdex-type-pill tp-{{ pokemon.primary_type.name }}">{{ pokemon.primary_type.name }}</span>
+        {% if pokemon.secondary_type %}
+        <span class="pdex-type-pill tp-{{ pokemon.secondary_type.name }}">{{ pokemon.secondary_type.name }}</span>
+        {% endif %}
+      </div>
+
+      {% if pokemon.primary_gen %}
+      <span class="pdex-gen" x-text="genLabel({{ pokemon.primary_gen }})">
+        Gen {{ pokemon.primary_gen }}
+      </span>
+      {% endif %}
+
+    </a>
+    {% empty %}
+    <div class="pdex-empty">
+      <div class="pdex-empty-icon">🔍</div>
+      <div class="pdex-empty-msg">No Pokémon in the database yet.</div>
+    </div>
+    {% endfor %}
+
+    {# Shown when all cards are filtered out #}
+    <div class="pdex-empty" x-show="visibleCount === 0 && totalCount > 0" style="display:none">
+      <div class="pdex-empty-icon">🔍</div>
+      <div class="pdex-empty-msg">No Pokémon match your filters.</div>
+    </div>
+
   </div>
-{% endif %}
+
+</div>
 {% endblock %}

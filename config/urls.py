@@ -18,6 +18,7 @@ urlpatterns = [
     path("quests/", include("apps.quests.urls", namespace="quests")),
     path("ranked/", include("apps.ranked.urls", namespace="ranked")),
     path("events/", include("apps.events.urls", namespace="events")),
+    path("guilds/", include("apps.guilds.urls", namespace="guilds")),
 ]
 
 if settings.DEBUG:

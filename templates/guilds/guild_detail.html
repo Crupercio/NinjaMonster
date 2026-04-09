@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}[{{ guild.tag }}] {{ guild.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.guild-hero {
+  background: linear-gradient(135deg, #1a1a4e, #0f3460);
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+.guild-big-tag {
+  background: #0f3460;
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+.guild-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.2rem; }
+.guild-desc-hero { color: #9ca3af; font-size: 0.85rem; }
+.guild-status {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+.stat-box {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  text-align: center;
+}
+.stat-label { font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.2rem; }
+.stat-value { font-size: 1.5rem; font-weight: 800; color: #e2e8f0; }
+
+.member-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.member-row {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.member-role {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.role-owner   { background:#450a0a; color:#fca5a5; }
+.role-officer { background:#1e1a4e; color:#a78bfa; }
+.role-member  { background:#0f1a2e; color:#6b7280; }
+.member-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.member-stats { font-size: 0.72rem; color: #6b7280; white-space: nowrap; }
+.member-actions { display: flex; gap: 0.3rem; }
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #6b7280;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #1e3a6e;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div style="margin-bottom:1rem;">
+  {% for msg in messages %}
+  <div style="padding:0.6rem 0.9rem;border-radius:8px;font-size:0.875rem;
+    background:{% if msg.tags == 'error' %}#450a0a{% else %}#052e16{% endif %};
+    color:{% if msg.tags == 'error' %}#fca5a5{% else %}#4ade80{% endif %};">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<a href="{% url 'guilds:list' %}" style="color:#6b7280;font-size:0.8rem;text-decoration:none;">← All Guilds</a>
+
+{# ── Guild hero ───────────────────────────────────────────────── #}
+<div class="guild-hero" style="margin-top:0.6rem;">
+  <div class="guild-big-tag">{{ guild.tag }}</div>
+  <div style="flex:1;">
+    <div class="guild-title">{{ guild.name }}</div>
+    {% if guild.description %}<div class="guild-desc-hero">{{ guild.description }}</div>{% endif %}
+    <div class="guild-status">
+      <span>{{ guild.member_count }}/20 members</span>
+      <span>{% if guild.is_recruiting %}🟢 Recruiting{% else %}🔴 Closed{% endif %}</span>
+      <span>Founded {{ guild.created_at|date:"M j, Y" }}</span>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:0.4rem;min-width:120px;align-items:flex-end;">
+    {% if in_this_guild %}
+      {% if my_membership.role == "owner" or my_membership.role == "officer" %}
+      {# Management handled per-member below #}
+      {% endif %}
+      <form method="post" action="{% url 'guilds:leave' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-sm"
+          onclick="return confirm('Leave this guild?')">Leave Guild</button>
+      </form>
+    {% elif not my_membership and guild.is_recruiting and not guild.is_full %}
+      <form method="post" action="{% url 'guilds:join' guild.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-sm">Join Guild</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Stats ────────────────────────────────────────────────────── #}
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="stat-label">Total Wins</div>
+    <div class="stat-value">{{ stats.total_wins }}</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Battles</div>
+    <div class="stat-value">{{ stats.total_battles }}</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Avg Longest Combo</div>
+    <div class="stat-value">x{{ stats.avg_longest_combo }}</div>
+  </div>
+</div>
+
+{# ── Members ──────────────────────────────────────────────────── #}
+<div class="section-title">Members — {{ guild.member_count }}/20</div>
+<div class="member-list">
+  {% for m in memberships %}
+  <div class="member-row">
+    <span class="member-role role-{{ m.role }}">{{ m.get_role_display }}</span>
+    <span class="member-name">
+      <a href="{% url 'users:profile' m.user.username %}" style="color:#e2e8f0;text-decoration:none;">
+        {{ m.user.display_name|default:m.user.username }}
+      </a>
+    </span>
+    <span class="member-stats">{{ m.user.battles_won }}W · x{{ m.user.longest_combo_chain }} combo</span>
+    <span style="font-size:0.68rem;color:#4b5563;">Since {{ m.joined_at|date:"M j" }}</span>
+
+    {# Actions visible to owner/officer only #}
+    {% if in_this_guild and m.user.pk != request.user.pk %}
+    <div class="member-actions">
+      {% if my_membership.role == "owner" %}
+        {% if m.role == "member" %}
+        <form method="post" action="{% url 'guilds:promote' guild.pk m.user.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;">↑ Officer</button>
+        </form>
+        {% elif m.role == "officer" %}
+        <form method="post" action="{% url 'guilds:demote' guild.pk m.user.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;">↓ Member</button>
+        </form>
+        {% endif %}
+      {% endif %}
+      {% if my_membership.role == "owner" or my_membership.role == "officer" and m.role == "member" %}
+      <form method="post" action="{% url 'guilds:kick' guild.pk m.user.pk %}"
+            onsubmit="return confirm('Kick {{ m.user.username }}?')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;color:#fca5a5;border-color:#7f1d1d;">Kick</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

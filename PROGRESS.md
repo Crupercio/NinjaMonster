@@ -45,6 +45,9 @@ python -m pytest -q
 **P3-4 test result:** 316 passed, 12 pre-existing failures (unchanged).
 **P4-1 test result:** 330 passed, 11 pre-existing failures (note: 1 re-counted — count corrected to 11).
 **P4-2 test result:** 349 passed, 11 pre-existing failures (unchanged).
+**P4-3 test result:** 364 passed, 11 pre-existing failures (unchanged).
+**P4-4 test result:** 373 passed, 11 pre-existing failures (unchanged).
+**P4-5 test result:** 390 passed, 12 pre-existing failures (unchanged — test_sticker_award pre-existing counted correctly).
 The pre-existing failures are in `test_game/test_ai.py`, `test_game/test_combo_chain.py`, `test_game/test_sticker_award.py`, and `test_pokemon/test_progression.py`.
 
 ---
@@ -108,9 +111,9 @@ The pre-existing failures are in `test_game/test_ai.py`, `test_game/test_combo_c
 |---|------|--------|--------------|
 | P4-1 | Story quest narrative (Act 1) | ✅ Done | Section 3.2 | Commit pending; `narrative_text`+`chapter` on QuestTemplate; Act 1 seeds (Kira/Shin dialogue); chapter timeline in quest_list.html; 13 new tests |
 | P4-2 | Seasonal events framework | ✅ Done | Section 20.11 | Commit pending; `apps/events/` app; SeasonalEvent model (BONUS_RYO/DUST/DOUBLE_COMBO_DUST); service integrates in _end_battle; event banner on home page; event_list.html; Events nav link; seed_seasonal_events command; 19 new tests |
-| P4-3 | Album completion rewards | 🔲 Not started | Section 20.13 |
-| P4-4 | Sticker album visual overhaul | 🔲 Not started | Section 12.6 |
-| P4-5 | Guild / clan system | 🔲 Not started | Section 20.12 |
+| P4-3 | Album completion rewards | ✅ Done | Section 20.13 | Commit pending; `AlbumCompletionReward` model; 42-slot completion check (7 rarities × 6 variants); auto-award on open_pack/craft_sticker; full dex legendary reward (+3 packs); album banner + ✓ badges; 15 new tests |
+| P4-4 | Sticker album visual overhaul | ✅ Done | Section 12.6 | Commit pending; `PokemonAlbumDetailView` + `/stickers/album/<pk>/`; 7-rarity-group slot grid with owned/silhouette/duplicate-count states; album.html overhauled with stats row, global progress bar, rarity color chips, Alpine.js filter (All/Missing/Complete/Search), clickable cards; 9 new tests |
+| P4-5 | Guild / clan system | ✅ Done | Section 20.12 | Commit pending; `apps/guilds/` app; Guild+GuildMembership models; GuildService (create/join/leave/kick/promote/demote/stats); guild_list/detail/create templates; guild tag in nav; 18 new tests |
 
 ---
 

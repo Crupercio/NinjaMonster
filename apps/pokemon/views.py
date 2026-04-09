@@ -2,6 +2,7 @@
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Min
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
@@ -9,7 +10,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.users.services import award_ryo, sell_value_for_level
 
-from .models import OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
+from .models import Generation, OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
 from .services import claim_training, create_owned_pokemon, start_training, stop_training
 from .type_chart import ALL_TYPES, TYPE_COLORS, build_chart_matrix, get_effectiveness
 
@@ -17,26 +18,26 @@ logger = logging.getLogger(__name__)
 
 
 class PokedexView(ListView):
-    """Display all Pokemon with optional type filtering."""
+    """Display all Pokemon. Filtering is handled client-side via Alpine.js."""
 
     model = Pokemon
     template_name = "pokemon/pokedex.html"
     context_object_name = "pokemon_list"
-    paginate_by = 24
+    # No server-side pagination — Alpine.js handles instant client-side filtering.
 
     def get_queryset(self):
-        qs = Pokemon.objects.select_related("primary_type", "secondary_type").order_by(
-            "pokedex_number", "name"
+        return (
+            Pokemon.objects.select_related("primary_type", "secondary_type")
+            .prefetch_related("generation_sources")
+            .annotate(primary_gen=Min("generation_sources__number"))
+            .order_by("pokedex_number", "name")
         )
-        type_filter = self.request.GET.get("type", "").strip()
-        if type_filter:
-            qs = qs.by_type(type_filter)
-        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["types"] = PokemonType.objects.order_by("name")
-        context["selected_type"] = self.request.GET.get("type", "")
+        context["generations"] = Generation.objects.order_by("number")
+        context["type_colors"] = TYPE_COLORS
         return context
 
 

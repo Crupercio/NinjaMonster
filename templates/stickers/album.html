@@ -1,89 +1,375 @@
 {% extends "base.html" %}
 {% block title %}My Sticker Album{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Rarity color tokens ─────────────────────────────────────── */
+.r-common      { --rc:#9ca3af; }
+.r-uncommon    { --rc:#4ade80; }
+.r-rare        { --rc:#60a5fa; }
+.r-epic        { --rc:#a78bfa; }
+.r-holographic { --rc:#fbbf24; }
+.r-full_art    { --rc:#f97316; }
+.r-secret_rare { --rc:#f43f5e; }
+
+/* ── Top action bar ──────────────────────────────────────────── */
+.album-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+.album-topbar h2 { margin: 0; font-size: 1.3rem; font-weight: 800; }
+.album-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* ── Stats row ───────────────────────────────────────────────── */
+.album-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.stat-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  text-align: center;
+}
+.stat-label { font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.2rem; }
+.stat-value { font-size: 1.6rem; font-weight: 800; }
+.stat-value.green  { color: #4ade80; }
+.stat-value.yellow { color: #fbbf24; }
+.stat-value.purple { color: #a78bfa; }
+
+/* ── Global progress bar ─────────────────────────────────────── */
+.dex-bar-wrap {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+}
+.dex-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+.dex-bar-bg { background: #0f3460; border-radius: 4px; height: 10px; overflow: hidden; }
+.dex-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b82f6, #a78bfa);
+  transition: width 0.5s ease;
+}
+
+/* ── Rarity chips row ────────────────────────────────────────── */
+.rarity-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.rarity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #16213e;
+  border: 1px solid var(--rc, #1e3a6e);
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--rc, #9ca3af);
+  white-space: nowrap;
+}
+.rarity-chip-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--rc, #9ca3af);
+  flex-shrink: 0;
+}
+
+/* ── Completion rewards banner ───────────────────────────────── */
+.completion-banner {
+  background: linear-gradient(135deg,#1a1a4e,#0f3460);
+  border: 1px solid #fbbf24;
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.1rem;
+}
+.completion-banner-title { font-weight: 700; color: #fbbf24; margin-bottom: 0.3rem; }
+.completion-banner-body { display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.82rem; color: #d1d5db; }
+.completion-banner-hint { margin-top: 0.35rem; font-size: 0.7rem; color: #6b7280; }
+
+/* ── Showcase ────────────────────────────────────────────────── */
+.showcase-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.showcase-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+  min-width: 100px;
+}
+
+/* ── Filter bar ──────────────────────────────────────────────── */
+.filter-bar {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-label { font-size: 0.7rem; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.filter-btn {
+  background: #0f1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.filter-btn.active, .filter-btn:hover {
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+.filter-input {
+  background: #0f1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  width: 160px;
+}
+.filter-input:focus { outline: none; border-color: #3b82f6; }
+
+/* ── Type sections ───────────────────────────────────────────── */
+.type-section { margin-bottom: 1.8rem; }
+.type-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+.type-title { font-size: 1rem; font-weight: 700; }
+.type-bar-wrap { width: 90px; flex-shrink: 0; }
+.type-bar-bg { background: #0f3460; border-radius: 3px; height: 6px; overflow: hidden; }
+.type-bar-fill { height: 100%; border-radius: 3px; background: #3b82f6; }
+.type-count { font-size: 0.75rem; color: #9ca3af; }
+
+/* ── Pokemon grid ────────────────────────────────────────────── */
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.4rem;
+}
+.poke-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.55rem 0.4rem;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.poke-card:hover { border-color: #3b82f6; transform: translateY(-1px); }
+.poke-card.locked { opacity: 0.28; filter: grayscale(90%); }
+.poke-card.complete { border-color: #4ade80; }
+.poke-card.complete:hover { border-color: #22d3ee; }
+
+.poke-complete-mark {
+  position: absolute;
+  top: 3px; right: 5px;
+  font-size: 0.6rem;
+  color: #4ade80;
+  font-weight: 900;
+}
+.poke-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 0.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.poke-dex { font-size: 0.62rem; color: #6b7280; }
+.poke-lock-icon { font-size: 1rem; color: #374151; margin-bottom: 0.15rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+{# ── Top bar ──────────────────────────────────────────────────── #}
+<div class="album-topbar">
   <h2>Sticker Album</h2>
-  <div style="display:flex;gap:0.5rem;">
+  <div class="album-actions">
     <a href="{% url 'stickers:buy_pack' %}" class="btn btn-primary btn-sm">Buy Pack</a>
-    <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Trade Board</a>
+    <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Trade</a>
     <a href="{% url 'stickers:craft' %}" class="btn btn-secondary btn-sm">Craft ({{ request.user.sticker_dust }} dust)</a>
     <a href="{% url 'stickers:dismantle' %}" class="btn btn-secondary btn-sm">Dismantle</a>
     <a href="{% url 'stickers:dust_convert' %}" class="btn btn-secondary btn-sm">Convert Dupes</a>
   </div>
 </div>
 
-<!-- Pokedex Completion -->
-<div class="combo-log" style="margin-bottom:1rem;">
-  <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
-    <div>
-      <div style="font-size:0.75rem;color:#9ca3af;">Pokedex Completion</div>
-      <div style="font-size:2rem;font-weight:700;color:#4ade80;">{{ completion_percentage }}%</div>
-    </div>
-    <div>
-      <div style="font-size:0.75rem;color:#9ca3af;">Total Stickers</div>
-      <div style="font-size:2rem;font-weight:700;">{{ total_stickers }}</div>
-    </div>
-    <div>
-      <div style="font-size:0.75rem;color:#9ca3af;">Unique Pokemon</div>
-      <div style="font-size:2rem;font-weight:700;">{{ unique_pokemon }}</div>
-    </div>
-    {% if unopened_packs > 0 %}
-    <div>
-      <div style="font-size:0.75rem;color:#fbbf24;">Unopened Packs</div>
-      <div style="font-size:2rem;font-weight:700;color:#fbbf24;">{{ unopened_packs }}</div>
-    </div>
-    {% endif %}
+{# ── Stats row ────────────────────────────────────────────────── #}
+<div class="album-stats">
+  <div class="stat-card">
+    <div class="stat-label">Pokédex Completion</div>
+    <div class="stat-value green">{{ completion_percentage }}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Stickers</div>
+    <div class="stat-value">{{ total_stickers }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Unique Pokémon</div>
+    <div class="stat-value">{{ unique_pokemon }}</div>
+  </div>
+  {% if unopened_packs > 0 %}
+  <div class="stat-card">
+    <div class="stat-label">Unopened Packs</div>
+    <div class="stat-value yellow">{{ unopened_packs }}</div>
+  </div>
+  {% endif %}
+  {% if total_completions > 0 %}
+  <div class="stat-card">
+    <div class="stat-label">Sets Complete</div>
+    <div class="stat-value purple">{{ total_completions }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{# ── Global progress bar ──────────────────────────────────────── #}
+<div class="dex-bar-wrap">
+  <div class="dex-bar-label">
+    <span>Overall Progress — {{ unique_pokemon }} / {{ all_pokemon|length }} Pokémon discovered</span>
+    <span>{{ completion_percentage }}%</span>
+  </div>
+  <div class="dex-bar-bg">
+    <div class="dex-bar-fill" style="width:{{ completion_percentage }}%;"></div>
   </div>
 </div>
 
-<!-- Rarity Breakdown -->
-<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+{# ── Rarity chips ─────────────────────────────────────────────── #}
+<div class="rarity-chips">
   {% for rarity, count in rarity_breakdown.items %}
-    <div class="pokemon-card" style="min-width:100px;text-align:center;">
-      <div style="font-size:0.7rem;color:#9ca3af;">{{ rarity|title }}</div>
-      <div style="font-size:1.5rem;font-weight:700;">{{ count }}</div>
-    </div>
+  <div class="rarity-chip r-{{ rarity }}">
+    <div class="rarity-chip-dot"></div>
+    {{ rarity|title|cut:"_" }} &nbsp;×{{ count }}
+  </div>
   {% endfor %}
 </div>
 
-<!-- Showcase -->
+{# ── Completion rewards banner ─────────────────────────────────── #}
+{% if total_completions > 0 or full_dex_claimed %}
+<div class="completion-banner">
+  <div class="completion-banner-title">🏆 Collection Rewards</div>
+  <div class="completion-banner-body">
+    <div>
+      <span style="color:#4ade80;font-weight:700;">{{ total_completions }}</span>
+      Pokémon sets complete
+      <span style="color:#9ca3af;font-size:0.72rem;">(+2,000 Ryo &amp; 500 Dust each)</span>
+    </div>
+    {% if full_dex_claimed %}
+    <div style="color:#fbbf24;font-weight:700;">✨ Full Dex Legendary Reward claimed!</div>
+    {% endif %}
+  </div>
+  <div class="completion-banner-hint">
+    Complete all {{ pokemon_completion_slots }} rarity/variant slots for a Pokémon to earn its reward. Click any card to see your slots.
+  </div>
+</div>
+{% endif %}
+
+{# ── Showcase ─────────────────────────────────────────────────── #}
 {% if showcase %}
-<div style="margin-bottom:1.5rem;">
-  <h3 style="margin-bottom:0.5rem;">Showcase</h3>
-  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+<div style="margin-bottom:1.4rem;">
+  <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:0.5rem;">Showcase</div>
+  <div class="showcase-row">
     {% for sticker in showcase %}
-      <div class="pokemon-card" style="text-align:center;min-width:100px;">
-        <div class="pokemon-name">{{ sticker.pokemon.name }}</div>
-        <div style="font-size:0.7rem;color:#fbbf24;">{{ sticker.rarity }} · {{ sticker.variant }}</div>
-      </div>
+    <div class="showcase-card r-{{ sticker.rarity }}">
+      <div style="font-size:0.75rem;font-weight:700;color:#e2e8f0;">{{ sticker.pokemon.name }}</div>
+      <div style="font-size:0.65rem;color:var(--rc,#9ca3af);margin-top:0.15rem;">{{ sticker.get_rarity_display }}</div>
+      <div style="font-size:0.62rem;color:#6b7280;">{{ sticker.get_variant_display }}</div>
+    </div>
     {% endfor %}
   </div>
 </div>
 {% endif %}
 
-<!-- Pokemon Grid by Type -->
-{% for type_name, type_data in by_type.items %}
-<div style="margin-bottom:1.5rem;">
-  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
-    <h3>{{ type_name }}</h3>
-    <div class="hp-bar-wrap" style="width:100px;">
-      <div class="hp-bar hp-green" style="width:{{ type_data.completion }}%"></div>
-    </div>
-    <span style="font-size:0.8rem;color:#9ca3af;">{{ type_data.owned }}/{{ type_data.total }} ({{ type_data.completion }}%)</span>
+{# ── Filter bar + type grid — single Alpine root ─────────────── #}
+<div x-data="{
+  search: '',
+  filter: 'all',
+  matches(name, owned, complete) {
+    if (this.filter === 'missing'  &&  owned)    return false;
+    if (this.filter === 'complete' && !complete) return false;
+    if (this.search && !name.toLowerCase().includes(this.search.toLowerCase())) return false;
+    return true;
+  }
+}">
+
+  {# Re-render filter bar bound to THIS Alpine component #}
+  <div class="filter-bar" style="margin-bottom:1rem;">
+    <span class="filter-label">Filter</span>
+    <button class="filter-btn" :class="{ active: filter==='all' }"     @click="filter='all'">All</button>
+    <button class="filter-btn" :class="{ active: filter==='missing' }" @click="filter='missing'">Missing only</button>
+    <button class="filter-btn" :class="{ active: filter==='complete'}" @click="filter='complete'">Sets complete</button>
+    <input class="filter-input" type="search" placeholder="Search Pokémon…" x-model="search">
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:0.3rem;">
-    {% for pokemon in all_pokemon %}
-      {% if pokemon.primary_type.name == type_name %}
-        <div class="pokemon-card" style="text-align:center;padding:0.5rem;
-          {% if pokemon.pk not in owned_pokemon_ids %}opacity:0.3;filter:grayscale(100%);{% endif %}">
-          <div style="font-size:0.75rem;font-weight:600;">
-            {% if pokemon.pk not in owned_pokemon_ids %}???{% else %}{{ pokemon.name }}{% endif %}
-          </div>
-          {% if pokemon.pokedex_number %}<div style="font-size:0.65rem;color:#6b7280;">#{{ pokemon.pokedex_number }}</div>{% endif %}
+
+  {% for type_name, type_data in by_type.items %}
+  <div class="type-section">
+    <div class="type-header">
+      <div class="type-title">{{ type_name }}</div>
+      <div class="type-bar-wrap">
+        <div class="type-bar-bg">
+          <div class="type-bar-fill" style="width:{{ type_data.completion }}%;"></div>
         </div>
-      {% endif %}
-    {% endfor %}
+      </div>
+      <span class="type-count">{{ type_data.owned }}/{{ type_data.total }}</span>
+    </div>
+
+    <div class="pokemon-grid">
+      {% for pokemon in all_pokemon %}{% if pokemon.primary_type.name == type_name %}
+      {% if pokemon.pk in owned_pokemon_ids %}{% if pokemon.pk in completed_pokemon_ids %}{% with o="true" c="true" %}
+      <a href="{% url 'stickers:pokemon_album' pokemon.pk %}"
+         class="poke-card complete"
+         x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
+        <div class="poke-complete-mark">✓</div>
+        <div class="poke-name">{{ pokemon.name }}</div>
+        {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
+      </a>
+      {% endwith %}{% else %}{% with o="true" c="false" %}
+      <a href="{% url 'stickers:pokemon_album' pokemon.pk %}"
+         class="poke-card"
+         x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
+        <div class="poke-name">{{ pokemon.name }}</div>
+        {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
+      </a>
+      {% endwith %}{% endif %}{% else %}{% with o="false" c="false" %}
+      <a href="{% url 'stickers:pokemon_album' pokemon.pk %}"
+         class="poke-card locked"
+         x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
+        <div class="poke-lock-icon">?</div>
+        <div class="poke-name">???</div>
+        {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
+      </a>
+      {% endwith %}{% endif %}
+      {% endif %}{% endfor %}
+    </div>
   </div>
+  {% endfor %}
+
 </div>
-{% endfor %}
 {% endblock %}

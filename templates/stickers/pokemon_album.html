@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}{{ pokemon.name }} — Sticker Collection{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page header ─────────────────────────────────────────────── */
+.pa-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.pa-back {
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+.pa-back:hover { color: #d1d5db; }
+.pa-title { font-size: 1.4rem; font-weight: 800; }
+.pa-dex   { font-size: 0.8rem; color: #6b7280; }
+.pa-types { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
+.type-badge {
+  background: #1e3a6e;
+  color: #93c5fd;
+  border-radius: 20px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.pa-progress {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+.pa-progress-bar-wrap { flex: 1; min-width: 160px; }
+.pa-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+.pa-bar-bg {
+  background: #0f3460;
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+.pa-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b82f6, #a78bfa);
+  transition: width 0.5s ease;
+}
+.pa-bar-fill.complete { background: linear-gradient(90deg, #4ade80, #22d3ee); }
+.pa-complete-badge {
+  background: #052e16;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+  border-radius: 20px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Rarity color tokens ─────────────────────────────────────── */
+.r-common       { --rc: #9ca3af; }
+.r-uncommon     { --rc: #4ade80; }
+.r-rare         { --rc: #60a5fa; }
+.r-epic         { --rc: #a78bfa; }
+.r-holographic  { --rc: #fbbf24; }
+.r-full_art     { --rc: #f97316; }
+.r-secret_rare  { --rc: #f43f5e; }
+
+/* ── Grid layout ─────────────────────────────────────────────── */
+.pa-rarity-section { margin-bottom: 1.4rem; }
+.pa-rarity-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--rc, #9ca3af);
+  border-bottom: 1px solid var(--rc, #1e3a6e);
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.6rem;
+  opacity: 0.9;
+}
+.pa-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+/* ── Slot card ───────────────────────────────────────────────── */
+.slot-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.65rem 0.6rem;
+  text-align: center;
+  position: relative;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.slot-card.owned {
+  border-color: var(--rc, #3b82f6);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--rc, #3b82f6) 25%, transparent);
+}
+.slot-card.owned:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--rc, #3b82f6) 35%, transparent);
+}
+.slot-card.missing { opacity: 0.35; filter: grayscale(80%); }
+
+.slot-rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rc, #9ca3af);
+  margin: 0 auto 0.35rem;
+}
+.slot-pokemon-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+  color: #e2e8f0;
+}
+.slot-variant {
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+.slot-rarity-label {
+  font-size: 0.6rem;
+  color: var(--rc, #9ca3af);
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+.slot-copies {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.6rem;
+  color: #6b7280;
+}
+.slot-copies.dupe { color: #fbbf24; }
+
+/* ── Missing silhouette icon ─────────────────────────────────── */
+.slot-silhouette {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 0.3rem;
+  background: #0f3460;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  opacity: 0.4;
+}
+.slot-owned-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 0.3rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--rc, #3b82f6) 15%, #16213e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{# ── Back link ────────────────────────────────────────────────── #}
+<a href="{% url 'stickers:album' %}" class="pa-back">← Back to Album</a>
+
+{# ── Header ───────────────────────────────────────────────────── #}
+<div class="pa-header">
+  <div>
+    <div class="pa-title">{{ pokemon.name }}</div>
+    {% if pokemon.pokedex_number %}<div class="pa-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
+    <div class="pa-types">
+      {% if pokemon.primary_type %}<span class="type-badge">{{ pokemon.primary_type.name }}</span>{% endif %}
+      {% if pokemon.secondary_type %}<span class="type-badge">{{ pokemon.secondary_type.name }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── Progress bar ─────────────────────────────────────────────── #}
+<div class="pa-progress">
+  <div class="pa-progress-bar-wrap">
+    <div class="pa-progress-label">
+      <span>Collection Progress</span>
+      <span>{{ slots_owned }} / {{ slots_total }}</span>
+    </div>
+    <div class="pa-bar-bg">
+      {% widthratio slots_owned slots_total 100 as pct %}
+      <div class="pa-bar-fill{% if is_complete %} complete{% endif %}" style="width:{{ pct }}%;"></div>
+    </div>
+  </div>
+  {% if is_complete %}
+  <div class="pa-complete-badge">✓ Collection Complete</div>
+  {% endif %}
+</div>
+
+{# ── Slot grid grouped by rarity ─────────────────────────────── #}
+{% regroup grid by rarity as rarity_groups %}
+{% for rarity_group in rarity_groups %}
+<div class="pa-rarity-section r-{{ rarity_group.grouper }}">
+  <div class="pa-rarity-title">
+    {% for slot in rarity_group.list %}{% if forloop.first %}{{ slot.rarity_label }}{% endif %}{% endfor %}
+    &nbsp;
+    {% with owned_in_rarity=rarity_group.list|length %}
+    {% endwith %}
+  </div>
+  <div class="pa-slots">
+    {% for slot in rarity_group.list %}
+    <div class="slot-card r-{{ slot.rarity }} {% if slot.owned %}owned{% else %}missing{% endif %}">
+      {% if slot.copies > 1 %}
+      <div class="slot-copies dupe">×{{ slot.copies }}</div>
+      {% elif slot.owned %}
+      <div class="slot-copies">×1</div>
+      {% endif %}
+
+      {% if slot.owned %}
+      <div class="slot-owned-icon">
+        {% if slot.rarity == "secret_rare" %}✦
+        {% elif slot.rarity == "full_art" %}🌟
+        {% elif slot.rarity == "holographic" %}💎
+        {% elif slot.rarity == "epic" %}⚡
+        {% elif slot.rarity == "rare" %}★
+        {% elif slot.rarity == "uncommon" %}◆
+        {% else %}●
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="slot-silhouette">?</div>
+      {% endif %}
+
+      <div class="slot-pokemon-name">{{ pokemon.name }}</div>
+      <div class="slot-variant">{{ slot.variant_label }}</div>
+      <div class="slot-rarity-label">{{ slot.rarity_label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

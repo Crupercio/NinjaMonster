@@ -19,6 +19,8 @@ from .models import (
     CRAFT_COSTS,
     DISMANTLE_VALUES,
     DUST_VALUES,
+    AlbumCompletionReward,
+    AlbumRewardType,
     Sticker,
     StickerAlbum,
     StickerPack,
@@ -93,6 +95,32 @@ _PITY_SECRET_RARE = 200
 # ── Shop pricing — change here to affect the whole feature ──────────────────
 PACK_PRICE_RYO: int = 500  # cost of one sticker pack
 # ────────────────────────────────────────────────────────────────────────────
+
+# ── Album completion (GDD §20.13) ────────────────────────────────────────────
+# 7 rarities × 6 non-ANIME variants = 42 valid (rarity, variant) slots per Pokemon.
+# ANIME variant is excluded — it is only available on SECRET_RARE and is a
+# cosmetic bonus that does not count toward completion.
+_COMPLETION_VARIANTS: list[str] = [
+    StickerVariant.BASE,
+    StickerVariant.SHINY,
+    StickerVariant.BATTLE_SCENE,
+    StickerVariant.CHIBI,
+    StickerVariant.MANGA_PANEL,
+    StickerVariant.FULL_ILLUSTRATION,
+]
+_COMPLETION_RARITIES: list[str] = list(StickerRarity.values)  # all 7
+
+POKEMON_COMPLETION_SLOTS: int = len(_COMPLETION_RARITIES) * len(_COMPLETION_VARIANTS)  # 42
+
+# Rewards for completing all 42 slots of a single Pokemon
+POKEMON_COMPLETE_DUST: int = 500
+POKEMON_COMPLETE_RYO: int = 2_000
+
+# Legendary reward for completing every Pokemon in the Pokedex
+FULL_DEX_DUST: int = 5_000
+FULL_DEX_RYO: int = 10_000
+FULL_DEX_PACKS: int = 3
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 def _weighted_choice(weights: dict[str, float]) -> str:
@@ -327,6 +355,10 @@ class StickerService:
         from apps.quests.services import QuestService
         QuestService().on_pack_opened(player)
 
+        # Check album completion for every unique Pokemon in this pack
+        pokemon_ids = {s.pokemon_id for s in stickers}
+        self.maybe_award_completion_rewards(player, pokemon_ids)
+
         return stickers
 
     @transaction.atomic
@@ -445,6 +477,7 @@ class StickerService:
             variant,
             cost,
         )
+        self.maybe_award_completion_rewards(player, {pokemon.pk})
         return sticker
 
     def get_album(self, user: User) -> dict:
@@ -502,6 +535,157 @@ class StickerService:
             "completion_percentage": completion,
             "by_type": by_type,
             "showcase": showcase,
+        }
+
+    # ------------------------------------------------------------------
+    # Album completion rewards (GDD §20.13)
+    # ------------------------------------------------------------------
+
+    def check_pokemon_completion(self, user: User, pokemon: Pokemon) -> bool:
+        """
+        Return True if the user owns at least one sticker for every valid
+        (rarity, variant) combination for the given Pokemon.
+
+        Valid combinations: all 7 rarities × 6 non-ANIME variants = 42 slots.
+        """
+        owned_slots = set(
+            Sticker.objects.filter(
+                owner=user,
+                pokemon=pokemon,
+                variant__in=_COMPLETION_VARIANTS,
+            ).values_list("rarity", "variant").distinct()
+        )
+        required_slots = {
+            (rarity, variant)
+            for rarity in _COMPLETION_RARITIES
+            for variant in _COMPLETION_VARIANTS
+        }
+        return required_slots.issubset(owned_slots)
+
+    def maybe_award_completion_rewards(
+        self, user: User, pokemon_ids: set[int]
+    ) -> list[dict]:
+        """
+        Check each pokemon_id for newly achieved completion and auto-award
+        the appropriate reward if not already claimed.
+
+        After checking individual Pokemon, also checks full dex completion.
+
+        Returns a list of award summary dicts (one per reward granted):
+          {"type": "pokemon", "pokemon": <Pokemon>, "dust": 500, "ryo": 2000}
+          {"type": "full_dex", "dust": 5000, "ryo": 10000, "packs": 3}
+        """
+        summaries: list[dict] = []
+
+        for pokemon_id in pokemon_ids:
+            try:
+                pokemon = Pokemon.objects.get(pk=pokemon_id)
+            except Pokemon.DoesNotExist:
+                continue
+
+            if not self.check_pokemon_completion(user, pokemon):
+                continue
+
+            # Guard: already awarded?
+            _, created = AlbumCompletionReward.objects.get_or_create(
+                user=user,
+                reward_type=AlbumRewardType.POKEMON_COMPLETE,
+                pokemon=pokemon,
+                defaults={
+                    "dust_awarded": POKEMON_COMPLETE_DUST,
+                    "ryo_awarded": POKEMON_COMPLETE_RYO,
+                    "packs_awarded": 0,
+                },
+            )
+            if not created:
+                continue  # already claimed previously
+
+            # Award
+            user.sticker_dust += POKEMON_COMPLETE_DUST
+            user.ryo += POKEMON_COMPLETE_RYO
+            user.save(update_fields=["sticker_dust", "ryo"])
+
+            summaries.append({
+                "type": "pokemon",
+                "pokemon": pokemon,
+                "dust": POKEMON_COMPLETE_DUST,
+                "ryo": POKEMON_COMPLETE_RYO,
+            })
+            logger.info(
+                "Pokemon completion reward: user=%s pokemon=%s dust=%d ryo=%d",
+                user,
+                pokemon.name,
+                POKEMON_COMPLETE_DUST,
+                POKEMON_COMPLETE_RYO,
+            )
+
+        # Check full dex only if at least one new pokemon reward was just granted
+        if summaries and self._check_full_dex_completion(user):
+            _, created = AlbumCompletionReward.objects.get_or_create(
+                user=user,
+                reward_type=AlbumRewardType.FULL_DEX,
+                pokemon=None,
+                defaults={
+                    "dust_awarded": FULL_DEX_DUST,
+                    "ryo_awarded": FULL_DEX_RYO,
+                    "packs_awarded": FULL_DEX_PACKS,
+                },
+            )
+            if created:
+                user.sticker_dust += FULL_DEX_DUST
+                user.ryo += FULL_DEX_RYO
+                user.save(update_fields=["sticker_dust", "ryo"])
+                for _ in range(FULL_DEX_PACKS):
+                    StickerPack.objects.create(owner=user)
+                summaries.append({
+                    "type": "full_dex",
+                    "dust": FULL_DEX_DUST,
+                    "ryo": FULL_DEX_RYO,
+                    "packs": FULL_DEX_PACKS,
+                })
+                logger.info(
+                    "Full dex completion reward: user=%s dust=%d ryo=%d packs=%d",
+                    user,
+                    FULL_DEX_DUST,
+                    FULL_DEX_RYO,
+                    FULL_DEX_PACKS,
+                )
+
+        return summaries
+
+    def _check_full_dex_completion(self, user: User) -> bool:
+        """Return True if every Pokemon in the DB is individually complete for user."""
+        all_pokemon = list(Pokemon.objects.only("pk"))
+        if not all_pokemon:
+            return False
+        completed_ids = set(
+            AlbumCompletionReward.objects.filter(
+                user=user,
+                reward_type=AlbumRewardType.POKEMON_COMPLETE,
+            ).values_list("pokemon_id", flat=True)
+        )
+        return all(p.pk in completed_ids for p in all_pokemon)
+
+    def get_completion_rewards_for_album(self, user: User) -> dict:
+        """
+        Return album completion context for the album page:
+          {
+            "completed_pokemon_ids": set[int],
+            "full_dex_claimed": bool,
+            "total_completions": int,
+          }
+        """
+        qs = AlbumCompletionReward.objects.filter(user=user)
+        completed_ids = set(
+            qs.filter(
+                reward_type=AlbumRewardType.POKEMON_COMPLETE
+            ).values_list("pokemon_id", flat=True)
+        )
+        full_dex_claimed = qs.filter(reward_type=AlbumRewardType.FULL_DEX).exists()
+        return {
+            "completed_pokemon_ids": completed_ids,
+            "full_dex_claimed": full_dex_claimed,
+            "total_completions": len(completed_ids),
         }
 
     # ------------------------------------------------------------------
