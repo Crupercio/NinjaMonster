@@ -3,6 +3,10 @@ from django.urls import path
 
 from .views import (
     CatchPokemonView,
+    ComboAtlasView,
+    ComboSimulatorChainsAPI,
+    ComboSimulatorMovesAPI,
+    ComboSimulatorView,
     MyPokemonView,
     OwnedPokemonDetailView,
     PokedexView,
@@ -25,4 +29,8 @@ urlpatterns = [
     path("my/<int:pk>/sell/", SellPokemonView.as_view(), name="sell"),
     path("team/", TeamView.as_view(), name="team"),
     path("team/slot/<int:position>/", TeamSlotPickerView.as_view(), name="team_slot"),
+    path("combos/", ComboAtlasView.as_view(), name="combo_atlas"),
+    path("combos/simulator/", ComboSimulatorView.as_view(), name="combo_simulator"),
+    path("combos/simulator/moves/<int:pk>/", ComboSimulatorMovesAPI.as_view(), name="combo_simulator_moves"),
+    path("combos/simulator/chains/", ComboSimulatorChainsAPI.as_view(), name="combo_simulator_chains"),
 ]

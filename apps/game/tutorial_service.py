@@ -95,8 +95,8 @@ class TutorialService:
                     level=5,
                     move_standard=moves[MoveSlotType.STANDARD],
                     move_chase=moves[MoveSlotType.CHASE],
-                    move_special=moves[MoveSlotType.SPECIAL],
-                    move_support=moves[MoveSlotType.SUPPORT],
+                    move_special=moves[MoveSlotType.MYSTERY],
+                    move_support=moves[MoveSlotType.PASSIVE_1],
                 )
                 owned_pks.append(op.pk)
 
@@ -158,25 +158,36 @@ class TutorialService:
         """
         Return one Move per required slot type for this species.
 
-        Queries the species' own learnset first.  For any slot type that the
-        species lacks, falls back to any other Move in the DB of that type so
-        the tutorial OwnedPokemon always have all four slots filled.
+        Queries SpeciesMovePool (the authoritative curated pool) first.
+        For any slot type still missing, falls back to any Move in the DB
+        of that type so the tutorial OwnedPokemon always have all four slots filled.
         """
+        from apps.pokemon.models import SpeciesMovePool
+
         required: list[str] = [
             MoveSlotType.STANDARD,
             MoveSlotType.CHASE,
-            MoveSlotType.SPECIAL,
-            MoveSlotType.SUPPORT,
+            MoveSlotType.MYSTERY,
+            MoveSlotType.PASSIVE_1,
         ]
         result: dict[str, Move | None] = {s: None for s in required}
 
-        for move in species.moves.filter(slot_type__in=required):
-            slot = move.slot_type
-            if result[slot] is None:
-                result[slot] = move
+        for entry in (
+            SpeciesMovePool.objects
+            .filter(species=species, slot_type__in=required)
+            .select_related("move")
+            .order_by("slot_type", "move__pk")
+        ):
+            if result[entry.slot_type] is None:
+                result[entry.slot_type] = entry.move
 
         missing = [s for s in required if result[s] is None]
         if missing:
+            logger.warning(
+                "Species '%s' has no SpeciesMovePool entries for slot(s): %s — using global fallback.",
+                species.name,
+                ", ".join(missing),
+            )
             used_pks: set[int] = {m.pk for m in result.values() if m is not None}
             fallbacks = list(
                 Move.objects.filter(slot_type__in=missing).order_by("slot_type", "pk")

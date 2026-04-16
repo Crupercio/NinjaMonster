@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+{% block title %}Combo Simulator{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ───────────────────────────────────────────────────── */
+.sim-wrap { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+.sim-hero {
+  background: radial-gradient(ellipse at 60% 0%, #0f3460 0%, #1a1a2e 65%);
+  border-bottom: 1px solid #0f3460;
+  padding: 1.75rem 0 1.4rem;
+  text-align: center;
+  margin-bottom: 0;
+}
+.sim-hero h1 { font-size: clamp(1.5rem,4vw,2.2rem); font-weight:800; margin:0 0 0.3rem; }
+.sim-hero p  { color:#9ca3af; font-size:0.88rem; margin:0; }
+.sim-hero-links { margin-top:0.6rem; display:flex; justify-content:center; gap:0.75rem; }
+.sim-hero-links a { font-size:0.75rem; color:#6b7280; text-decoration:none; }
+.sim-hero-links a:hover { color:#e2e8f0; }
+
+/* ── Two-column layout ────────────────────────────────────────── */
+.sim-layout { display: grid; grid-template-columns: 340px 1fr; gap: 1.25rem; align-items: start; margin-top: 1.5rem; }
+@media (max-width: 800px) { .sim-layout { grid-template-columns: 1fr; } }
+
+/* ── Team builder panel ───────────────────────────────────────── */
+.team-panel {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  overflow: hidden;
+  position: sticky;
+  top: 1rem;
+}
+.team-panel-header {
+  padding: 0.75rem 1rem;
+  background: #1a2744;
+  border-bottom: 1px solid #1e3a6e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.team-slots { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+/* ── Slot card ────────────────────────────────────────────────── */
+.slot-card {
+  background: #0f1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.slot-card.filled { border-color: #3b82f6; }
+.slot-card.has-chains { border-color: #4ade80; }
+
+.slot-empty {
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #4b5563;
+  font-size: 0.82rem;
+  transition: background 0.12s;
+}
+.slot-empty:hover { background: #1a2744; color: #94a3b8; }
+.slot-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #1e3a6e; color: #6b7280;
+  font-size: 0.65rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.slot-filled-header {
+  padding: 0.5rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #1e3a6e;
+  cursor: pointer;
+}
+.slot-filled-header:hover { background: #1a2744; }
+.slot-species-name { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; flex: 1; }
+.slot-dex { font-size: 0.65rem; color: #4b5563; }
+.slot-remove {
+  color: #4b5563; font-size: 0.75rem; cursor: pointer;
+  padding: 2px 5px; border-radius: 4px;
+}
+.slot-remove:hover { background: #7f1d1d; color: #fca5a5; }
+
+/* ── Move pickers within slot ─────────────────────────────────── */
+.slot-moves { padding: 0.5rem 0.7rem 0.6rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.move-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+}
+.move-slot-label {
+  width: 58px; flex-shrink: 0;
+  font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+  color: #4b5563; letter-spacing: 0.05em;
+}
+.move-slot-label.mystery  { color: #a5b4fc; }
+.move-slot-label.chase    { color: #fbbf24; }
+.move-slot-label.passive  { color: #9ca3af; }
+.move-slot-label.standard { color: #86efac; }
+
+.move-select {
+  flex: 1;
+  background: #1a1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 5px;
+  color: #e2e8f0;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.move-select:focus { outline: none; border-color: #3b82f6; }
+.move-select.combo-move { border-color: #4ade80; }
+
+.move-fixed {
+  flex: 1; padding: 3px 6px;
+  background: #0f1a2e; border: 1px solid #0f3460;
+  border-radius: 5px; color: #94a3b8; font-size: 0.7rem;
+}
+
+/* ── Simulate button ──────────────────────────────────────────── */
+.sim-btn-wrap { padding: 0.75rem; border-top: 1px solid #1e3a6e; }
+.sim-btn {
+  width: 100%;
+  background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sim-btn:hover { opacity: 0.9; }
+.sim-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Results panel ────────────────────────────────────────────── */
+.results-panel { min-height: 300px; }
+.results-empty {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+.results-empty .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+.results-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 0.9rem; flex-wrap: wrap;
+}
+.results-title { font-size: 1rem; font-weight: 800; color: #e2e8f0; }
+.results-stat { background: #0f3460; border-radius: 5px; padding: 2px 10px; font-size: 0.72rem; font-weight: 700; color: #fbbf24; }
+.results-stat.green { color: #4ade80; }
+
+/* ── Chain result card ────────────────────────────────────────── */
+.chain-result {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  margin-bottom: 0.9rem;
+  overflow: hidden;
+}
+.chain-result-header {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  background: #1a2744;
+  border-bottom: 1px solid #1e3a6e;
+}
+.status-badge {
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 2px 9px; border-radius: 20px;
+}
+.status-burned    { background:#7f1d1d; color:#fca5a5; }
+.status-paralyzed { background:#78350f; color:#fcd34d; }
+.status-poisoned  { background:#3b0764; color:#e879f9; }
+.status-frozen    { background:#164e63; color:#a5f3fc; }
+.status-confused  { background:#4a044e; color:#f0abfc; }
+.status-bound     { background:#1c1917; color:#d6d3d1; }
+.status-asleep    { background:#1e1b4b; color:#a5b4fc; }
+
+.chain-pairs { padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.chain-pair {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  background: #0f1a2e; border: 1px solid #1e3a6e;
+  border-radius: 7px; padding: 0.45rem 0.7rem;
+}
+.pair-primer, .pair-chaser {
+  display: flex; flex-direction: column; gap: 1px;
+  flex: 1; min-width: 120px;
+}
+.pair-species { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; }
+.pair-move    { font-size: 0.68rem; color: #9ca3af; }
+.pair-arrow {
+  color: #e94560; font-size: 1rem; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.pair-amp { font-size: 0.6rem; color: #fbbf24; font-weight: 700; }
+.pair-condition { font-size: 0.6rem; color: #6b7280; font-style: italic; }
+
+/* ── Type pips ────────────────────────────────────────────────── */
+.type-pip {
+  display: inline-block; font-size: 0.56rem; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px; text-transform: uppercase;
+  vertical-align: middle; margin-left: 2px;
+}
+.type-fire    { background:#7f1d1d; color:#fca5a5; }
+.type-water   { background:#1e3a5f; color:#93c5fd; }
+.type-grass   { background:#14532d; color:#86efac; }
+.type-electric{ background:#78350f; color:#fcd34d; }
+.type-psychic { background:#4a044e; color:#f0abfc; }
+.type-dragon  { background:#1e1b4b; color:#a5b4fc; }
+.type-ice     { background:#164e63; color:#a5f3fc; }
+.type-ghost   { background:#2d1b69; color:#c4b5fd; }
+.type-dark    { background:#1c1917; color:#a8a29e; }
+.type-steel   { background:#374151; color:#d1d5db; }
+.type-poison  { background:#3b0764; color:#e879f9; }
+.type-fighting{ background:#7c2d12; color:#fdba74; }
+.type-rock    { background:#292524; color:#d6d3d1; }
+.type-ground  { background:#451a03; color:#fcd34d; }
+.type-flying  { background:#1e1b4b; color:#c7d2fe; }
+.type-bug     { background:#1a2e05; color:#bef264; }
+.type-normal  { background:#374151; color:#f3f4f6; }
+.type-fairy   { background:#500724; color:#fda4af; }
+
+/* ── Species search modal ─────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  width: min(480px, 95vw);
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #1e3a6e;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.modal-title { font-size: 0.9rem; font-weight: 700; flex: 1; }
+.modal-close { color: #6b7280; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; border-radius: 4px; }
+.modal-close:hover { background: #1e3a6e; color: #e2e8f0; }
+.modal-search {
+  margin: 0.75rem;
+  background: #0f1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 7px;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  width: calc(100% - 1.5rem);
+}
+.modal-search:focus { outline: none; border-color: #3b82f6; }
+.modal-list { overflow-y: auto; flex: 1; padding: 0 0.75rem 0.75rem; }
+.modal-species-item {
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #e2e8f0;
+}
+.modal-species-item:hover { background: #1a2744; }
+.modal-species-item.already-added { opacity: 0.35; pointer-events: none; }
+.modal-dex { font-size: 0.65rem; color: #4b5563; width: 32px; flex-shrink: 0; }
+
+/* ── Loading spinner ──────────────────────────────────────────── */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #1e3a6e; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sim-hero">
+  <h1>&#9889; Combo Simulator</h1>
+  <p>Build a team of up to 6 species and discover every possible combo chain between them.</p>
+  <div class="sim-hero-links">
+    <a href="{% url 'pokemon:combo_atlas' %}">&#8592; Back to Combo Atlas</a>
+  </div>
+</div>
+
+<div class="sim-wrap">
+  <div class="sim-layout">
+
+    {# ── Team builder panel ──────────────────────────────────── #}
+    <div class="team-panel">
+      <div class="team-panel-header">
+        <span>Team Builder</span>
+        <span id="team-count" style="color:#4b5563;font-weight:400;">0 / 6</span>
+      </div>
+      <div class="team-slots" id="team-slots">
+        {% for i in "123456" %}
+        <div class="slot-card" id="slot-{{ forloop.counter }}" data-slot="{{ forloop.counter }}">
+          <div class="slot-empty" onclick="openModal({{ forloop.counter }})">
+            <span class="slot-num">{{ forloop.counter }}</span>
+            <span>Click to add a Pokémon</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="sim-btn-wrap">
+        <button class="sim-btn" id="sim-btn" onclick="simulate()" disabled>
+          Simulate Combos
+        </button>
+      </div>
+    </div>
+
+    {# ── Results panel ───────────────────────────────────────── #}
+    <div class="results-panel" id="results-panel">
+      <div class="results-empty">
+        <div class="icon">&#9889;</div>
+        <div>Add at least 2 Pokémon and click <strong>Simulate Combos</strong> to see chains.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{# ── Species search modal ────────────────────────────────────── #}
+<div class="modal-overlay" id="species-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Choose a Pokémon</span>
+      <span class="modal-close" onclick="closeModal()">&#10005;</span>
+    </div>
+    <input class="modal-search" id="modal-search" type="text" placeholder="Search by name or #..." oninput="filterModal(this.value)">
+    <div class="modal-list" id="modal-list"></div>
+  </div>
+</div>
+
+<script>
+// ── All species from Django context ───────────────────────────
+const ALL_SPECIES = [
+  {% for s in all_species %}
+  { id: {{ s.id }}, name: "{{ s.name|escapejs }}", dex: {{ s.pokedex_number }} },
+  {% endfor %}
+];
+
+// ── State ─────────────────────────────────────────────────────
+// team: { slotNum: { species_id, species_name, dex, slots: { slot_type: [moves] }, chosen: { slot_type: move_id } } }
+const team = {};
+let openingSlot = null;
+
+const SLOT_LABELS = {
+  standard: 'Standard',
+  chase:    'Chase',
+  mystery:  'Mystery',
+  passive_1: 'Passive 1',
+  passive_2: 'Passive 2',
+};
+
+// ── Modal ─────────────────────────────────────────────────────
+function openModal(slotNum) {
+  openingSlot = slotNum;
+  document.getElementById('modal-search').value = '';
+  renderModalList('');
+  document.getElementById('species-modal').classList.add('open');
+  setTimeout(() => document.getElementById('modal-search').focus(), 50);
+}
+function closeModal() {
+  document.getElementById('species-modal').classList.remove('open');
+  openingSlot = null;
+}
+document.getElementById('species-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+function filterModal(q) {
+  renderModalList(q.trim().toLowerCase());
+}
+
+function renderModalList(q) {
+  const addedIds = new Set(Object.values(team).map(m => m.species_id));
+  const list = document.getElementById('modal-list');
+  const filtered = q
+    ? ALL_SPECIES.filter(s => s.name.toLowerCase().includes(q) || String(s.dex).includes(q))
+    : ALL_SPECIES;
+
+  list.innerHTML = filtered.slice(0, 80).map(s => `
+    <div class="modal-species-item ${addedIds.has(s.id) ? 'already-added' : ''}"
+         onclick="selectSpecies(${s.id}, '${s.name.replace(/'/g,"\\'")}', ${s.dex})">
+      <span class="modal-dex">#${String(s.dex).padStart(3,'0')}</span>
+      <span>${s.name}</span>
+    </div>
+  `).join('');
+}
+
+// ── Select species: fetch move pool ───────────────────────────
+async function selectSpecies(id, name, dex) {
+  const slotNum = openingSlot;
+  closeModal();
+  const slotCard = document.getElementById(`slot-${slotNum}`);
+  slotCard.innerHTML = `<div class="slot-empty" style="justify-content:center;cursor:default;"><span class="spinner"></span></div>`;
+  slotCard.classList.add('filled');
+
+  const resp = await fetch(`{% url 'pokemon:combo_simulator_moves' 0 %}`.replace('/0/', `/${id}/`));
+  const data = await resp.json();
+
+  team[slotNum] = {
+    species_id: id,
+    species_name: name,
+    dex,
+    slots: data.slots,
+    chosen: {},
+  };
+
+  // Auto-select when only one option per slot
+  for (const [slotType, moves] of Object.entries(data.slots)) {
+    if (moves.length === 1) {
+      team[slotNum].chosen[slotType] = moves[0].id;
+    }
+  }
+
+  renderSlot(slotNum);
+  updateSimBtn();
+}
+
+// ── Render a filled slot ───────────────────────────────────────
+function renderSlot(slotNum) {
+  const m = team[slotNum];
+  const card = document.getElementById(`slot-${slotNum}`);
+
+  let movesHtml = '';
+  for (const [slotType, moves] of Object.entries(m.slots)) {
+    const labelClass = slotType === 'mystery' ? 'mystery'
+                     : slotType === 'chase'   ? 'chase'
+                     : slotType.startsWith('passive') ? 'passive' : 'standard';
+    const label = SLOT_LABELS[slotType] || slotType;
+
+    let inputHtml;
+    if (moves.length === 1) {
+      const mv = moves[0];
+      const isCombo = mv.applies_status || mv.trigger_status;
+      inputHtml = `<div class="move-fixed ${isCombo ? 'combo-move' : ''}">${mv.name}${mv.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${mv.power}</span>` : ''}</div>`;
+    } else {
+      const opts = moves.map(mv => {
+        const isCombo = mv.applies_status || mv.trigger_status;
+        const flag = isCombo ? ' ⚡' : '';
+        return `<option value="${mv.id}" ${m.chosen[slotType] == mv.id ? 'selected' : ''}>${mv.name}${flag}${mv.power ? ` (${mv.power})` : ''}</option>`;
+      }).join('');
+      inputHtml = `<select class="move-select ${moves.some(mv => (mv.applies_status||mv.trigger_status) && m.chosen[slotType]==mv.id) ? 'combo-move':''}"
+        onchange="pickMove(${slotNum},'${slotType}',+this.value,this)">
+        <option value="">— pick a move —</option>${opts}
+      </select>`;
+    }
+
+    movesHtml += `
+      <div class="move-row">
+        <span class="move-slot-label ${labelClass}">${label}</span>
+        ${inputHtml}
+      </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="slot-filled-header">
+      <span class="slot-num">${slotNum}</span>
+      <span class="slot-species-name">${m.species_name}</span>
+      <span class="slot-dex">#${String(m.dex).padStart(3,'0')}</span>
+      <span class="slot-remove" onclick="removeSlot(${slotNum})" title="Remove">&#10005;</span>
+    </div>
+    <div class="slot-moves">${movesHtml}</div>`;
+
+  updateTeamCount();
+}
+
+function pickMove(slotNum, slotType, moveId, selectEl) {
+  team[slotNum].chosen[slotType] = moveId || null;
+  // Update green highlight if combo move selected
+  const moves = team[slotNum].slots[slotType];
+  const picked = moves.find(m => m.id === moveId);
+  if (picked && (picked.applies_status || picked.trigger_status)) {
+    selectEl.classList.add('combo-move');
+  } else {
+    selectEl.classList.remove('combo-move');
+  }
+}
+
+function removeSlot(slotNum) {
+  delete team[slotNum];
+  const card = document.getElementById(`slot-${slotNum}`);
+  card.className = 'slot-card';
+  card.innerHTML = `<div class="slot-empty" onclick="openModal(${slotNum})">
+    <span class="slot-num">${slotNum}</span>
+    <span>Click to add a Pokémon</span>
+  </div>`;
+  updateTeamCount();
+  updateSimBtn();
+}
+
+function updateTeamCount() {
+  document.getElementById('team-count').textContent = `${Object.keys(team).length} / 6`;
+}
+function updateSimBtn() {
+  document.getElementById('sim-btn').disabled = Object.keys(team).length < 2;
+}
+
+// ── Simulate ───────────────────────────────────────────────────
+async function simulate() {
+  const btn = document.getElementById('sim-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Simulating…';
+
+  const payload = Object.values(team).map(m => ({
+    species_name: m.species_name,
+    moves: m.chosen,   // { slot_type: move_id }
+  }));
+
+  const resp = await fetch('{% url "pokemon:combo_simulator_chains" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ team: payload }),
+  });
+  const data = await resp.json();
+
+  renderResults(data);
+  btn.disabled = false;
+  btn.textContent = 'Simulate Combos';
+}
+
+// ── Render results ─────────────────────────────────────────────
+function renderResults(data) {
+  const panel = document.getElementById('results-panel');
+  if (!data.chains || data.chains.length === 0) {
+    panel.innerHTML = `
+      <div class="results-empty">
+        <div class="icon">&#128528;</div>
+        <div>No combo chains found in this team.<br>
+        <span style="font-size:0.8rem;color:#6b7280;">Try adding Pokémon with status-applying moves, or pick chase moves that trigger on those statuses.</span></div>
+      </div>`;
+    return;
+  }
+
+  const chainCards = data.chains.map(chain => {
+    const pairs = [];
+    for (const primer of chain.primers) {
+      for (const chaser of chain.chasers) {
+        pairs.push(`
+          <div class="chain-pair">
+            <div class="pair-primer">
+              <div class="pair-species">${primer.species}</div>
+              <div class="pair-move">${primer.move}${primer.type ? ` <span class="type-pip type-${primer.type.toLowerCase()}">${primer.type}</span>` : ''}${primer.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${primer.power}</span>` : ''}</div>
+            </div>
+            <div class="pair-arrow">
+              &#8594;
+              <span class="pair-amp">×1.10</span>
+            </div>
+            <div class="pair-chaser">
+              <div class="pair-species">${chaser.species}</div>
+              <div class="pair-move">${chaser.move}${chaser.type ? ` <span class="type-pip type-${chaser.type.toLowerCase()}">${chaser.type}</span>` : ''}${chaser.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${chaser.power}</span>` : ''}${chaser.condition ? ` <span class="pair-condition">req: ${chaser.condition}</span>` : ''}</div>
+            </div>
+          </div>`);
+      }
+    }
+    return `
+      <div class="chain-result">
+        <div class="chain-result-header">
+          <span class="status-badge status-${chain.status_key}">${chain.status}</span>
+          <span style="font-size:0.75rem;color:#6b7280;">${chain.primers.length} causer${chain.primers.length!=1?'s':''} → ${chain.chasers.length} chaser${chain.chasers.length!=1?'s':''}</span>
+        </div>
+        <div class="chain-pairs">${pairs.join('')}</div>
+      </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="results-header">
+      <span class="results-title">Combo Chains Found</span>
+      <span class="results-stat green">${data.chains.length} status${data.chains.length!=1?'es':''}</span>
+      <span class="results-stat">${data.total_links} possible link${data.total_links!=1?'s':''}</span>
+    </div>
+    ${chainCards}`;
+}
+
+// ── CSRF helper ────────────────────────────────────────────────
+function getCookie(name) {
+  const m = document.cookie.match(`(^|;)\\s*${name}=([^;]+)`);
+  return m ? decodeURIComponent(m[2]) : '';
+}
+</script>
+{% endblock %}

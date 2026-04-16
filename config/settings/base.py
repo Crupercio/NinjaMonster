@@ -40,6 +40,7 @@ LOCAL_APPS = [
     "apps.game",
     "apps.stickers",
     "apps.quests",
+    "apps.expedition",
     "apps.ranked",
     "apps.events",
     "apps.guilds",

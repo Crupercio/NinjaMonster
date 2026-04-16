@@ -163,6 +163,42 @@ class QuestService:
             battle.pk,
         )
 
+    def on_expedition_completed(self, user: User) -> None:
+        """Called when an expedition session finishes (all encounters used)."""
+        period_keys = [_daily_period_key(), _weekly_period_key(), "story"]
+        active_quests = list(
+            UserQuest.objects.filter(
+                user=user,
+                completed=False,
+                period_key__in=period_keys,
+                template__condition=QuestCondition.COMPLETE_EXPEDITIONS,
+            ).select_related("template")
+        )
+        for uq in active_quests:
+            uq.progress = min(uq.progress + 1, uq.template.condition_value)
+            if uq.progress >= uq.template.condition_value:
+                uq.completed = True
+                uq.completed_at = timezone.now()
+            uq.save(update_fields=["progress", "completed", "completed_at"])
+
+    def on_pokemon_bonded(self, user: User) -> None:
+        """Called when an expedition encounter results in a successful bond."""
+        period_keys = [_daily_period_key(), _weekly_period_key(), "story"]
+        active_quests = list(
+            UserQuest.objects.filter(
+                user=user,
+                completed=False,
+                period_key__in=period_keys,
+                template__condition=QuestCondition.BOND_POKEMON,
+            ).select_related("template")
+        )
+        for uq in active_quests:
+            uq.progress = min(uq.progress + 1, uq.template.condition_value)
+            if uq.progress >= uq.template.condition_value:
+                uq.completed = True
+                uq.completed_at = timezone.now()
+            uq.save(update_fields=["progress", "completed", "completed_at"])
+
     def on_pack_opened(self, user: User) -> None:
         """
         Increment OPEN_PACKS quest progress after the user opens a sticker pack.
@@ -241,6 +277,10 @@ class QuestService:
 
         user_quest.rewarded = True
         user_quest.save(update_fields=["rewarded"])
+
+        # Award trainer XP for completing a quest (50 XP per quest claim)
+        from apps.users.services import award_trainer_xp
+        award_trainer_xp(user, 50, source="quest")
 
         logger.info(
             "Quest reward claimed: user=%s quest='%s' reward=%s",

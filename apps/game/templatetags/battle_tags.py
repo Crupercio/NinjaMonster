@@ -14,19 +14,47 @@ def hp_color(hp_percentage: float) -> str:
     return "hp-red"
 
 
+_PHYSICAL_ICON: dict[str, str] = {
+    "airborne":  "🌀",
+    "launched":  "⬆",
+    "knockback": "💨",
+    "grounded":  "⬇",
+}
+
+_UTILITY_ICON: dict[str, str] = {
+    "shielded":      "🛡",
+    "hidden":        "👁",
+    "immune":        "✦",
+    "chain_breaker": "⛓",
+    "state_locked":  "🔒",
+    "charging":      "⚡",
+}
+
+
 @register.filter
 def status_badge_class(status_name: str) -> str:
     """Return a CSS badge class for a given status name."""
     danger = {"burned", "poisoned", "badly_poisoned", "ignited", "corroded"}
-    warning = {"paralyzed", "frozen", "asleep", "confused", "immobile"}
-    info = {"tagged", "blinded", "acupunctured", "enfeebled", "weakened"}
+    warning = {"paralyzed", "frozen", "asleep", "confused", "immobile",
+               "infatuated", "acupunctured", "taunted", "seeded"}
+    info = {"tagged", "blinded", "enfeebled", "weakened", "interrupted"}
     if status_name in danger:
         return "badge-danger"
     if status_name in warning:
         return "badge-warning"
     if status_name in info:
         return "badge-info"
+    if status_name in _PHYSICAL_ICON:
+        return f"badge-physical badge-phys-{status_name}"
+    if status_name in _UTILITY_ICON:
+        return f"badge-utility badge-util-{status_name}"
     return "badge-secondary"
+
+
+@register.filter
+def status_icon(status_name: str) -> str:
+    """Return an icon character for a given status name."""
+    return _PHYSICAL_ICON.get(status_name) or _UTILITY_ICON.get(status_name, "")
 
 
 @register.simple_tag
@@ -53,6 +81,33 @@ def is_on_cooldown(value: object) -> bool:
         return int(value) > 0  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return False
+
+
+@register.filter
+def chakra_fill(remaining: object, total_cooldown: object) -> int:
+    """
+    Return the chakra bar fill percentage (0–100) from cooldown remaining and total.
+
+    When remaining == 0 the bar is full (100%).
+    When remaining == total_cooldown the bar is empty (0%).
+    """
+    try:
+        r = int(remaining)  # type: ignore[arg-type]
+        t = int(total_cooldown)  # type: ignore[arg-type]
+        if t <= 0:
+            return 100
+        return max(0, min(100, round((1 - r / t) * 100)))
+    except (TypeError, ValueError):
+        return 0
+
+
+@register.filter
+def min_five(value: object) -> int:
+    """Clamp value to max 5 (for chain-link CSS class depth)."""
+    try:
+        return min(int(value), 5)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0
 
 
 @register.simple_tag

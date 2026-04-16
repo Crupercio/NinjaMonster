@@ -16,6 +16,7 @@ urlpatterns = [
     path("battle/", include("apps.game.urls", namespace="game")),
     path("stickers/", include("apps.stickers.urls", namespace="stickers")),
     path("quests/", include("apps.quests.urls", namespace="quests")),
+    path("expedition/", include("apps.expedition.urls", namespace="expedition")),
     path("ranked/", include("apps.ranked.urls", namespace="ranked")),
     path("events/", include("apps.events.urls", namespace="events")),
     path("guilds/", include("apps.guilds.urls", namespace="guilds")),

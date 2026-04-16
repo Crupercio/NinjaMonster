@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+{% load sticker_tags %}
+{% block title %}{{ region_label }} — {{ album_page.location_name }} ({{ rarity_label }}){% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Rarity colour tokens ─────────────────────────────────────── */
+.r-common      { --rc:#9ca3af; }
+.r-uncommon    { --rc:#4ade80; }
+.r-rare        { --rc:#60a5fa; }
+.r-epic        { --rc:#a78bfa; }
+.r-holographic { --rc:#fbbf24; }
+.r-full_art    { --rc:#f97316; }
+.r-secret_rare { --rc:#f43f5e; }
+
+/* ── Rarity image filters ─────────────────────────────────────── */
+.rarity-img-common      { filter: grayscale(0.6) brightness(0.85); }
+.rarity-img-uncommon    { filter: sepia(0.6) hue-rotate(80deg) saturate(1.4); }
+.rarity-img-rare        { filter: sepia(0.5) hue-rotate(200deg) saturate(1.8); }
+.rarity-img-epic        { filter: hue-rotate(270deg) saturate(2) brightness(1.05); }
+.rarity-img-holographic { filter: saturate(3) contrast(1.2) brightness(1.1); }
+.rarity-img-full_art    { filter: saturate(2) brightness(1.15) contrast(1.1); }
+.rarity-img-secret_rare { filter: sepia(0.3) hue-rotate(40deg) saturate(4) brightness(1.3); }
+@keyframes holo-shimmer {
+  0%,100% { filter: saturate(3) contrast(1.2) brightness(1.1) hue-rotate(0deg); }
+  50%     { filter: saturate(3) contrast(1.2) brightness(1.2) hue-rotate(30deg); }
+}
+.rarity-img-holographic { animation: holo-shimmer 3s ease-in-out infinite; }
+.silhouette { filter: brightness(0); opacity: 0.18; }
+
+/* ── Themed gradient background (12-cycle by page number) ─────── */
+body {
+  min-height: 100vh;
+  background:
+    {% if album_page.page_number|add:"-1"|divisibleby:12 %}
+      linear-gradient(160deg, #1a0522 0%, #3d1237 35%, #7a2c0d 70%, #b85c0a 100%)
+    {% elif album_page.page_number|add:"-2"|divisibleby:12 %}
+      linear-gradient(160deg, #051a0a 0%, #0d3520 45%, #1a5c2a 80%, #1e6b35 100%)
+    {% elif album_page.page_number|add:"-3"|divisibleby:12 %}
+      linear-gradient(160deg, #0d1117 0%, #1c2437 45%, #2d3d5c 80%, #3a4f70 100%)
+    {% elif album_page.page_number|add:"-4"|divisibleby:12 %}
+      linear-gradient(160deg, #050d1a 0%, #0a1e40 45%, #0d2d60 80%, #0e3d80 100%)
+    {% elif album_page.page_number|add:"-5"|divisibleby:12 %}
+      linear-gradient(160deg, #050f1a 0%, #0d2035 40%, #0f2e46 65%, #163d50 85%, #1e4a1a 100%)
+    {% elif album_page.page_number|add:"-6"|divisibleby:12 %}
+      linear-gradient(160deg, #0d0a17 0%, #1a0d2e 45%, #2d1a4a 80%, #3a2060 100%)
+    {% elif album_page.page_number|add:"-7"|divisibleby:12 %}
+      linear-gradient(160deg, #091209 0%, #102518 45%, #183520 75%, #1f4828 100%)
+    {% elif album_page.page_number|add:"-8"|divisibleby:12 %}
+      linear-gradient(160deg, #120a05 0%, #2a1a0a 40%, #3d2a10 65%, #2e3812 100%)
+    {% elif album_page.page_number|add:"-9"|divisibleby:12 %}
+      linear-gradient(160deg, #0a0e17 0%, #131d30 45%, #1d2d48 80%, #243858 100%)
+    {% elif album_page.page_number|add:"-10"|divisibleby:12 %}
+      linear-gradient(160deg, #17050a 0%, #3d0d0d 40%, #5c1800 70%, #7a2a00 100%)
+    {% elif album_page.page_number|add:"-11"|divisibleby:12 %}
+      linear-gradient(160deg, #050d17 0%, #091e30 45%, #0c2a4a 80%, #0e3460 100%)
+    {% else %}
+      linear-gradient(160deg, #070512 0%, #0f0a24 45%, #1a1240 80%, #22105a 100%)
+    {% endif %};
+}
+
+/* ── Page header ──────────────────────────────────────────────── */
+.page-header {
+  margin-bottom: 1rem;
+}
+.page-header h2 {
+  margin: 0 0 0.1rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+.page-header-meta { font-size: 0.7rem; color: #64748b; }
+
+/* ── Rarity tabs ──────────────────────────────────────────────── */
+.rarity-tabs { display:flex; gap:0.3rem; flex-wrap:wrap; margin-bottom:1rem; }
+.rarity-tab {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(30,58,110,0.7);
+  background: rgba(22,33,62,0.65);
+  color: #94a3b8;
+  text-decoration: none;
+  backdrop-filter: blur(4px);
+}
+.rarity-tab:hover { background: rgba(30,41,59,0.8); }
+.rarity-tab.active { border-color: var(--rc); color: var(--rc); background: rgba(15,23,42,0.85); }
+
+/* ── Progress bar ─────────────────────────────────────────────── */
+.page-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(22,33,62,0.65);
+  border: 1px solid rgba(30,58,110,0.7);
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(4px);
+}
+.page-bar-wrap { flex:1; height:7px; background:rgba(15,23,42,0.8); border-radius:6px; overflow:hidden; }
+.page-bar-fill { height:100%; border-radius:6px; background:var(--rc,#3b82f6); transition:width 0.4s; }
+.page-count { font-size:0.8rem; font-weight:700; color:var(--rc,#e2e8f0); white-space:nowrap; }
+
+/* ── Reward banner ────────────────────────────────────────────── */
+.reward-banner {
+  background: rgba(15,42,26,0.75);
+  border: 1px solid #16533a;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1rem;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem; flex-wrap: wrap;
+  backdrop-filter: blur(4px);
+}
+.reward-banner-text { font-size:0.8rem; color:#4ade80; font-weight:600; }
+.reward-claimed-text { font-size:0.75rem; color:#64748b; }
+
+/* ── Variant table ────────────────────────────────────────────── */
+.variant-table-wrap {
+  overflow-x: auto;
+  background: rgba(15,23,42,0.72);
+  border: 1px solid rgba(30,58,110,0.6);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.variant-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Header row */
+.variant-table thead th {
+  padding: 0.4rem 0.2rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+  border-bottom: 1px solid rgba(30,58,110,0.5);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.variant-table thead th.th-name {
+  text-align: left;
+  padding-left: 0.6rem;
+  width: 80px;
+}
+
+/* Pokemon name cell */
+.vt-name-cell {
+  padding: 0.2rem 0.3rem 0.2rem 0.6rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(30,58,110,0.3);
+  width: 80px;
+}
+.vt-dex { display:block; font-size:0.52rem; color:#4b5563; line-height:1; }
+.vt-name { display:block; font-size:0.65rem; font-weight:700; color:#cbd5e1; line-height:1.2; }
+
+/* Variant cells — equal width, fill remaining space */
+.vt-cell {
+  padding: 0.2rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(30,58,110,0.3);
+  border-left: 1px solid rgba(30,58,110,0.2);
+  text-align: center;
+}
+.vt-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1.5px solid rgba(30,58,110,0.5);
+  background: rgba(10,15,30,0.6);
+  transition: border-color 0.12s, background 0.12s;
+  overflow: hidden;
+}
+.vt-slot img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+.vt-slot.placed {
+  border-color: #4ade80;
+  background: rgba(74,222,128,0.06);
+}
+.vt-slot.available {
+  cursor: pointer;
+  border-color: rgba(59,130,246,0.5);
+  background: rgba(10,15,30,0.6);
+}
+.vt-slot.available:hover {
+  border-color: #3b82f6;
+  background: rgba(30,41,59,0.8);
+}
+.vt-slot.empty {
+  border-color: rgba(30,58,110,0.3);
+  background: rgba(10,15,30,0.4);
+}
+
+.vt-tick {
+  position: absolute;
+  top: 4px; right: 5px;
+  font-size: 0.6rem;
+  color: #4ade80;
+  font-weight: 800;
+}
+.vt-count {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  background: #1d4ed8;
+  color: #bfdbfe;
+  font-size: 0.5rem;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 1px 4px;
+  line-height: 1.2;
+}
+
+/* Alternating row shading */
+.variant-table tbody tr:nth-child(odd) .vt-name-cell,
+.variant-table tbody tr:nth-child(odd) .vt-cell {
+  background: rgba(255,255,255,0.018);
+}
+
+/* ── Placement modal ──────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: #0f172a;
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  padding: 1rem;
+  max-width: 340px; width: 100%;
+  max-height: 75vh; overflow-y: auto;
+}
+.modal-box h5 { margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 700; color: #f1f5f9; }
+.modal-sticker-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.6rem; border-radius: 7px;
+  background: #16213e; margin-bottom: 0.4rem;
+  cursor: pointer; border: none; width: 100%;
+  text-align: left; transition: background 0.12s;
+}
+.modal-sticker-row:hover { background: #1e293b; }
+.modal-sticker-row img { width:36px; height:36px; object-fit:contain; }
+.modal-sticker-info { flex:1; font-size:0.72rem; color:#e2e8f0; }
+.modal-sticker-variant { font-size:0.62rem; color:#64748b; }
+
+/* ── Page nav ─────────────────────────────────────────────────── */
+.page-nav {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem; gap: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="r-{{ rarity }}">
+
+{# ── Breadcrumb ── #}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.6rem;">
+  <div style="font-size:0.7rem;color:#64748b;">
+    <a href="{% url 'stickers:regional_album_index' %}" style="color:#64748b;">Regions</a>
+    › <a href="{% url 'stickers:album_scene_index' region=region %}" style="color:#64748b;">{{ region_label }}</a>
+    › {{ album_page.location_name }}
+  </div>
+  <a href="{% url 'stickers:album_scene_index' region=region %}" class="btn btn-sm btn-secondary">All Pages</a>
+</div>
+
+{# ── Location title ── #}
+<div class="page-header">
+  <h2>{{ album_page.location_name }}</h2>
+  <span class="page-header-meta">{{ region_label }} · Page {{ album_page.page_number }} · #{{ album_page.dex_start }}–#{{ album_page.dex_end }}</span>
+</div>
+
+{# ── Rarity tabs ── #}
+<div class="rarity-tabs">
+  {% for value, label in rarity_choices %}
+  <a href="{% url 'stickers:album_scene_page' region=region page_number=album_page.page_number rarity=value %}"
+     class="rarity-tab r-{{ value }} {% if value == rarity %}active{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{# ── Progress bar ── #}
+<div class="page-progress">
+  <span style="font-size:0.72rem;color:#94a3b8;white-space:nowrap;">{{ rarity_label }}</span>
+  <div class="page-bar-wrap">
+    <div class="page-bar-fill"
+         style="width:{% if page_total_count %}{% widthratio page_placed_count page_total_count 100 %}{% else %}0{% endif %}%;">
+    </div>
+  </div>
+  <span class="page-count">{{ page_placed_count }}/{{ page_total_count }}</span>
+</div>
+
+{# ── Reward banner ── #}
+{% if page_complete and not reward_claimed %}
+<div class="reward-banner">
+  <span class="reward-banner-text">⭐ Page complete — claim your reward!</span>
+  <form method="post" action="{% url 'stickers:claim_page_reward' %}">
+    {% csrf_token %}
+    <input type="hidden" name="region" value="{{ region }}">
+    <input type="hidden" name="rarity" value="{{ rarity }}">
+    <button type="submit" class="btn btn-sm" style="background:#16533a;color:#4ade80;border:none;">Claim Reward</button>
+  </form>
+</div>
+{% elif reward_claimed %}
+<div class="reward-banner">
+  <span class="reward-claimed-text">✓ Reward already claimed</span>
+</div>
+{% endif %}
+
+{# ── Variant grid ── #}
+<div x-data="{ openSlotKey: null }" class="variant-table-wrap">
+  <table class="variant-table">
+    <thead>
+      <tr>
+        <th class="th-name"></th>
+        {% for vslot in pokemon_cards.0.variant_slots %}
+        <th>{{ vslot.variant_label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for card in pokemon_cards %}
+      <tr>
+        {# Pokemon name column #}
+        <td class="vt-name-cell">
+          <span class="vt-dex">#{{ card.pokemon.pokedex_number }}</span>
+          <span class="vt-name">{% if card.placed_count > 0 %}{{ card.pokemon.name }}{% else %}???{% endif %}</span>
+        </td>
+
+        {# 6 variant cells #}
+        {% for vslot in card.variant_slots %}
+        <td class="vt-cell">
+          {% if vslot.placed_sticker %}
+            <div class="vt-slot placed">
+              <span class="vt-tick">✓</span>
+              {% if card.pokemon.pokedex_number %}
+              <img src="{{ card.pokemon.pokedex_number|sticker_sprite:vslot.variant }}"
+                   alt="{{ card.pokemon.name }}"
+                   class="rarity-img-{{ rarity }}"
+                   onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+              {% endif %}
+            </div>
+
+          {% elif vslot.available_stickers %}
+            <div class="vt-slot available"
+                 @click="openSlotKey = '{{ card.pokemon.pk }}_{{ vslot.variant }}'">
+              <span class="vt-count">{{ vslot.available_stickers|length }}×</span>
+              {% if card.pokemon.pokedex_number %}
+              <img src="{{ card.pokemon.pokedex_number|sticker_sprite:vslot.variant }}"
+                   alt="{{ card.pokemon.name }}"
+                   style="opacity:0.55;"
+                   onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+              {% endif %}
+            </div>
+
+          {% else %}
+            <div class="vt-slot empty">
+              {% if card.pokemon.pokedex_number %}
+              <img src="{{ card.pokemon.pokedex_number|sticker_sprite:vslot.variant }}"
+                   alt=""
+                   class="silhouette"
+                   onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+              {% endif %}
+            </div>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# ── Placement modals (teleported to body) ── #}
+  {% for card in pokemon_cards %}
+  {% for vslot in card.variant_slots %}
+  {% if vslot.available_stickers and not vslot.placed_sticker %}
+  <template x-teleport="body">
+    <div class="modal-backdrop"
+         x-show="openSlotKey === '{{ card.pokemon.pk }}_{{ vslot.variant }}'"
+         x-cloak
+         @click.self="openSlotKey = null">
+      <div class="modal-box r-{{ rarity }}">
+        <h5>{{ card.pokemon.name }} — {{ vslot.variant_label }}</h5>
+        <p style="font-size:0.7rem;color:#94a3b8;margin:0 0 0.7rem;">
+          <strong style="color:var(--rc);">{{ rarity_label }} · {{ vslot.variant_label }}</strong><br>
+          <strong style="color:#fbbf24;">⚠ Soul-bound</strong> — permanent, not tradeable.
+        </p>
+        {% for sticker in vslot.available_stickers %}
+        <form method="post" action="{% url 'stickers:place_sticker' %}">
+          {% csrf_token %}
+          <input type="hidden" name="sticker_id" value="{{ sticker.pk }}">
+          <input type="hidden" name="region" value="{{ region }}">
+          <input type="hidden" name="rarity" value="{{ rarity }}">
+          <input type="hidden" name="redirect_to" value="scene">
+          <input type="hidden" name="page_number" value="{{ album_page.page_number }}">
+          <button type="submit" class="modal-sticker-row">
+            {% if card.pokemon.pokedex_number %}
+            <img src="{{ card.pokemon.pokedex_number|sticker_sprite:vslot.variant }}"
+                 alt="{{ card.pokemon.name }}"
+                 class="rarity-img-{{ rarity }}"
+                 style="width:36px;height:36px;object-fit:contain;"
+                 onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+            {% endif %}
+            <div class="modal-sticker-info">
+              {{ card.pokemon.name }} — {{ vslot.variant_label }}
+              <div class="modal-sticker-variant">Sticker #{{ sticker.pk }}</div>
+            </div>
+            <span style="font-size:0.65rem;color:#4ade80;">Place →</span>
+          </button>
+        </form>
+        {% endfor %}
+        <button @click="openSlotKey = null"
+                style="margin-top:0.5rem;width:100%;padding:0.4rem;background:#1e293b;border:none;border-radius:7px;color:#94a3b8;cursor:pointer;font-size:0.75rem;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </template>
+  {% endif %}
+  {% endfor %}
+  {% endfor %}
+
+</div>{# /x-data + variant-table-wrap #}
+
+{# ── Page navigation ── #}
+<div class="page-nav">
+  {% if prev_page %}
+  <a href="{% url 'stickers:album_scene_page' region=region page_number=prev_page.page_number rarity=rarity %}"
+     class="btn btn-sm btn-secondary">‹ {{ prev_page.location_name }}</a>
+  {% else %}<span></span>{% endif %}
+
+  <span style="font-size:0.7rem;color:#64748b;">Page {{ album_page.page_number }}</span>
+
+  {% if next_page %}
+  <a href="{% url 'stickers:album_scene_page' region=region page_number=next_page.page_number rarity=rarity %}"
+     class="btn btn-sm btn-secondary">{{ next_page.location_name }} ›</a>
+  {% else %}<span></span>{% endif %}
+</div>
+
+</div>{# /.r-rarity #}
+{% endblock %}

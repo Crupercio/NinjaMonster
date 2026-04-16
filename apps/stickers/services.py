@@ -16,11 +16,20 @@ from apps.pokemon.models import Pokemon
 from apps.users.services import deduct_ryo
 
 from .models import (
+    BADGE_CRAFT_REQUIREMENTS,
     CRAFT_COSTS,
     DISMANTLE_VALUES,
     DUST_VALUES,
+    PAGE_REWARDS,
+    REGION_LABELS,
+    REGION_RANGES,
     AlbumCompletionReward,
+    AlbumPage,
     AlbumRewardType,
+    Badge,
+    BadgeTier,
+    OwnedBadge,
+    RegionalAlbumPage,
     Sticker,
     StickerAlbum,
     StickerPack,
@@ -375,6 +384,8 @@ class StickerService:
             raise ValueError("This sticker does not belong to the player")
         if sticker.is_trading:
             raise ValueError("Cannot convert a sticker that is currently in a trade")
+        if sticker.is_album_placed:
+            raise ValueError("Cannot convert a sticker that is placed in your album")
 
         # Count copies the player owns of this exact combination
         copy_count = Sticker.objects.filter(
@@ -419,6 +430,8 @@ class StickerService:
             raise ValueError("Cannot dismantle a sticker that is listed for trade")
         if sticker.is_favorite:
             raise ValueError("Cannot dismantle a favourited sticker — unfavourite it first")
+        if sticker.is_album_placed:
+            raise ValueError("Cannot dismantle a sticker that is placed in your album")
 
         dust = DISMANTLE_VALUES.get(sticker.rarity, 5)
         sticker.delete()
@@ -736,6 +749,8 @@ class TradeService:
             raise ValueError("You do not own this sticker")
         if sticker.is_trading:
             raise ValueError("This sticker is already listed for trade")
+        if sticker.is_album_placed:
+            raise ValueError("Cannot trade a sticker that is placed in your album")
 
         # Cannot trade the only copy
         copy_count = Sticker.objects.filter(
@@ -883,3 +898,639 @@ class TradeService:
         if user is not None:
             qs = qs.filter(offered_to=user) | qs.filter(offered_to__isnull=True, offered_by=user)
         return qs.order_by("-created_at")
+
+
+# ---------------------------------------------------------------------------
+# AlbumService — regional album placement, completion, and rewards
+# ---------------------------------------------------------------------------
+
+class AlbumService:
+    """
+    Handles regional album page logic:
+      - Placing / removing stickers into album slots
+      - Page completion detection
+      - Reward claiming per (region, rarity) page
+      - Region index summary for the album hub page
+    """
+
+    # ------------------------------------------------------------------
+    # Public read methods
+    # ------------------------------------------------------------------
+
+    def get_region_index(self, user: User) -> list[dict]:
+        """
+        Return a summary of all regions for the album hub.
+
+        Each entry:
+          {
+            "region": str,
+            "label": str,
+            "dex_range": str,          # e.g. "#1 – #151"
+            "locked": bool,            # True if no Pokemon exist in DB for this region
+            "total_pokemon": int,
+            "rarities": [
+              {
+                "rarity": str,
+                "label": str,
+                "placed": int,
+                "total": int,
+                "complete": bool,
+                "reward_claimed": bool,
+              }
+            ],
+            "pages_complete": int,
+            "pages_total": int,
+          }
+        """
+        from apps.pokemon.models import Pokemon
+
+        all_pokemon = list(Pokemon.objects.only("pokedex_number").order_by("pokedex_number"))
+
+        # Pre-fetch this user's placed stickers grouped by (region, rarity)
+        placed_qs = (
+            Sticker.objects.filter(owner=user, is_album_placed=True)
+            .select_related("pokemon")
+            .values("pokemon__pokedex_number", "rarity")
+        )
+        # Build set of (region, rarity, pokedex_number) for fast lookup
+        placed_set: set[tuple[str, str, int]] = set()
+        for row in placed_qs:
+            dex = row["pokemon__pokedex_number"]
+            if dex is None:
+                continue
+            for region_name, (low, high) in REGION_RANGES.items():
+                if low <= dex <= high:
+                    placed_set.add((region_name, row["rarity"], dex))
+                    break
+
+        # Pre-fetch claimed pages
+        claimed_pages: set[tuple[str, str]] = set(
+            RegionalAlbumPage.objects.filter(user=user, reward_claimed=True)
+            .values_list("region", "rarity")
+        )
+
+        result = []
+        for region_name, (low, high) in REGION_RANGES.items():
+            region_pokemon = [p for p in all_pokemon if p.pokedex_number and low <= p.pokedex_number <= high]
+            total_pokemon = len(region_pokemon)
+            locked = total_pokemon == 0
+
+            rarity_rows = []
+            pages_complete = 0
+            for rarity in StickerRarity.values:
+                placed_count = sum(
+                    1 for p in region_pokemon
+                    if (region_name, rarity, p.pokedex_number) in placed_set
+                )
+                complete = total_pokemon > 0 and placed_count == total_pokemon
+                if complete:
+                    pages_complete += 1
+                rarity_rows.append({
+                    "rarity": rarity,
+                    "label": StickerRarity(rarity).label,
+                    "placed": placed_count,
+                    "total": total_pokemon,
+                    "complete": complete,
+                    "reward_claimed": (region_name, rarity) in claimed_pages,
+                })
+
+            result.append({
+                "region": region_name,
+                "label": REGION_LABELS[region_name],
+                "dex_range": f"#{low} – #{min(high, 99999) if high < 99999 else '???'}",
+                "locked": locked,
+                "total_pokemon": total_pokemon,
+                "rarities": rarity_rows,
+                "pages_complete": pages_complete,
+                "pages_total": len(StickerRarity.values),
+            })
+
+        return result
+
+    def get_page_detail(self, user: User, region: str, rarity: str) -> dict:
+        """
+        Return the full grid for one (region, rarity) album page.
+
+        Returns:
+          {
+            "region": str,
+            "region_label": str,
+            "rarity": str,
+            "rarity_label": str,
+            "slots": [
+              {
+                "pokemon": Pokemon,
+                "placed_sticker": Sticker | None,
+                "available_stickers": list[Sticker],  # unplaced copies user owns
+              }
+            ],
+            "placed_count": int,
+            "total_count": int,
+            "page_complete": bool,
+            "reward_claimed": bool,
+          }
+        """
+        from apps.pokemon.models import Pokemon
+
+        if region not in REGION_RANGES:
+            raise ValueError(f"Unknown region: {region}")
+        if rarity not in StickerRarity.values:
+            raise ValueError(f"Unknown rarity: {rarity}")
+
+        low, high = REGION_RANGES[region]
+        region_pokemon = list(
+            Pokemon.objects.filter(
+                pokedex_number__gte=low,
+                pokedex_number__lte=high,
+            ).order_by("pokedex_number")
+        )
+
+        # Placed stickers per (pokemon_id, variant): each slot is (pokemon, rarity, variant)
+        placed_qs = Sticker.objects.filter(
+            owner=user,
+            rarity=rarity,
+            is_album_placed=True,
+            pokemon__pokedex_number__gte=low,
+            pokemon__pokedex_number__lte=high,
+        ).select_related("pokemon")
+        # key: (pokemon_id, variant) → Sticker
+        placed_map: dict[tuple[int, str], Sticker] = {
+            (s.pokemon_id, s.variant): s for s in placed_qs
+        }
+
+        # Available (unplaced, non-trading) stickers per (pokemon_id, variant)
+        available_qs = Sticker.objects.filter(
+            owner=user,
+            rarity=rarity,
+            is_album_placed=False,
+            is_trading=False,
+            pokemon__pokedex_number__gte=low,
+            pokemon__pokedex_number__lte=high,
+        ).select_related("pokemon").order_by("pokemon__pokedex_number", "variant")
+
+        # key: (pokemon_id, variant) → list[Sticker]
+        available_map: dict[tuple[int, str], list[Sticker]] = {}
+        for s in available_qs:
+            key = (s.pokemon_id, s.variant)
+            available_map.setdefault(key, []).append(s)
+
+        # Build slots: one per (pokemon, variant) combination
+        slots = []
+        for pokemon in region_pokemon:
+            for variant in _COMPLETION_VARIANTS:
+                key = (pokemon.pk, variant)
+                slots.append({
+                    "pokemon": pokemon,
+                    "variant": variant,
+                    "variant_label": StickerVariant(variant).label,
+                    "placed_sticker": placed_map.get(key),
+                    "available_stickers": available_map.get(key, []),
+                })
+
+        placed_count = len(placed_map)
+        # Total slots = one per (pokemon, variant) combination
+        total_count = len(region_pokemon) * len(_COMPLETION_VARIANTS)
+        page_complete = total_count > 0 and placed_count == total_count
+
+        reward_claimed = RegionalAlbumPage.objects.filter(
+            user=user, region=region, rarity=rarity, reward_claimed=True
+        ).exists()
+
+        return {
+            "region": region,
+            "region_label": REGION_LABELS.get(region, region.title()),
+            "rarity": rarity,
+            "rarity_label": StickerRarity(rarity).label,
+            "slots": slots,
+            "placed_count": placed_count,
+            "total_count": total_count,
+            "page_complete": page_complete,
+            "reward_claimed": reward_claimed,
+        }
+
+    # ------------------------------------------------------------------
+    # Mutating methods
+    # ------------------------------------------------------------------
+
+    @transaction.atomic
+    def place_sticker(self, user: User, sticker_id: int) -> Sticker:
+        """
+        Place a sticker into its regional album slot.
+
+        Validation:
+        - User owns the sticker
+        - Sticker is not already placed, not in trade
+        - The pokemon has a valid region
+        - No other placed sticker already occupies this (pokemon, rarity) slot
+        - After placing, user must still have at least one unplaced copy
+          (last-copy protection: you need N+1 total if you want to place one)
+
+        Sets is_album_placed=True and checks for page completion.
+        Returns the updated sticker.
+        """
+        sticker = Sticker.objects.select_for_update().filter(pk=sticker_id, owner=user).first()
+        if sticker is None:
+            raise ValueError("Sticker not found or does not belong to you")
+        if sticker.is_album_placed:
+            raise ValueError("This sticker is already placed in your album")
+        if sticker.is_trading:
+            raise ValueError("Cannot place a sticker that is currently in a trade")
+
+        pokemon = sticker.pokemon
+        if pokemon.region is None:
+            raise ValueError(f"{pokemon.name} does not have a valid Pokédex number and cannot be placed")
+
+        # Each (pokemon, rarity, variant) is a unique album slot.
+        # Check no other placed sticker already fills this exact slot.
+        already_placed = Sticker.objects.filter(
+            owner=user,
+            pokemon=pokemon,
+            rarity=sticker.rarity,
+            variant=sticker.variant,
+            is_album_placed=True,
+        ).exclude(pk=sticker.pk).exists()
+        if already_placed:
+            raise ValueError(
+                f"You already have a {sticker.rarity} {sticker.variant} {pokemon.name} placed in your album"
+            )
+        # No last-copy restriction — placing your only copy makes it soul-bound (protected).
+
+        sticker.is_album_placed = True
+        sticker.save(update_fields=["is_album_placed"])
+
+        logger.info(
+            "Player %s placed sticker #%d (%s [%s]) in regional album",
+            user,
+            sticker.pk,
+            pokemon.name,
+            sticker.rarity,
+        )
+
+        # Award trainer XP for placing a sticker (10 XP per placement)
+        from apps.users.services import award_trainer_xp
+        award_trainer_xp(user, 10, source="sticker_placed")
+
+        self._check_and_mark_page_complete(user, pokemon.region, sticker.rarity)
+        return sticker
+
+    @transaction.atomic
+    def remove_sticker(self, user: User, sticker_id: int) -> Sticker:
+        """
+        Remove a sticker from its album slot, making it flexible again.
+
+        Sets is_album_placed=False. Also clears completed_at on the page
+        if it was complete (removing a sticker breaks completion).
+        """
+        sticker = Sticker.objects.select_for_update().filter(pk=sticker_id, owner=user).first()
+        if sticker is None:
+            raise ValueError("Sticker not found or does not belong to you")
+        if not sticker.is_album_placed:
+            raise ValueError("This sticker is not placed in your album")
+
+        region = sticker.pokemon.region
+        rarity = sticker.rarity
+
+        sticker.is_album_placed = False
+        sticker.save(update_fields=["is_album_placed"])
+
+        # Unmark the page as complete if it was complete
+        if region:
+            RegionalAlbumPage.objects.filter(
+                user=user, region=region, rarity=rarity
+            ).update(completed_at=None)
+
+        logger.info(
+            "Player %s removed sticker #%d (%s [%s]) from regional album",
+            user,
+            sticker.pk,
+            sticker.pokemon.name,
+            rarity,
+        )
+        return sticker
+
+    @transaction.atomic
+    def claim_page_reward(self, user: User, region: str, rarity: str) -> dict:
+        """
+        Claim the reward for a completed (region, rarity) page.
+
+        Validates:
+        - Region and rarity are valid
+        - Page is actually complete
+        - Reward has not already been claimed
+
+        Awards dust, ryo, and/or packs. Returns the reward amounts.
+        """
+        if region not in REGION_RANGES:
+            raise ValueError(f"Unknown region: {region}")
+        if rarity not in StickerRarity.values:
+            raise ValueError(f"Unknown rarity: {rarity}")
+
+        page_data = self.get_page_detail(user, region, rarity)
+        if not page_data["page_complete"]:
+            raise ValueError("This album page is not yet complete")
+
+        page, created = RegionalAlbumPage.objects.get_or_create(
+            user=user,
+            region=region,
+            rarity=rarity,
+        )
+        if not created and page.reward_claimed:
+            raise ValueError("Reward for this page has already been claimed")
+
+        reward = PAGE_REWARDS[rarity]
+        dust = reward["dust"]
+        ryo = reward["ryo"]
+        packs = reward["packs"]
+
+        user_obj = User.objects.select_for_update().get(pk=user.pk)
+        user_obj.sticker_dust += dust
+        user_obj.ryo += ryo
+        user_obj.save(update_fields=["sticker_dust", "ryo"])
+
+        for _ in range(packs):
+            StickerPack.objects.create(owner=user_obj)
+
+        page.reward_claimed = True
+        page.save(update_fields=["reward_claimed"])
+
+        logger.info(
+            "Player %s claimed page reward for %s [%s]: dust=%d ryo=%d packs=%d",
+            user,
+            region,
+            rarity,
+            dust,
+            ryo,
+            packs,
+        )
+        return {"dust": dust, "ryo": ryo, "packs": packs}
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _check_and_mark_page_complete(self, user: User, region: str, rarity: str) -> bool:
+        """
+        Check if the page is now complete and stamp completed_at if so.
+        Returns True if page just became complete, False otherwise.
+        """
+        from datetime import datetime, timezone as tz
+
+        from apps.pokemon.models import Pokemon
+
+        low, high = REGION_RANGES[region]
+        total_in_region = Pokemon.objects.filter(
+            pokedex_number__gte=low,
+            pokedex_number__lte=high,
+        ).count()
+
+        if total_in_region == 0:
+            return False
+
+        # Each slot = (pokemon, rarity, variant): total slots = pokemon_count × variant_count
+        total_slots = total_in_region * len(_COMPLETION_VARIANTS)
+        placed_count = Sticker.objects.filter(
+            owner=user,
+            rarity=rarity,
+            is_album_placed=True,
+            pokemon__pokedex_number__gte=low,
+            pokemon__pokedex_number__lte=high,
+            variant__in=_COMPLETION_VARIANTS,
+        ).values("pokemon_id", "variant").distinct().count()
+
+        if placed_count < total_slots:
+            return False
+
+        page, _ = RegionalAlbumPage.objects.get_or_create(
+            user=user, region=region, rarity=rarity
+        )
+        if page.completed_at is None:
+            page.completed_at = datetime.now(tz=tz.utc)
+            page.save(update_fields=["completed_at"])
+            logger.info(
+                "Regional album page complete: user=%s region=%s rarity=%s",
+                user,
+                region,
+                rarity,
+            )
+        return True
+
+
+# ---------------------------------------------------------------------------
+# SceneAlbumService — scene-page (15 Pokémon + card-flip) logic
+# ---------------------------------------------------------------------------
+
+class SceneAlbumService:
+    """
+    Handles data retrieval for the scene-based album pages.
+
+    Each AlbumPage groups ~15 Pokémon into a location scene.  Within a scene
+    the user browses by rarity (tab); each Pokémon card can be flipped to
+    reveal its 6 variant slots for the current rarity.
+    """
+
+    def get_region_pages(self, region: str) -> list[AlbumPage]:
+        """Return all AlbumPage objects for a region, ordered by page_number."""
+        return list(AlbumPage.objects.filter(region=region).order_by("page_number"))
+
+    def get_scene_page(self, user: User, album_page: AlbumPage, rarity: str) -> dict:
+        """
+        Build full context for one scene page at a given rarity.
+
+        Returns:
+          {
+            "album_page": AlbumPage,
+            "rarity": str,
+            "rarity_label": str,
+            "rarity_choices": list[tuple],
+            "pokemon_cards": [
+              {
+                "pokemon": Pokemon,
+                "variant_slots": [          # 6 entries, one per completion variant
+                  {
+                    "variant": str,
+                    "variant_label": str,
+                    "placed_sticker": Sticker | None,
+                    "available_stickers": list[Sticker],
+                  }
+                ],
+                "placed_count": int,        # how many variants placed at this rarity
+                "total_variants": int,      # always 6
+                "all_placed": bool,
+              }
+            ],
+            "page_placed_count": int,       # total placed cells on this page at this rarity
+            "page_total_count": int,        # total cells (pokemon_count × 6)
+            "page_complete": bool,
+            "reward_claimed": bool,
+            "prev_page": AlbumPage | None,
+            "next_page": AlbumPage | None,
+          }
+        """
+        from apps.pokemon.models import Pokemon
+
+        if rarity not in StickerRarity.values:
+            raise ValueError(f"Unknown rarity: {rarity}")
+
+        low, high = album_page.dex_start, album_page.dex_end
+        region_pokemon = list(
+            Pokemon.objects.filter(
+                pokedex_number__gte=low,
+                pokedex_number__lte=high,
+            ).order_by("pokedex_number")
+        )
+
+        # Placed stickers: keyed by (pokemon_id, variant)
+        placed_map: dict[tuple[int, str], Sticker] = {
+            (s.pokemon_id, s.variant): s
+            for s in Sticker.objects.filter(
+                owner=user,
+                rarity=rarity,
+                is_album_placed=True,
+                pokemon__pokedex_number__gte=low,
+                pokemon__pokedex_number__lte=high,
+            ).select_related("pokemon")
+        }
+
+        # Available unplaced stickers: keyed by (pokemon_id, variant)
+        available_map: dict[tuple[int, str], list[Sticker]] = {}
+        for s in Sticker.objects.filter(
+            owner=user,
+            rarity=rarity,
+            is_album_placed=False,
+            is_trading=False,
+            pokemon__pokedex_number__gte=low,
+            pokemon__pokedex_number__lte=high,
+        ).select_related("pokemon").order_by("pokemon__pokedex_number", "variant"):
+            available_map.setdefault((s.pokemon_id, s.variant), []).append(s)
+
+        # Build per-Pokémon card data
+        pokemon_cards = []
+        for pokemon in region_pokemon:
+            variant_slots = []
+            placed_count = 0
+            for variant in _COMPLETION_VARIANTS:
+                key = (pokemon.pk, variant)
+                placed = placed_map.get(key)
+                if placed:
+                    placed_count += 1
+                variant_slots.append({
+                    "variant": variant,
+                    "variant_label": StickerVariant(variant).label,
+                    "placed_sticker": placed,
+                    "available_stickers": available_map.get(key, []),
+                })
+            pokemon_cards.append({
+                "pokemon": pokemon,
+                "variant_slots": variant_slots,
+                "placed_count": placed_count,
+                "total_variants": len(_COMPLETION_VARIANTS),
+                "all_placed": placed_count == len(_COMPLETION_VARIANTS),
+            })
+
+        total_cells = len(region_pokemon) * len(_COMPLETION_VARIANTS)
+        page_placed = len(placed_map)
+        page_complete = total_cells > 0 and page_placed == total_cells
+
+        reward_claimed = RegionalAlbumPage.objects.filter(
+            user=user,
+            region=album_page.region,
+            rarity=rarity,
+            reward_claimed=True,
+        ).exists()
+
+        # Prev / next page navigation
+        siblings = list(
+            AlbumPage.objects.filter(region=album_page.region).order_by("page_number")
+        )
+        idx = next((i for i, p in enumerate(siblings) if p.pk == album_page.pk), 0)
+        prev_page = siblings[idx - 1] if idx > 0 else None
+        next_page = siblings[idx + 1] if idx < len(siblings) - 1 else None
+
+        return {
+            "album_page": album_page,
+            "rarity": rarity,
+            "rarity_label": StickerRarity(rarity).label,
+            "rarity_choices": StickerRarity.choices,
+            "pokemon_cards": pokemon_cards,
+            "page_placed_count": page_placed,
+            "page_total_count": total_cells,
+            "page_complete": page_complete,
+            "reward_claimed": reward_claimed,
+            "prev_page": prev_page,
+            "next_page": next_page,
+        }
+
+    def get_all_pages_summary(self, user: User, region: str) -> list[dict]:
+        """
+        Return a summary of all pages in a region for the page-picker index.
+
+        Each entry:
+          {
+            "album_page": AlbumPage,
+            "rarity_progress": [{rarity, placed, total, complete, pct}],
+            "overall_placed": int,
+            "overall_total": int,
+          }
+        """
+        from apps.pokemon.models import Pokemon
+
+        pages = self.get_region_pages(region)
+        if not pages:
+            return []
+
+        # All placed stickers in this region, grouped for fast lookup
+        placed_qs = (
+            Sticker.objects.filter(
+                owner=user,
+                is_album_placed=True,
+                pokemon__pokedex_number__gte=pages[0].dex_start,
+                pokemon__pokedex_number__lte=pages[-1].dex_end,
+                variant__in=_COMPLETION_VARIANTS,
+            )
+            .values("pokemon__pokedex_number", "rarity", "variant")
+        )
+        # Build a set of (dex, rarity, variant) tuples for fast membership test
+        placed_set: set[tuple[int, str, str]] = {
+            (row["pokemon__pokedex_number"], row["rarity"], row["variant"])
+            for row in placed_qs
+            if row["pokemon__pokedex_number"] is not None
+        }
+
+        result = []
+        for page in pages:
+            pokemon_in_page = list(
+                Pokemon.objects.filter(
+                    pokedex_number__gte=page.dex_start,
+                    pokedex_number__lte=page.dex_end,
+                ).values_list("pokedex_number", flat=True)
+            )
+            poke_count = len(pokemon_in_page)
+            total_per_rarity = poke_count * len(_COMPLETION_VARIANTS)
+
+            rarity_progress = []
+            overall_placed = 0
+            for rarity in StickerRarity.values:
+                placed = sum(
+                    1 for dex in pokemon_in_page
+                    for variant in _COMPLETION_VARIANTS
+                    if (dex, rarity, variant) in placed_set
+                )
+                overall_placed += placed
+                complete = total_per_rarity > 0 and placed == total_per_rarity
+                rarity_progress.append({
+                    "rarity": rarity,
+                    "label": StickerRarity(rarity).label,
+                    "placed": placed,
+                    "total": total_per_rarity,
+                    "complete": complete,
+                    "pct": round(placed / total_per_rarity * 100) if total_per_rarity else 0,
+                })
+
+            result.append({
+                "album_page": page,
+                "rarity_progress": rarity_progress,
+                "overall_placed": overall_placed,
+                "overall_total": poke_count * len(_COMPLETION_VARIANTS) * len(StickerRarity.values),
+            })
+
+        return result

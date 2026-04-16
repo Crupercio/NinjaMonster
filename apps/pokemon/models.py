@@ -9,10 +9,95 @@ from .querysets import PokemonQuerySet
 logger = logging.getLogger(__name__)
 
 
+class HeldEffect(models.Model):
+    """
+    A passive item-like effect a Pokémon can hold.
+
+    Fires on a specific trigger (on_hit, on_faint, on_status, passive) with a
+    configurable activation_chance and optional per-battle cap (max_activations).
+
+    effect_data keys (all optional):
+      heal_fraction       — heal holder by this fraction of max HP
+      damage_reflect      — deal this fraction of damage_taken back to attacker
+      status_cleanse      — remove all active statuses from holder (bool)
+      revive_hp_fraction  — revive holder with this fraction of max HP (on_faint only)
+    """
+
+    class TriggerCondition(models.TextChoices):
+        ON_HIT = "on_hit", "On Hit"
+        ON_FAINT = "on_faint", "On Faint"
+        ON_STATUS = "on_status", "On Status"
+        PASSIVE = "passive", "Passive (each round)"
+
+    name = models.TextField(unique=True)
+    description = models.TextField(blank=True, default="")
+    trigger_condition = models.TextField(
+        choices=TriggerCondition.choices,
+        db_index=True,
+    )
+    effect_data = models.JSONField(
+        default=dict,
+        help_text=(
+            "Effect parameters: heal_fraction, damage_reflect, "
+            "status_cleanse, revive_hp_fraction."
+        ),
+    )
+    activation_chance = models.FloatField(
+        default=1.0,
+        help_text="Probability (0.0–1.0) that this fires when triggered.",
+    )
+    max_activations = models.PositiveIntegerField(
+        default=0,
+        help_text="Max activations per battle (0 = unlimited).",
+    )
+
+    class Meta:
+        ordering = ["trigger_condition", "name"]
+        verbose_name = "held effect"
+        verbose_name_plural = "held effects"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ChakraElement(models.Model):
+    """
+    One of the five chakra natures that groups the 18 Pokémon types.
+
+    Advantage cycle: Fire→Wind→Lightning→Earth→Water→Fire
+    """
+
+    class Name(models.TextChoices):
+        FIRE = "fire", "Fire"
+        WATER = "water", "Water"
+        EARTH = "earth", "Earth"
+        LIGHTNING = "lightning", "Lightning"
+        WIND = "wind", "Wind"
+
+    name = models.TextField(choices=Name.choices, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "chakra element"
+        verbose_name_plural = "chakra elements"
+
+    def __str__(self) -> str:
+        return self.get_name_display()
+
+
 class PokemonType(models.Model):
     """Represents a Pokemon elemental type (Fire, Water, etc.)."""
 
     name = models.TextField(unique=True)
+    chakra_element = models.ForeignKey(
+        ChakraElement,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="types",
+        db_index=True,
+        help_text="Chakra nature this type belongs to (fire/water/earth/lightning/wind).",
+    )
 
     class Meta:
         ordering = ["name"]
@@ -47,18 +132,24 @@ class Generation(models.Model):
 class MoveSlotType(models.TextChoices):
     STANDARD = "standard", "Basic Technique"
     CHASE = "chase", "Chase Technique"
-    SPECIAL = "special", "Secret Technique"
-    SUPPORT = "support", "Support Technique"
-    PASSIVE = "passive", "Ninja Trait"
+    MYSTERY = "mystery", "Mystery"
+    PASSIVE_1 = "passive_1", "Passive 1"
+    PASSIVE_2 = "passive_2", "Passive 2"
+
+
+class ComboRole(models.TextChoices):
+    STARTER = "starter", "Starter"
+    EXTENDER = "extender", "Extender"
+    AMPLIFIER = "amplifier", "Amplifier"
+    FINISHER = "finisher", "Finisher"
 
 
 class TacticalRole(models.TextChoices):
-    DPS = "dps", "DPS"
-    ASSASSIN = "assassin", "Assassin"
+    BURST = "burst", "Burst"
+    COMBO = "combo", "Combo"
     TANK = "tank", "Tank"
     SUPPORT = "support", "Support"
     CONTROL = "control", "Control"
-    BRUISER = "bruiser", "Bruiser"
 
 
 # All slot types that must be covered for a species to be battle-ready.
@@ -139,6 +230,24 @@ class Move(models.Model):
         default=False,
         help_text="This move can fire automatically as part of a combo chain.",
     )
+    # --- Combo role ---
+    combo_role = models.TextField(
+        choices=ComboRole.choices,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Role this move plays in a combo chain (starter/extender/amplifier/finisher).",
+    )
+    # --- Physical state condition for chase moves ---
+    chase_condition = models.TextField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=(
+            "Physical state the target must be in for this Chase move to trigger "
+            "(airborne / launched / knockback / grounded). Null = no restriction."
+        ),
+    )
     # --- Support flag ---
     support_flag = models.BooleanField(
         default=False,
@@ -200,9 +309,9 @@ class Pokemon(models.Model):
     base_hp = models.PositiveIntegerField(default=45)
     base_attack = models.PositiveIntegerField(default=45)
     base_defense = models.PositiveIntegerField(default=45)
-    base_sp_attack = models.PositiveIntegerField(default=45)
+    base_ninjutsu = models.PositiveIntegerField(default=45)
     base_sp_defense = models.PositiveIntegerField(default=45)
-    base_speed = models.PositiveIntegerField(default=45)
+    base_initiative = models.PositiveIntegerField(default=45)
 
     moves = models.ManyToManyField(Move, related_name="learned_by", blank=True)
     generation_sources = models.ManyToManyField(
@@ -218,7 +327,7 @@ class Pokemon(models.Model):
     pokedex_number = models.PositiveIntegerField(unique=True, null=True, blank=True)
     primary_role = models.TextField(
         choices=TacticalRole.choices,
-        default=TacticalRole.DPS,
+        default=TacticalRole.BURST,
         blank=True,
         db_index=True,
         help_text="Tactical identity: determines build flavor and pool curation.",
@@ -241,6 +350,24 @@ class Pokemon(models.Model):
     def calculate_stat(self, base_stat: int, level: int) -> int:
         """Calculate a non-HP stat at the given level."""
         return int((2 * base_stat * level) / 100) + 5
+
+    @property
+    def region(self) -> str | None:
+        """
+        Derive the Pokémon's home region from its Pokédex number.
+
+        Covers all nine main-series generations so new Pokémon added later
+        are automatically assigned the correct region without a migration.
+        Returns None if pokedex_number is not set.
+        """
+        from apps.stickers.models import REGION_RANGES  # avoid circular import at module level
+
+        if self.pokedex_number is None:
+            return None
+        for name, (low, high) in REGION_RANGES.items():
+            if low <= self.pokedex_number <= high:
+                return name
+        return None
 
     @property
     def is_battle_ready(self) -> bool:
@@ -274,6 +401,15 @@ class OwnedPokemon(models.Model):
     level = models.PositiveIntegerField(default=1)
     # EXP toward the next level (resets to 0 on level-up)
     experience = models.PositiveIntegerField(default=0)
+    held_effect = models.ForeignKey(
+        HeldEffect,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="holders",
+        db_index=True,
+        help_text="Held effect equipped by this Pokémon.",
+    )
     is_training = models.BooleanField(default=False)
     training_started_at = models.DateTimeField(null=True, blank=True)
     training_ends_at = models.DateTimeField(null=True, blank=True)
@@ -332,8 +468,25 @@ class OwnedPokemon(models.Model):
 
     @property
     def exp_to_next_level(self) -> int:
-        """EXP needed to advance one level. Scales with current level."""
-        return self.level * 10
+        """
+        EXP needed to advance one level — three-phase curve.
+
+        Phase 1 (1–20):  fast, hooks the player early.
+        Phase 2 (21–85): steady grind, ~42h of 4h training sessions.
+        Phase 3 (86–100): exponential — last 15 levels = 60% of total XP.
+
+        Total XP to level 100 ≈ 117,000 (~25 days at 1 session/day).
+        """
+        lv = self.level
+        if lv >= 100:
+            return 0
+        if lv <= 20:
+            return 30 + lv * 8                      # 38–190 XP
+        if lv <= 50:
+            return 200 + (lv - 20) * 12             # 212–560 XP
+        if lv <= 85:
+            return 600 + (lv - 50) * 20             # 620–1,300 XP
+        return int(1500 * (1.15 ** (lv - 85)))      # 1,724–10,613 XP (exponential)
 
     @property
     def sell_value(self) -> int:
@@ -341,16 +494,20 @@ class OwnedPokemon(models.Model):
         return max(100, self.level * 50)
 
     @property
+    def level_up_ryo(self) -> int:
+        """Ryo rewarded each time this Pokémon levels up. Caps at 5,000."""
+        return min(5000, self.level * 50)
+
+    @property
     def battle_exp_gain(self) -> int:
         """
-        Base EXP this Pokemon earns per battle, based on level bracket.
+        Base EXP earned per battle. Flat by bracket so training
+        is the primary leveling mechanism, not battle grinding.
 
-        Bracket rule: every 10 levels adds 10 EXP.
-          Lv 1–9  → 10 EXP
-          Lv 10–19 → 20 EXP
-          Lv 20–29 → 30 EXP  (and so on)
+          Lv 1–50  → 5 EXP
+          Lv 51–100 → 10 EXP
         """
-        return (self.level // 10 + 1) * 10
+        return 5 if self.level <= 50 else 10
 
     @property
     def training_complete(self) -> bool:
@@ -407,8 +564,12 @@ class Team(models.Model):
             ).order_by("position")
         ]
 
+    def get_active_six(self) -> list["OwnedPokemon"]:
+        """Return all 6 slots' OwnedPokemon ordered by position (used by battle system)."""
+        return self.get_ordered_pokemon()[:6]
+
     def get_active_four(self) -> list["OwnedPokemon"]:
-        """Return first 4 slots' OwnedPokemon (used by battle system)."""
+        """Deprecated — use get_active_six() for 6v6. Kept for compatibility."""
         return self.get_ordered_pokemon()[:4]
 
 

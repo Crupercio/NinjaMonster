@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+{% block title %}Expedition — Explore & Bond{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ───────────────────────────────────────────────────── */
+.exp-wrap { max-width: 1060px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+.exp-hero {
+  padding: 1.75rem 0 1.4rem;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, #0f3460 0%, #1a1a2e 65%);
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 0;
+}
+.exp-hero h1 { font-size: clamp(1.5rem,4vw,2.2rem); font-weight:800; margin:0 0 0.3rem; }
+.exp-hero p  { color:#9ca3af; font-size:0.88rem; margin:0; }
+
+/* ── Trainer bar ──────────────────────────────────────────────── */
+.trainer-bar {
+  background: #16213e;
+  border-bottom: 1px solid #1e3a6e;
+  padding: 0.65rem 1.25rem;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.trainer-info { font-size: 0.78rem; color: #94a3b8; }
+.trainer-info strong { color: #e2e8f0; }
+.trainer-xp-bar { flex: 1; min-width: 140px; }
+.trainer-xp-bg { height: 6px; background: #0f3460; border-radius: 4px; overflow: hidden; }
+.trainer-xp-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 4px; transition: width 0.4s; }
+.candy-counts { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.candy-chip {
+  font-size: 0.68rem; font-weight: 700; border-radius: 5px;
+  padding: 2px 8px; background: #0f1a2e; border: 1px solid #1e3a6e;
+  color: #94a3b8;
+}
+.candy-chip.has-candy { border-color: #4ade80; color: #4ade80; }
+.exp-left-badge { font-size: 0.7rem; color: #fbbf24; font-weight: 700; white-space: nowrap; }
+
+/* ── Zone grid ────────────────────────────────────────────────── */
+.zone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.zone-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #3b5bdb;
+  background: #0f172a;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  display: flex; flex-direction: column;
+}
+.zone-card.unlocked:hover { transform: translateY(-3px); border-color: #6366f1; box-shadow: 0 6px 24px rgba(99,102,241,0.35); }
+.zone-card.locked { opacity: 0.4; filter: grayscale(80%); }
+
+.zone-bg {
+  padding: 1.25rem 1rem 1rem;
+  min-height: 100px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  position: relative;
+}
+.zone-name { font-size: 1.05rem; font-weight: 800; color: #f1f5f9; margin-bottom: 0.25rem; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.zone-desc { font-size: 0.73rem; color: #cbd5e1; line-height: 1.4; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+
+.zone-body { background: #192540; padding: 0.85rem 1rem; flex: 1; border-top: 1px solid #3b5bdb; }
+.zone-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.zone-tag {
+  font-size: 0.62rem; font-weight: 700; border-radius: 4px;
+  padding: 2px 7px; background: #0f1a2e; border: 1px solid #1e3a6e; color: #6b7280;
+}
+.zone-tag.cost    { border-color: #fbbf24; color: #fbbf24; }
+.zone-tag.enc     { border-color: #60a5fa; color: #60a5fa; }
+.zone-tag.level   { border-color: #a78bfa; color: #a78bfa; }
+.zone-tag.species { border-color: #4ade80; color: #4ade80; }
+
+.zone-sample { font-size: 0.68rem; color: #4b5563; margin-bottom: 0.75rem; line-height: 1.5; }
+.zone-sample span { color: #6b7280; }
+
+.zone-btn {
+  width: 100%; padding: 0.5rem; border: none; border-radius: 7px;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  transition: opacity 0.12s;
+}
+.zone-btn.go       { background: linear-gradient(90deg,#1d4ed8,#7c3aed); color:#fff; }
+.zone-btn.go:hover { opacity: 0.9; }
+.zone-btn.broke    { background: #1a1a2e; color: #ef4444; border: 1px solid #ef4444; cursor: not-allowed; }
+.zone-btn.locked   { background: #1a1a2e; color: #4b5563; cursor: not-allowed; }
+.zone-btn.no-exp   { background: #1a1a2e; color: #fbbf24; border: 1px solid #fbbf24; cursor: not-allowed; }
+
+/* ── Expedition modal ─────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.exp-modal {
+  background: #0d1117;
+  border: 1px solid #1e3a6e;
+  border-radius: 16px;
+  width: min(540px, 96vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+/* ── Log (text adventure output) ─────────────────────────────── */
+.exp-log {
+  background: #0a1020;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  line-height: 1.7;
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.log-line { margin: 0; }
+.log-line.system   { color: #6b7280; font-style: italic; }
+.log-line.action   { color: #60a5fa; }
+.log-line.success  { color: #4ade80; font-weight: 700; }
+.log-line.fail     { color: #f87171; }
+.log-line.encounter{ color: #fbbf24; font-weight: 600; }
+
+/* ── Encounter card ───────────────────────────────────────────── */
+.encounter-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+.enc-sprite {
+  width: 96px; height: 96px; object-fit: contain;
+  display: block; margin: 0 auto 0.5rem;
+  image-rendering: pixelated;
+}
+.enc-name { font-size: 1.1rem; font-weight: 800; color: #f1f5f9; }
+.enc-dex  { font-size: 0.68rem; color: #4b5563; margin-bottom: 0.3rem; }
+.enc-hint { font-size: 0.78rem; color: #94a3b8; font-style: italic; margin-bottom: 0.8rem; }
+
+/* ── Candy bar ────────────────────────────────────────────────── */
+.candy-bar { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+.candy-btn {
+  padding: 6px 14px; border-radius: 7px; font-size: 0.72rem; font-weight: 700;
+  border: 1px solid #1e3a6e; background: #0f1a2e; color: #94a3b8; cursor: pointer;
+  transition: all 0.12s;
+}
+.candy-btn:hover:not(:disabled) { border-color: #4ade80; color: #4ade80; }
+.candy-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.candy-btn.selected { border-color: #4ade80; background: #052e16; color: #4ade80; }
+
+/* ── Action buttons ───────────────────────────────────────────── */
+.action-row { display: flex; gap: 0.6rem; }
+.bond-btn {
+  flex: 1; padding: 0.6rem; border: none; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  background: linear-gradient(90deg,#1d4ed8,#7c3aed); color:#fff;
+  transition: opacity 0.12s;
+}
+.bond-btn:hover:not(:disabled) { opacity: 0.9; }
+.bond-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.skip-btn {
+  padding: 0.6rem 1rem; border: 1px solid #374151; border-radius: 8px;
+  background: transparent; color: #6b7280; font-size: 0.82rem;
+  font-weight: 600; cursor: pointer;
+}
+.skip-btn:hover { border-color: #6b7280; color: #9ca3af; }
+
+/* ── Progress + controls ──────────────────────────────────────── */
+.enc-progress { font-size: 0.72rem; color: #4b5563; text-align: center; }
+.enc-progress span { color: #60a5fa; font-weight: 700; }
+
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #1e3a6e; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Result overlay ───────────────────────────────────────────── */
+.result-banner {
+  border-radius: 10px; padding: 1rem; text-align: center;
+  font-weight: 700; font-size: 0.9rem;
+}
+.result-banner.success { background: #052e16; border: 1px solid #4ade80; color: #4ade80; }
+.result-banner.fail    { background: #1a0505; border: 1px solid #f87171; color: #f87171; }
+
+.done-banner {
+  background: #16213e; border: 1px solid #4ade80; border-radius: 10px;
+  padding: 1.2rem; text-align: center;
+}
+.done-banner h3 { color: #4ade80; font-size: 1rem; margin: 0 0 0.4rem; }
+.done-banner p  { color: #6b7280; font-size: 0.8rem; margin: 0; }
+.done-btn {
+  margin-top: 0.8rem; padding: 0.5rem 1.4rem;
+  background: #1d4ed8; color: #fff; border: none;
+  border-radius: 7px; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+}
+
+/* ── Candy shop ───────────────────────────────────────────────── */
+.candy-shop {
+  background: #0f1a2e; border: 1px solid #2a4a8e;
+  border-radius: 12px; padding: 1rem 1.25rem;
+  margin-top: 1.25rem;
+}
+.candy-shop-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: #6b7280; margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem; border-bottom: 1px solid #1e3a6e;
+}
+.candy-shop-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.candy-shop-item {
+  background: #16213e; border: 1px solid #1e3a6e; border-radius: 10px;
+  padding: 0.75rem 1rem; flex: 1; min-width: 140px; text-align: center;
+}
+.candy-shop-name { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.2rem; }
+.candy-shop-desc { font-size: 0.68rem; color: #4ade80; margin-bottom: 0.5rem; }
+.candy-shop-cost { font-size: 0.7rem; color: #fbbf24; margin-bottom: 0.6rem; font-weight: 700; }
+.candy-shop-count { font-size: 0.65rem; color: #6b7280; margin-bottom: 0.5rem; }
+.buy-btn {
+  width: 100%; padding: 5px 0; border: none; border-radius: 6px;
+  background: linear-gradient(90deg, #1d4ed8, #7c3aed); color: #fff;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.12s;
+}
+.buy-btn:hover:not(:disabled) { opacity: 0.85; }
+.buy-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exp-hero">
+  <h1>&#127758; Expedition</h1>
+  <p>Pay to explore a zone and bond with wild Pokémon. Use candies to improve your chances.</p>
+</div>
+
+{# ── Trainer status bar ────────────────────────────────────────── #}
+<div class="trainer-bar">
+  <div class="trainer-info">
+    <strong>Trainer Lv.{{ trainer_level }}</strong>
+    <span style="color:#4b5563;font-size:0.65rem;margin-left:4px;">{{ trainer_xp }}/{{ trainer_xp_to_next }} XP</span>
+  </div>
+  <div class="trainer-xp-bar">
+    <div class="trainer-xp-bg">
+      <div class="trainer-xp-fill" style="width:{{ trainer_xp_percent }}%;"></div>
+    </div>
+  </div>
+  <div class="candy-counts">
+    <span class="candy-chip {% if candy.trail_mix.count %}has-candy{% endif %}">
+      Trail Mix x{{ candy.trail_mix.count }}
+    </span>
+    <span class="candy-chip {% if candy.sweet_berry.count %}has-candy{% endif %}">
+      Sweet Berry x{{ candy.sweet_berry.count }}
+    </span>
+    <span class="candy-chip {% if candy.golden_apple.count %}has-candy{% endif %}">
+      Golden Apple x{{ candy.golden_apple.count }}
+    </span>
+  </div>
+  <div class="exp-left-badge">
+    &#127758; {{ zones.0.expeditions_left }}/{{ max_expeditions }} runs left today
+  </div>
+</div>
+
+<div class="exp-wrap">
+  {# ── Candy shop ── #}
+  <div class="candy-shop">
+    <div class="candy-shop-title">🍬 Candy Shop — spend Ryo to improve bond chances</div>
+    <div class="candy-shop-grid">
+      <div class="candy-shop-item">
+        <div class="candy-shop-name">Trail Mix</div>
+        <div class="candy-shop-desc">+10% bond rate</div>
+        <div class="candy-shop-cost">80 Ryo each</div>
+        <div class="candy-shop-count" id="shop-tm-count">Owned: {{ candy.trail_mix.count }}</div>
+        <button class="buy-btn" onclick="buyCandy('trail_mix')">Buy</button>
+      </div>
+      <div class="candy-shop-item">
+        <div class="candy-shop-name">Sweet Berry</div>
+        <div class="candy-shop-desc">+25% bond rate</div>
+        <div class="candy-shop-cost">200 Ryo each</div>
+        <div class="candy-shop-count" id="shop-sb-count">Owned: {{ candy.sweet_berry.count }}</div>
+        <button class="buy-btn" onclick="buyCandy('sweet_berry')">Buy</button>
+      </div>
+      <div class="candy-shop-item">
+        <div class="candy-shop-name">Golden Apple</div>
+        <div class="candy-shop-desc">+50% bond rate</div>
+        <div class="candy-shop-cost">500 Ryo each</div>
+        <div class="candy-shop-count" id="shop-ga-count">Owned: {{ candy.golden_apple.count }}</div>
+        <button class="buy-btn" onclick="buyCandy('golden_apple')">Buy</button>
+      </div>
+    </div>
+    <div id="shop-msg" style="font-size:0.72rem;margin-top:0.5rem;min-height:1.2em;"></div>
+  </div>
+
+  {% if not zones %}
+  <p style="text-align:center;color:#6b7280;padding:2rem;">No zones available. Run: python manage.py seed_zones</p>
+  {% endif %}
+  <div class="zone-grid">
+    {% for z in zones %}
+    {% with zone=z.zone %}
+    <div class="zone-card {% if z.unlocked %}unlocked{% else %}locked{% endif %}">
+      <div class="zone-bg" style="background: {{ zone.bg_gradient }};">
+        <div class="zone-name">{{ zone.name }}</div>
+        <div class="zone-desc">{{ zone.description }}</div>
+      </div>
+      <div class="zone-body">
+        <div class="zone-meta">
+          <span class="zone-tag cost">{{ zone.cost }} Ryo</span>
+          <span class="zone-tag enc">{{ zone.encounters_per_run }} encounters</span>
+          {% if zone.min_trainer_level > 1 %}
+          <span class="zone-tag level">Lv.{{ zone.min_trainer_level }}+ trainer</span>
+          {% endif %}
+          <span class="zone-tag species">{{ z.spawn_count }} species</span>
+        </div>
+        <div class="zone-sample">
+          Possible: <span>{% for name, dex in z.sample_species %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if z.spawn_count > 8 %}…{% endif %}</span>
+        </div>
+        {% if not z.unlocked %}
+        <button class="zone-btn locked" disabled>Reach Trainer Lv.{{ zone.min_trainer_level }}</button>
+        {% elif z.expeditions_left == 0 %}
+        <button class="zone-btn no-exp" disabled>No runs left today</button>
+        {% elif not z.can_afford %}
+        <button class="zone-btn broke" disabled>Need {{ zone.cost }} Ryo</button>
+        {% else %}
+        <button class="zone-btn go" onclick="openExpedition({{ zone.pk }}, '{{ zone.name|escapejs }}')">
+          Enter Zone &rarr;
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+
+{# ── Expedition modal ──────────────────────────────────────────── #}
+<div class="modal-overlay" id="exp-modal">
+  <div class="exp-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+      <span id="modal-zone-name" style="font-size:0.9rem;font-weight:800;color:#e2e8f0;"></span>
+      <span id="modal-progress" class="enc-progress" style="margin:0;"></span>
+    </div>
+
+    {# Text adventure log #}
+    <div class="exp-log" id="exp-log"></div>
+
+    {# Encounter card — hidden until encounter drawn #}
+    <div id="encounter-section" style="display:none;">
+      <div class="encounter-card">
+        <img id="enc-sprite" src="" alt="" class="enc-sprite">
+        <div id="enc-name" class="enc-name"></div>
+        <div id="enc-dex" class="enc-dex"></div>
+        <div id="enc-hint" class="enc-hint"></div>
+        <div class="candy-bar" id="candy-bar">
+          <button class="candy-btn" id="candy-none" onclick="selectCandy('')">No candy</button>
+          <button class="candy-btn" id="candy-trail_mix" onclick="selectCandy('trail_mix')">Trail Mix +10% (<span id="tm-count">0</span>)</button>
+          <button class="candy-btn" id="candy-sweet_berry" onclick="selectCandy('sweet_berry')">Sweet Berry +25% (<span id="sb-count">0</span>)</button>
+          <button class="candy-btn" id="candy-golden_apple" onclick="selectCandy('golden_apple')">Golden Apple +50% (<span id="ga-count">0</span>)</button>
+        </div>
+        <div id="result-banner" style="display:none;margin-top:0.8rem;"></div>
+        <div class="action-row" style="margin-top:0.9rem;" id="action-row">
+          <button class="bond-btn" id="bond-btn" onclick="attemptBond()">Bond with Pokémon</button>
+          <button class="skip-btn" onclick="skipEncounter()">Pass</button>
+        </div>
+      </div>
+    </div>
+
+    {# Done banner #}
+    <div id="done-banner" style="display:none;" class="done-banner">
+      <h3>Expedition Complete!</h3>
+      <p id="done-summary"></p>
+      <button class="done-btn" onclick="closeModal()">Back to Zones</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
+
+let sessionId = null;
+let currentEncounter = null;
+let selectedCandy = '';
+let bonded_count = 0;
+
+// Candy counts (updated after each resolve)
+let candy = {
+  trail_mix:    {{ candy.trail_mix.count }},
+  sweet_berry:  {{ candy.sweet_berry.count }},
+  golden_apple: {{ candy.golden_apple.count }},
+};
+
+function updateCandyUI() {
+  document.getElementById('tm-count').textContent = candy.trail_mix;
+  document.getElementById('sb-count').textContent = candy.sweet_berry;
+  document.getElementById('ga-count').textContent = candy.golden_apple;
+  document.getElementById('candy-trail_mix').disabled = candy.trail_mix < 1;
+  document.getElementById('candy-sweet_berry').disabled = candy.sweet_berry < 1;
+  document.getElementById('candy-golden_apple').disabled = candy.golden_apple < 1;
+}
+
+function selectCandy(type) {
+  selectedCandy = type;
+  document.querySelectorAll('.candy-btn').forEach(b => b.classList.remove('selected'));
+  const id = type ? `candy-${type}` : 'candy-none';
+  document.getElementById(id).classList.add('selected');
+}
+
+function log(text, cls = '') {
+  const el = document.getElementById('exp-log');
+  const p = document.createElement('p');
+  p.className = 'log-line ' + cls;
+  p.textContent = text;
+  el.appendChild(p);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('exp-log').innerHTML = '';
+}
+
+async function openExpedition(zoneId, zoneName) {
+  clearLog();
+  bonded_count = 0;
+  selectedCandy = '';
+  document.getElementById('modal-zone-name').textContent = zoneName;
+  document.getElementById('encounter-section').style.display = 'none';
+  document.getElementById('done-banner').style.display = 'none';
+  document.getElementById('modal-progress').innerHTML = '';
+  document.getElementById('exp-modal').classList.add('open');
+
+  log('Preparing for expedition…', 'system');
+
+  const resp = await fetch('{% url "expedition:start" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ zone_id: zoneId }),
+  });
+  const data = await resp.json();
+
+  if (data.error) {
+    log('Error: ' + data.error, 'fail');
+    return;
+  }
+
+  sessionId = data.session_id;
+  log(data.flavor_intro, 'action');
+  updateProgress(data.encounters_remaining, data.encounters_total);
+  updateCandyUI();
+  selectCandy('');
+
+  await delay(1800);
+  await nextEncounter(data.flavor_walking);
+}
+
+async function nextEncounter(walking_text) {
+  document.getElementById('encounter-section').style.display = 'none';
+  document.getElementById('done-banner').style.display = 'none';
+  document.getElementById('result-banner').style.display = 'none';
+  document.getElementById('action-row').style.display = 'flex';
+
+  log(walking_text || 'You continue deeper into the zone…', 'system');
+  await delay(random(1800, 3200));
+
+  const resp = await fetch(`{% url "expedition:draw" session_id=0 %}`.replace('/0/', `/${sessionId}/`));
+  const enc = await resp.json();
+
+  if (enc.finished || enc.encounters_remaining === 0) {
+    showDone();
+    return;
+  }
+
+  currentEncounter = enc;
+  updateProgress(enc.encounters_remaining, null);
+
+  // Populate encounter card
+  document.getElementById('enc-sprite').src = SPRITE_BASE + enc.pokedex_number + '.png';
+  document.getElementById('enc-sprite').alt = enc.species_name;
+  document.getElementById('enc-name').textContent = enc.species_name;
+  document.getElementById('enc-dex').textContent = '#' + String(enc.pokedex_number).padStart(3, '0');
+  document.getElementById('enc-hint').textContent = 'It ' + enc.hint + '.';
+
+  log(`A wild ${enc.species_name} appeared!`, 'encounter');
+  document.getElementById('encounter-section').style.display = 'block';
+  document.getElementById('bond-btn').disabled = false;
+  selectCandy('');
+  updateCandyUI();
+}
+
+async function attemptBond() {
+  if (!currentEncounter) return;
+  document.getElementById('bond-btn').disabled = true;
+
+  const resp = await fetch(`{% url "expedition:resolve" session_id=0 %}`.replace('/0/', `/${sessionId}/`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({
+      species_id: currentEncounter.species_id,
+      base_bond_rate: currentEncounter.base_bond_rate,
+      candy_type: selectedCandy,
+    }),
+  });
+  const result = await resp.json();
+
+  if (result.error) { log('Error: ' + result.error, 'fail'); return; }
+
+  // Update candy inventory
+  candy.trail_mix    = result.candy_trail_mix;
+  candy.sweet_berry  = result.candy_sweet_berry;
+  candy.golden_apple = result.candy_golden_apple;
+
+  // Show result
+  const banner = document.getElementById('result-banner');
+  banner.style.display = 'block';
+  document.getElementById('action-row').style.display = 'none';
+
+  if (result.bonded) {
+    bonded_count++;
+    banner.className = 'result-banner success';
+    banner.innerHTML = `<div style="font-size:1.1rem;margin-bottom:0.3rem;">&#10024; ${currentEncounter.species_name} wants to be your friend!</div><div style="font-size:0.75rem;font-weight:400;">They decided to follow you home.</div>`;
+    log(`${currentEncounter.species_name} bonded with you! A new friendship begins.`, 'success');
+  } else {
+    banner.className = 'result-banner fail';
+    banner.innerHTML = `<div>${currentEncounter.species_name} hesitated… and disappeared into the wild.</div>`;
+    log(`${currentEncounter.species_name} wasn't ready yet. They slipped away.`, 'fail');
+  }
+
+  updateProgress(result.encounters_remaining, null);
+
+  if (result.session_complete) {
+    await delay(2000);
+    showDone();
+  } else {
+    await delay(2200);
+    await nextEncounter(null);
+  }
+}
+
+async function skipEncounter() {
+  if (!currentEncounter) return;
+  log(`You let ${currentEncounter.species_name} go peacefully.`, 'system');
+  document.getElementById('encounter-section').style.display = 'none';
+
+  const resp = await fetch(`{% url "expedition:resolve" session_id=0 %}`.replace('/0/', `/${sessionId}/`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({
+      species_id: currentEncounter.species_id,
+      base_bond_rate: 0,
+      candy_type: '',
+    }),
+  });
+  const result = await resp.json();
+  updateProgress(result.encounters_remaining, null);
+
+  if (result.session_complete) {
+    showDone();
+  } else {
+    await delay(1200);
+    await nextEncounter(null);
+  }
+}
+
+function showDone() {
+  document.getElementById('encounter-section').style.display = 'none';
+  document.getElementById('done-banner').style.display = 'block';
+  document.getElementById('done-summary').textContent =
+    bonded_count > 0
+      ? `You made ${bonded_count} new friend${bonded_count > 1 ? 's' : ''} on this expedition!`
+      : 'No bonds were formed this time. Try again with some candies!';
+  log('Expedition complete. You head back to the village.', 'system');
+}
+
+function updateProgress(remaining, total) {
+  const el = document.getElementById('modal-progress');
+  if (remaining !== null) {
+    el.innerHTML = `<span>${remaining}</span> encounter${remaining !== 1 ? 's' : ''} remaining`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('exp-modal').classList.remove('open');
+  sessionId = null;
+  currentEncounter = null;
+  window.location.reload();
+}
+
+document.getElementById('exp-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function random(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+async function buyCandy(type) {
+  const msg = document.getElementById('shop-msg');
+  msg.style.color = '#9ca3af';
+  msg.textContent = 'Purchasing…';
+
+  const resp = await fetch('{% url "users:buy_candy" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ candy_type: type }),
+  });
+  const data = await resp.json();
+
+  if (data.error) {
+    msg.style.color = '#f87171';
+    msg.textContent = data.error;
+    return;
+  }
+
+  // Update counts everywhere
+  candy.trail_mix    = data.candy_trail_mix;
+  candy.sweet_berry  = data.candy_sweet_berry;
+  candy.golden_apple = data.candy_golden_apple;
+  updateCandyUI();
+  document.getElementById('shop-tm-count').textContent = 'Owned: ' + data.candy_trail_mix;
+  document.getElementById('shop-sb-count').textContent = 'Owned: ' + data.candy_sweet_berry;
+  document.getElementById('shop-ga-count').textContent = 'Owned: ' + data.candy_golden_apple;
+
+  msg.style.color = '#4ade80';
+  const label = {'trail_mix':'Trail Mix','sweet_berry':'Sweet Berry','golden_apple':'Golden Apple'}[type];
+  msg.textContent = `Bought 1x ${label}! Ryo remaining: ${data.ryo.toLocaleString()}`;
+}
+</script>
+{% endblock %}

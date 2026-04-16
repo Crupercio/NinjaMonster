@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% load battle_tags %}
+{% block title %}Dust Workshop{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Rarity color tokens ──────────────────────────────────────── */
+.r-common      { --rc:#9ca3af; }
+.r-uncommon    { --rc:#4ade80; }
+.r-rare        { --rc:#60a5fa; }
+.r-epic        { --rc:#a78bfa; }
+.r-holographic { --rc:#fbbf24; }
+.r-full_art    { --rc:#f97316; }
+.r-secret_rare { --rc:#f43f5e; }
+
+/* ── Page header ──────────────────────────────────────────────── */
+.ws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.ws-title { font-size: 1.4rem; font-weight: 800; margin: 0; }
+.ws-dust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #16213e;
+  border: 1px solid #a78bfa44;
+  border-radius: 20px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #a78bfa;
+}
+.ws-dust-badge span { font-size: 1rem; }
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.ws-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #1e3a6e;
+  margin-bottom: 2rem;
+}
+.ws-tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.ws-tab:hover { color: #9ca3af; }
+.ws-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
+.ws-tab.phase3 { color: #374151; cursor: default; }
+.ws-tab.phase3:hover { color: #374151; }
+
+/* ── Tab panels ───────────────────────────────────────────────── */
+.ws-panel { display: none; }
+.ws-panel.active { display: block; }
+
+/* ── Duplicate rows ───────────────────────────────────────────── */
+.dup-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+}
+.dup-name { font-weight: 600; font-size: 0.9rem; }
+.dup-meta { font-size: 0.75rem; color: #6b7280; margin-left: 0.25rem; }
+.dup-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+.dust-gain {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a78bfa;
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+
+/* ── Craft form ───────────────────────────────────────────────── */
+.craft-form { max-width: 480px; }
+.form-group { margin-bottom: 1.1rem; }
+.form-group label { display: block; font-size: 0.78rem; color: #9ca3af; margin-bottom: 0.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-group select {
+  width: 100%;
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  color: #f1f5f9;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+}
+.craft-cost-bar {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.craft-cost-label { font-size: 0.8rem; color: #6b7280; }
+.craft-cost-value { font-size: 1.1rem; font-weight: 800; color: #a78bfa; }
+.craft-cost-value.cannot-afford { color: #f43f5e; }
+
+/* ── Badge forge (Phase 3 teaser) ─────────────────────────────── */
+.phase3-banner {
+  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  border: 1px solid #3730a3;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.phase3-banner h3 { font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0 0 0.4rem; }
+.phase3-banner p  { font-size: 0.82rem; color: #4b5563; margin: 0; line-height: 1.6; }
+
+.badge-tier-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 1.25rem; }
+.badge-tier-table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  color: #4b5563;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #1e3a6e;
+}
+.badge-tier-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #111827;
+  color: #374151;
+}
+.badge-tier-table tr:last-child td { border-bottom: none; }
+.tier-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tier-bronze      { background: #292524; color: #78350f; border: 1px solid #44403c; }
+.tier-silver      { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
+.tier-gold        { background: #1c1400; color: #ca8a04; border: 1px solid #854d0e; }
+.tier-holographic { background: #0c0a1e; color: #7c3aed; border: 1px solid #4c1d95; }
+.tier-prismatic   { background: #1a0010; color: #db2777; border: 1px solid #9d174d; }
+
+.coming-soon-overlay {
+  display: inline-block;
+  background: #111827;
+  border: 1px dashed #1e3a6e;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  color: #1e3a6e;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+.empty-state { color: #4b5563; font-size: 0.88rem; padding: 1.5rem 0; text-align: center; }
+
+/* ── Back link ────────────────────────────────────────────────── */
+.back-link { font-size: 0.82rem; color: #374151; text-decoration: none; }
+.back-link:hover { color: #9ca3af; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ws-header">
+  <h2 class="ws-title">&#9878; Dust Workshop</h2>
+  <div class="ws-dust-badge">
+    <span>&#10022;</span> {{ sticker_dust }} dust
+  </div>
+</div>
+
+<div style="display:flex;gap:0.75rem;align-items:center;">
+  <a href="{% url 'stickers:album' %}" class="back-link">&larr; Back to My Collection</a>
+  <span style="color:#1e3a6e;">·</span>
+  <a href="{% url 'stickers:generator' %}" class="back-link">&#9733; AI Sticker Generator</a>
+</div>
+
+{% if error %}
+  <div class="msg-error" style="margin-top:1rem;">{{ error }}</div>
+{% endif %}
+
+<!-- ── TABS ───────────────────────────────────────────────────── -->
+<div class="ws-tabs" id="ws-tabs" style="margin-top:1.25rem;">
+  <button class="ws-tab {% if active_tab == 'convert' %}active{% endif %}"
+          onclick="switchTab('convert')">
+    &#8645; Convert Dupes
+  </button>
+  <button class="ws-tab {% if active_tab == 'craft' %}active{% endif %}"
+          onclick="switchTab('craft')">
+    &#9999; Craft Sticker
+  </button>
+  <button class="ws-tab phase3" title="Coming in Phase 3">
+    &#9670; Forge Badge &nbsp;<span style="font-size:0.65rem;color:#1e3a6e;">SOON</span>
+  </button>
+</div>
+
+<!-- ── PANEL: CONVERT DUPLICATES ─────────────────────────────── -->
+<div class="ws-panel {% if active_tab == 'convert' %}active{% endif %}" id="panel-convert">
+  <p style="color:#6b7280;font-size:0.82rem;margin-bottom:1rem;">
+    Convert extra copies of the same sticker into dust. Your first copy is always kept safe.
+  </p>
+
+  {% if duplicates %}
+    {% for dup in duplicates %}
+      <div class="dup-row r-{{ dup.rarity }}">
+        <div style="flex:1;">
+          <span class="dup-name">{{ dup.pokemon__name }}</span>
+          <span class="dup-meta">[{{ dup.rarity|title }}] {{ dup.variant|title }}</span>
+        </div>
+        <span class="dup-count">×{{ dup.count }}</span>
+        <form method="post" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="convert">
+          <input type="hidden" name="sticker_id" value="{{ dup.id }}">
+          <button type="submit" class="btn btn-secondary btn-sm">
+            Convert &nbsp;<span style="color:var(--rc,#a78bfa);font-weight:800;">+dust</span>
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      &#10003; No duplicates — every sticker you own is unique!
+    </div>
+  {% endif %}
+</div>
+
+<!-- ── PANEL: CRAFT STICKER ──────────────────────────────────── -->
+<div class="ws-panel {% if active_tab == 'craft' %}active{% endif %}" id="panel-craft">
+  <p style="color:#6b7280;font-size:0.82rem;margin-bottom:1.25rem;">
+    Spend dust to craft the exact sticker you need.
+  </p>
+
+  <form method="post" class="craft-form" id="craft-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="craft">
+
+    <div class="form-group">
+      <label>Pokémon</label>
+      <select name="pokemon_id">
+        {% for pokemon in pokemon_list %}
+          <option value="{{ pokemon.pk }}">{{ pokemon.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Rarity</label>
+      <select name="rarity" id="craft-rarity" onchange="updateCraftCost()">
+        {% for rarity, cost in craft_costs.items %}
+          <option value="{{ rarity }}" data-cost="{{ cost }}">{{ rarity|title }} — {{ cost }} dust</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Variant</label>
+      <select name="variant">
+        {% for val, label in variants %}
+          <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="craft-cost-bar">
+      <span class="craft-cost-label">Cost</span>
+      <span class="craft-cost-value" id="craft-cost-display">— dust</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="craft-submit">Craft Sticker</button>
+  </form>
+</div>
+
+<!-- ── PANEL: BADGE FORGE (Phase 3 teaser) ───────────────────── -->
+<div class="ws-panel" id="panel-badge">
+  <div class="phase3-banner">
+    <h3>&#9670; Badge Forging — Phase 3</h3>
+    <p>
+      Forge powerful battle badges from your sticker collection.<br>
+      Each badge passively enhances a specific Pokémon in battle.
+    </p>
+  </div>
+
+  <table class="badge-tier-table">
+    <thead>
+      <tr>
+        <th>Tier</th>
+        <th>Sticker Requirement</th>
+        <th>Dust Cost</th>
+        <th>Effect Strength</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tier_val, tier_label in badge_tiers %}
+        {% with req=badge_requirements|get_item:tier_val %}
+        <tr>
+          <td><span class="tier-pill tier-{{ tier_val }}">{{ tier_label }}</span></td>
+          <td style="color:#374151;">
+            {% if req %}{{ req.copies }}× {{ req.rarity|title }}{% endif %}
+          </td>
+          <td style="color:#374151;">
+            {% if req %}{{ req.dust }} dust{% endif %}
+          </td>
+          <td style="color:#374151;">
+            {% if tier_val == "bronze" %}+5%
+            {% elif tier_val == "silver" %}+12%
+            {% elif tier_val == "gold" %}+22%
+            {% elif tier_val == "holographic" %}+35%
+            {% elif tier_val == "prismatic" %}+50% + special
+            {% endif %}
+          </td>
+          <td><span class="coming-soon-overlay">Locked</span></td>
+        </tr>
+        {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="color:#1e3a6e;font-size:0.75rem;margin-top:1.25rem;text-align:center;">
+    Badge effects wire into battle during Phase 3. Accumulate dust and rare stickers now.
+  </p>
+</div>
+
+<script>
+  const DUST = {{ sticker_dust }};
+
+  function switchTab(name) {
+    document.querySelectorAll('.ws-tab:not(.phase3)').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ws-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function updateCraftCost() {
+    const sel = document.getElementById('craft-rarity');
+    const cost = parseInt(sel.options[sel.selectedIndex].dataset.cost, 10);
+    const el = document.getElementById('craft-cost-display');
+    el.textContent = cost + ' dust';
+    el.className = 'craft-cost-value' + (DUST < cost ? ' cannot-afford' : '');
+    document.getElementById('craft-submit').disabled = DUST < cost;
+  }
+
+  updateCraftCost();
+</script>
+{% endblock %}

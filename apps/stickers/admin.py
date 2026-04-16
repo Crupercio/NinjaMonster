@@ -1,13 +1,25 @@
 """Admin registrations for the stickers app."""
 from django.contrib import admin
 
-from .models import Sticker, StickerAlbum, StickerPack, TradeHistory, TradeOffer
+from .models import (
+    Badge,
+    OwnedBadge,
+    RegionalAlbumPage,
+    Sticker,
+    StickerAlbum,
+    StickerPack,
+    TradeHistory,
+    TradeOffer,
+)
 
 
 @admin.register(Sticker)
 class StickerAdmin(admin.ModelAdmin):
-    list_display = ("pk", "pokemon", "owner", "rarity", "variant", "is_trading", "is_favorite", "date_caught")
-    list_filter = ("rarity", "variant", "is_trading", "is_favorite")
+    list_display = (
+        "pk", "pokemon", "owner", "rarity", "variant",
+        "is_trading", "is_favorite", "is_album_placed", "date_caught",
+    )
+    list_filter = ("rarity", "variant", "is_trading", "is_favorite", "is_album_placed")
     search_fields = ("pokemon__name", "owner__username")
     raw_id_fields = ("pokemon", "owner")
 
@@ -36,3 +48,27 @@ class TradeOfferAdmin(admin.ModelAdmin):
 class TradeHistoryAdmin(admin.ModelAdmin):
     list_display = ("pk", "from_user", "to_user", "sticker_given", "sticker_received", "completed_at")
     raw_id_fields = ("offer", "from_user", "to_user", "sticker_given", "sticker_received")
+
+
+@admin.register(RegionalAlbumPage)
+class RegionalAlbumPageAdmin(admin.ModelAdmin):
+    list_display = ("pk", "user", "region", "rarity", "completed_at", "reward_claimed")
+    list_filter = ("region", "rarity", "reward_claimed")
+    search_fields = ("user__username",)
+    raw_id_fields = ("user",)
+
+
+@admin.register(Badge)
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ("pk", "name", "pokemon", "tier", "effect_category")
+    list_filter = ("tier", "effect_category")
+    search_fields = ("name", "pokemon__name")
+    raw_id_fields = ("pokemon",)
+
+
+@admin.register(OwnedBadge)
+class OwnedBadgeAdmin(admin.ModelAdmin):
+    list_display = ("pk", "user", "badge", "equipped_slot", "crafted_at")
+    list_filter = ("equipped_slot",)
+    search_fields = ("user__username", "badge__name")
+    raw_id_fields = ("user", "badge")

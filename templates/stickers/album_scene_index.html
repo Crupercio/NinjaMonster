@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{{ region_label }} — Scene Album{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page cards grid ─────────────────────────────────────────── */
+.scene-index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.scene-page-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+.scene-page-card:hover {
+  transform: translateY(-3px);
+  border-color: #3b82f6;
+}
+.scene-page-card.complete { border-color: #4ade80; }
+
+/* Scene thumbnail — gradient only, no image */
+.scene-thumb {
+  width: 100%;
+  height: 100px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.scene-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%);
+}
+.scene-thumb-label {
+  position: relative;
+  z-index: 1;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* 12 themed gradients via nth-child — matches detail page palettes */
+.scene-index-grid .scene-page-card:nth-child(12n+1)  .scene-thumb { background: linear-gradient(160deg,#1a0522,#3d1237,#7a2c0d,#b85c0a); }
+.scene-index-grid .scene-page-card:nth-child(12n+2)  .scene-thumb { background: linear-gradient(160deg,#051a0a,#0d3520,#1a5c2a,#1e6b35); }
+.scene-index-grid .scene-page-card:nth-child(12n+3)  .scene-thumb { background: linear-gradient(160deg,#0d1117,#1c2437,#2d3d5c,#3a4f70); }
+.scene-index-grid .scene-page-card:nth-child(12n+4)  .scene-thumb { background: linear-gradient(160deg,#050d1a,#0a1e40,#0d2d60,#0e3d80); }
+.scene-index-grid .scene-page-card:nth-child(12n+5)  .scene-thumb { background: linear-gradient(160deg,#050f1a,#0d2035,#0f2e46,#163d50,#1e4a1a); }
+.scene-index-grid .scene-page-card:nth-child(12n+6)  .scene-thumb { background: linear-gradient(160deg,#0d0a17,#1a0d2e,#2d1a4a,#3a2060); }
+.scene-index-grid .scene-page-card:nth-child(12n+7)  .scene-thumb { background: linear-gradient(160deg,#091209,#102518,#183520,#1f4828); }
+.scene-index-grid .scene-page-card:nth-child(12n+8)  .scene-thumb { background: linear-gradient(160deg,#120a05,#2a1a0a,#3d2a10,#2e3812); }
+.scene-index-grid .scene-page-card:nth-child(12n+9)  .scene-thumb { background: linear-gradient(160deg,#0a0e17,#131d30,#1d2d48,#243858); }
+.scene-index-grid .scene-page-card:nth-child(12n+10) .scene-thumb { background: linear-gradient(160deg,#17050a,#3d0d0d,#5c1800,#7a2a00); }
+.scene-index-grid .scene-page-card:nth-child(12n+11) .scene-thumb { background: linear-gradient(160deg,#050d17,#091e30,#0c2a4a,#0e3460); }
+.scene-index-grid .scene-page-card:nth-child(12n)    .scene-thumb { background: linear-gradient(160deg,#070512,#0f0a24,#1a1240,#22105a); }
+
+/* Card body */
+.scene-card-body {
+  padding: 0.65rem 0.8rem;
+}
+.scene-card-meta {
+  font-size: 0.62rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+.scene-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 0.4rem;
+}
+
+/* Rarity mini progress rows */
+.rp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+.rp-label {
+  font-size: 0.58rem;
+  color: #94a3b8;
+  width: 70px;
+  flex-shrink: 0;
+}
+.rp-bar {
+  flex: 1;
+  height: 5px;
+  background: #0f172a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rp-fill { height: 100%; border-radius: 4px; }
+.rp-count { font-size: 0.58rem; color: #475569; white-space: nowrap; }
+.rp-complete { color: #4ade80; }
+
+/* Rarity fill colours */
+.rp-fill-common      { background: #9ca3af; }
+.rp-fill-uncommon    { background: #4ade80; }
+.rp-fill-rare        { background: #60a5fa; }
+.rp-fill-epic        { background: #a78bfa; }
+.rp-fill-holographic { background: #fbbf24; }
+.rp-fill-full_art    { background: #f97316; }
+.rp-fill-secret_rare { background: #f43f5e; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Header ── #}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+  <h2 style="margin:0;font-size:1.3rem;font-weight:800;">{{ region_label }} — Scene Album</h2>
+  <a href="{% url 'stickers:regional_album_index' %}" class="btn btn-sm btn-secondary">All Regions</a>
+</div>
+
+{% if not pages_summary %}
+<div style="background:#16213e;border:1px solid #1e3a6e;border-radius:10px;padding:1.5rem;text-align:center;color:#94a3b8;font-size:0.85rem;">
+  No scene pages seeded yet for {{ region_label }}. Run <code>python manage.py seed_album_pages</code> to create them.
+</div>
+{% else %}
+
+{# Default rarity selector #}
+<div style="font-size:0.72rem;color:#94a3b8;margin-bottom:0.8rem;">
+  Click a page to browse by
+  <strong style="color:#e2e8f0;">{{ default_rarity|title }}</strong>
+  rarity — you can switch rarities from within any page.
+</div>
+
+<div class="scene-index-grid">
+  {% for entry in pages_summary %}
+  {% with page=entry.album_page %}
+  <a href="{% url 'stickers:album_scene_page' region=region page_number=page.page_number rarity=default_rarity %}"
+     class="scene-page-card {% if entry.overall_placed == entry.overall_total and entry.overall_total > 0 %}complete{% endif %}">
+
+    {# Scene thumbnail — gradient from CSS nth-child, no image #}
+    <div class="scene-thumb">
+      <div class="scene-thumb-overlay"></div>
+      <span class="scene-thumb-label">Page {{ page.page_number }}</span>
+    </div>
+
+    <div class="scene-card-body">
+      <div class="scene-card-meta">#{{ page.dex_start }}–#{{ page.dex_end }}</div>
+      <div class="scene-card-title">{{ page.location_name }}</div>
+
+      {# Per-rarity mini progress bars #}
+      {% for rp in entry.rarity_progress %}
+      <div class="rp-row">
+        <span class="rp-label {% if rp.complete %}rp-complete{% endif %}">{{ rp.label }}</span>
+        <div class="rp-bar">
+          <div class="rp-fill rp-fill-{{ rp.rarity }}" style="width:{{ rp.pct }}%;"></div>
+        </div>
+        <span class="rp-count {% if rp.complete %}rp-complete{% endif %}">
+          {% if rp.complete %}✓{% else %}{{ rp.placed }}/{{ rp.total }}{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </a>
+  {% endwith %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

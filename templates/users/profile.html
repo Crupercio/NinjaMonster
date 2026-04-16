@@ -117,7 +117,17 @@
   <div class="profile-avatar">🥷</div>
   <div class="profile-info">
     <div class="profile-name">{{ profile_user.display_name|default:profile_user.username }}</div>
-    <div class="profile-username">@{{ profile_user.username }}</div>
+    <div class="profile-username">@{{ profile_user.username }}
+      <span style="margin-left:0.75rem;background:#0f3460;border:1px solid #6366f1;border-radius:5px;padding:1px 8px;font-size:0.72rem;color:#a78bfa;font-weight:700;">
+        Trainer Lv.{{ profile_user.trainer_level }}
+      </span>
+    </div>
+    <div style="margin-top:0.4rem;">
+      <div style="font-size:0.65rem;color:#4b5563;margin-bottom:2px;">{{ profile_user.trainer_xp }}/{{ profile_user.trainer_xp_to_next_level }} XP</div>
+      <div style="height:5px;background:#0f1a2e;border-radius:3px;overflow:hidden;width:160px;max-width:100%;">
+        <div style="height:100%;width:{{ profile_user.trainer_xp_percent }}%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:3px;"></div>
+      </div>
+    </div>
     {% if is_own_profile %}
     <a href="{% url 'quests:quest_list' %}" class="btn btn-secondary btn-sm" style="margin-right:0.5rem;">Quests</a>
     <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
@@ -127,6 +137,10 @@
 
 {# ── Stats row ────────────────────────────────────────────────────────────── #}
 <div class="stat-row">
+  <div class="stat-box">
+    <div class="stat-value" style="color:#a78bfa;">{{ profile_user.trainer_level }}</div>
+    <div class="stat-label">Trainer Lv</div>
+  </div>
   <div class="stat-box">
     <div class="stat-value">{{ profile_user.battles_won }}</div>
     <div class="stat-label">Wins</div>

@@ -1,0 +1,156 @@
+[
+  {
+    "model": "pokemon.heldeffect", "pk": 1,
+    "fields": {
+      "name": "Leftovers",
+      "description": "Restores 1/16 of max HP at the start of each round.",
+      "trigger_condition": "passive",
+      "effect_data": {"heal_fraction": 0.0625},
+      "activation_chance": 1.0,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 2,
+    "fields": {
+      "name": "Black Sludge",
+      "description": "50% chance to restore 1/8 of max HP each round.",
+      "trigger_condition": "passive",
+      "effect_data": {"heal_fraction": 0.125},
+      "activation_chance": 0.5,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 3,
+    "fields": {
+      "name": "Mystic Water",
+      "description": "Slowly recovers a tiny fraction of HP each round.",
+      "trigger_condition": "passive",
+      "effect_data": {"heal_fraction": 0.03125},
+      "activation_chance": 1.0,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 4,
+    "fields": {
+      "name": "Rocky Helmet",
+      "description": "Reflects 1/6 of damage taken back to the attacker.",
+      "trigger_condition": "on_hit",
+      "effect_data": {"damage_reflect": 0.166},
+      "activation_chance": 1.0,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 5,
+    "fields": {
+      "name": "Flame Shard",
+      "description": "30% chance to reflect 25% of damage taken back.",
+      "trigger_condition": "on_hit",
+      "effect_data": {"damage_reflect": 0.25},
+      "activation_chance": 0.3,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 6,
+    "fields": {
+      "name": "Salac Seed",
+      "description": "35% chance to heal 12.5% of max HP when hit. Up to 3 times.",
+      "trigger_condition": "on_hit",
+      "effect_data": {"heal_fraction": 0.125},
+      "activation_chance": 0.35,
+      "max_activations": 3
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 7,
+    "fields": {
+      "name": "Sitrus Berry",
+      "description": "Once per battle, 25% chance to heal 25% of max HP when hit.",
+      "trigger_condition": "on_hit",
+      "effect_data": {"heal_fraction": 0.25},
+      "activation_chance": 0.25,
+      "max_activations": 1
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 8,
+    "fields": {
+      "name": "Focus Sash",
+      "description": "Once per battle, survive a knockout with minimal HP.",
+      "trigger_condition": "on_faint",
+      "effect_data": {"revive_hp_fraction": 0.01},
+      "activation_chance": 1.0,
+      "max_activations": 1
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 9,
+    "fields": {
+      "name": "Focus Band",
+      "description": "10% chance to survive any knockout with 10% HP.",
+      "trigger_condition": "on_faint",
+      "effect_data": {"revive_hp_fraction": 0.10},
+      "activation_chance": 0.10,
+      "max_activations": 0
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 10,
+    "fields": {
+      "name": "Rage Crystal",
+      "description": "On fainting, reflects 30% of damage taken back to attacker.",
+      "trigger_condition": "on_faint",
+      "effect_data": {"damage_reflect": 0.30},
+      "activation_chance": 1.0,
+      "max_activations": 1
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 11,
+    "fields": {
+      "name": "Lum Berry",
+      "description": "Once per battle, immediately cleanses all status conditions.",
+      "trigger_condition": "on_status",
+      "effect_data": {"status_cleanse": true},
+      "activation_chance": 1.0,
+      "max_activations": 1
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 12,
+    "fields": {
+      "name": "Pecha Berry",
+      "description": "75% chance to cleanse status. Up to 2 times per battle.",
+      "trigger_condition": "on_status",
+      "effect_data": {"status_cleanse": true},
+      "activation_chance": 0.75,
+      "max_activations": 2
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 13,
+    "fields": {
+      "name": "Cure Orb",
+      "description": "Once per battle, 50% chance to cleanse status and heal 12.5% HP.",
+      "trigger_condition": "on_status",
+      "effect_data": {"status_cleanse": true, "heal_fraction": 0.125},
+      "activation_chance": 0.5,
+      "max_activations": 1
+    }
+  },
+  {
+    "model": "pokemon.heldeffect", "pk": 14,
+    "fields": {
+      "name": "Rage Chip",
+      "description": "50% chance to heal 1/16 HP when inflicted with a status.",
+      "trigger_condition": "on_status",
+      "effect_data": {"heal_fraction": 0.0625},
+      "activation_chance": 0.5,
+      "max_activations": 0
+    }
+  }
+]

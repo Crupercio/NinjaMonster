@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Open Sticker Pack{% endblock %}
 
+{% load sticker_tags %}
 {% block extra_css %}
 <style>
   /* ── Card flip container ──────────────────────────────────────────────── */
@@ -13,9 +14,9 @@
   }
 
   .card-scene {
-    width: 140px;
-    height: 200px;
-    perspective: 600px;
+    width: 155px;
+    height: 220px;
+    perspective: 700px;
   }
 
   .card-inner {
@@ -46,22 +47,70 @@
 
   /* ── Back of card (face-down) ─────────────────────────────────────────── */
   .card-back {
-    background: linear-gradient(135deg, #0f3460, #16213e);
+    background:
+      radial-gradient(ellipse at 50% 42%, rgba(233,69,96,0.18) 0%, transparent 65%),
+      linear-gradient(160deg, #1a0a2e 0%, #0f3460 50%, #16213e 100%);
     border: 2px solid #e94560;
     cursor: pointer;
-    font-size: 2.5rem;
+    overflow: hidden;
+  }
+
+  /* Pokeball SVG watermark on the back */
+  .card-back::before {
+    content: "";
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23e94560' stroke-width='4'/%3E%3Cpath d='M2 50 h96' stroke='%23e94560' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%230f3460' stroke='%23e94560' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23e94560'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity: 0.55;
+  }
+
+  /* decorative corner diamonds */
+  .card-back::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(233,69,96,0.25);
+    border-radius: 8px;
+    pointer-events: none;
   }
 
   .card-back:hover {
     border-color: #fbbf24;
-    box-shadow: 0 0 16px rgba(251,191,36,0.4);
+    box-shadow: 0 0 20px rgba(251,191,36,0.45);
+  }
+
+  .card-back:hover::before {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 6px #fbbf24);
   }
 
   /* ── Front of card (revealed) ─────────────────────────────────────────── */
   .card-front {
-    background: #16213e;
+    background: linear-gradient(160deg, #16213e 0%, #0f1e38 100%);
     border: 2px solid #2d3748;
     transform: rotateY(180deg);
+    padding: 0.6rem 0.5rem;
+    gap: 0;
+  }
+
+  .card-sprite {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    margin-bottom: 0.3rem;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  }
+
+  .card-sprite-placeholder {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    margin-bottom: 0.3rem;
   }
 
   /* ── Rarity colour classes ────────────────────────────────────────────── */
@@ -127,6 +176,8 @@
               rarityLabel: '{{ s.get_rarity_display|escapejs }}',
               variant: '{{ s.get_variant_display|escapejs }}',
               ptype: '{{ s.pokemon.primary_type|escapejs }}',
+              sprite: '{{ s.pokemon.pokedex_number|sticker_sprite:s.variant|escapejs }}',
+              dexNum: '{% if s.pokemon.pokedex_number %}{{ s.pokemon.pokedex_number|stringformat:"03d" }}{% endif %}',
               premium: {% if s.rarity == 'holographic' or s.rarity == 'full_art' or s.rarity == 'secret_rare' %}true{% else %}false{% endif %},
               flipped: false,
               shimmer: false
@@ -165,20 +216,27 @@
               >
                 {# Back face #}
                 <div class="card-face card-back">
-                  <span>🎴</span>
-                  <span class="tap-hint" x-show="!card.flipped">tap</span>
+                  <span class="tap-hint" x-show="!card.flipped" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;">tap</span>
                 </div>
 
                 {# Front face #}
                 <div
                   class="card-face card-front"
                   :class="[`rarity-${card.rarity.replace('_', '-')}`, { 'premium-shimmer': card.shimmer }]"
-                  :style="card.premium ? 'box-shadow: 0 0 8px currentColor;' : ''"
+                  :style="card.premium ? 'border-color: currentColor; box-shadow: 0 0 14px currentColor;' : ''"
                 >
-                  <div style="font-size:1rem;font-weight:700;margin-bottom:0.4rem;" x-text="card.name"></div>
-                  <div style="font-size:0.8rem;font-weight:700;margin:0.2rem 0;" x-text="card.rarityLabel"></div>
-                  <div style="font-size:0.75rem;color:#9ca3af;" x-text="card.variant"></div>
-                  <div style="font-size:0.7rem;color:#6b7280;margin-top:0.3rem;" x-text="card.ptype"></div>
+                  {# Sprite or placeholder #}
+                  <template x-if="card.sprite">
+                    <img :src="card.sprite" :alt="card.name" class="card-sprite" loading="lazy">
+                  </template>
+                  <template x-if="!card.sprite">
+                    <div class="card-sprite-placeholder">🎴</div>
+                  </template>
+
+                  <div style="font-size:0.65rem;color:#6b7280;margin-bottom:0.25rem;" x-text="`#${card.dexNum}`"></div>
+                  <div style="font-size:0.95rem;font-weight:700;line-height:1.1;" x-text="card.name"></div>
+                  <div style="font-size:0.72rem;font-weight:700;margin:0.25rem 0;" x-text="card.rarityLabel"></div>
+                  <div style="font-size:0.65rem;color:#9ca3af;" x-text="card.ptype"></div>
                 </div>
               </div>
             </div>

@@ -11,11 +11,14 @@ from typing import TYPE_CHECKING
 from django.db.models import QuerySet
 
 from .constants import (
+    ADVANCED_STATUSES,
     DAMAGE_PER_TURN_SIXTEENTHS,
     NARUTO_STATUSES,
     PERSISTENT_STATUSES,
+    PHYSICAL_STATUSES,
     STAT_MODIFIERS,
     TYPE_IMMUNITIES,
+    UTILITY_STATUSES,
     VOLATILE_STATUSES,
     StatusName,
 )
@@ -54,6 +57,7 @@ class StatusEffectEngine:
         status: StatusEffect,
         round_number: int,
         duration_override: int | None = None,
+        applied_by_slot: "BattleSlot | None" = None,
     ) -> ActiveStatusEffect | None:
         """
         Apply a status effect to a BattleSlot.
@@ -69,6 +73,10 @@ class StatusEffectEngine:
             logger.debug("%s already has a persistent status; cannot apply %s", slot, status.name)
             return None
 
+        # Physical states are mutually exclusive: clear the current one before applying a new one
+        if status.name in PHYSICAL_STATUSES and self._has_any_physical(slot):
+            self.clear_physical_statuses(slot)
+
         # Idempotent: no stacking of the same status
         if self.has_status(slot, status.name):
             logger.debug("%s already has %s", slot, status.name)
@@ -82,6 +90,7 @@ class StatusEffectEngine:
             remaining_turns=duration,
             applied_at_round=round_number,
             turns_active=0,
+            applied_by_slot=applied_by_slot,
         )
         logger.info("Applied %s to %s (duration=%s)", status.name, slot, duration)
         return active
@@ -100,17 +109,23 @@ class StatusEffectEngine:
 
     def remove_volatile_statuses(self, slot: "BattleSlot") -> int:
         """
-        Remove all volatile statuses from a BattleSlot.
+        Remove all volatile, physical, utility, and advanced statuses from a BattleSlot.
 
         Called when a Pokemon switches out. Returns the count removed.
         """
-        volatile_names = list(VOLATILE_STATUSES) + list(NARUTO_STATUSES)
+        clearable_names = (
+            list(VOLATILE_STATUSES)
+            + list(NARUTO_STATUSES)
+            + list(PHYSICAL_STATUSES)
+            + list(UTILITY_STATUSES)
+            + list(ADVANCED_STATUSES)
+        )
         deleted, _ = ActiveStatusEffect.objects.filter(
             slot=slot,
-            status__name__in=volatile_names,
+            status__name__in=clearable_names,
         ).delete()
         if deleted:
-            logger.info("Cleared %d volatile statuses from %s", deleted, slot)
+            logger.info("Cleared %d volatile/physical/utility statuses from %s", deleted, slot)
         return deleted
 
     def tick_statuses(
@@ -130,7 +145,7 @@ class StatusEffectEngine:
         results: list[dict] = []
         active_statuses = (
             ActiveStatusEffect.objects.filter(slot=slot)
-            .select_related("status")
+            .select_related("status", "applied_by_slot__pokemon")
         )
 
         for active in active_statuses:
@@ -189,6 +204,11 @@ class StatusEffectEngine:
         if StatusName.INTERRUPTED in status_names:
             return False, "interrupted"
 
+        # P2-4: INFATUATED — 50% chance to refuse to attack
+        if StatusName.INFATUATED in status_names:
+            if random.random() < _INFATUATION_REFUSE_CHANCE:
+                return False, "infatuated"
+
         # Confusion — may hit self (handled in battle service, not here)
         return True, ""
 
@@ -245,6 +265,30 @@ class StatusEffectEngine:
             slot=slot, status__name__in=list(PERSISTENT_STATUSES)
         ).exists()
 
+    def _has_any_physical(self, slot: "BattleSlot") -> bool:
+        """Return True if any physical state (Airborne/Launched/Knockback) is active."""
+        return ActiveStatusEffect.objects.filter(
+            slot=slot, status__name__in=list(PHYSICAL_STATUSES)
+        ).exists()
+
+    def clear_physical_statuses(self, slot: "BattleSlot") -> int:
+        """Remove all active physical states from a slot. Returns count removed."""
+        deleted, _ = ActiveStatusEffect.objects.filter(
+            slot=slot, status__name__in=list(PHYSICAL_STATUSES)
+        ).delete()
+        if deleted:
+            logger.debug("Cleared %d physical state(s) from %s", deleted, slot)
+        return deleted
+
+    def is_grounded(self, slot: "BattleSlot") -> bool:
+        """
+        True when the slot is in the default Grounded state.
+
+        GROUNDED is implicit — a slot is grounded when it has no active
+        Airborne / Launched / Knockback state.
+        """
+        return not self._has_any_physical(slot)
+
     def _roll_duration(self, status: StatusEffect) -> int | None:
         """Roll a random duration for statuses with variable durations."""
         if status.name == StatusName.ASLEEP:
@@ -277,6 +321,14 @@ class StatusEffectEngine:
             if slot.current_hp == 0:
                 slot.is_fainted = True
                 slot.save(update_fields=["is_fainted"])
+
+            # P2-6: SEEDED drain — heal the slot that planted the seed
+            if status_name == StatusName.SEEDED and active.applied_by_slot_id:
+                healer = active.applied_by_slot
+                if healer and not healer.is_fainted:
+                    healer.current_hp = min(healer.max_hp, healer.current_hp + damage)
+                    healer.save(update_fields=["current_hp"])
+                    result["message"] += f" {healer.pokemon.name} absorbed {damage} HP!"
 
         # --- Nightmare: extra damage only while asleep ---
         if status_name == StatusName.NIGHTMARE and self.has_status(slot, StatusName.ASLEEP):

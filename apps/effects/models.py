@@ -80,6 +80,14 @@ class ActiveStatusEffect(models.Model):
         default=0,
         help_text="Incremented each turn; used for escalating effects.",
     )
+    applied_by_slot = models.ForeignKey(
+        "game.BattleSlot",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="seeded_targets",
+        help_text="The slot that applied this effect (used for SEEDED drain).",
+    )
 
     class Meta:
         unique_together = [("slot", "status")]

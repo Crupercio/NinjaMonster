@@ -40,251 +40,251 @@ PASSIVE_MOVE_PKS: frozenset[int] = frozenset({
 SPECIES_POOLS: dict[int, tuple[str, dict[str, list[int]]]] = {
     # --- Grass/Poison line — CONTROL ---
     1: ("control", {  # Bulbasaur
-        "standard": [22, 75],     # Vine Whip, Razor Leaf
-        "chase":    [20, 40],     # Bind, Poison Sting
-        "special":  [76, 80],     # Solar Beam, Petal Dance
-        "support":  [77, 78, 79], # Poison Powder, Stun Spore, Sleep Powder
-        "passive":  [73],         # Leech Seed
+        "standard":  [22, 75],     # Vine Whip, Razor Leaf
+        "chase":     [20, 40],     # Bind, Poison Sting
+        "mystery":   [76, 80],     # Solar Beam, Petal Dance
+        "passive_1": [77, 78, 79], # Poison Powder, Stun Spore, Sleep Powder
+        "passive_2": [73],         # Leech Seed
     }),
     2: ("control", {  # Ivysaur
-        "standard": [22, 75],
-        "chase":    [20, 72],     # Bind, Mega Drain
-        "special":  [76, 34],     # Solar Beam, Body Slam
-        "support":  [77, 78, 79],
-        "passive":  [73],
+        "standard":  [22, 75],
+        "chase":     [20, 72],     # Bind, Mega Drain
+        "mystery":   [76, 34],     # Solar Beam, Body Slam
+        "passive_1": [77, 78, 79],
+        "passive_2": [73],
     }),
     3: ("control", {  # Venusaur
-        "standard": [75, 22],
-        "chase":    [20, 72],
-        "special":  [76, 80],
-        "support":  [77, 79, 78],
-        "passive":  [73],
+        "standard":  [75, 22],
+        "chase":     [20, 72],
+        "mystery":   [76, 80],
+        "passive_1": [77, 79, 78],
+        "passive_2": [73],
     }),
-    # --- Fire line — DPS ---
-    4: ("dps", {      # Charmander
-        "standard": [52, 10],     # Ember, Scratch
-        "chase":    [83, 7],      # Fire Spin, Fire Punch
-        "special":  [53],         # Flamethrower
-        "support":  [45],         # Growl
-        "passive":  [71],         # Absorb
+    # --- Fire line — BURST ---
+    4: ("burst", {      # Charmander
+        "standard":  [52, 10],    # Ember, Scratch
+        "chase":     [83, 7],     # Fire Spin, Fire Punch
+        "mystery":   [53],        # Flamethrower
+        "passive_1": [45],        # Growl
+        "passive_2": [71],        # Absorb
     }),
-    5: ("dps", {      # Charmeleon
-        "standard": [52, 1],
-        "chase":    [7, 83],
-        "special":  [53, 34],     # Flamethrower, Body Slam
-        "support":  [14, 45],     # Swords Dance, Growl
-        "passive":  [71],
+    5: ("burst", {      # Charmeleon
+        "standard":  [52, 1],
+        "chase":     [7, 83],
+        "mystery":   [53, 34],    # Flamethrower, Body Slam
+        "passive_1": [14, 45],    # Swords Dance, Growl
+        "passive_2": [71],
     }),
-    6: ("dps", {      # Charizard
-        "standard": [52, 17],     # Ember, Wing Attack
-        "chase":    [7, 83],
-        "special":  [53, 19, 38], # Flamethrower, Fly, Double-Edge
-        "support":  [14, 43],     # Swords Dance, Leer
-        "passive":  [71],
+    6: ("burst", {      # Charizard
+        "standard":  [52, 17],    # Ember, Wing Attack
+        "chase":     [7, 83],
+        "mystery":   [53, 19, 38], # Flamethrower, Fly, Double-Edge
+        "passive_1": [14, 43],    # Swords Dance, Leer
+        "passive_2": [71],
     }),
     # --- Water line — TANK ---
     7: ("tank", {     # Squirtle
-        "standard": [55, 33],     # Water Gun, Tackle
-        "chase":    [61, 35],     # Bubble Beam, Wrap
-        "special":  [57],         # Surf
-        "support":  [54, 39],     # Mist, Tail Whip
-        "passive":  [68],         # Counter
+        "standard":  [55, 33],    # Water Gun, Tackle
+        "chase":     [61, 35],    # Bubble Beam, Wrap
+        "mystery":   [57],        # Surf
+        "passive_1": [54, 39],    # Mist, Tail Whip
+        "passive_2": [68],        # Counter
     }),
     8: ("tank", {     # Wartortle
-        "standard": [55, 23],
-        "chase":    [61, 35],
-        "special":  [57, 56],     # Surf, Hydro Pump
-        "support":  [54, 28],     # Mist, Sand Attack
-        "passive":  [68],
+        "standard":  [55, 23],
+        "chase":     [61, 35],
+        "mystery":   [57, 56],    # Surf, Hydro Pump
+        "passive_1": [54, 28],    # Mist, Sand Attack
+        "passive_2": [68],
     }),
     9: ("tank", {     # Blastoise
-        "standard": [55, 23],
-        "chase":    [61, 9],      # Bubble Beam, Thunder Punch
-        "special":  [56, 57],
-        "support":  [54, 39, 28],
-        "passive":  [68],
+        "standard":  [55, 23],
+        "chase":     [61, 9],     # Bubble Beam, Thunder Punch
+        "mystery":   [56, 57],
+        "passive_1": [54, 39, 28],
+        "passive_2": [68],
     }),
-    # --- Electric — ASSASSIN ---
-    10: ("assassin", {  # Pikachu
-        "standard": [84, 15],     # Thunder Shock, Cut
-        "chase":    [9, 3],       # Thunder Punch, Double Slap
-        "special":  [34],         # Body Slam
-        "support":  [14, 43],     # Swords Dance, Leer
-        "passive":  [81],         # String Shot
+    # --- Electric — COMBO ---
+    10: ("combo", {  # Pikachu
+        "standard":  [84, 15],    # Thunder Shock, Cut
+        "chase":     [9, 3],      # Thunder Punch, Double Slap
+        "mystery":   [34],        # Body Slam
+        "passive_1": [14, 43],    # Swords Dance, Leer
+        "passive_2": [81],        # String Shot
     }),
-    11: ("dps", {       # Raichu
-        "standard": [84],
-        "chase":    [9, 3],
-        "special":  [34, 25],     # Body Slam, Mega Kick
-        "support":  [14, 45],
-        "passive":  [81],
+    11: ("burst", {       # Raichu
+        "standard":  [84],
+        "chase":     [9, 3],
+        "mystery":   [34, 25],    # Body Slam, Mega Kick
+        "passive_1": [14, 45],
+        "passive_2": [81],
     }),
-    # --- Ghost/Poison — ASSASSIN / CONTROL ---
-    12: ("assassin", {  # Gengar
-        "standard": [33, 40],     # Tackle, Poison Sting
-        "chase":    [44, 49],     # Bite, Sonic Boom
-        "special":  [37, 12],     # Thrash, Guillotine
-        "support":  [47, 48, 50], # Sing, Supersonic, Disable
-        "passive":  [73],
+    # --- Ghost/Poison — COMBO / CONTROL ---
+    12: ("combo", {  # Gengar
+        "standard":  [33, 40],    # Tackle, Poison Sting
+        "chase":     [44, 49],    # Bite, Sonic Boom
+        "mystery":   [37, 12],    # Thrash, Guillotine
+        "passive_1": [47, 48, 50], # Sing, Supersonic, Disable
+        "passive_2": [73],
     }),
     13: ("control", {   # Haunter
-        "standard": [33],
-        "chase":    [44, 49],
-        "special":  [37],
-        "support":  [47, 48, 50],
-        "passive":  [73],
+        "standard":  [33],
+        "chase":     [44, 49],
+        "mystery":   [37],
+        "passive_1": [47, 48, 50],
+        "passive_2": [73],
     }),
     # --- Electric Eeveelutions ---
-    14: ("assassin", {  # Jolteon
-        "standard": [84, 15],
-        "chase":    [9, 17],      # Thunder Punch, Wing Attack
-        "special":  [34, 38],     # Body Slam, Double-Edge
-        "support":  [14, 43],
-        "passive":  [81],
+    14: ("combo", {  # Jolteon
+        "standard":  [84, 15],
+        "chase":     [9, 17],     # Thunder Punch, Wing Attack
+        "mystery":   [34, 38],    # Body Slam, Double-Edge
+        "passive_1": [14, 43],
+        "passive_2": [81],
     }),
-    15: ("bruiser", {   # Flareon
-        "standard": [52, 7],      # Ember, Fire Punch
-        "chase":    [83, 31],     # Fire Spin, Fury Attack
-        "special":  [53, 25],     # Flamethrower, Mega Kick
-        "support":  [45, 43],
-        "passive":  [71],
+    15: ("tank", {   # Flareon
+        "standard":  [52, 7],     # Ember, Fire Punch
+        "chase":     [83, 31],    # Fire Spin, Fury Attack
+        "mystery":   [53, 25],    # Flamethrower, Mega Kick
+        "passive_1": [45, 43],
+        "passive_2": [71],
     }),
     16: ("support", {   # Vaporeon
-        "standard": [55, 23],
-        "chase":    [61, 72],     # Bubble Beam, Mega Drain
-        "special":  [57, 56],
-        "support":  [54, 74, 47], # Mist, Growth, Sing
-        "passive":  [73],
+        "standard":  [55, 23],
+        "chase":     [61, 72],    # Bubble Beam, Mega Drain
+        "mystery":   [57, 56],
+        "passive_1": [54, 74, 47], # Mist, Growth, Sing
+        "passive_2": [73],
     }),
     # --- Ice/Water — TANK ---
     17: ("tank", {      # Lapras
-        "standard": [55, 23],
-        "chase":    [62, 8],      # Aurora Beam, Ice Punch
-        "special":  [57, 58, 59], # Surf, Ice Beam, Blizzard
-        "support":  [46, 47],     # Roar, Sing
-        "passive":  [68],
+        "standard":  [55, 23],
+        "chase":     [62, 8],     # Aurora Beam, Ice Punch
+        "mystery":   [57, 58, 59], # Surf, Ice Beam, Blizzard
+        "passive_1": [46, 47],    # Roar, Sing
+        "passive_2": [68],
     }),
     # --- Legendaries ---
     18: ("tank", {      # Articuno
-        "standard": [16, 64],     # Gust, Peck
-        "chase":    [62, 8],
-        "special":  [58, 59, 19], # Ice Beam, Blizzard, Fly
-        "support":  [46, 50],     # Roar, Disable
-        "passive":  [68],
+        "standard":  [16, 64],    # Gust, Peck
+        "chase":     [62, 8],
+        "mystery":   [58, 59, 19], # Ice Beam, Blizzard, Fly
+        "passive_1": [46, 50],    # Roar, Disable
+        "passive_2": [68],
     }),
-    19: ("dps", {       # Zapdos
-        "standard": [84, 16],
-        "chase":    [9, 17],      # Thunder Punch, Wing Attack
-        "special":  [34, 36],     # Body Slam, Take Down
-        "support":  [14, 28],
-        "passive":  [81],
+    19: ("burst", {       # Zapdos
+        "standard":  [84, 16],
+        "chase":     [9, 17],     # Thunder Punch, Wing Attack
+        "mystery":   [34, 36],    # Body Slam, Take Down
+        "passive_1": [14, 28],
+        "passive_2": [81],
     }),
-    20: ("dps", {       # Moltres
-        "standard": [52, 17],
-        "chase":    [7, 83],
-        "special":  [53, 19, 38],
-        "support":  [45, 14],
-        "passive":  [71],
+    20: ("burst", {       # Moltres
+        "standard":  [52, 17],
+        "chase":     [7, 83],
+        "mystery":   [53, 19, 38],
+        "passive_1": [45, 14],
+        "passive_2": [71],
     }),
-    # --- Psychic — ASSASSIN / CONTROL ---
-    21: ("assassin", {  # Alakazam
-        "standard": [33, 1],
-        "chase":    [60, 49],     # Psybeam, Sonic Boom
-        "special":  [36, 63],     # Take Down, Hyper Beam
-        "support":  [48, 43],     # Supersonic, Leer
-        "passive":  [73],
+    # --- Psychic — COMBO / CONTROL ---
+    21: ("combo", {  # Alakazam
+        "standard":  [33, 1],
+        "chase":     [60, 49],    # Psybeam, Sonic Boom
+        "mystery":   [36, 63],    # Take Down, Hyper Beam
+        "passive_1": [48, 43],    # Supersonic, Leer
+        "passive_2": [73],
     }),
     22: ("control", {   # Hypno
-        "standard": [33],
-        "chase":    [60, 44],
-        "special":  [36],
-        "support":  [47, 48, 50],
-        "passive":  [73],
+        "standard":  [33],
+        "chase":     [60, 44],
+        "mystery":   [36],
+        "passive_1": [47, 48, 50],
+        "passive_2": [73],
     }),
     # --- Poison — CONTROL / TANK ---
     23: ("control", {   # Arbok
-        "standard": [40, 30],     # Poison Sting, Horn Attack
-        "chase":    [20, 35],     # Bind, Wrap
-        "special":  [34, 21],     # Body Slam, Slam
-        "support":  [77, 28],     # Poison Powder, Sand Attack
-        "passive":  [73],
+        "standard":  [40, 30],    # Poison Sting, Horn Attack
+        "chase":     [20, 35],    # Bind, Wrap
+        "mystery":   [34, 21],    # Body Slam, Slam
+        "passive_1": [77, 28],    # Poison Powder, Sand Attack
+        "passive_2": [73],
     }),
     24: ("tank", {      # Weezing
-        "standard": [40, 51],     # Poison Sting, Acid
-        "chase":    [20, 44],     # Bind, Bite
-        "special":  [34, 21],
-        "support":  [77, 50, 28], # Poison Powder, Disable, Sand Attack
-        "passive":  [73],
+        "standard":  [40, 51],    # Poison Sting, Acid
+        "chase":     [20, 44],    # Bind, Bite
+        "mystery":   [34, 21],
+        "passive_1": [77, 50, 28], # Poison Powder, Disable, Sand Attack
+        "passive_2": [73],
     }),
-    # --- Fighting — BRUISER ---
-    25: ("bruiser", {   # Machamp
-        "standard": [2, 1],       # Karate Chop, Pound
-        "chase":    [24, 27, 67], # Double Kick, Rolling Kick, Low Kick
-        "special":  [26, 66, 25], # Jump Kick, Submission, Mega Kick
-        "support":  [14, 45, 43],
-        "passive":  [68],
+    # --- Fighting — TANK ---
+    25: ("tank", {   # Machamp
+        "standard":  [2, 1],      # Karate Chop, Pound
+        "chase":     [24, 27, 67], # Double Kick, Rolling Kick, Low Kick
+        "mystery":   [26, 66, 25], # Jump Kick, Submission, Mega Kick
+        "passive_1": [14, 45, 43],
+        "passive_2": [68],
     }),
-    # --- Water/Psychic — ASSASSIN ---
-    26: ("assassin", {  # Starmie
-        "standard": [55, 15],
-        "chase":    [61, 60],     # Bubble Beam, Psybeam
-        "special":  [57, 56],
-        "support":  [28, 48],
-        "passive":  [73],
+    # --- Water/Psychic — COMBO ---
+    26: ("combo", {  # Starmie
+        "standard":  [55, 15],
+        "chase":     [61, 60],    # Bubble Beam, Psybeam
+        "mystery":   [57, 56],
+        "passive_1": [28, 48],
+        "passive_2": [73],
     }),
-    # --- Dragon — BRUISER ---
-    27: ("bruiser", {   # Dragonite
-        "standard": [17, 29],     # Wing Attack, Headbutt
-        "chase":    [9, 7],       # Thunder Punch, Fire Punch
-        "special":  [38, 19, 63], # Double-Edge, Fly, Hyper Beam
-        "support":  [14, 43],
-        "passive":  [71],
+    # --- Dragon — TANK ---
+    27: ("tank", {   # Dragonite
+        "standard":  [17, 29],    # Wing Attack, Headbutt
+        "chase":     [9, 7],      # Thunder Punch, Fire Punch
+        "mystery":   [38, 19, 63], # Double-Edge, Fly, Hyper Beam
+        "passive_1": [14, 43],
+        "passive_2": [71],
     }),
-    # --- Mewtwo/Mew — DPS / SUPPORT ---
-    28: ("dps", {       # Mewtwo
-        "standard": [33, 23],
-        "chase":    [60, 44],
-        "special":  [63, 36, 37], # Hyper Beam, Take Down, Thrash
-        "support":  [48, 50, 46],
-        "passive":  [73],
+    # --- Mewtwo/Mew — BURST / SUPPORT ---
+    28: ("burst", {       # Mewtwo
+        "standard":  [33, 23],
+        "chase":     [60, 44],
+        "mystery":   [63, 36, 37], # Hyper Beam, Take Down, Thrash
+        "passive_1": [48, 50, 46],
+        "passive_2": [73],
     }),
     29: ("support", {   # Mew
-        "standard": [1, 33],
-        "chase":    [60, 72],
-        "special":  [34, 76],
-        "support":  [47, 74, 79, 78],
-        "passive":  [73],
+        "standard":  [1, 33],
+        "chase":     [60, 72],
+        "mystery":   [34, 76],
+        "passive_1": [47, 74, 79, 78],
+        "passive_2": [73],
     }),
     # --- Dark — TANK ---
     30: ("tank", {      # Umbreon
-        "standard": [33, 44],     # Tackle, Bite
-        "chase":    [35, 49],     # Wrap, Sonic Boom
-        "special":  [34, 38],     # Body Slam, Double-Edge
-        "support":  [39, 46, 50], # Tail Whip, Roar, Disable
-        "passive":  [68],
+        "standard":  [33, 44],    # Tackle, Bite
+        "chase":     [35, 49],    # Wrap, Sonic Boom
+        "mystery":   [34, 38],    # Body Slam, Double-Edge
+        "passive_1": [39, 46, 50], # Tail Whip, Roar, Disable
+        "passive_2": [68],
     }),
 }
 
 # Fallback pools keyed by primary type name.
 TYPE_POOLS: dict[str, dict[str, list[int]]] = {
-    "Normal":   {"standard": [33, 1, 15],  "chase": [3, 31, 4],   "special": [5, 25, 34, 38],  "support": [39, 43, 45, 18], "passive": [68]},
-    "Fire":     {"standard": [52],          "chase": [7, 83],      "special": [53],              "support": [45, 14],          "passive": [71]},
-    "Water":    {"standard": [55, 23],      "chase": [61, 35],     "special": [57, 56],          "support": [54, 28, 39],      "passive": [68]},
-    "Electric": {"standard": [84, 15],      "chase": [9, 3],       "special": [34],              "support": [14, 43],          "passive": [81]},
-    "Grass":    {"standard": [22, 75],      "chase": [20, 72],     "special": [76, 80],          "support": [77, 78, 79, 74],  "passive": [73]},
-    "Ice":      {"standard": [16, 64],      "chase": [62, 8],      "special": [58, 59],          "support": [46, 47],          "passive": [68]},
-    "Fighting": {"standard": [2, 15],       "chase": [24, 27, 67], "special": [26, 66, 25],      "support": [43, 45, 14],      "passive": [68]},
-    "Poison":   {"standard": [40, 51],      "chase": [20, 35],     "special": [34, 21],          "support": [77, 28, 50],      "passive": [73]},
-    "Ground":   {"standard": [23, 29],      "chase": [20, 35],     "special": [34, 21, 70],      "support": [28, 43, 39],      "passive": [68]},
-    "Flying":   {"standard": [16, 64],      "chase": [17, 31],     "special": [19, 65, 25],      "support": [18, 43, 45],      "passive": [81]},
-    "Psychic":  {"standard": [33, 1],       "chase": [60, 49],     "special": [36, 63],          "support": [47, 48, 50],      "passive": [73]},
-    "Bug":      {"standard": [64, 33],      "chase": [41, 42, 20], "special": [34, 21],          "support": [81, 28, 45],      "passive": [73]},
-    "Rock":     {"standard": [29, 23],      "chase": [31, 20],     "special": [34, 36, 70],      "support": [28, 43],          "passive": [68]},
-    "Ghost":    {"standard": [33, 44],      "chase": [49, 44],     "special": [37, 12],          "support": [47, 48, 50],      "passive": [73]},
-    "Dragon":   {"standard": [29, 17],      "chase": [9, 7],       "special": [38, 63],          "support": [14, 43],          "passive": [71]},
-    "Dark":     {"standard": [33, 44],      "chase": [35, 49],     "special": [34, 38],          "support": [39, 46, 50],      "passive": [68]},
-    "Steel":    {"standard": [23, 29],      "chase": [20, 9],      "special": [34, 70],          "support": [43, 28],          "passive": [68]},
-    "Fairy":    {"standard": [1, 33],       "chase": [3, 60],      "special": [34, 21],          "support": [47, 45, 74],      "passive": [73]},
+    "Normal":   {"standard": [33, 1, 15],  "chase": [3, 31, 4],   "mystery": [5, 25, 34, 38],  "passive_1": [39, 43, 45, 18], "passive_2": [68]},
+    "Fire":     {"standard": [52],          "chase": [7, 83],      "mystery": [53],              "passive_1": [45, 14],          "passive_2": [71]},
+    "Water":    {"standard": [55, 23],      "chase": [61, 35],     "mystery": [57, 56],          "passive_1": [54, 28, 39],      "passive_2": [68]},
+    "Electric": {"standard": [84, 15],      "chase": [9, 3],       "mystery": [34],              "passive_1": [14, 43],          "passive_2": [81]},
+    "Grass":    {"standard": [22, 75],      "chase": [20, 72],     "mystery": [76, 80],          "passive_1": [77, 78, 79, 74],  "passive_2": [73]},
+    "Ice":      {"standard": [16, 64],      "chase": [62, 8],      "mystery": [58, 59],          "passive_1": [46, 47],          "passive_2": [68]},
+    "Fighting": {"standard": [2, 15],       "chase": [24, 27, 67], "mystery": [26, 66, 25],      "passive_1": [43, 45, 14],      "passive_2": [68]},
+    "Poison":   {"standard": [40, 51],      "chase": [20, 35],     "mystery": [34, 21],          "passive_1": [77, 28, 50],      "passive_2": [73]},
+    "Ground":   {"standard": [23, 29],      "chase": [20, 35],     "mystery": [34, 21, 70],      "passive_1": [28, 43, 39],      "passive_2": [68]},
+    "Flying":   {"standard": [16, 64],      "chase": [17, 31],     "mystery": [19, 65, 25],      "passive_1": [18, 43, 45],      "passive_2": [81]},
+    "Psychic":  {"standard": [33, 1],       "chase": [60, 49],     "mystery": [36, 63],          "passive_1": [47, 48, 50],      "passive_2": [73]},
+    "Bug":      {"standard": [64, 33],      "chase": [41, 42, 20], "mystery": [34, 21],          "passive_1": [81, 28, 45],      "passive_2": [73]},
+    "Rock":     {"standard": [29, 23],      "chase": [31, 20],     "mystery": [34, 36, 70],      "passive_1": [28, 43],          "passive_2": [68]},
+    "Ghost":    {"standard": [33, 44],      "chase": [49, 44],     "mystery": [37, 12],          "passive_1": [47, 48, 50],      "passive_2": [73]},
+    "Dragon":   {"standard": [29, 17],      "chase": [9, 7],       "mystery": [38, 63],          "passive_1": [14, 43],          "passive_2": [71]},
+    "Dark":     {"standard": [33, 44],      "chase": [35, 49],     "mystery": [34, 38],          "passive_1": [39, 46, 50],      "passive_2": [68]},
+    "Steel":    {"standard": [23, 29],      "chase": [20, 9],      "mystery": [34, 70],          "passive_1": [43, 28],          "passive_2": [68]},
+    "Fairy":    {"standard": [1, 33],       "chase": [3, 60],      "mystery": [34, 21],          "passive_1": [47, 45, 74],      "passive_2": [73]},
 }
 
 
@@ -295,19 +295,19 @@ TYPE_POOLS: dict[str, dict[str, list[int]]] = {
 def infer_slot_type(move: Any) -> str:
     """Determine the appropriate MoveSlotType value for a move using heuristics."""
     if move.is_charge_move:
-        return "special"
+        return "mystery"
     if move.power == 0 and move.accuracy <= 30:
-        return "special"  # OHKO moves
+        return "mystery"  # OHKO moves
     if move.power == 0 and move.pk in PASSIVE_MOVE_PKS:
-        return "passive"
+        return "passive_2"
     if move.power > 0 and move.pk in PASSIVE_MOVE_PKS:
-        return "passive"
+        return "passive_2"
     if move.power == 0:
-        return "support"
+        return "passive_1"
     if move.always_first or move.priority > 0:
         return "chase"
     if move.power >= 80:
-        return "special"
+        return "mystery"
     if move.power <= 25:
         return "chase"
     if move.power >= 60:
@@ -317,21 +317,21 @@ def infer_slot_type(move: Any) -> str:
 
 def determine_role(species: Any) -> str:
     """Assign a TacticalRole value based on base stats."""
-    speed = species.base_speed
+    speed = species.base_initiative
     atk = species.base_attack
-    spa = species.base_sp_attack
+    spa = species.base_ninjutsu
     total_def = species.base_hp + species.base_defense + species.base_sp_defense
     total_off = atk + spa
 
     if speed >= 110 and total_off >= 150:
-        return "assassin"
+        return "combo"
     if total_off >= 220:
-        return "bruiser" if atk >= spa else "dps"
+        return "tank" if atk >= spa else "burst"
     if total_def >= 260 and total_off < 200:
         return "tank"
     if total_off < 170:
         return "support" if species.base_hp >= 90 else "control"
-    return "dps"
+    return "burst"
 
 
 # ---------------------------------------------------------------------------

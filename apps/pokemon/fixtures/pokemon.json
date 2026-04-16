@@ -1,155 +1,2932 @@
 [
-  {"model": "pokemon.pokemon", "pk": 1,  "fields": {"name": "Bulbasaur",   "pokedex_number": 1,   "primary_type": 5,  "secondary_type": 8,  "base_hp": 45,  "base_attack": 49,  "base_defense": 49,  "base_sp_attack": 65,  "base_sp_defense": 65,  "base_speed": 45,  "sprite_url": "", "moves": [1, 18, 20, 21]}},
-  {"model": "pokemon.pokemon", "pk": 2,  "fields": {"name": "Ivysaur",     "pokedex_number": 2,   "primary_type": 5,  "secondary_type": 8,  "base_hp": 60,  "base_attack": 62,  "base_defense": 63,  "base_sp_attack": 80,  "base_sp_defense": 80,  "base_speed": 60,  "sprite_url": "", "moves": [18, 20, 21, 22]}},
-  {"model": "pokemon.pokemon", "pk": 3,  "fields": {"name": "Venusaur",    "pokedex_number": 3,   "primary_type": 5,  "secondary_type": 8,  "base_hp": 80,  "base_attack": 82,  "base_defense": 83,  "base_sp_attack": 100, "base_sp_defense": 100, "base_speed": 80,  "sprite_url": "", "moves": [18, 19, 20, 21, 22, 28]}},
-  {"model": "pokemon.pokemon", "pk": 4,  "fields": {"name": "Charmander",  "pokedex_number": 4,   "primary_type": 2,  "secondary_type": null,"base_hp": 39,  "base_attack": 52,  "base_defense": 43,  "base_sp_attack": 60,  "base_sp_defense": 50,  "base_speed": 65,  "sprite_url": "", "moves": [2, 6, 4, 5]}},
-  {"model": "pokemon.pokemon", "pk": 5,  "fields": {"name": "Charmeleon",  "pokedex_number": 5,   "primary_type": 2,  "secondary_type": null,"base_hp": 58,  "base_attack": 64,  "base_defense": 58,  "base_sp_attack": 80,  "base_sp_defense": 65,  "base_speed": 80,  "sprite_url": "", "moves": [6, 4, 5, 41]}},
-  {"model": "pokemon.pokemon", "pk": 6,  "fields": {"name": "Charizard",   "pokedex_number": 6,   "primary_type": 2,  "secondary_type": 10, "base_hp": 78,  "base_attack": 84,  "base_defense": 78,  "base_sp_attack": 109, "base_sp_defense": 85,  "base_speed": 100, "sprite_url": "", "moves": [4, 7, 8, 5, 41, 53]}},
-  {"model": "pokemon.pokemon", "pk": 7,  "fields": {"name": "Squirtle",    "pokedex_number": 7,   "primary_type": 3,  "secondary_type": null,"base_hp": 44,  "base_attack": 48,  "base_defense": 65,  "base_sp_attack": 50,  "base_sp_defense": 64,  "base_speed": 43,  "sprite_url": "", "moves": [1, 9, 10, 12]}},
-  {"model": "pokemon.pokemon", "pk": 8,  "fields": {"name": "Wartortle",   "pokedex_number": 8,   "primary_type": 3,  "secondary_type": null,"base_hp": 59,  "base_attack": 63,  "base_defense": 80,  "base_sp_attack": 65,  "base_sp_defense": 80,  "base_speed": 58,  "sprite_url": "", "moves": [9, 10, 12, 11]}},
-  {"model": "pokemon.pokemon", "pk": 9,  "fields": {"name": "Blastoise",   "pokedex_number": 9,   "primary_type": 3,  "secondary_type": null,"base_hp": 79,  "base_attack": 83,  "base_defense": 100, "base_sp_attack": 85,  "base_sp_defense": 105, "base_speed": 78,  "sprite_url": "", "moves": [9, 11, 12, 10, 23]}},
-  {"model": "pokemon.pokemon", "pk": 10, "fields": {"name": "Pikachu",     "pokedex_number": 25,  "primary_type": 4,  "secondary_type": null,"base_hp": 35,  "base_attack": 55,  "base_defense": 40,  "base_sp_attack": 50,  "base_sp_defense": 50,  "base_speed": 90,  "sprite_url": "", "moves": [3, 13, 14, 15]}},
-  {"model": "pokemon.pokemon", "pk": 11, "fields": {"name": "Raichu",      "pokedex_number": 26,  "primary_type": 4,  "secondary_type": null,"base_hp": 60,  "base_attack": 90,  "base_defense": 55,  "base_sp_attack": 90,  "base_sp_defense": 80,  "base_speed": 110, "sprite_url": "", "moves": [13, 15, 16, 14, 17, 57, 58]}},
-  {"model": "pokemon.pokemon", "pk": 12, "fields": {"name": "Gengar",      "pokedex_number": 94,  "primary_type": 14, "secondary_type": 8,  "base_hp": 60,  "base_attack": 65,  "base_defense": 60,  "base_sp_attack": 130, "base_sp_defense": 75,  "base_speed": 110, "sprite_url": "", "moves": [32, 33, 34, 37, 35, 59]}},
-  {"model": "pokemon.pokemon", "pk": 13, "fields": {"name": "Haunter",     "pokedex_number": 93,  "primary_type": 14, "secondary_type": 8,  "base_hp": 45,  "base_attack": 50,  "base_defense": 45,  "base_sp_attack": 115, "base_sp_defense": 55,  "base_speed": 95,  "sprite_url": "", "moves": [32, 33, 35, 37]}},
-  {"model": "pokemon.pokemon", "pk": 14, "fields": {"name": "Jolteon",     "pokedex_number": 135, "primary_type": 4,  "secondary_type": null,"base_hp": 65,  "base_attack": 65,  "base_defense": 60,  "base_sp_attack": 110, "base_sp_defense": 95,  "base_speed": 130, "sprite_url": "", "moves": [13, 14, 16, 17, 57]}},
-  {"model": "pokemon.pokemon", "pk": 15, "fields": {"name": "Flareon",     "pokedex_number": 136, "primary_type": 2,  "secondary_type": null,"base_hp": 65,  "base_attack": 130, "base_defense": 60,  "base_sp_attack": 95,  "base_sp_defense": 110, "base_speed": 65,  "sprite_url": "", "moves": [4, 7, 8, 6, 41, 52]}},
-  {"model": "pokemon.pokemon", "pk": 16, "fields": {"name": "Vaporeon",    "pokedex_number": 134, "primary_type": 3,  "secondary_type": null,"base_hp": 130, "base_attack": 65,  "base_defense": 60,  "base_sp_attack": 110, "base_sp_defense": 95,  "base_speed": 65,  "sprite_url": "", "moves": [9, 11, 12, 10]}},
-  {"model": "pokemon.pokemon", "pk": 17, "fields": {"name": "Lapras",      "pokedex_number": 131, "primary_type": 3,  "secondary_type": 6,  "base_hp": 130, "base_attack": 85,  "base_defense": 80,  "base_sp_attack": 85,  "base_sp_defense": 95,  "base_speed": 60,  "sprite_url": "", "moves": [23, 24, 9, 26, 27]}},
-  {"model": "pokemon.pokemon", "pk": 18, "fields": {"name": "Articuno",    "pokedex_number": 144, "primary_type": 6,  "secondary_type": 10, "base_hp": 90,  "base_attack": 85,  "base_defense": 100, "base_sp_attack": 95,  "base_sp_defense": 125, "base_speed": 85,  "sprite_url": "", "moves": [23, 24, 25, 26, 27, 56]}},
-  {"model": "pokemon.pokemon", "pk": 19, "fields": {"name": "Zapdos",      "pokedex_number": 145, "primary_type": 4,  "secondary_type": 10, "base_hp": 90,  "base_attack": 90,  "base_defense": 85,  "base_sp_attack": 125, "base_sp_defense": 90,  "base_speed": 100, "sprite_url": "", "moves": [13, 14, 15, 16, 38, 57, 58]}},
-  {"model": "pokemon.pokemon", "pk": 20, "fields": {"name": "Moltres",     "pokedex_number": 146, "primary_type": 2,  "secondary_type": 10, "base_hp": 90,  "base_attack": 100, "base_defense": 90,  "base_sp_attack": 125, "base_sp_defense": 85,  "base_speed": 90,  "sprite_url": "", "moves": [4, 7, 8, 41, 53]}},
-  {"model": "pokemon.pokemon", "pk": 21, "fields": {"name": "Alakazam",    "pokedex_number": 65,  "primary_type": 11, "secondary_type": null,"base_hp": 55,  "base_attack": 50,  "base_defense": 45,  "base_sp_attack": 135, "base_sp_defense": 95,  "base_speed": 120, "sprite_url": "", "moves": [36, 37, 43, 48, 51, 55]}},
-  {"model": "pokemon.pokemon", "pk": 22, "fields": {"name": "Hypno",       "pokedex_number": 97,  "primary_type": 11, "secondary_type": null,"base_hp": 85,  "base_attack": 73,  "base_defense": 70,  "base_sp_attack": 73,  "base_sp_defense": 115, "base_speed": 67,  "sprite_url": "", "moves": [22, 36, 37, 43, 48]}},
-  {"model": "pokemon.pokemon", "pk": 23, "fields": {"name": "Arbok",       "pokedex_number": 24,  "primary_type": 8,  "secondary_type": null,"base_hp": 60,  "base_attack": 85,  "base_defense": 69,  "base_sp_attack": 65,  "base_sp_defense": 79,  "base_speed": 80,  "sprite_url": "", "moves": [28, 29, 30, 31, 54]}},
-  {"model": "pokemon.pokemon", "pk": 24, "fields": {"name": "Weezing",     "pokedex_number": 110, "primary_type": 8,  "secondary_type": null,"base_hp": 65,  "base_attack": 90,  "base_defense": 120, "base_sp_attack": 85,  "base_sp_defense": 70,  "base_speed": 60,  "sprite_url": "", "moves": [28, 29, 30, 31, 50, 54]}},
-  {"model": "pokemon.pokemon", "pk": 25, "fields": {"name": "Machamp",     "pokedex_number": 68,  "primary_type": 7,  "secondary_type": null,"base_hp": 90,  "base_attack": 130, "base_defense": 80,  "base_sp_attack": 65,  "base_sp_defense": 85,  "base_speed": 55,  "sprite_url": "", "moves": [1, 2, 42, 44, 45, 53]}},
-  {"model": "pokemon.pokemon", "pk": 26, "fields": {"name": "Starmie",     "pokedex_number": 121, "primary_type": 3,  "secondary_type": 11, "base_hp": 60,  "base_attack": 75,  "base_defense": 85,  "base_sp_attack": 100, "base_sp_defense": 85,  "base_speed": 115, "sprite_url": "", "moves": [9, 11, 23, 36, 43]}},
-  {"model": "pokemon.pokemon", "pk": 27, "fields": {"name": "Dragonite",   "pokedex_number": 149, "primary_type": 15, "secondary_type": 10, "base_hp": 91,  "base_attack": 134, "base_defense": 95,  "base_sp_attack": 100, "base_sp_defense": 100, "base_speed": 80,  "sprite_url": "", "moves": [38, 13, 4, 23, 47, 52]}},
-  {"model": "pokemon.pokemon", "pk": 28, "fields": {"name": "Mewtwo",      "pokedex_number": 150, "primary_type": 11, "secondary_type": null,"base_hp": 106, "base_attack": 110, "base_defense": 90,  "base_sp_attack": 154, "base_sp_defense": 90,  "base_speed": 130, "sprite_url": "", "moves": [36, 37, 43, 46, 48, 51, 55, 60]}},
-  {"model": "pokemon.pokemon", "pk": 29, "fields": {"name": "Mew",         "pokedex_number": 151, "primary_type": 11, "secondary_type": null,"base_hp": 100, "base_attack": 100, "base_defense": 100, "base_sp_attack": 100, "base_sp_defense": 100, "base_speed": 100, "sprite_url": "", "moves": [4, 9, 13, 18, 22, 28, 33, 37, 43, 47]}},
-  {"model": "pokemon.pokemon", "pk": 30, "fields": {"name": "Umbreon",     "pokedex_number": 197, "primary_type": 16, "secondary_type": null,"base_hp": 95,  "base_attack": 65,  "base_defense": 110, "base_sp_attack": 60,  "base_sp_defense": 130, "base_speed": 65,  "sprite_url": "", "moves": [33, 39, 40, 47, 49, 52, 60]}},
-
-  {"model": "pokemon.pokemon", "pk": 31, "fields": {"name": "Caterpie",    "pokedex_number": 10,  "primary_type": 12, "secondary_type": null,"base_hp": 45,  "base_attack": 30,  "base_defense": 35,  "base_sp_attack": 20,  "base_sp_defense": 20,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 32, "fields": {"name": "Metapod",     "pokedex_number": 11,  "primary_type": 12, "secondary_type": null,"base_hp": 50,  "base_attack": 20,  "base_defense": 55,  "base_sp_attack": 25,  "base_sp_defense": 25,  "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 33, "fields": {"name": "Butterfree",  "pokedex_number": 12,  "primary_type": 12, "secondary_type": 10, "base_hp": 60,  "base_attack": 45,  "base_defense": 50,  "base_sp_attack": 90,  "base_sp_defense": 80,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 34, "fields": {"name": "Weedle",      "pokedex_number": 13,  "primary_type": 12, "secondary_type": 8,  "base_hp": 40,  "base_attack": 35,  "base_defense": 30,  "base_sp_attack": 20,  "base_sp_defense": 20,  "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 35, "fields": {"name": "Kakuna",      "pokedex_number": 14,  "primary_type": 12, "secondary_type": 8,  "base_hp": 45,  "base_attack": 25,  "base_defense": 50,  "base_sp_attack": 25,  "base_sp_defense": 25,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 36, "fields": {"name": "Beedrill",    "pokedex_number": 15,  "primary_type": 12, "secondary_type": 8,  "base_hp": 65,  "base_attack": 90,  "base_defense": 40,  "base_sp_attack": 45,  "base_sp_defense": 80,  "base_speed": 75,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 37, "fields": {"name": "Pidgey",      "pokedex_number": 16,  "primary_type": 1,  "secondary_type": 10, "base_hp": 40,  "base_attack": 45,  "base_defense": 40,  "base_sp_attack": 35,  "base_sp_defense": 35,  "base_speed": 56,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 38, "fields": {"name": "Pidgeotto",   "pokedex_number": 17,  "primary_type": 1,  "secondary_type": 10, "base_hp": 63,  "base_attack": 60,  "base_defense": 55,  "base_sp_attack": 50,  "base_sp_defense": 50,  "base_speed": 71,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 39, "fields": {"name": "Pidgeot",     "pokedex_number": 18,  "primary_type": 1,  "secondary_type": 10, "base_hp": 83,  "base_attack": 80,  "base_defense": 75,  "base_sp_attack": 70,  "base_sp_defense": 70,  "base_speed": 101, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 40, "fields": {"name": "Rattata",     "pokedex_number": 19,  "primary_type": 1,  "secondary_type": null,"base_hp": 30,  "base_attack": 56,  "base_defense": 35,  "base_sp_attack": 25,  "base_sp_defense": 35,  "base_speed": 72,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 41, "fields": {"name": "Raticate",    "pokedex_number": 20,  "primary_type": 1,  "secondary_type": null,"base_hp": 55,  "base_attack": 81,  "base_defense": 60,  "base_sp_attack": 50,  "base_sp_defense": 70,  "base_speed": 97,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 42, "fields": {"name": "Spearow",     "pokedex_number": 21,  "primary_type": 1,  "secondary_type": 10, "base_hp": 40,  "base_attack": 60,  "base_defense": 30,  "base_sp_attack": 31,  "base_sp_defense": 31,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 43, "fields": {"name": "Fearow",      "pokedex_number": 22,  "primary_type": 1,  "secondary_type": 10, "base_hp": 65,  "base_attack": 90,  "base_defense": 65,  "base_sp_attack": 61,  "base_sp_defense": 61,  "base_speed": 100, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 44, "fields": {"name": "Ekans",       "pokedex_number": 23,  "primary_type": 8,  "secondary_type": null,"base_hp": 35,  "base_attack": 60,  "base_defense": 44,  "base_sp_attack": 40,  "base_sp_defense": 54,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 45, "fields": {"name": "Sandshrew",   "pokedex_number": 27,  "primary_type": 9,  "secondary_type": null,"base_hp": 50,  "base_attack": 75,  "base_defense": 85,  "base_sp_attack": 20,  "base_sp_defense": 30,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 46, "fields": {"name": "Sandslash",   "pokedex_number": 28,  "primary_type": 9,  "secondary_type": null,"base_hp": 75,  "base_attack": 100, "base_defense": 110, "base_sp_attack": 45,  "base_sp_defense": 55,  "base_speed": 65,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 47, "fields": {"name": "Nidoran-F",   "pokedex_number": 29,  "primary_type": 8,  "secondary_type": null,"base_hp": 55,  "base_attack": 47,  "base_defense": 52,  "base_sp_attack": 40,  "base_sp_defense": 40,  "base_speed": 41,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 48, "fields": {"name": "Nidorina",    "pokedex_number": 30,  "primary_type": 8,  "secondary_type": null,"base_hp": 70,  "base_attack": 62,  "base_defense": 67,  "base_sp_attack": 55,  "base_sp_defense": 55,  "base_speed": 56,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 49, "fields": {"name": "Nidoqueen",   "pokedex_number": 31,  "primary_type": 8,  "secondary_type": 9,  "base_hp": 90,  "base_attack": 92,  "base_defense": 87,  "base_sp_attack": 75,  "base_sp_defense": 85,  "base_speed": 76,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 50, "fields": {"name": "Nidoran-M",   "pokedex_number": 32,  "primary_type": 8,  "secondary_type": null,"base_hp": 46,  "base_attack": 57,  "base_defense": 40,  "base_sp_attack": 40,  "base_sp_defense": 40,  "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 51, "fields": {"name": "Nidorino",    "pokedex_number": 33,  "primary_type": 8,  "secondary_type": null,"base_hp": 61,  "base_attack": 72,  "base_defense": 57,  "base_sp_attack": 55,  "base_sp_defense": 55,  "base_speed": 65,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 52, "fields": {"name": "Nidoking",    "pokedex_number": 34,  "primary_type": 8,  "secondary_type": 9,  "base_hp": 81,  "base_attack": 102, "base_defense": 77,  "base_sp_attack": 85,  "base_sp_defense": 75,  "base_speed": 85,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 53, "fields": {"name": "Clefairy",    "pokedex_number": 35,  "primary_type": 18, "secondary_type": null,"base_hp": 70,  "base_attack": 45,  "base_defense": 48,  "base_sp_attack": 60,  "base_sp_defense": 65,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 54, "fields": {"name": "Clefable",    "pokedex_number": 36,  "primary_type": 18, "secondary_type": null,"base_hp": 95,  "base_attack": 70,  "base_defense": 73,  "base_sp_attack": 95,  "base_sp_defense": 90,  "base_speed": 60,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 55, "fields": {"name": "Vulpix",      "pokedex_number": 37,  "primary_type": 2,  "secondary_type": null,"base_hp": 38,  "base_attack": 41,  "base_defense": 40,  "base_sp_attack": 50,  "base_sp_defense": 65,  "base_speed": 65,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 56, "fields": {"name": "Ninetales",   "pokedex_number": 38,  "primary_type": 2,  "secondary_type": null,"base_hp": 73,  "base_attack": 76,  "base_defense": 75,  "base_sp_attack": 81,  "base_sp_defense": 100, "base_speed": 100, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 57, "fields": {"name": "Jigglypuff",  "pokedex_number": 39,  "primary_type": 1,  "secondary_type": 18, "base_hp": 115, "base_attack": 45,  "base_defense": 20,  "base_sp_attack": 45,  "base_sp_defense": 25,  "base_speed": 20,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 58, "fields": {"name": "Wigglytuff",  "pokedex_number": 40,  "primary_type": 1,  "secondary_type": 18, "base_hp": 140, "base_attack": 70,  "base_defense": 45,  "base_sp_attack": 85,  "base_sp_defense": 50,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 59, "fields": {"name": "Zubat",       "pokedex_number": 41,  "primary_type": 8,  "secondary_type": 10, "base_hp": 40,  "base_attack": 45,  "base_defense": 35,  "base_sp_attack": 30,  "base_sp_defense": 40,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 60, "fields": {"name": "Golbat",      "pokedex_number": 42,  "primary_type": 8,  "secondary_type": 10, "base_hp": 75,  "base_attack": 80,  "base_defense": 70,  "base_sp_attack": 65,  "base_sp_defense": 75,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 61, "fields": {"name": "Oddish",      "pokedex_number": 43,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 45,  "base_attack": 50,  "base_defense": 55,  "base_sp_attack": 75,  "base_sp_defense": 65,  "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 62, "fields": {"name": "Gloom",       "pokedex_number": 44,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 60,  "base_attack": 65,  "base_defense": 70,  "base_sp_attack": 85,  "base_sp_defense": 75,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 63, "fields": {"name": "Vileplume",   "pokedex_number": 45,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 75,  "base_attack": 80,  "base_defense": 85,  "base_sp_attack": 110, "base_sp_defense": 90,  "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 64, "fields": {"name": "Paras",       "pokedex_number": 46,  "primary_type": 12, "secondary_type": 5,  "base_hp": 35,  "base_attack": 70,  "base_defense": 55,  "base_sp_attack": 45,  "base_sp_defense": 55,  "base_speed": 25,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 65, "fields": {"name": "Parasect",    "pokedex_number": 47,  "primary_type": 12, "secondary_type": 5,  "base_hp": 60,  "base_attack": 95,  "base_defense": 80,  "base_sp_attack": 60,  "base_sp_defense": 80,  "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 66, "fields": {"name": "Venonat",     "pokedex_number": 48,  "primary_type": 12, "secondary_type": 8,  "base_hp": 60,  "base_attack": 55,  "base_defense": 50,  "base_sp_attack": 40,  "base_sp_defense": 55,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 67, "fields": {"name": "Venomoth",    "pokedex_number": 49,  "primary_type": 12, "secondary_type": 8,  "base_hp": 70,  "base_attack": 65,  "base_defense": 60,  "base_sp_attack": 90,  "base_sp_defense": 75,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 68, "fields": {"name": "Diglett",     "pokedex_number": 50,  "primary_type": 9,  "secondary_type": null,"base_hp": 10,  "base_attack": 55,  "base_defense": 25,  "base_sp_attack": 35,  "base_sp_defense": 45,  "base_speed": 95,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 69, "fields": {"name": "Dugtrio",     "pokedex_number": 51,  "primary_type": 9,  "secondary_type": null,"base_hp": 35,  "base_attack": 80,  "base_defense": 50,  "base_sp_attack": 50,  "base_sp_defense": 70,  "base_speed": 120, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 70, "fields": {"name": "Meowth",      "pokedex_number": 52,  "primary_type": 1,  "secondary_type": null,"base_hp": 40,  "base_attack": 45,  "base_defense": 35,  "base_sp_attack": 40,  "base_sp_defense": 40,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 71, "fields": {"name": "Persian",     "pokedex_number": 53,  "primary_type": 1,  "secondary_type": null,"base_hp": 65,  "base_attack": 70,  "base_defense": 60,  "base_sp_attack": 65,  "base_sp_defense": 65,  "base_speed": 115, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 72, "fields": {"name": "Psyduck",     "pokedex_number": 54,  "primary_type": 3,  "secondary_type": null,"base_hp": 50,  "base_attack": 52,  "base_defense": 48,  "base_sp_attack": 65,  "base_sp_defense": 50,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 73, "fields": {"name": "Golduck",     "pokedex_number": 55,  "primary_type": 3,  "secondary_type": null,"base_hp": 80,  "base_attack": 82,  "base_defense": 78,  "base_sp_attack": 95,  "base_sp_defense": 80,  "base_speed": 85,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 74, "fields": {"name": "Mankey",      "pokedex_number": 56,  "primary_type": 7,  "secondary_type": null,"base_hp": 40,  "base_attack": 80,  "base_defense": 35,  "base_sp_attack": 35,  "base_sp_defense": 45,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 75, "fields": {"name": "Primeape",    "pokedex_number": 57,  "primary_type": 7,  "secondary_type": null,"base_hp": 65,  "base_attack": 105, "base_defense": 60,  "base_sp_attack": 60,  "base_sp_defense": 70,  "base_speed": 95,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 76, "fields": {"name": "Growlithe",   "pokedex_number": 58,  "primary_type": 2,  "secondary_type": null,"base_hp": 55,  "base_attack": 70,  "base_defense": 45,  "base_sp_attack": 70,  "base_sp_defense": 50,  "base_speed": 60,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 77, "fields": {"name": "Arcanine",    "pokedex_number": 59,  "primary_type": 2,  "secondary_type": null,"base_hp": 90,  "base_attack": 110, "base_defense": 80,  "base_sp_attack": 100, "base_sp_defense": 80,  "base_speed": 95,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 78, "fields": {"name": "Poliwag",     "pokedex_number": 60,  "primary_type": 3,  "secondary_type": null,"base_hp": 40,  "base_attack": 50,  "base_defense": 40,  "base_sp_attack": 40,  "base_sp_defense": 40,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 79, "fields": {"name": "Poliwhirl",   "pokedex_number": 61,  "primary_type": 3,  "secondary_type": null,"base_hp": 65,  "base_attack": 65,  "base_defense": 65,  "base_sp_attack": 50,  "base_sp_defense": 50,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 80, "fields": {"name": "Poliwrath",   "pokedex_number": 62,  "primary_type": 3,  "secondary_type": 7,  "base_hp": 90,  "base_attack": 95,  "base_defense": 95,  "base_sp_attack": 70,  "base_sp_defense": 90,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 81, "fields": {"name": "Abra",        "pokedex_number": 63,  "primary_type": 11, "secondary_type": null,"base_hp": 25,  "base_attack": 20,  "base_defense": 15,  "base_sp_attack": 105, "base_sp_defense": 55,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 82, "fields": {"name": "Kadabra",     "pokedex_number": 64,  "primary_type": 11, "secondary_type": null,"base_hp": 40,  "base_attack": 35,  "base_defense": 30,  "base_sp_attack": 120, "base_sp_defense": 70,  "base_speed": 105, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 83, "fields": {"name": "Machop",      "pokedex_number": 66,  "primary_type": 7,  "secondary_type": null,"base_hp": 70,  "base_attack": 80,  "base_defense": 50,  "base_sp_attack": 35,  "base_sp_defense": 35,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 84, "fields": {"name": "Machoke",     "pokedex_number": 67,  "primary_type": 7,  "secondary_type": null,"base_hp": 80,  "base_attack": 100, "base_defense": 70,  "base_sp_attack": 50,  "base_sp_defense": 60,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 85, "fields": {"name": "Bellsprout",  "pokedex_number": 69,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 50,  "base_attack": 75,  "base_defense": 35,  "base_sp_attack": 70,  "base_sp_defense": 30,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 86, "fields": {"name": "Weepinbell",  "pokedex_number": 70,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 65,  "base_attack": 90,  "base_defense": 50,  "base_sp_attack": 85,  "base_sp_defense": 45,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 87, "fields": {"name": "Victreebel",  "pokedex_number": 71,  "primary_type": 5,  "secondary_type": 8,  "base_hp": 80,  "base_attack": 105, "base_defense": 65,  "base_sp_attack": 100, "base_sp_defense": 60,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 88, "fields": {"name": "Tentacool",   "pokedex_number": 72,  "primary_type": 3,  "secondary_type": 8,  "base_hp": 40,  "base_attack": 40,  "base_defense": 35,  "base_sp_attack": 50,  "base_sp_defense": 100, "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 89, "fields": {"name": "Tentacruel",  "pokedex_number": 73,  "primary_type": 3,  "secondary_type": 8,  "base_hp": 80,  "base_attack": 70,  "base_defense": 65,  "base_sp_attack": 80,  "base_sp_defense": 120, "base_speed": 100, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 90, "fields": {"name": "Geodude",     "pokedex_number": 74,  "primary_type": 13, "secondary_type": 9,  "base_hp": 40,  "base_attack": 80,  "base_defense": 100, "base_sp_attack": 30,  "base_sp_defense": 30,  "base_speed": 20,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 91, "fields": {"name": "Graveler",    "pokedex_number": 75,  "primary_type": 13, "secondary_type": 9,  "base_hp": 55,  "base_attack": 95,  "base_defense": 115, "base_sp_attack": 45,  "base_sp_defense": 45,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 92, "fields": {"name": "Golem",       "pokedex_number": 76,  "primary_type": 13, "secondary_type": 9,  "base_hp": 80,  "base_attack": 120, "base_defense": 130, "base_sp_attack": 55,  "base_sp_defense": 65,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 93, "fields": {"name": "Ponyta",      "pokedex_number": 77,  "primary_type": 2,  "secondary_type": null,"base_hp": 50,  "base_attack": 85,  "base_defense": 55,  "base_sp_attack": 65,  "base_sp_defense": 65,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 94, "fields": {"name": "Rapidash",    "pokedex_number": 78,  "primary_type": 2,  "secondary_type": null,"base_hp": 65,  "base_attack": 100, "base_defense": 70,  "base_sp_attack": 80,  "base_sp_defense": 80,  "base_speed": 105, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 95, "fields": {"name": "Slowpoke",    "pokedex_number": 79,  "primary_type": 3,  "secondary_type": 11, "base_hp": 90,  "base_attack": 65,  "base_defense": 65,  "base_sp_attack": 40,  "base_sp_defense": 40,  "base_speed": 15,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 96, "fields": {"name": "Slowbro",     "pokedex_number": 80,  "primary_type": 3,  "secondary_type": 11, "base_hp": 95,  "base_attack": 75,  "base_defense": 110, "base_sp_attack": 100, "base_sp_defense": 80,  "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 97, "fields": {"name": "Magnemite",   "pokedex_number": 81,  "primary_type": 4,  "secondary_type": 17, "base_hp": 25,  "base_attack": 35,  "base_defense": 70,  "base_sp_attack": 95,  "base_sp_defense": 55,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 98, "fields": {"name": "Magneton",    "pokedex_number": 82,  "primary_type": 4,  "secondary_type": 17, "base_hp": 50,  "base_attack": 60,  "base_defense": 95,  "base_sp_attack": 120, "base_sp_defense": 70,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 99, "fields": {"name": "Farfetch'd",  "pokedex_number": 83,  "primary_type": 1,  "secondary_type": 10, "base_hp": 52,  "base_attack": 90,  "base_defense": 55,  "base_sp_attack": 58,  "base_sp_defense": 62,  "base_speed": 60,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 100,"fields": {"name": "Doduo",       "pokedex_number": 84,  "primary_type": 1,  "secondary_type": 10, "base_hp": 35,  "base_attack": 85,  "base_defense": 45,  "base_sp_attack": 35,  "base_sp_defense": 35,  "base_speed": 75,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 101,"fields": {"name": "Dodrio",      "pokedex_number": 85,  "primary_type": 1,  "secondary_type": 10, "base_hp": 60,  "base_attack": 110, "base_defense": 70,  "base_sp_attack": 60,  "base_sp_defense": 60,  "base_speed": 110, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 102,"fields": {"name": "Seel",        "pokedex_number": 86,  "primary_type": 3,  "secondary_type": null,"base_hp": 65,  "base_attack": 45,  "base_defense": 55,  "base_sp_attack": 45,  "base_sp_defense": 70,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 103,"fields": {"name": "Dewgong",     "pokedex_number": 87,  "primary_type": 3,  "secondary_type": 6,  "base_hp": 90,  "base_attack": 70,  "base_defense": 80,  "base_sp_attack": 70,  "base_sp_defense": 95,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 104,"fields": {"name": "Grimer",      "pokedex_number": 88,  "primary_type": 8,  "secondary_type": null,"base_hp": 80,  "base_attack": 80,  "base_defense": 50,  "base_sp_attack": 40,  "base_sp_defense": 50,  "base_speed": 25,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 105,"fields": {"name": "Muk",         "pokedex_number": 89,  "primary_type": 8,  "secondary_type": null,"base_hp": 105, "base_attack": 105, "base_defense": 75,  "base_sp_attack": 65,  "base_sp_defense": 100, "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 106,"fields": {"name": "Shellder",    "pokedex_number": 90,  "primary_type": 3,  "secondary_type": null,"base_hp": 30,  "base_attack": 65,  "base_defense": 100, "base_sp_attack": 45,  "base_sp_defense": 25,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 107,"fields": {"name": "Cloyster",    "pokedex_number": 91,  "primary_type": 3,  "secondary_type": 6,  "base_hp": 50,  "base_attack": 95,  "base_defense": 180, "base_sp_attack": 85,  "base_sp_defense": 45,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 108,"fields": {"name": "Gastly",      "pokedex_number": 92,  "primary_type": 14, "secondary_type": 8,  "base_hp": 30,  "base_attack": 35,  "base_defense": 30,  "base_sp_attack": 100, "base_sp_defense": 35,  "base_speed": 80,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 109,"fields": {"name": "Onix",        "pokedex_number": 95,  "primary_type": 13, "secondary_type": 9,  "base_hp": 35,  "base_attack": 45,  "base_defense": 160, "base_sp_attack": 30,  "base_sp_defense": 45,  "base_speed": 70,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 110,"fields": {"name": "Drowzee",     "pokedex_number": 96,  "primary_type": 11, "secondary_type": null,"base_hp": 60,  "base_attack": 48,  "base_defense": 45,  "base_sp_attack": 43,  "base_sp_defense": 90,  "base_speed": 42,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 111,"fields": {"name": "Krabby",      "pokedex_number": 98,  "primary_type": 3,  "secondary_type": null,"base_hp": 30,  "base_attack": 105, "base_defense": 90,  "base_sp_attack": 25,  "base_sp_defense": 25,  "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 112,"fields": {"name": "Kingler",     "pokedex_number": 99,  "primary_type": 3,  "secondary_type": null,"base_hp": 55,  "base_attack": 130, "base_defense": 115, "base_sp_attack": 50,  "base_sp_defense": 50,  "base_speed": 75,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 113,"fields": {"name": "Voltorb",     "pokedex_number": 100, "primary_type": 4,  "secondary_type": null,"base_hp": 40,  "base_attack": 30,  "base_defense": 50,  "base_sp_attack": 55,  "base_sp_defense": 55,  "base_speed": 100, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 114,"fields": {"name": "Electrode",   "pokedex_number": 101, "primary_type": 4,  "secondary_type": null,"base_hp": 60,  "base_attack": 50,  "base_defense": 70,  "base_sp_attack": 80,  "base_sp_defense": 80,  "base_speed": 150, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 115,"fields": {"name": "Exeggcute",   "pokedex_number": 102, "primary_type": 5,  "secondary_type": 11, "base_hp": 60,  "base_attack": 40,  "base_defense": 80,  "base_sp_attack": 60,  "base_sp_defense": 45,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 116,"fields": {"name": "Exeggutor",   "pokedex_number": 103, "primary_type": 5,  "secondary_type": 11, "base_hp": 95,  "base_attack": 95,  "base_defense": 85,  "base_sp_attack": 125, "base_sp_defense": 65,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 117,"fields": {"name": "Cubone",      "pokedex_number": 104, "primary_type": 9,  "secondary_type": null,"base_hp": 50,  "base_attack": 50,  "base_defense": 95,  "base_sp_attack": 40,  "base_sp_defense": 50,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 118,"fields": {"name": "Marowak",     "pokedex_number": 105, "primary_type": 9,  "secondary_type": null,"base_hp": 60,  "base_attack": 80,  "base_defense": 110, "base_sp_attack": 50,  "base_sp_defense": 80,  "base_speed": 45,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 119,"fields": {"name": "Hitmonlee",   "pokedex_number": 106, "primary_type": 7,  "secondary_type": null,"base_hp": 50,  "base_attack": 120, "base_defense": 53,  "base_sp_attack": 35,  "base_sp_defense": 110, "base_speed": 87,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 120,"fields": {"name": "Hitmonchan",  "pokedex_number": 107, "primary_type": 7,  "secondary_type": null,"base_hp": 50,  "base_attack": 105, "base_defense": 79,  "base_sp_attack": 35,  "base_sp_defense": 110, "base_speed": 76,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 121,"fields": {"name": "Lickitung",   "pokedex_number": 108, "primary_type": 1,  "secondary_type": null,"base_hp": 90,  "base_attack": 55,  "base_defense": 75,  "base_sp_attack": 60,  "base_sp_defense": 75,  "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 122,"fields": {"name": "Koffing",     "pokedex_number": 109, "primary_type": 8,  "secondary_type": null,"base_hp": 40,  "base_attack": 65,  "base_defense": 95,  "base_sp_attack": 60,  "base_sp_defense": 45,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 123,"fields": {"name": "Rhyhorn",     "pokedex_number": 111, "primary_type": 9,  "secondary_type": 13, "base_hp": 80,  "base_attack": 85,  "base_defense": 95,  "base_sp_attack": 30,  "base_sp_defense": 30,  "base_speed": 25,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 124,"fields": {"name": "Rhydon",      "pokedex_number": 112, "primary_type": 9,  "secondary_type": 13, "base_hp": 105, "base_attack": 130, "base_defense": 120, "base_sp_attack": 45,  "base_sp_defense": 45,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 125,"fields": {"name": "Chansey",     "pokedex_number": 113, "primary_type": 1,  "secondary_type": null,"base_hp": 250, "base_attack": 5,   "base_defense": 5,   "base_sp_attack": 35,  "base_sp_defense": 105, "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 126,"fields": {"name": "Tangela",     "pokedex_number": 114, "primary_type": 5,  "secondary_type": null,"base_hp": 65,  "base_attack": 55,  "base_defense": 115, "base_sp_attack": 100, "base_sp_defense": 40,  "base_speed": 60,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 127,"fields": {"name": "Kangaskhan",  "pokedex_number": 115, "primary_type": 1,  "secondary_type": null,"base_hp": 105, "base_attack": 95,  "base_defense": 80,  "base_sp_attack": 40,  "base_sp_defense": 80,  "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 128,"fields": {"name": "Horsea",      "pokedex_number": 116, "primary_type": 3,  "secondary_type": null,"base_hp": 30,  "base_attack": 40,  "base_defense": 70,  "base_sp_attack": 70,  "base_sp_defense": 25,  "base_speed": 60,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 129,"fields": {"name": "Seadra",      "pokedex_number": 117, "primary_type": 3,  "secondary_type": null,"base_hp": 55,  "base_attack": 65,  "base_defense": 95,  "base_sp_attack": 95,  "base_sp_defense": 45,  "base_speed": 85,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 130,"fields": {"name": "Goldeen",     "pokedex_number": 118, "primary_type": 3,  "secondary_type": null,"base_hp": 45,  "base_attack": 67,  "base_defense": 60,  "base_sp_attack": 35,  "base_sp_defense": 50,  "base_speed": 63,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 131,"fields": {"name": "Seaking",     "pokedex_number": 119, "primary_type": 3,  "secondary_type": null,"base_hp": 80,  "base_attack": 92,  "base_defense": 65,  "base_sp_attack": 65,  "base_sp_defense": 80,  "base_speed": 68,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 132,"fields": {"name": "Staryu",      "pokedex_number": 120, "primary_type": 3,  "secondary_type": null,"base_hp": 30,  "base_attack": 45,  "base_defense": 55,  "base_sp_attack": 70,  "base_sp_defense": 55,  "base_speed": 85,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 133,"fields": {"name": "Mr. Mime",    "pokedex_number": 122, "primary_type": 11, "secondary_type": 18, "base_hp": 40,  "base_attack": 45,  "base_defense": 65,  "base_sp_attack": 100, "base_sp_defense": 120, "base_speed": 90,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 134,"fields": {"name": "Scyther",     "pokedex_number": 123, "primary_type": 12, "secondary_type": 10, "base_hp": 70,  "base_attack": 110, "base_defense": 80,  "base_sp_attack": 55,  "base_sp_defense": 80,  "base_speed": 105, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 135,"fields": {"name": "Jynx",        "pokedex_number": 124, "primary_type": 6,  "secondary_type": 11, "base_hp": 65,  "base_attack": 50,  "base_defense": 35,  "base_sp_attack": 115, "base_sp_defense": 95,  "base_speed": 95,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 136,"fields": {"name": "Electabuzz",  "pokedex_number": 125, "primary_type": 4,  "secondary_type": null,"base_hp": 65,  "base_attack": 83,  "base_defense": 57,  "base_sp_attack": 95,  "base_sp_defense": 85,  "base_speed": 105, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 137,"fields": {"name": "Magmar",      "pokedex_number": 126, "primary_type": 2,  "secondary_type": null,"base_hp": 65,  "base_attack": 95,  "base_defense": 57,  "base_sp_attack": 100, "base_sp_defense": 85,  "base_speed": 93,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 138,"fields": {"name": "Pinsir",      "pokedex_number": 127, "primary_type": 12, "secondary_type": null,"base_hp": 65,  "base_attack": 125, "base_defense": 100, "base_sp_attack": 55,  "base_sp_defense": 70,  "base_speed": 85,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 139,"fields": {"name": "Tauros",      "pokedex_number": 128, "primary_type": 1,  "secondary_type": null,"base_hp": 75,  "base_attack": 100, "base_defense": 95,  "base_sp_attack": 40,  "base_sp_defense": 70,  "base_speed": 110, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 140,"fields": {"name": "Magikarp",    "pokedex_number": 129, "primary_type": 3,  "secondary_type": null,"base_hp": 20,  "base_attack": 10,  "base_defense": 55,  "base_sp_attack": 15,  "base_sp_defense": 20,  "base_speed": 80,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 141,"fields": {"name": "Gyarados",    "pokedex_number": 130, "primary_type": 3,  "secondary_type": 10, "base_hp": 95,  "base_attack": 125, "base_defense": 79,  "base_sp_attack": 60,  "base_sp_defense": 100, "base_speed": 81,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 142,"fields": {"name": "Ditto",       "pokedex_number": 132, "primary_type": 1,  "secondary_type": null,"base_hp": 48,  "base_attack": 48,  "base_defense": 48,  "base_sp_attack": 48,  "base_sp_defense": 48,  "base_speed": 48,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 143,"fields": {"name": "Eevee",       "pokedex_number": 133, "primary_type": 1,  "secondary_type": null,"base_hp": 55,  "base_attack": 55,  "base_defense": 50,  "base_sp_attack": 45,  "base_sp_defense": 65,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 144,"fields": {"name": "Porygon",     "pokedex_number": 137, "primary_type": 1,  "secondary_type": null,"base_hp": 65,  "base_attack": 60,  "base_defense": 70,  "base_sp_attack": 85,  "base_sp_defense": 75,  "base_speed": 40,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 145,"fields": {"name": "Omanyte",     "pokedex_number": 138, "primary_type": 13, "secondary_type": 3,  "base_hp": 35,  "base_attack": 40,  "base_defense": 100, "base_sp_attack": 90,  "base_sp_defense": 55,  "base_speed": 35,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 146,"fields": {"name": "Omastar",     "pokedex_number": 139, "primary_type": 13, "secondary_type": 3,  "base_hp": 70,  "base_attack": 60,  "base_defense": 125, "base_sp_attack": 115, "base_sp_defense": 70,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 147,"fields": {"name": "Kabuto",      "pokedex_number": 140, "primary_type": 13, "secondary_type": 3,  "base_hp": 30,  "base_attack": 80,  "base_defense": 90,  "base_sp_attack": 55,  "base_sp_defense": 45,  "base_speed": 55,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 148,"fields": {"name": "Kabutops",    "pokedex_number": 141, "primary_type": 13, "secondary_type": 3,  "base_hp": 60,  "base_attack": 115, "base_defense": 105, "base_sp_attack": 65,  "base_sp_defense": 70,  "base_speed": 80,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 149,"fields": {"name": "Aerodactyl",  "pokedex_number": 142, "primary_type": 13, "secondary_type": 10, "base_hp": 80,  "base_attack": 105, "base_defense": 65,  "base_sp_attack": 60,  "base_sp_defense": 75,  "base_speed": 130, "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 150,"fields": {"name": "Snorlax",     "pokedex_number": 143, "primary_type": 1,  "secondary_type": null,"base_hp": 160, "base_attack": 110, "base_defense": 65,  "base_sp_attack": 65,  "base_sp_defense": 110, "base_speed": 30,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 151,"fields": {"name": "Dratini",     "pokedex_number": 147, "primary_type": 15, "secondary_type": null,"base_hp": 41,  "base_attack": 64,  "base_defense": 45,  "base_sp_attack": 50,  "base_sp_defense": 50,  "base_speed": 50,  "sprite_url": "", "moves": []}},
-  {"model": "pokemon.pokemon", "pk": 152,"fields": {"name": "Dragonair",   "pokedex_number": 148, "primary_type": 15, "secondary_type": null,"base_hp": 61,  "base_attack": 84,  "base_defense": 65,  "base_sp_attack": 70,  "base_sp_defense": 70,  "base_speed": 70,  "sprite_url": "", "moves": []}}
+  {
+    "model": "pokemon.pokemon",
+    "pk": 1,
+    "fields": {
+      "name": "Bulbasaur",
+      "pokedex_number": 1,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 45,
+      "base_attack": 49,
+      "base_defense": 49,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [
+        1,
+        18,
+        20,
+        21
+      ],
+      "base_ninjutsu": 65,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 2,
+    "fields": {
+      "name": "Ivysaur",
+      "pokedex_number": 2,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 60,
+      "base_attack": 62,
+      "base_defense": 63,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [
+        18,
+        20,
+        21,
+        22
+      ],
+      "base_ninjutsu": 80,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 3,
+    "fields": {
+      "name": "Venusaur",
+      "pokedex_number": 3,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 80,
+      "base_attack": 82,
+      "base_defense": 83,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        28
+      ],
+      "base_ninjutsu": 100,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 4,
+    "fields": {
+      "name": "Charmander",
+      "pokedex_number": 4,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 39,
+      "base_attack": 52,
+      "base_defense": 43,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [
+        2,
+        6,
+        4,
+        5
+      ],
+      "base_ninjutsu": 60,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 5,
+    "fields": {
+      "name": "Charmeleon",
+      "pokedex_number": 5,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 58,
+      "base_attack": 64,
+      "base_defense": 58,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [
+        6,
+        4,
+        5,
+        41
+      ],
+      "base_ninjutsu": 80,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 6,
+    "fields": {
+      "name": "Charizard",
+      "pokedex_number": 6,
+      "primary_type": 2,
+      "secondary_type": 10,
+      "base_hp": 78,
+      "base_attack": 84,
+      "base_defense": 78,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [
+        4,
+        7,
+        8,
+        5,
+        41,
+        53
+      ],
+      "base_ninjutsu": 109,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 7,
+    "fields": {
+      "name": "Squirtle",
+      "pokedex_number": 7,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 44,
+      "base_attack": 48,
+      "base_defense": 65,
+      "base_sp_defense": 64,
+      "sprite_url": "",
+      "moves": [
+        1,
+        9,
+        10,
+        12
+      ],
+      "base_ninjutsu": 50,
+      "base_initiative": 43
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 8,
+    "fields": {
+      "name": "Wartortle",
+      "pokedex_number": 8,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 59,
+      "base_attack": 63,
+      "base_defense": 80,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [
+        9,
+        10,
+        12,
+        11
+      ],
+      "base_ninjutsu": 65,
+      "base_initiative": 58
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 9,
+    "fields": {
+      "name": "Blastoise",
+      "pokedex_number": 9,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 79,
+      "base_attack": 83,
+      "base_defense": 100,
+      "base_sp_defense": 105,
+      "sprite_url": "",
+      "moves": [
+        9,
+        11,
+        12,
+        10,
+        23
+      ],
+      "base_ninjutsu": 85,
+      "base_initiative": 78
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 10,
+    "fields": {
+      "name": "Pikachu",
+      "pokedex_number": 25,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 35,
+      "base_attack": 55,
+      "base_defense": 40,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [
+        3,
+        13,
+        14,
+        15
+      ],
+      "base_ninjutsu": 50,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 11,
+    "fields": {
+      "name": "Raichu",
+      "pokedex_number": 26,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 60,
+      "base_attack": 90,
+      "base_defense": 55,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [
+        13,
+        15,
+        16,
+        14,
+        17,
+        57,
+        58
+      ],
+      "base_ninjutsu": 90,
+      "base_initiative": 110
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 12,
+    "fields": {
+      "name": "Gengar",
+      "pokedex_number": 94,
+      "primary_type": 14,
+      "secondary_type": 8,
+      "base_hp": 60,
+      "base_attack": 65,
+      "base_defense": 60,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [
+        32,
+        33,
+        34,
+        37,
+        35,
+        59
+      ],
+      "base_ninjutsu": 130,
+      "base_initiative": 110
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 13,
+    "fields": {
+      "name": "Haunter",
+      "pokedex_number": 93,
+      "primary_type": 14,
+      "secondary_type": 8,
+      "base_hp": 45,
+      "base_attack": 50,
+      "base_defense": 45,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [
+        32,
+        33,
+        35,
+        37
+      ],
+      "base_ninjutsu": 115,
+      "base_initiative": 95
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 14,
+    "fields": {
+      "name": "Jolteon",
+      "pokedex_number": 135,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 65,
+      "base_defense": 60,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [
+        13,
+        14,
+        16,
+        17,
+        57
+      ],
+      "base_ninjutsu": 110,
+      "base_initiative": 130
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 15,
+    "fields": {
+      "name": "Flareon",
+      "pokedex_number": 136,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 130,
+      "base_defense": 60,
+      "base_sp_defense": 110,
+      "sprite_url": "",
+      "moves": [
+        4,
+        7,
+        8,
+        6,
+        41,
+        52
+      ],
+      "base_ninjutsu": 95,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 16,
+    "fields": {
+      "name": "Vaporeon",
+      "pokedex_number": 134,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 130,
+      "base_attack": 65,
+      "base_defense": 60,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [
+        9,
+        11,
+        12,
+        10
+      ],
+      "base_ninjutsu": 110,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 17,
+    "fields": {
+      "name": "Lapras",
+      "pokedex_number": 131,
+      "primary_type": 3,
+      "secondary_type": 6,
+      "base_hp": 130,
+      "base_attack": 85,
+      "base_defense": 80,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [
+        23,
+        24,
+        9,
+        26,
+        27
+      ],
+      "base_ninjutsu": 85,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 18,
+    "fields": {
+      "name": "Articuno",
+      "pokedex_number": 144,
+      "primary_type": 6,
+      "secondary_type": 10,
+      "base_hp": 90,
+      "base_attack": 85,
+      "base_defense": 100,
+      "base_sp_defense": 125,
+      "sprite_url": "",
+      "moves": [
+        23,
+        24,
+        25,
+        26,
+        27,
+        56
+      ],
+      "base_ninjutsu": 95,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 19,
+    "fields": {
+      "name": "Zapdos",
+      "pokedex_number": 145,
+      "primary_type": 4,
+      "secondary_type": 10,
+      "base_hp": 90,
+      "base_attack": 90,
+      "base_defense": 85,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [
+        13,
+        14,
+        15,
+        16,
+        38,
+        57,
+        58
+      ],
+      "base_ninjutsu": 125,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 20,
+    "fields": {
+      "name": "Moltres",
+      "pokedex_number": 146,
+      "primary_type": 2,
+      "secondary_type": 10,
+      "base_hp": 90,
+      "base_attack": 100,
+      "base_defense": 90,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [
+        4,
+        7,
+        8,
+        41,
+        53
+      ],
+      "base_ninjutsu": 125,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 21,
+    "fields": {
+      "name": "Alakazam",
+      "pokedex_number": 65,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 50,
+      "base_defense": 45,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [
+        36,
+        37,
+        43,
+        48,
+        51,
+        55
+      ],
+      "base_ninjutsu": 135,
+      "base_initiative": 120
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 22,
+    "fields": {
+      "name": "Hypno",
+      "pokedex_number": 97,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 85,
+      "base_attack": 73,
+      "base_defense": 70,
+      "base_sp_defense": 115,
+      "sprite_url": "",
+      "moves": [
+        22,
+        36,
+        37,
+        43,
+        48
+      ],
+      "base_ninjutsu": 73,
+      "base_initiative": 67
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 23,
+    "fields": {
+      "name": "Arbok",
+      "pokedex_number": 24,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 60,
+      "base_attack": 85,
+      "base_defense": 69,
+      "base_sp_defense": 79,
+      "sprite_url": "",
+      "moves": [
+        28,
+        29,
+        30,
+        31,
+        54
+      ],
+      "base_ninjutsu": 65,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 24,
+    "fields": {
+      "name": "Weezing",
+      "pokedex_number": 110,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 90,
+      "base_defense": 120,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [
+        28,
+        29,
+        30,
+        31,
+        50,
+        54
+      ],
+      "base_ninjutsu": 85,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 25,
+    "fields": {
+      "name": "Machamp",
+      "pokedex_number": 68,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 90,
+      "base_attack": 130,
+      "base_defense": 80,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [
+        1,
+        2,
+        42,
+        44,
+        45,
+        53
+      ],
+      "base_ninjutsu": 65,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 26,
+    "fields": {
+      "name": "Starmie",
+      "pokedex_number": 121,
+      "primary_type": 3,
+      "secondary_type": 11,
+      "base_hp": 60,
+      "base_attack": 75,
+      "base_defense": 85,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [
+        9,
+        11,
+        23,
+        36,
+        43
+      ],
+      "base_ninjutsu": 100,
+      "base_initiative": 115
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 27,
+    "fields": {
+      "name": "Dragonite",
+      "pokedex_number": 149,
+      "primary_type": 15,
+      "secondary_type": 10,
+      "base_hp": 91,
+      "base_attack": 134,
+      "base_defense": 95,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [
+        38,
+        13,
+        4,
+        23,
+        47,
+        52
+      ],
+      "base_ninjutsu": 100,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 28,
+    "fields": {
+      "name": "Mewtwo",
+      "pokedex_number": 150,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 106,
+      "base_attack": 110,
+      "base_defense": 90,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [
+        36,
+        37,
+        43,
+        46,
+        48,
+        51,
+        55,
+        60
+      ],
+      "base_ninjutsu": 154,
+      "base_initiative": 130
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 29,
+    "fields": {
+      "name": "Mew",
+      "pokedex_number": 151,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 100,
+      "base_attack": 100,
+      "base_defense": 100,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [
+        4,
+        9,
+        13,
+        18,
+        22,
+        28,
+        33,
+        37,
+        43,
+        47
+      ],
+      "base_ninjutsu": 100,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 30,
+    "fields": {
+      "name": "Umbreon",
+      "pokedex_number": 197,
+      "primary_type": 16,
+      "secondary_type": null,
+      "base_hp": 95,
+      "base_attack": 65,
+      "base_defense": 110,
+      "base_sp_defense": 130,
+      "sprite_url": "",
+      "moves": [
+        33,
+        39,
+        40,
+        47,
+        49,
+        52,
+        60
+      ],
+      "base_ninjutsu": 60,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 31,
+    "fields": {
+      "name": "Caterpie",
+      "pokedex_number": 10,
+      "primary_type": 12,
+      "secondary_type": null,
+      "base_hp": 45,
+      "base_attack": 30,
+      "base_defense": 35,
+      "base_sp_defense": 20,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 20,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 32,
+    "fields": {
+      "name": "Metapod",
+      "pokedex_number": 11,
+      "primary_type": 12,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 20,
+      "base_defense": 55,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 25,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 33,
+    "fields": {
+      "name": "Butterfree",
+      "pokedex_number": 12,
+      "primary_type": 12,
+      "secondary_type": 10,
+      "base_hp": 60,
+      "base_attack": 45,
+      "base_defense": 50,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 90,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 34,
+    "fields": {
+      "name": "Weedle",
+      "pokedex_number": 13,
+      "primary_type": 12,
+      "secondary_type": 8,
+      "base_hp": 40,
+      "base_attack": 35,
+      "base_defense": 30,
+      "base_sp_defense": 20,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 20,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 35,
+    "fields": {
+      "name": "Kakuna",
+      "pokedex_number": 14,
+      "primary_type": 12,
+      "secondary_type": 8,
+      "base_hp": 45,
+      "base_attack": 25,
+      "base_defense": 50,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 25,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 36,
+    "fields": {
+      "name": "Beedrill",
+      "pokedex_number": 15,
+      "primary_type": 12,
+      "secondary_type": 8,
+      "base_hp": 65,
+      "base_attack": 90,
+      "base_defense": 40,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 75
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 37,
+    "fields": {
+      "name": "Pidgey",
+      "pokedex_number": 16,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 40,
+      "base_attack": 45,
+      "base_defense": 40,
+      "base_sp_defense": 35,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 56
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 38,
+    "fields": {
+      "name": "Pidgeotto",
+      "pokedex_number": 17,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 63,
+      "base_attack": 60,
+      "base_defense": 55,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 71
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 39,
+    "fields": {
+      "name": "Pidgeot",
+      "pokedex_number": 18,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 83,
+      "base_attack": 80,
+      "base_defense": 75,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 101
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 40,
+    "fields": {
+      "name": "Rattata",
+      "pokedex_number": 19,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 30,
+      "base_attack": 56,
+      "base_defense": 35,
+      "base_sp_defense": 35,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 25,
+      "base_initiative": 72
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 41,
+    "fields": {
+      "name": "Raticate",
+      "pokedex_number": 20,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 81,
+      "base_defense": 60,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 97
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 42,
+    "fields": {
+      "name": "Spearow",
+      "pokedex_number": 21,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 40,
+      "base_attack": 60,
+      "base_defense": 30,
+      "base_sp_defense": 31,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 31,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 43,
+    "fields": {
+      "name": "Fearow",
+      "pokedex_number": 22,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 65,
+      "base_attack": 90,
+      "base_defense": 65,
+      "base_sp_defense": 61,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 61,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 44,
+    "fields": {
+      "name": "Ekans",
+      "pokedex_number": 23,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 35,
+      "base_attack": 60,
+      "base_defense": 44,
+      "base_sp_defense": 54,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 45,
+    "fields": {
+      "name": "Sandshrew",
+      "pokedex_number": 27,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 75,
+      "base_defense": 85,
+      "base_sp_defense": 30,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 20,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 46,
+    "fields": {
+      "name": "Sandslash",
+      "pokedex_number": 28,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 75,
+      "base_attack": 100,
+      "base_defense": 110,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 47,
+    "fields": {
+      "name": "Nidoran-F",
+      "pokedex_number": 29,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 47,
+      "base_defense": 52,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 41
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 48,
+    "fields": {
+      "name": "Nidorina",
+      "pokedex_number": 30,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 70,
+      "base_attack": 62,
+      "base_defense": 67,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 56
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 49,
+    "fields": {
+      "name": "Nidoqueen",
+      "pokedex_number": 31,
+      "primary_type": 8,
+      "secondary_type": 9,
+      "base_hp": 90,
+      "base_attack": 92,
+      "base_defense": 87,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 75,
+      "base_initiative": 76
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 50,
+    "fields": {
+      "name": "Nidoran-M",
+      "pokedex_number": 32,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 46,
+      "base_attack": 57,
+      "base_defense": 40,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 51,
+    "fields": {
+      "name": "Nidorino",
+      "pokedex_number": 33,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 61,
+      "base_attack": 72,
+      "base_defense": 57,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 52,
+    "fields": {
+      "name": "Nidoking",
+      "pokedex_number": 34,
+      "primary_type": 8,
+      "secondary_type": 9,
+      "base_hp": 81,
+      "base_attack": 102,
+      "base_defense": 77,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 53,
+    "fields": {
+      "name": "Clefairy",
+      "pokedex_number": 35,
+      "primary_type": 18,
+      "secondary_type": null,
+      "base_hp": 70,
+      "base_attack": 45,
+      "base_defense": 48,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 54,
+    "fields": {
+      "name": "Clefable",
+      "pokedex_number": 36,
+      "primary_type": 18,
+      "secondary_type": null,
+      "base_hp": 95,
+      "base_attack": 70,
+      "base_defense": 73,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 95,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 55,
+    "fields": {
+      "name": "Vulpix",
+      "pokedex_number": 37,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 38,
+      "base_attack": 41,
+      "base_defense": 40,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 65
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 56,
+    "fields": {
+      "name": "Ninetales",
+      "pokedex_number": 38,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 73,
+      "base_attack": 76,
+      "base_defense": 75,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 81,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 57,
+    "fields": {
+      "name": "Jigglypuff",
+      "pokedex_number": 39,
+      "primary_type": 1,
+      "secondary_type": 18,
+      "base_hp": 115,
+      "base_attack": 45,
+      "base_defense": 20,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 20
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 58,
+    "fields": {
+      "name": "Wigglytuff",
+      "pokedex_number": 40,
+      "primary_type": 1,
+      "secondary_type": 18,
+      "base_hp": 140,
+      "base_attack": 70,
+      "base_defense": 45,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 59,
+    "fields": {
+      "name": "Zubat",
+      "pokedex_number": 41,
+      "primary_type": 8,
+      "secondary_type": 10,
+      "base_hp": 40,
+      "base_attack": 45,
+      "base_defense": 35,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 30,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 60,
+    "fields": {
+      "name": "Golbat",
+      "pokedex_number": 42,
+      "primary_type": 8,
+      "secondary_type": 10,
+      "base_hp": 75,
+      "base_attack": 80,
+      "base_defense": 70,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 61,
+    "fields": {
+      "name": "Oddish",
+      "pokedex_number": 43,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 45,
+      "base_attack": 50,
+      "base_defense": 55,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 75,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 62,
+    "fields": {
+      "name": "Gloom",
+      "pokedex_number": 44,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 60,
+      "base_attack": 65,
+      "base_defense": 70,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 63,
+    "fields": {
+      "name": "Vileplume",
+      "pokedex_number": 45,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 75,
+      "base_attack": 80,
+      "base_defense": 85,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 110,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 64,
+    "fields": {
+      "name": "Paras",
+      "pokedex_number": 46,
+      "primary_type": 12,
+      "secondary_type": 5,
+      "base_hp": 35,
+      "base_attack": 70,
+      "base_defense": 55,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 25
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 65,
+    "fields": {
+      "name": "Parasect",
+      "pokedex_number": 47,
+      "primary_type": 12,
+      "secondary_type": 5,
+      "base_hp": 60,
+      "base_attack": 95,
+      "base_defense": 80,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 66,
+    "fields": {
+      "name": "Venonat",
+      "pokedex_number": 48,
+      "primary_type": 12,
+      "secondary_type": 8,
+      "base_hp": 60,
+      "base_attack": 55,
+      "base_defense": 50,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 67,
+    "fields": {
+      "name": "Venomoth",
+      "pokedex_number": 49,
+      "primary_type": 12,
+      "secondary_type": 8,
+      "base_hp": 70,
+      "base_attack": 65,
+      "base_defense": 60,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 90,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 68,
+    "fields": {
+      "name": "Diglett",
+      "pokedex_number": 50,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 10,
+      "base_attack": 55,
+      "base_defense": 25,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 95
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 69,
+    "fields": {
+      "name": "Dugtrio",
+      "pokedex_number": 51,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 35,
+      "base_attack": 80,
+      "base_defense": 50,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 120
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 70,
+    "fields": {
+      "name": "Meowth",
+      "pokedex_number": 52,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 45,
+      "base_defense": 35,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 71,
+    "fields": {
+      "name": "Persian",
+      "pokedex_number": 53,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 70,
+      "base_defense": 60,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 115
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 72,
+    "fields": {
+      "name": "Psyduck",
+      "pokedex_number": 54,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 52,
+      "base_defense": 48,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 73,
+    "fields": {
+      "name": "Golduck",
+      "pokedex_number": 55,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 80,
+      "base_attack": 82,
+      "base_defense": 78,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 95,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 74,
+    "fields": {
+      "name": "Mankey",
+      "pokedex_number": 56,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 80,
+      "base_defense": 35,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 75,
+    "fields": {
+      "name": "Primeape",
+      "pokedex_number": 57,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 105,
+      "base_defense": 60,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 95
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 76,
+    "fields": {
+      "name": "Growlithe",
+      "pokedex_number": 58,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 70,
+      "base_defense": 45,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 77,
+    "fields": {
+      "name": "Arcanine",
+      "pokedex_number": 59,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 90,
+      "base_attack": 110,
+      "base_defense": 80,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 95
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 78,
+    "fields": {
+      "name": "Poliwag",
+      "pokedex_number": 60,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 50,
+      "base_defense": 40,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 79,
+    "fields": {
+      "name": "Poliwhirl",
+      "pokedex_number": 61,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 65,
+      "base_defense": 65,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 80,
+    "fields": {
+      "name": "Poliwrath",
+      "pokedex_number": 62,
+      "primary_type": 3,
+      "secondary_type": 7,
+      "base_hp": 90,
+      "base_attack": 95,
+      "base_defense": 95,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 81,
+    "fields": {
+      "name": "Abra",
+      "pokedex_number": 63,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 25,
+      "base_attack": 20,
+      "base_defense": 15,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 105,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 82,
+    "fields": {
+      "name": "Kadabra",
+      "pokedex_number": 64,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 35,
+      "base_defense": 30,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 120,
+      "base_initiative": 105
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 83,
+    "fields": {
+      "name": "Machop",
+      "pokedex_number": 66,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 70,
+      "base_attack": 80,
+      "base_defense": 50,
+      "base_sp_defense": 35,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 84,
+    "fields": {
+      "name": "Machoke",
+      "pokedex_number": 67,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 80,
+      "base_attack": 100,
+      "base_defense": 70,
+      "base_sp_defense": 60,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 85,
+    "fields": {
+      "name": "Bellsprout",
+      "pokedex_number": 69,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 50,
+      "base_attack": 75,
+      "base_defense": 35,
+      "base_sp_defense": 30,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 86,
+    "fields": {
+      "name": "Weepinbell",
+      "pokedex_number": 70,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 65,
+      "base_attack": 90,
+      "base_defense": 50,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 87,
+    "fields": {
+      "name": "Victreebel",
+      "pokedex_number": 71,
+      "primary_type": 5,
+      "secondary_type": 8,
+      "base_hp": 80,
+      "base_attack": 105,
+      "base_defense": 65,
+      "base_sp_defense": 60,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 88,
+    "fields": {
+      "name": "Tentacool",
+      "pokedex_number": 72,
+      "primary_type": 3,
+      "secondary_type": 8,
+      "base_hp": 40,
+      "base_attack": 40,
+      "base_defense": 35,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 89,
+    "fields": {
+      "name": "Tentacruel",
+      "pokedex_number": 73,
+      "primary_type": 3,
+      "secondary_type": 8,
+      "base_hp": 80,
+      "base_attack": 70,
+      "base_defense": 65,
+      "base_sp_defense": 120,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 80,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 90,
+    "fields": {
+      "name": "Geodude",
+      "pokedex_number": 74,
+      "primary_type": 13,
+      "secondary_type": 9,
+      "base_hp": 40,
+      "base_attack": 80,
+      "base_defense": 100,
+      "base_sp_defense": 30,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 30,
+      "base_initiative": 20
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 91,
+    "fields": {
+      "name": "Graveler",
+      "pokedex_number": 75,
+      "primary_type": 13,
+      "secondary_type": 9,
+      "base_hp": 55,
+      "base_attack": 95,
+      "base_defense": 115,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 92,
+    "fields": {
+      "name": "Golem",
+      "pokedex_number": 76,
+      "primary_type": 13,
+      "secondary_type": 9,
+      "base_hp": 80,
+      "base_attack": 120,
+      "base_defense": 130,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 93,
+    "fields": {
+      "name": "Ponyta",
+      "pokedex_number": 77,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 85,
+      "base_defense": 55,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 94,
+    "fields": {
+      "name": "Rapidash",
+      "pokedex_number": 78,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 100,
+      "base_defense": 70,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 80,
+      "base_initiative": 105
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 95,
+    "fields": {
+      "name": "Slowpoke",
+      "pokedex_number": 79,
+      "primary_type": 3,
+      "secondary_type": 11,
+      "base_hp": 90,
+      "base_attack": 65,
+      "base_defense": 65,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 15
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 96,
+    "fields": {
+      "name": "Slowbro",
+      "pokedex_number": 80,
+      "primary_type": 3,
+      "secondary_type": 11,
+      "base_hp": 95,
+      "base_attack": 75,
+      "base_defense": 110,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 97,
+    "fields": {
+      "name": "Magnemite",
+      "pokedex_number": 81,
+      "primary_type": 4,
+      "secondary_type": 17,
+      "base_hp": 25,
+      "base_attack": 35,
+      "base_defense": 70,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 95,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 98,
+    "fields": {
+      "name": "Magneton",
+      "pokedex_number": 82,
+      "primary_type": 4,
+      "secondary_type": 17,
+      "base_hp": 50,
+      "base_attack": 60,
+      "base_defense": 95,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 120,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 99,
+    "fields": {
+      "name": "Farfetch'd",
+      "pokedex_number": 83,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 52,
+      "base_attack": 90,
+      "base_defense": 55,
+      "base_sp_defense": 62,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 58,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 100,
+    "fields": {
+      "name": "Doduo",
+      "pokedex_number": 84,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 35,
+      "base_attack": 85,
+      "base_defense": 45,
+      "base_sp_defense": 35,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 75
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 101,
+    "fields": {
+      "name": "Dodrio",
+      "pokedex_number": 85,
+      "primary_type": 1,
+      "secondary_type": 10,
+      "base_hp": 60,
+      "base_attack": 110,
+      "base_defense": 70,
+      "base_sp_defense": 60,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 110
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 102,
+    "fields": {
+      "name": "Seel",
+      "pokedex_number": 86,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 45,
+      "base_defense": 55,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 103,
+    "fields": {
+      "name": "Dewgong",
+      "pokedex_number": 87,
+      "primary_type": 3,
+      "secondary_type": 6,
+      "base_hp": 90,
+      "base_attack": 70,
+      "base_defense": 80,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 104,
+    "fields": {
+      "name": "Grimer",
+      "pokedex_number": 88,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 80,
+      "base_attack": 80,
+      "base_defense": 50,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 25
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 105,
+    "fields": {
+      "name": "Muk",
+      "pokedex_number": 89,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 105,
+      "base_attack": 105,
+      "base_defense": 75,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 106,
+    "fields": {
+      "name": "Shellder",
+      "pokedex_number": 90,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 30,
+      "base_attack": 65,
+      "base_defense": 100,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 107,
+    "fields": {
+      "name": "Cloyster",
+      "pokedex_number": 91,
+      "primary_type": 3,
+      "secondary_type": 6,
+      "base_hp": 50,
+      "base_attack": 95,
+      "base_defense": 180,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 108,
+    "fields": {
+      "name": "Gastly",
+      "pokedex_number": 92,
+      "primary_type": 14,
+      "secondary_type": 8,
+      "base_hp": 30,
+      "base_attack": 35,
+      "base_defense": 30,
+      "base_sp_defense": 35,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 109,
+    "fields": {
+      "name": "Onix",
+      "pokedex_number": 95,
+      "primary_type": 13,
+      "secondary_type": 9,
+      "base_hp": 35,
+      "base_attack": 45,
+      "base_defense": 160,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 30,
+      "base_initiative": 70
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 110,
+    "fields": {
+      "name": "Drowzee",
+      "pokedex_number": 96,
+      "primary_type": 11,
+      "secondary_type": null,
+      "base_hp": 60,
+      "base_attack": 48,
+      "base_defense": 45,
+      "base_sp_defense": 90,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 43,
+      "base_initiative": 42
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 111,
+    "fields": {
+      "name": "Krabby",
+      "pokedex_number": 98,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 30,
+      "base_attack": 105,
+      "base_defense": 90,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 25,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 112,
+    "fields": {
+      "name": "Kingler",
+      "pokedex_number": 99,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 130,
+      "base_defense": 115,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 75
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 113,
+    "fields": {
+      "name": "Voltorb",
+      "pokedex_number": 100,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 30,
+      "base_defense": 50,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 100
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 114,
+    "fields": {
+      "name": "Electrode",
+      "pokedex_number": 101,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 60,
+      "base_attack": 50,
+      "base_defense": 70,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 80,
+      "base_initiative": 150
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 115,
+    "fields": {
+      "name": "Exeggcute",
+      "pokedex_number": 102,
+      "primary_type": 5,
+      "secondary_type": 11,
+      "base_hp": 60,
+      "base_attack": 40,
+      "base_defense": 80,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 116,
+    "fields": {
+      "name": "Exeggutor",
+      "pokedex_number": 103,
+      "primary_type": 5,
+      "secondary_type": 11,
+      "base_hp": 95,
+      "base_attack": 95,
+      "base_defense": 85,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 125,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 117,
+    "fields": {
+      "name": "Cubone",
+      "pokedex_number": 104,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 50,
+      "base_defense": 95,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 118,
+    "fields": {
+      "name": "Marowak",
+      "pokedex_number": 105,
+      "primary_type": 9,
+      "secondary_type": null,
+      "base_hp": 60,
+      "base_attack": 80,
+      "base_defense": 110,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 45
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 119,
+    "fields": {
+      "name": "Hitmonlee",
+      "pokedex_number": 106,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 120,
+      "base_defense": 53,
+      "base_sp_defense": 110,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 87
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 120,
+    "fields": {
+      "name": "Hitmonchan",
+      "pokedex_number": 107,
+      "primary_type": 7,
+      "secondary_type": null,
+      "base_hp": 50,
+      "base_attack": 105,
+      "base_defense": 79,
+      "base_sp_defense": 110,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 76
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 121,
+    "fields": {
+      "name": "Lickitung",
+      "pokedex_number": 108,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 90,
+      "base_attack": 55,
+      "base_defense": 75,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 122,
+    "fields": {
+      "name": "Koffing",
+      "pokedex_number": 109,
+      "primary_type": 8,
+      "secondary_type": null,
+      "base_hp": 40,
+      "base_attack": 65,
+      "base_defense": 95,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 123,
+    "fields": {
+      "name": "Rhyhorn",
+      "pokedex_number": 111,
+      "primary_type": 9,
+      "secondary_type": 13,
+      "base_hp": 80,
+      "base_attack": 85,
+      "base_defense": 95,
+      "base_sp_defense": 30,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 30,
+      "base_initiative": 25
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 124,
+    "fields": {
+      "name": "Rhydon",
+      "pokedex_number": 112,
+      "primary_type": 9,
+      "secondary_type": 13,
+      "base_hp": 105,
+      "base_attack": 130,
+      "base_defense": 120,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 125,
+    "fields": {
+      "name": "Chansey",
+      "pokedex_number": 113,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 250,
+      "base_attack": 5,
+      "base_defense": 5,
+      "base_sp_defense": 105,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 126,
+    "fields": {
+      "name": "Tangela",
+      "pokedex_number": 114,
+      "primary_type": 5,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 55,
+      "base_defense": 115,
+      "base_sp_defense": 40,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 127,
+    "fields": {
+      "name": "Kangaskhan",
+      "pokedex_number": 115,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 105,
+      "base_attack": 95,
+      "base_defense": 80,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 128,
+    "fields": {
+      "name": "Horsea",
+      "pokedex_number": 116,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 30,
+      "base_attack": 40,
+      "base_defense": 70,
+      "base_sp_defense": 25,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 60
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 129,
+    "fields": {
+      "name": "Seadra",
+      "pokedex_number": 117,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 65,
+      "base_defense": 95,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 95,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 130,
+    "fields": {
+      "name": "Goldeen",
+      "pokedex_number": 118,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 45,
+      "base_attack": 67,
+      "base_defense": 60,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 35,
+      "base_initiative": 63
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 131,
+    "fields": {
+      "name": "Seaking",
+      "pokedex_number": 119,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 80,
+      "base_attack": 92,
+      "base_defense": 65,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 68
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 132,
+    "fields": {
+      "name": "Staryu",
+      "pokedex_number": 120,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 30,
+      "base_attack": 45,
+      "base_defense": 55,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 133,
+    "fields": {
+      "name": "Mr. Mime",
+      "pokedex_number": 122,
+      "primary_type": 11,
+      "secondary_type": 18,
+      "base_hp": 40,
+      "base_attack": 45,
+      "base_defense": 65,
+      "base_sp_defense": 120,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 90
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 134,
+    "fields": {
+      "name": "Scyther",
+      "pokedex_number": 123,
+      "primary_type": 12,
+      "secondary_type": 10,
+      "base_hp": 70,
+      "base_attack": 110,
+      "base_defense": 80,
+      "base_sp_defense": 80,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 105
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 135,
+    "fields": {
+      "name": "Jynx",
+      "pokedex_number": 124,
+      "primary_type": 6,
+      "secondary_type": 11,
+      "base_hp": 65,
+      "base_attack": 50,
+      "base_defense": 35,
+      "base_sp_defense": 95,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 115,
+      "base_initiative": 95
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 136,
+    "fields": {
+      "name": "Electabuzz",
+      "pokedex_number": 125,
+      "primary_type": 4,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 83,
+      "base_defense": 57,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 95,
+      "base_initiative": 105
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 137,
+    "fields": {
+      "name": "Magmar",
+      "pokedex_number": 126,
+      "primary_type": 2,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 95,
+      "base_defense": 57,
+      "base_sp_defense": 85,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 100,
+      "base_initiative": 93
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 138,
+    "fields": {
+      "name": "Pinsir",
+      "pokedex_number": 127,
+      "primary_type": 12,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 125,
+      "base_defense": 100,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 85
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 139,
+    "fields": {
+      "name": "Tauros",
+      "pokedex_number": 128,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 75,
+      "base_attack": 100,
+      "base_defense": 95,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 40,
+      "base_initiative": 110
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 140,
+    "fields": {
+      "name": "Magikarp",
+      "pokedex_number": 129,
+      "primary_type": 3,
+      "secondary_type": null,
+      "base_hp": 20,
+      "base_attack": 10,
+      "base_defense": 55,
+      "base_sp_defense": 20,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 15,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 141,
+    "fields": {
+      "name": "Gyarados",
+      "pokedex_number": 130,
+      "primary_type": 3,
+      "secondary_type": 10,
+      "base_hp": 95,
+      "base_attack": 125,
+      "base_defense": 79,
+      "base_sp_defense": 100,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 81
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 142,
+    "fields": {
+      "name": "Ditto",
+      "pokedex_number": 132,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 48,
+      "base_attack": 48,
+      "base_defense": 48,
+      "base_sp_defense": 48,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 48,
+      "base_initiative": 48
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 143,
+    "fields": {
+      "name": "Eevee",
+      "pokedex_number": 133,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 55,
+      "base_attack": 55,
+      "base_defense": 50,
+      "base_sp_defense": 65,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 45,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 144,
+    "fields": {
+      "name": "Porygon",
+      "pokedex_number": 137,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 65,
+      "base_attack": 60,
+      "base_defense": 70,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 85,
+      "base_initiative": 40
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 145,
+    "fields": {
+      "name": "Omanyte",
+      "pokedex_number": 138,
+      "primary_type": 13,
+      "secondary_type": 3,
+      "base_hp": 35,
+      "base_attack": 40,
+      "base_defense": 100,
+      "base_sp_defense": 55,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 90,
+      "base_initiative": 35
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 146,
+    "fields": {
+      "name": "Omastar",
+      "pokedex_number": 139,
+      "primary_type": 13,
+      "secondary_type": 3,
+      "base_hp": 70,
+      "base_attack": 60,
+      "base_defense": 125,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 115,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 147,
+    "fields": {
+      "name": "Kabuto",
+      "pokedex_number": 140,
+      "primary_type": 13,
+      "secondary_type": 3,
+      "base_hp": 30,
+      "base_attack": 80,
+      "base_defense": 90,
+      "base_sp_defense": 45,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 55,
+      "base_initiative": 55
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 148,
+    "fields": {
+      "name": "Kabutops",
+      "pokedex_number": 141,
+      "primary_type": 13,
+      "secondary_type": 3,
+      "base_hp": 60,
+      "base_attack": 115,
+      "base_defense": 105,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 80
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 149,
+    "fields": {
+      "name": "Aerodactyl",
+      "pokedex_number": 142,
+      "primary_type": 13,
+      "secondary_type": 10,
+      "base_hp": 80,
+      "base_attack": 105,
+      "base_defense": 65,
+      "base_sp_defense": 75,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 60,
+      "base_initiative": 130
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 150,
+    "fields": {
+      "name": "Snorlax",
+      "pokedex_number": 143,
+      "primary_type": 1,
+      "secondary_type": null,
+      "base_hp": 160,
+      "base_attack": 110,
+      "base_defense": 65,
+      "base_sp_defense": 110,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 65,
+      "base_initiative": 30
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 151,
+    "fields": {
+      "name": "Dratini",
+      "pokedex_number": 147,
+      "primary_type": 15,
+      "secondary_type": null,
+      "base_hp": 41,
+      "base_attack": 64,
+      "base_defense": 45,
+      "base_sp_defense": 50,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 50,
+      "base_initiative": 50
+    }
+  },
+  {
+    "model": "pokemon.pokemon",
+    "pk": 152,
+    "fields": {
+      "name": "Dragonair",
+      "pokedex_number": 148,
+      "primary_type": 15,
+      "secondary_type": null,
+      "base_hp": 61,
+      "base_attack": 84,
+      "base_defense": 65,
+      "base_sp_defense": 70,
+      "sprite_url": "",
+      "moves": [],
+      "base_ninjutsu": 70,
+      "base_initiative": 70
+    }
+  }
 ]

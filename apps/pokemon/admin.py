@@ -96,7 +96,7 @@ class BattleReadyFilter(admin.SimpleListFilter):
 class PokemonAdmin(admin.ModelAdmin):
     list_display = (
         "name", "primary_type", "secondary_type",
-        "base_hp", "base_speed", "primary_role", "battle_ready",
+        "base_hp", "base_initiative", "primary_role", "battle_ready",
     )
     list_filter = ("primary_type", "secondary_type", "generation_sources", "primary_role", BattleReadyFilter)
     search_fields = ("name",)

@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+{% block title %}Sticker Generator{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ──────────────────────────────────────────────── */
+.gen-wrap   { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+@media (max-width: 820px) { .gen-wrap { grid-template-columns: 1fr; } }
+
+/* ── Section label ───────────────────────────────────────── */
+.sec-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Panel card ──────────────────────────────────────────── */
+.panel {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Pokemon grid ────────────────────────────────────────── */
+.poke-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.35rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.poke-btn {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 7px;
+  padding: 0.35rem 0.4rem;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.12s, background 0.12s;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+.poke-btn:hover  { border-color: #374151; color: #9ca3af; }
+.poke-btn.active { background: #0f1f3d; border-color: #3b82f6; color: #93c5fd; }
+.poke-btn .dex   { font-family: monospace; font-size: 0.65rem; color: #374151; }
+
+/* ── Variant pills ───────────────────────────────────────── */
+.variant-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.variant-pill {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #1f2937;
+  background: #111827;
+  color: #4b5563;
+  transition: all 0.12s;
+}
+.variant-pill:hover  { border-color: #374151; color: #9ca3af; }
+.variant-pill.active { background: #0f1f3d; border-color: #3b82f6; color: #93c5fd; }
+
+/* ── Rarity selector ─────────────────────────────────────── */
+.rarity-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.rarity-pill {
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.12s;
+  opacity: 0.45;
+}
+.rarity-pill.active { opacity: 1; }
+.rp-common      { background: #1f2937; color: #9ca3af; border-color: #374151; }
+.rp-uncommon    { background: #052e16; color: #4ade80; border-color: #166534; }
+.rp-rare        { background: #0c1a3d; color: #60a5fa; border-color: #1d4ed8; }
+.rp-epic        { background: #1e1b4b; color: #a78bfa; border-color: #4c1d95; }
+.rp-holographic { background: #1c1400; color: #fbbf24; border-color: #92400e; }
+.rp-full_art    { background: #1c0a00; color: #f97316; border-color: #9a3412; }
+.rp-secret_rare { background: #1f0014; color: #f43f5e; border-color: #9f1239; }
+
+/* ── Preview card ────────────────────────────────────────── */
+.preview-card {
+  background: #111827;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid #1f2937;
+  position: relative;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.preview-card.r-common      { border-color: #374151; }
+.preview-card.r-uncommon    { border-color: #166534; box-shadow: 0 0 18px rgba(74,222,128,0.15); }
+.preview-card.r-rare        { border-color: #1d4ed8; box-shadow: 0 0 22px rgba(96,165,250,0.2); }
+.preview-card.r-epic        { border-color: #4c1d95; box-shadow: 0 0 26px rgba(167,139,250,0.25); }
+.preview-card.r-holographic { border-color: #92400e; box-shadow: 0 0 30px rgba(251,191,36,0.3); }
+.preview-card.r-full_art    { border-color: #9a3412; box-shadow: 0 0 30px rgba(249,115,22,0.25); }
+.preview-card.r-secret_rare { border-color: #9f1239; box-shadow: 0 0 35px rgba(244,63,94,0.3); }
+
+/* Holographic shimmer */
+@keyframes holo-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.holo-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 20%, rgba(251,191,36,0.08) 40%, rgba(167,139,250,0.08) 60%, transparent 80%);
+  background-size: 300% 300%;
+  animation: holo-shift 3s ease infinite;
+  pointer-events: none;
+}
+
+/* ── Sticker image wrapper ───────────────────────────────── */
+.sticker-img-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0f1a;
+  position: relative;
+  overflow: hidden;
+}
+.sticker-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sticker-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0f1a;
+  z-index: 2;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid #1e2235;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+/* ── Card footer ─────────────────────────────────────────── */
+.card-footer {
+  padding: 0.75rem 1rem;
+  background: #0d0f1a;
+  border-top: 1px solid #1f2937;
+}
+.card-poke-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.1rem; }
+.card-meta      { font-size: 0.7rem; color: #4b5563; }
+
+/* ── All-variants grid ───────────────────────────────────── */
+.variants-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+}
+.mini-card {
+  background: #0d0f1a;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.mini-card:hover { border-color: #374151; }
+.mini-card.active { border-color: #3b82f6; }
+.mini-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.mini-card-label { font-size: 0.6rem; color: #4b5563; text-align: center; padding: 2px 0 4px; }
+.mini-loader {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #0d0f1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mini-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid #1e2235;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+/* ── Prompt box ──────────────────────────────────────────── */
+.prompt-box {
+  background: #080c16;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.72rem;
+  color: #374151;
+  font-family: monospace;
+  line-height: 1.6;
+  word-break: break-all;
+}
+.prompt-label { font-size: 0.65rem; color: #1e3a6e; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.3rem; }
+
+/* ── Copy button ─────────────────────────────────────────── */
+.copy-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: #16213e; border: 1px solid #1e3a6e; border-radius: 7px;
+  padding: 0.35rem 0.75rem; font-size: 0.72rem; color: #6b7280;
+  cursor: pointer; transition: all 0.15s;
+}
+.copy-btn:hover { border-color: #3b82f6; color: #93c5fd; }
+.copy-btn.copied { border-color: #166534; color: #4ade80; }
+
+/* ── Rate limit notice ───────────────────────────────────── */
+.rate-notice {
+  background: #1c1400;
+  border: 1px solid #92400e44;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.72rem;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+/* ── Info table ──────────────────────────────────────────── */
+.info-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.info-table th { text-align: left; padding: 0.35rem 0.6rem; color: #4b5563; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #1f2937; }
+.info-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #111827; }
+.info-table tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;">
+  <div>
+    <h2 style="margin:0;font-size:1.4rem;font-weight:800;">&#9733; Sticker Generator</h2>
+    <p style="margin:0.25rem 0 0;font-size:0.78rem;color:#4b5563;">AI-generated previews via Pollinations.ai — free, no API key, Naruto-online theme</p>
+  </div>
+  <div style="display:flex;gap:0.5rem;">
+    <a href="{% url 'stickers:workshop' %}" class="btn btn-secondary btn-sm">&#9878; Workshop</a>
+    <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">&larr; My Collection</a>
+  </div>
+</div>
+
+<div x-data="stickerGen()" x-init="init()" class="gen-wrap">
+
+  <!-- ── LEFT COLUMN: controls ──────────────────────────────────────── -->
+  <div>
+
+    <!-- API Key -->
+    <div class="panel" :style="apiKey ? 'border-color:#166534;' : 'border-color:#9a3412;'">
+      <div class="sec-label">&#128273; Pollinations.ai API Key</div>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <input
+          type="password"
+          x-model="apiKey"
+          placeholder="pk_... or sk_... (get free at enter.pollinations.ai)"
+          style="flex:1;background:#0d0f1a;border:1px solid #1e3a6e;border-radius:8px;padding:0.5rem 0.75rem;color:#f1f5f9;font-size:0.82rem;"
+          @change="saveKey()"
+        >
+        <button @click="saveKey()" class="copy-btn" :class="apiKey ? 'copied' : ''">
+          <span x-text="apiKey ? '✓ Saved' : 'Save'"></span>
+        </button>
+      </div>
+      <div style="font-size:0.68rem;color:#4b5563;margin-top:0.4rem;line-height:1.6;">
+        Use a <strong style="color:#9ca3af;">Publishable key (pk_)</strong> for browser previews here.
+        Use a <strong style="color:#9ca3af;">Secret key (sk_)</strong> for the management command.
+        Key is stored in your browser only — never sent to this server.
+        <a href="https://enter.pollinations.ai" target="_blank" style="color:#3b82f6;">Get free key ↗</a>
+      </div>
+    </div>
+
+    <!-- Pokemon picker -->
+    <div class="panel">
+      <div class="sec-label">&#9670; Choose Pokémon</div>
+      <input
+        type="text"
+        x-model="search"
+        placeholder="Search by name..."
+        style="width:100%;background:#0d0f1a;border:1px solid #1e3a6e;border-radius:8px;padding:0.5rem 0.75rem;color:#f1f5f9;font-size:0.82rem;margin-bottom:0.75rem;"
+      >
+      <div class="poke-grid">
+        <template x-for="p in filteredPokemon" :key="p.id">
+          <button
+            class="poke-btn"
+            :class="{ active: selected && selected.id === p.id }"
+            @click="selectPokemon(p)"
+          >
+            <div class="dex" x-text="'#' + String(p.dex).padStart(3,'0')"></div>
+            <div x-text="p.name"></div>
+            <div style="font-size:0.6rem;color:#374151;margin-top:1px;" x-text="p.chakra || p.type"></div>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Variant picker -->
+    <div class="panel">
+      <div class="sec-label">&#9671; Sticker Variant</div>
+      <div class="variant-grid">
+        <template x-for="v in variants" :key="v.id">
+          <button
+            class="variant-pill"
+            :class="{ active: variant === v.id }"
+            @click="variant = v.id; refreshMain()"
+          >
+            <span x-text="v.icon + ' ' + v.label"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Rarity picker -->
+    <div class="panel">
+      <div class="sec-label">&#9670; Rarity Frame</div>
+      <div class="rarity-grid">
+        <template x-for="r in rarities" :key="r.id">
+          <button
+            class="rarity-pill"
+            :class="['rp-' + r.id, { active: rarity === r.id }]"
+            @click="rarity = r.id"
+          >
+            <span x-text="r.badge + ' ' + r.label"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- All-variants mini grid -->
+    <div class="panel" x-show="selected">
+      <div class="sec-label">&#9671; All Variants — <span x-text="selected?.name"></span></div>
+      <div class="variants-mini-grid">
+        <template x-for="v in variants" :key="v.id">
+          <div
+            class="mini-card"
+            :class="{ active: variant === v.id }"
+            @click="variant = v.id; refreshMain()"
+          >
+            <template x-if="miniLoaded[v.id] === false">
+              <div class="mini-loader"><div class="mini-spinner"></div></div>
+            </template>
+            <img
+              :src="miniUrl(v.id)"
+              :alt="v.label"
+              loading="lazy"
+              style="display:block;"
+              :style="miniLoaded[v.id] ? 'opacity:1' : 'opacity:0;position:absolute'"
+              @load="miniLoaded[v.id] = true"
+              @error="miniLoaded[v.id] = 'err'"
+            >
+            <div class="mini-card-label" x-text="v.label"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- How it works info -->
+    <div class="panel">
+      <div class="sec-label">&#8505; How It Works</div>
+      <table class="info-table">
+        <thead><tr><th>Variant</th><th>Prompt Style</th><th>Best Rarity</th></tr></thead>
+        <tbody>
+          <template x-for="v in variants" :key="v.id">
+            <tr>
+              <td style="color:#9ca3af;font-weight:600;" x-text="v.icon + ' ' + v.label"></td>
+              <td style="color:#4b5563;" x-text="v.style"></td>
+              <td x-html="v.bestRarity"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <div class="rate-notice" style="margin-top:0.75rem;">
+        &#9888; Pollinations.ai rate limit: 1 image/15s (anonymous) or 1/5s (free signup).
+        Images with the same <code>seed</code> are cached — the same Pokémon always returns the same art.
+        For production, pre-generate once and host on GitHub Releases or Cloudflare R2 (free 10 GB).
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT COLUMN: preview ──────────────────────────────────────── -->
+  <div>
+
+    <!-- Main preview card -->
+    <div class="preview-card" :class="'r-' + rarity" x-show="selected">
+      <!-- Holographic shimmer overlay -->
+      <template x-if="rarity === 'holographic' || rarity === 'secret_rare'">
+        <div class="holo-shimmer"></div>
+      </template>
+
+      <!-- Image -->
+      <div class="sticker-img-wrap">
+        <div class="sticker-loader" x-show="!mainLoaded">
+          <div>
+            <div class="spinner" style="margin:0 auto 0.5rem;"></div>
+            <div style="font-size:0.7rem;color:#374151;text-align:center;">Generating...</div>
+          </div>
+        </div>
+        <img
+          :src="mainUrl"
+          :alt="selected?.name"
+          x-show="mainLoaded"
+          @load="mainLoaded = true"
+          @error="mainLoaded = true"
+        >
+      </div>
+
+      <!-- Card footer -->
+      <div class="card-footer">
+        <div class="card-poke-name" x-text="selected?.name"></div>
+        <div class="card-meta">
+          <span x-text="variantLabel"></span> &nbsp;·&nbsp;
+          <span x-text="rarityLabel"></span>
+          <template x-if="selected?.chakra">
+            &nbsp;·&nbsp; <span x-text="selected.chakra + ' chakra'"></span>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="!selected" style="background:#111827;border:2px dashed #1f2937;border-radius:14px;padding:3rem 1rem;text-align:center;color:#374151;font-size:0.85rem;">
+      &#8592; Select a Pokémon to preview
+    </div>
+
+    <!-- Prompt box -->
+    <div class="panel" style="margin-top:1rem;" x-show="selected">
+      <div class="prompt-label">PROMPT SENT TO POLLINATIONS.AI</div>
+      <div class="prompt-box" x-text="currentPrompt"></div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap;">
+        <button class="copy-btn" :class="{ copied: copied === 'url' }" @click="copyText(mainUrl, 'url')">
+          <span x-text="copied === 'url' ? '✓ Copied!' : '&#128279; Copy URL'"></span>
+        </button>
+        <button class="copy-btn" :class="{ copied: copied === 'prompt' }" @click="copyText(currentPrompt, 'prompt')">
+          <span x-text="copied === 'prompt' ? '✓ Copied!' : '&#128203; Copy Prompt'"></span>
+        </button>
+        <a :href="mainUrl" target="_blank" class="copy-btn">&#8599; Open Full Size</a>
+      </div>
+    </div>
+
+    <!-- Seed note -->
+    <div class="panel" x-show="selected">
+      <div class="sec-label">&#128273; Seed = Deterministic Art</div>
+      <p style="font-size:0.78rem;color:#4b5563;margin:0 0 0.5rem;line-height:1.6;">
+        Each Pokémon uses its Pokédex number as the image seed.
+        <strong style="color:#9ca3af;">Same seed → same image every time</strong>, even across sessions.
+        No need to store images during development.
+      </p>
+      <div style="font-family:monospace;font-size:0.7rem;color:#374151;background:#080c16;border-radius:6px;padding:0.5rem 0.75rem;" x-text="'seed=' + (selected?.dex || '???')"></div>
+    </div>
+
+  </div><!-- end right column -->
+</div><!-- end x-data -->
+
+<script>
+// ── Pokémon data from Django ────────────────────────────────────────────────
+const POKEMON_DATA = [
+  {% for p in pokemon_list %}
+  {
+    id: {{ p.pk }},
+    name: "{{ p.name|escapejs }}",
+    dex: {{ p.pokedex_number }},
+    type: "{{ p.primary_type__name|default:'' }}",
+    chakra: "{{ p.primary_type__chakra_element__name|default:'' }}"
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+// ── Pollinations.ai base URL (2026 endpoint) ───────────────────────────────
+const BASE_URL = "https://gen.pollinations.ai/image/";
+
+// ── Prompt templates (Naruto-online + chakra ninja theme) ──────────────────
+// Each uses: name, chakraElement, pokemonType
+const VARIANT_PROMPTS = {
+  base: (name, chakra, type) =>
+    `${name} pokemon, ninja shinobi battle card art, ${chakra || type} chakra aura, Naruto online game style, clean character illustration, dramatic lighting, collectible card art, detailed`,
+
+  shiny: (name, chakra, type) =>
+    `${name} pokemon shiny variant, glowing ${chakra || type} chakra energy, golden divine aura, Naruto online legendary card, iridescent colors, bright divine radiance, premium foil illustration`,
+
+  battle_scene: (name, chakra, type) =>
+    `${name} pokemon action battle pose, ${chakra || type} chakra explosion, Naruto shinobi battle scene, dynamic energy effects, fierce expression, anime battle background, epic fantasy`,
+
+  chibi: (name, chakra, type) =>
+    `cute chibi ${name} pokemon, tiny ninja shinobi outfit, ${chakra || type} element symbol, kawaii sticker art, thick white outline, pastel colors, simple flat background, adorable`,
+
+  manga_panel: (name, chakra, type) =>
+    `${name} pokemon manga panel art, black ink lines, dramatic screentone shading, Naruto manga style, speed lines, intense expression, ${chakra || type} chakra marks, white background`,
+
+  full_illustration: (name, chakra, type) =>
+    `${name} pokemon full art card illustration, ${chakra || type} chakra landscape background, Naruto online premium artwork, lush detailed environment, painted style, wide angle, epic scene`,
+
+  anime: (name, chakra, type) =>
+    `${name} pokemon anime screenshot style, Naruto shippuden animation quality, ${chakra || type} chakra glow, cel shading, clean outlines, vibrant colors, anime broadcast style`,
+};
+
+// ── Variant metadata ────────────────────────────────────────────────────────
+const VARIANTS = [
+  { id:"base",              label:"Base",            icon:"⚡", style:"Ninja card art",        bestRarity:"<span style='color:#9ca3af'>Common / Uncommon</span>" },
+  { id:"shiny",             label:"Shiny",           icon:"✨", style:"Divine golden aura",     bestRarity:"<span style='color:#fbbf24'>Holographic</span>" },
+  { id:"battle_scene",      label:"Battle Scene",    icon:"⚔", style:"Action chakra explosion", bestRarity:"<span style='color:#60a5fa'>Rare / Epic</span>" },
+  { id:"chibi",             label:"Chibi",           icon:"🎀", style:"Kawaii sticker art",      bestRarity:"<span style='color:#9ca3af'>Common</span>" },
+  { id:"manga_panel",       label:"Manga Panel",     icon:"📖", style:"Ink + screentone",        bestRarity:"<span style='color:#a78bfa'>Epic</span>" },
+  { id:"full_illustration", label:"Full Art",        icon:"🖼", style:"Painted landscape",       bestRarity:"<span style='color:#f97316'>Full Art</span>" },
+  { id:"anime",             label:"Anime",           icon:"📺", style:"Cel-shaded broadcast",    bestRarity:"<span style='color:#f43f5e'>Secret Rare</span>" },
+];
+
+const RARITIES = [
+  { id:"common",      label:"Common",      badge:"○" },
+  { id:"uncommon",    label:"Uncommon",    badge:"◆" },
+  { id:"rare",        label:"Rare",        badge:"★" },
+  { id:"epic",        label:"Epic",        badge:"✦" },
+  { id:"holographic", label:"Holographic", badge:"◈" },
+  { id:"full_art",    label:"Full Art",    badge:"⬡" },
+  { id:"secret_rare", label:"Secret Rare", badge:"❋" },
+];
+
+// ── Alpine.js component ─────────────────────────────────────────────────────
+function stickerGen() {
+  return {
+    search: "",
+    pokemon: POKEMON_DATA,
+    selected: null,
+    variant: "base",
+    rarity: "common",
+    variants: VARIANTS,
+    rarities: RARITIES,
+    mainUrl: "",
+    mainLoaded: false,
+    currentPrompt: "",
+    miniLoaded: {},
+    copied: null,
+    apiKey: localStorage.getItem("pollinations_pk") || "",
+
+    init() {
+      if (this.pokemon.length) this.selectPokemon(this.pokemon[0]);
+    },
+
+    saveKey() {
+      localStorage.setItem("pollinations_pk", this.apiKey);
+      this.refreshMain();
+    },
+
+    get filteredPokemon() {
+      const q = this.search.toLowerCase();
+      return q ? this.pokemon.filter(p => p.name.toLowerCase().includes(q)) : this.pokemon;
+    },
+
+    get variantLabel() {
+      return VARIANTS.find(v => v.id === this.variant)?.label || this.variant;
+    },
+    get rarityLabel() {
+      return RARITIES.find(r => r.id === this.rarity)?.label || this.rarity;
+    },
+
+    selectPokemon(p) {
+      this.selected = p;
+      this.miniLoaded = {};
+      this.refreshMain();
+    },
+
+    buildUrl(variantId, size = 512) {
+      if (!this.selected) return "";
+      const p   = this.selected;
+      const fn  = VARIANT_PROMPTS[variantId] || VARIANT_PROMPTS.base;
+      const prompt = fn(p.name, p.chakra, p.type);
+      this.currentPrompt = prompt;
+      const key = this.apiKey ? `&token=${encodeURIComponent(this.apiKey)}` : "";
+      return BASE_URL + encodeURIComponent(prompt) +
+        `?width=${size}&height=${size}&seed=${p.dex}&model=flux&nologo=true${key}`;
+    },
+
+    miniUrl(variantId) {
+      if (!this.selected) return "";
+      const p   = this.selected;
+      const fn  = VARIANT_PROMPTS[variantId] || VARIANT_PROMPTS.base;
+      const prompt = fn(p.name, p.chakra, p.type);
+      const key = this.apiKey ? `&token=${encodeURIComponent(this.apiKey)}` : "";
+      return BASE_URL + encodeURIComponent(prompt) +
+        `?width=120&height=120&seed=${p.dex}&model=flux&nologo=true${key}`;
+    },
+
+    refreshMain() {
+      this.mainLoaded = false;
+      this.mainUrl = this.buildUrl(this.variant, 512);
+    },
+
+    copyText(text, key) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.copied = key;
+        setTimeout(() => { this.copied = null; }, 2000);
+      });
+    },
+  };
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% block title %}Combo Chain Atlas{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero ─────────────────────────────────────────────────────── */
+.atlas-hero {
+  background: radial-gradient(ellipse at 60% 0%, #0f3460 0%, #1a1a2e 65%);
+  border-bottom: 1px solid #0f3460;
+  padding: 2rem 0 1.5rem;
+  text-align: center;
+  margin-bottom: 0;
+}
+.atlas-hero h1 { font-size: clamp(1.6rem,4vw,2.4rem); font-weight:800; margin:0 0 0.4rem; }
+.atlas-hero p  { color:#9ca3af; font-size:0.9rem; margin:0; }
+.atlas-stats { display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-top:0.75rem; }
+.atlas-stat  { background:#0f3460; border-radius:6px; padding:3px 12px; font-size:0.78rem; font-weight:700; color:#fbbf24; }
+.atlas-stat.green { color:#4ade80; }
+.atlas-stat.red   { color:#f87171; }
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.atlas-wrap { max-width: 1060px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+
+/* ── Filter bar ───────────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #1e3a6e;
+  margin-bottom: 1.2rem;
+  position: sticky;
+  top: 0;
+  background: #0d1117;
+  z-index: 10;
+}
+.filter-label { font-size: 0.7rem; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.filter-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+  background: rgba(30,58,110,0.4);
+  color: #94a3b8;
+}
+.filter-chip:hover { background: rgba(30,58,110,0.7); }
+.filter-chip.active { color: #fff; }
+.chip-all.active         { border-color:#6b7280; background:#374151; }
+.chip-burned.active      { border-color:#fca5a5; background:#7f1d1d; color:#fca5a5; }
+.chip-paralyzed.active   { border-color:#fcd34d; background:#78350f; color:#fcd34d; }
+.chip-poisoned.active    { border-color:#e879f9; background:#3b0764; color:#e879f9; }
+.chip-frozen.active      { border-color:#a5f3fc; background:#164e63; color:#a5f3fc; }
+.chip-confused.active    { border-color:#f0abfc; background:#4a044e; color:#f0abfc; }
+.chip-bound.active       { border-color:#d6d3d1; background:#1c1917; color:#d6d3d1; }
+.chip-asleep.active      { border-color:#a5b4fc; background:#1e1b4b; color:#a5b4fc; }
+
+.role-toggle { display:flex; gap:0.3rem; margin-left: auto; }
+.role-btn {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border: 1px solid #1e3a6e;
+  cursor: pointer;
+  background: transparent;
+  color: #6b7280;
+  transition: all 0.12s;
+}
+.role-btn.active { background: #1e3a6e; color: #e2e8f0; }
+
+/* ── Chain block ──────────────────────────────────────────────── */
+.chain-block {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+.chain-block.hidden { display: none; }
+
+.chain-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.1rem;
+  background: #1a2744;
+  border-bottom: 1px solid #0f3460;
+  cursor: pointer;
+  user-select: none;
+}
+.chain-header:hover { background: #1e2f50; }
+.chain-collapse-icon { margin-left: auto; color: #4b5563; font-size: 0.8rem; transition: transform 0.2s; }
+.chain-block.collapsed .chain-collapse-icon { transform: rotate(-90deg); }
+.chain-block.collapsed .chain-grid { display: none; }
+
+.status-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.status-burned    { background:#7f1d1d; color:#fca5a5; }
+.status-paralyzed { background:#78350f; color:#fcd34d; }
+.status-poisoned  { background:#3b0764; color:#e879f9; }
+.status-frozen    { background:#164e63; color:#a5f3fc; }
+.status-confused  { background:#4a044e; color:#f0abfc; }
+.status-bound     { background:#1c1917; color:#d6d3d1; }
+.status-flinched  { background:#292524; color:#d6d3d1; }
+.status-asleep    { background:#1e1b4b; color:#a5b4fc; }
+
+.chain-meta { font-size: 0.78rem; color: #6b7280; }
+.chain-meta .primer-count { color: #4ade80; font-weight: 700; }
+.chain-meta .chaser-count { color: #fbbf24; font-weight: 700; }
+
+/* ── Chain grid ───────────────────────────────────────────────── */
+.chain-grid {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr;
+  gap: 0;
+}
+.chain-col-header {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.9rem 0.35rem;
+  color: #6b7280;
+  border-bottom: 1px solid #0f3460;
+}
+.chain-col-header.primers { color: #4ade80; }
+.chain-col-header.chasers { color: #fbbf24; }
+.chain-arrow-header {
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 1px solid #0f3460; color: #374151; font-size: 1rem;
+}
+.chain-entries { padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.chain-entries.primers-col { display: var(--show-primers, flex); }
+.chain-entries.chasers-col { display: var(--show-chasers, flex); }
+.chain-arrow-col {
+  display: flex; align-items: center; justify-content: center;
+  color: #e94560; font-size: 1.1rem; padding: 0.5rem 0;
+}
+.entry-card {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.78rem;
+  text-decoration: none;
+  display: block;
+  color: #f1f5f9;
+  transition: border-color 0.12s;
+}
+.entry-card:hover { border-color: #e94560; color: #f1f5f9; }
+.entry-species { font-weight: 700; margin-bottom: 2px; }
+.entry-move    { font-size: 0.7rem; color: #9ca3af; }
+.entry-power   { font-size: 0.65rem; color: #6b7280; margin-left: 4px; }
+.entry-condition {
+  font-size: 0.6rem; color: #6b7280; font-style: italic;
+  border: 1px solid #1e3a6e; border-radius: 3px;
+  padding: 1px 4px; margin-left: 4px; display: inline-block;
+}
+.entry-slot {
+  font-size: 0.6rem; border-radius: 3px; padding: 1px 4px;
+  margin-left: 4px; display: inline-block;
+}
+.slot-mystery  { background:#1e1b4b; color:#a5b4fc; }
+.slot-passive_1, .slot-passive_2 { background:#1c1917; color:#a8a29e; }
+.slot-standard { background:#14532d; color:#86efac; }
+
+/* ── Type pips ────────────────────────────────────────────────── */
+.type-pip {
+  display: inline-block; font-size: 0.58rem; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px; text-transform: uppercase;
+  vertical-align: middle; margin-left: 3px;
+}
+.type-fire    { background:#7f1d1d; color:#fca5a5; }
+.type-water   { background:#1e3a5f; color:#93c5fd; }
+.type-grass   { background:#14532d; color:#86efac; }
+.type-electric{ background:#78350f; color:#fcd34d; }
+.type-psychic { background:#4a044e; color:#f0abfc; }
+.type-dragon  { background:#1e1b4b; color:#a5b4fc; }
+.type-ice     { background:#164e63; color:#a5f3fc; }
+.type-ghost   { background:#2d1b69; color:#c4b5fd; }
+.type-dark    { background:#1c1917; color:#a8a29e; }
+.type-steel   { background:#374151; color:#d1d5db; }
+.type-poison  { background:#3b0764; color:#e879f9; }
+.type-fighting{ background:#7c2d12; color:#fdba74; }
+.type-rock    { background:#292524; color:#d6d3d1; }
+.type-ground  { background:#451a03; color:#fcd34d; }
+.type-flying  { background:#1e1b4b; color:#c7d2fe; }
+.type-bug     { background:#1a2e05; color:#bef264; }
+.type-normal  { background:#374151; color:#f3f4f6; }
+.type-fairy   { background:#500724; color:#fda4af; }
+
+/* ── Missing moves section ────────────────────────────────────── */
+.gap-section {
+  margin-top: 2.5rem;
+  border-top: 1px solid #1e3a6e;
+  padding-top: 1.5rem;
+}
+.gap-section-title {
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #6b7280; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.gap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.6rem;
+}
+.gap-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  display: flex; flex-direction: column; gap: 0.25rem;
+}
+.gap-card-name { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; }
+.gap-card-counts { display: flex; gap: 0.5rem; }
+.gap-count { font-size: 0.65rem; font-weight: 700; border-radius: 4px; padding: 2px 7px; }
+.gap-count.ok    { background:#14532d; color:#86efac; }
+.gap-count.zero  { background:#292524; color:#9ca3af; }
+.gap-count.need  { background:#7c2d12; color:#fdba74; }
+.gap-card-note { font-size: 0.68rem; color: #6b7280; line-height: 1.4; }
+
+.empty-state { color: #4b5563; font-size: 0.82rem; font-style: italic; padding: 0.4rem 0.8rem 0.6rem; }
+
+@media (max-width: 600px) {
+  .chain-grid { grid-template-columns: 1fr; }
+  .chain-arrow-header, .chain-arrow-col { display: none; }
+  .role-toggle { margin-left: 0; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="atlas-hero">
+  <h1>&#9889; Combo Chain Atlas</h1>
+  <p>Which Pokémon prime statuses — and which ones chain off them for bonus damage.</p>
+  <div style="margin-top:0.6rem;">
+    <a href="{% url 'pokemon:combo_simulator' %}" style="display:inline-block;background:#1d4ed8;color:#fff;border-radius:7px;padding:5px 16px;font-size:0.78rem;font-weight:700;text-decoration:none;">&#9889; Open Team Simulator</a>
+  </div>
+  <div class="atlas-stats">
+    <span class="atlas-stat green">{{ active_status_count }} active status{{ active_status_count|pluralize:"es" }}</span>
+    <span class="atlas-stat">{{ total_links }} possible combo link{{ total_links|pluralize }}</span>
+    <span class="atlas-stat red">{{ planned_statuses|length }} status{{ planned_statuses|length|pluralize:"es" }} need moves</span>
+  </div>
+</div>
+
+<div class="atlas-wrap" id="atlas-app">
+
+  {# ── Sticky filter bar ──────────────────────────────────────── #}
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-chip chip-all active" onclick="filterStatus('all', this)">All</button>
+    {% for chain in combo_chains %}
+    <button class="filter-chip chip-{{ chain.key }}" onclick="filterStatus('{{ chain.key }}', this)">{{ chain.status }}</button>
+    {% endfor %}
+    <div class="role-toggle">
+      <button class="role-btn active" id="btn-primers" onclick="toggleRole('primers')">Causers</button>
+      <button class="role-btn active" id="btn-chasers" onclick="toggleRole('chasers')">Chasers</button>
+    </div>
+  </div>
+
+  {# ── Chain blocks ───────────────────────────────────────────── #}
+  {% if not combo_chains %}
+    <div style="text-align:center;padding:3rem;color:#6b7280;">
+      No combo chains configured yet. Run <code>python manage.py fix_combo_triggers</code> to set up trigger statuses.
+    </div>
+  {% endif %}
+
+  {% for chain in combo_chains %}
+  <div class="chain-block" data-status="{{ chain.key }}" id="chain-{{ chain.key }}">
+    <div class="chain-header" onclick="toggleCollapse(this)">
+      <span class="status-badge status-{{ chain.key }}">{{ chain.status }}</span>
+      <span class="chain-meta">
+        <span class="primer-count">{{ chain.primers|length }} causer{{ chain.primers|length|pluralize }}</span>
+        &rarr;
+        <span class="chaser-count">{{ chain.chasers|length }} chaser{{ chain.chasers|length|pluralize }}</span>
+      </span>
+      <span class="chain-collapse-icon">&#9660;</span>
+    </div>
+    <div class="chain-grid">
+      <div class="chain-col-header primers">&#9654; Causes {{ chain.status }}</div>
+      <div class="chain-arrow-header">&rarr;</div>
+      <div class="chain-col-header chasers">&#9889; Chains on {{ chain.status }}</div>
+
+      <div class="chain-entries primers-col">
+        {% for p in chain.primers %}
+          <a href="{% url 'pokemon:detail' p.species.pk %}" class="entry-card">
+            <div class="entry-species">{{ p.species.name }}</div>
+            <div class="entry-move">
+              {{ p.move_name }}
+              {% if p.move_type %}<span class="type-pip type-{{ p.move_type.name|lower }}">{{ p.move_type.name }}</span>{% endif %}
+              {% if p.slot == 'mystery' %}<span class="entry-slot slot-mystery">Mystery</span>
+              {% elif p.slot == 'passive_1' or p.slot == 'passive_2' %}<span class="entry-slot slot-passive_1">Passive</span>
+              {% endif %}
+              {% if p.power > 0 %}<span class="entry-power">PWR {{ p.power }}</span>{% endif %}
+            </div>
+          </a>
+        {% empty %}
+          <div class="empty-state">No causers yet</div>
+        {% endfor %}
+      </div>
+
+      <div class="chain-arrow-col">&#8594;</div>
+
+      <div class="chain-entries chasers-col">
+        {% for c in chain.chasers %}
+          <a href="{% url 'pokemon:detail' c.species.pk %}" class="entry-card">
+            <div class="entry-species">{{ c.species.name }}</div>
+            <div class="entry-move">
+              {{ c.move_name }}
+              {% if c.move_type %}<span class="type-pip type-{{ c.move_type.name|lower }}">{{ c.move_type.name }}</span>{% endif %}
+              {% if c.condition %}<span class="entry-condition">req: {{ c.condition }}</span>{% endif %}
+              {% if c.power > 0 %}<span class="entry-power">PWR {{ c.power }}</span>{% endif %}
+            </div>
+          </a>
+        {% empty %}
+          <div class="empty-state">No chasers yet</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {# ── Missing moves roadmap ──────────────────────────────────── #}
+  <div class="gap-section">
+    <div class="gap-section-title">
+      &#9888; Move Gaps — Statuses Needing Work
+      <span style="font-weight:400;color:#4b5563;">({{ planned_statuses|length }} statuses incomplete)</span>
+    </div>
+    <div class="gap-grid">
+      {% for s in planned_statuses %}
+      <div class="gap-card">
+        <div class="gap-card-name">{{ s.name }}</div>
+        <div class="gap-card-counts">
+          <span class="gap-count {% if s.primers > 0 %}ok{% elif s.gap == 'primers' or s.gap == 'both' %}need{% else %}zero{% endif %}">
+            {{ s.primers }} causer{{ s.primers|pluralize }}
+          </span>
+          <span class="gap-count {% if s.chasers > 0 %}ok{% elif s.gap == 'chasers' or s.gap == 'both' %}need{% else %}zero{% endif %}">
+            {{ s.chasers }} chaser{{ s.chasers|pluralize }}
+          </span>
+        </div>
+        <div class="gap-card-note">{{ s.note }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+let activeStatus = 'all';
+let showPrimers = true;
+let showChasers = true;
+
+function filterStatus(key, btn) {
+  activeStatus = key;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function toggleRole(role) {
+  if (role === 'primers') {
+    showPrimers = !showPrimers;
+    document.getElementById('btn-primers').classList.toggle('active', showPrimers);
+  } else {
+    showChasers = !showChasers;
+    document.getElementById('btn-chasers').classList.toggle('active', showChasers);
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.chain-block').forEach(block => {
+    const statusMatch = activeStatus === 'all' || block.dataset.status === activeStatus;
+    block.classList.toggle('hidden', !statusMatch);
+  });
+  document.querySelectorAll('.primers-col').forEach(el => {
+    el.style.display = showPrimers ? 'flex' : 'none';
+  });
+  document.querySelectorAll('.chasers-col').forEach(el => {
+    el.style.display = showChasers ? 'flex' : 'none';
+  });
+  // hide arrow cols when one side is hidden
+  document.querySelectorAll('.chain-arrow-col, .chain-arrow-header').forEach(el => {
+    el.style.display = (showPrimers && showChasers) ? '' : 'none';
+  });
+  // adjust grid columns
+  document.querySelectorAll('.chain-grid').forEach(el => {
+    if (!showPrimers || !showChasers) {
+      el.style.gridTemplateColumns = '1fr';
+    } else {
+      el.style.gridTemplateColumns = '1fr 40px 1fr';
+    }
+  });
+}
+
+function toggleCollapse(header) {
+  header.closest('.chain-block').classList.toggle('collapsed');
+}
+
+// Collapse all on load, expand on filter
+document.addEventListener('DOMContentLoaded', () => {
+  // Start expanded — user can collapse individually
+});
+</script>
+{% endblock %}

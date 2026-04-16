@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 SLOT_FIELD_MAP: dict[str, str] = {
     "standard": "move_standard",
     "chase": "move_chase",
-    "special": "move_special",
-    "support": "move_support",
-    "passive": "move_passive",
+    "mystery": "move_special",
+    "passive_1": "move_support",
+    "passive_2": "move_passive",
 }
 
 

@@ -158,6 +158,112 @@
     font-style: italic;
   }
 
+  /* ── combo synergy section ── */
+  .synergy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.65rem;
+  }
+  .synergy-card {
+    display: block;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .synergy-primer {
+    background: #1a1a2e;
+    border-color: #7c3aed44;
+  }
+  .synergy-primer:hover { border-color: #7c3aed; }
+  .synergy-chaser {
+    background: #1a1a2e;
+    border-color: #b4530944;
+  }
+  .synergy-chaser:hover { border-color: #f59e0b; }
+  .synergy-role-tag {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .synergy-primer .synergy-role-tag { color: #a78bfa; }
+  .synergy-chaser .synergy-role-tag { color: #fbbf24; }
+  .synergy-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #f1f5f9;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+  }
+  .synergy-detail {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    line-height: 1.4;
+  }
+
+  /* ── passive / chase card variants ── */
+  .move-card-passive { border-color: #7c3aed44; background: #1a1a2e; }
+  .move-card-passive:hover { border-color: #7c3aed; }
+  .move-card-chase { border-color: #b45309aa; background: #1a1a2e; }
+  .move-card-chase:hover { border-color: #f59e0b; }
+
+  .slot-auto-tag {
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: #7c3aed;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  .slot-chase-tag {
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: #b45309;
+    color: #fde68a;
+    border-radius: 3px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  .passive-trigger-hint {
+    font-size: 0.72rem;
+    color: #a78bfa;
+    margin: 4px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .passive-icon { font-size: 0.7rem; color: #7c3aed; }
+
+  .chase-trigger-hint {
+    font-size: 0.72rem;
+    color: #fbbf24;
+    margin: 4px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chain-icon { font-size: 0.75rem; color: #f59e0b; }
+
+  .combo-prime-hint {
+    font-size: 0.72rem;
+    color: #86efac;
+    margin: 4px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .prime-icon { font-size: 0.7rem; color: #4ade80; }
+
   /* type pill colours (reused from pokemon_detail.html) */
   .type-Fire     { background:#b22222;color:#fff; }
   .type-Water    { background:#1e90ff;color:#fff; }
@@ -186,7 +292,10 @@
 
 <!-- ── HERO ── -->
 <div class="detail-hero">
-  {% if owned.species.sprite_url %}
+  {% if owned.species.pokedex_number %}
+    <img src="/media/pokemon/sprites/{{ owned.species.pokedex_number|stringformat:'03d' }}.png"
+         alt="{{ owned.species.name }}">
+  {% elif owned.species.sprite_url %}
     <img src="{{ owned.species.sprite_url }}" alt="{{ owned.species.name }}">
   {% else %}
     <div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;
@@ -245,13 +354,43 @@
   {% endfor %}
 </div>
 
+<!-- ── COMBO SYNERGY ── -->
+{% if pairing_hints %}
+<div class="panel" style="margin-bottom:1rem;">
+  <div class="panel-title">&#9889; Combo Synergy — Recommended Partners</div>
+  <div class="synergy-grid">
+    {% for hint in pairing_hints %}
+      <a href="{% url 'pokemon:detail' hint.partner.pk %}" class="synergy-card synergy-{{ hint.role }}">
+        <div class="synergy-role-tag">
+          {% if hint.role == 'primer' %}You prime &rarr; they chain{% else %}They prime &rarr; you chain{% endif %}
+        </div>
+        <div class="synergy-name">
+          {% if hint.partner.pokedex_number %}
+            <img src="/media/pokemon/sprites/{{ hint.partner.pokedex_number|stringformat:'03d' }}.png"
+                 alt="{{ hint.partner.name }}"
+                 style="width:32px;height:32px;object-fit:contain;image-rendering:pixelated;margin-right:6px;vertical-align:middle;">
+          {% endif %}
+          {{ hint.partner.name }}
+        </div>
+        <div class="synergy-detail">{{ hint.detail }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <!-- ── MOVES ── -->
 <div class="panel">
   <div class="panel-title">Assigned Moves</div>
   <div class="moves-grid">
     {% for slot_label, slot_key, move in move_slots %}
-      <div class="move-card">
-        <div class="move-slot-label">{{ slot_label }}</div>
+      <div class="move-card{% if slot_key == 'passive_1' or slot_key == 'passive_2' %} move-card-passive{% endif %}{% if slot_key == 'chase' %} move-card-chase{% endif %}">
+        <div class="move-slot-label">
+          {{ slot_label }}
+          {% if slot_key == 'passive_1' %}<span class="slot-auto-tag">AUTO</span>{% endif %}
+          {% if slot_key == 'passive_2' %}<span class="slot-auto-tag">FORMATION</span>{% endif %}
+          {% if slot_key == 'chase' %}<span class="slot-chase-tag">CHAIN</span>{% endif %}
+        </div>
         {% if move %}
           <div class="move-display-name">
             {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}
@@ -262,34 +401,65 @@
           <div style="margin-bottom:4px;">
             <span class="type-pill type-{{ move.move_type }}" style="font-size:0.65rem;">{{ move.move_type }}</span>
           </div>
-          <div class="move-stats">
-            {% if move.power > 0 %}
-              <span class="move-stat-chip">PWR {{ move.power }}</span>
+
+          {% if slot_key == 'passive_1' %}
+            <!-- Passive 1: auto-fires on cooldown schedule -->
+            <div class="passive-trigger-hint">
+              <span class="passive-icon">&#9654;</span>
+              {% if move.cooldown > 0 %}
+                Auto-fires every {{ move.cooldown }} round{{ move.cooldown|pluralize }}
+              {% else %}
+                Auto-fires every round
+              {% endif %}
+              &middot; No player input needed
+            </div>
+            <div class="move-stats">
+              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
+              {% if move.cooldown > 0 %}<span class="move-stat-chip">CD {{ move.cooldown }}r</span>{% endif %}
+            </div>
+
+          {% elif slot_key == 'passive_2' %}
+            <!-- Passive 2: formation / condition bonus -->
+            <div class="passive-trigger-hint">
+              <span class="passive-icon">&#9670;</span>
+              Formation passive &middot; Activates by team condition
+            </div>
+            <div class="move-stats">
+              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
+            </div>
+
+          {% elif slot_key == 'chase' %}
+            <!-- Chase: triggers when enemy has a specific status -->
+            {% if move.trigger_status %}
+              <div class="chase-trigger-hint">
+                <span class="chain-icon">&#9889;</span>
+                Chains when enemy is <strong>{{ move.trigger_status.get_name_display }}</strong>
+              </div>
             {% endif %}
-            <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
-            <span class="move-stat-chip">PP {{ move.pp }}</span>
-            {% if move.cooldown > 0 %}
-              <span class="move-stat-chip">CD {{ move.cooldown }}r</span>
+            <div class="move-stats">
+              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
+              <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
+            </div>
+
+          {% else %}
+            <!-- Standard / Mystery -->
+            <div class="move-stats">
+              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
+              <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
+              {% if move.cooldown > 0 %}<span class="move-stat-chip">CD {{ move.cooldown }}r</span>{% endif %}
+            </div>
+            {% if move.applies_status %}
+              <div class="combo-prime-hint">
+                <span class="prime-icon">&#9654;</span>
+                Primes <strong>{{ move.applies_status.get_name_display }}</strong> &rarr; enables Chase combos
+              </div>
             {% endif %}
-          </div>
+          {% endif %}
+
           {% if move.description %}
             <div class="move-desc">{{ move.description }}</div>
           {% endif %}
-          {% if move.applies_status %}
-            <div style="margin-top:6px;">
-              <span class="badge badge-warning" style="font-size:0.65rem;">Applies: {{ move.applies_status }}</span>
-            </div>
-          {% endif %}
-          {% if move.combo_starter %}
-            <div style="margin-top:4px;">
-              <span class="badge badge-info" style="font-size:0.65rem;">Combo Starter</span>
-            </div>
-          {% endif %}
-          {% if move.combo_trigger %}
-            <div style="margin-top:4px;">
-              <span class="badge badge-danger" style="font-size:0.65rem;">Combo Trigger</span>
-            </div>
-          {% endif %}
+
         {% else %}
           <div class="move-empty">No move assigned</div>
         {% endif %}

@@ -4,263 +4,415 @@
 
 {% block extra_css %}
 <style>
-/* ── Reset / base ────────────────────────────────────────────── */
+/* ── Reset / base ──────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ── Header strip ───────────────────────────────────────────── */
+/* ── Battlefield ───────────────────────────────────────── */
 .battle-header {
   display: flex; align-items: center; flex-wrap: wrap;
-  gap: 0.75rem; margin-bottom: 1.25rem;
+  gap: 0.75rem; margin-bottom: 1rem;
 }
-.battle-header h2 { margin: 0; }
+.battle-header h2 { margin: 0; font-size: 1rem; color: #9ca3af; }
 
-/* ── Winner banner ──────────────────────────────────────────── */
 .winner-banner {
   background: #052e16; border: 1px solid #4ade80;
   border-radius: 8px; padding: 0.75rem 1rem;
   margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;
 }
 
-/* ── Battlefield: two 2×2 grids flanking VS ─────────────────── */
 .battlefield {
   display: grid;
-  grid-template-columns: 1fr 48px 1fr;
-  gap: 0.75rem;
+  grid-template-columns: 1fr 72px 1fr;
+  gap: 0.5rem;
   align-items: start;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
-.vs-label {
-  text-align: center; font-size: 1.4rem; font-weight: 800;
-  color: #e94560; padding-top: 1.5rem; align-self: center;
+
+/* ── Team side ────────────────────────────────────────── */
+.team-side { display: flex; flex-direction: column; gap: 0.4rem; }
+.team-side-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.1rem;
 }
-.team-side { display: flex; flex-direction: column; gap: 0.5rem; }
 .team-side-label {
-  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
-  color: #9ca3af; margin-bottom: 0.25rem;
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px;
+  color: #6b7280;
+}
+.team-hp-bar-wrap {
+  height: 3px; background: #1f2937; border-radius: 2px; margin-bottom: 0.3rem;
+  overflow: hidden;
+}
+.team-hp-bar { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1d4ed8, #60a5fa); transition: width 0.6s; }
+.team-hp-bar.opp { background: linear-gradient(90deg, #991b1b, #f87171); }
+
+/* Column labels BACK | FRONT */
+.grid-col-labels {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+.grid-col-label {
+  font-size: 0.55rem; text-transform: uppercase; letter-spacing: 2px;
+  color: #374151; text-align: center; padding-bottom: 3px;
+  border-bottom: 1px solid #1e3a6e;
+}
+.grid-col-label.is-front { color: #3b82f6; border-color: rgba(59,130,246,0.5); }
+
+/* ── Pokemon grid — 2-column with explicit CSS grid placement ── */
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  gap: 0.4rem;
 }
 
-/* 2×2 pokemon grid */
-.pokemon-grid-2x2 {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
-}
+/* Player side: BACK = column 1, FRONT = column 2 */
+#player-grid .pos-back_left   { grid-column: 1; grid-row: 1; }
+#player-grid .pos-back_center { grid-column: 1; grid-row: 2; }
+#player-grid .pos-back_right  { grid-column: 1; grid-row: 3; }
+#player-grid .pos-front_left  { grid-column: 2; grid-row: 1; }
+#player-grid .pos-front_center { grid-column: 2; grid-row: 2; }
+#player-grid .pos-front_right { grid-column: 2; grid-row: 3; }
 
-/* ── Pokemon card ───────────────────────────────────────────── */
+/* Opponent side: FRONT = column 1, BACK = column 2 (mirrored) */
+#opponent-grid .pos-front_left   { grid-column: 1; grid-row: 1; }
+#opponent-grid .pos-front_center { grid-column: 1; grid-row: 2; }
+#opponent-grid .pos-front_right  { grid-column: 1; grid-row: 3; }
+#opponent-grid .pos-back_left    { grid-column: 2; grid-row: 1; }
+#opponent-grid .pos-back_center  { grid-column: 2; grid-row: 2; }
+#opponent-grid .pos-back_right   { grid-column: 2; grid-row: 3; }
+
+/* ── Pokemon card ─────────────────────────────────────── */
 .pokemon-card {
-  background: #16213e; border: 2px solid #1e3a6e;
-  border-radius: 8px; padding: 0.6rem 0.75rem;
-  cursor: default; transition: border-color 0.2s, opacity 0.3s;
+  background: #0a1020;
+  border: 1px solid #1e3a6e;
+  border-radius: 8px; padding: 0.5rem 0.6rem;
+  cursor: default; transition: border-color 0.2s, box-shadow 0.2s, opacity 0.3s;
   position: relative; min-width: 0;
 }
+
+/* FRONT-row cards are more prominent */
+.pokemon-card.pos-front_left,
+.pokemon-card.pos-front_center,
+.pokemon-card.pos-front_right {
+  background: #0f1a2e;
+  border-color: rgba(37,99,235,0.4);
+}
+
 .pokemon-card.fainted {
-  opacity: 0.4; border-color: #374151; pointer-events: none;
+  opacity: 0.3; border-color: #1f2937; pointer-events: none;
 }
 .pokemon-card.selected-attacker {
-  border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96,165,250,0.3);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96,165,250,0.2), inset 0 0 16px rgba(96,165,250,0.04);
 }
 .pokemon-card.selected-target {
-  border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249,115,22,0.2), inset 0 0 16px rgba(249,115,22,0.04);
 }
-.pokemon-card.enemy-card { cursor: pointer; }
-.pokemon-card.enemy-card:not(.fainted):hover {
-  border-color: #fb923c;
-}
-.pokemon-card.damage-flash { animation: damage-flash 0.5s ease-out; }
+.pokemon-card.enemy-card { cursor: default; }
+.pokemon-card.damage-flash { animation: damage-flash 0.4s ease-out; }
 @keyframes damage-flash {
-  0%, 60% { background: #7f1d1d; }
-  100%     { background: #16213e; }
+  0%, 50% { background: rgba(127,29,29,0.7); }
+  100%    { background: #0a1020; }
+}
+/* ── Combat animation ─────────────────────────────────────── */
+.pokemon-card.attacking {
+  animation: sprite-lunge 0.35s ease-in-out;
+  z-index: 10;
+}
+@keyframes sprite-lunge {
+  0%   { transform: translateX(0) scale(1); }
+  40%  { transform: translateX(18px) scale(1.07); }
+  70%  { transform: translateX(6px) scale(1.03); }
+  100% { transform: translateX(0) scale(1); }
+}
+.pokemon-card.attacking.enemy-attacker {
+  animation: sprite-lunge-enemy 0.35s ease-in-out;
+}
+@keyframes sprite-lunge-enemy {
+  0%   { transform: translateX(0) scale(1); }
+  40%  { transform: translateX(-18px) scale(1.07); }
+  70%  { transform: translateX(-6px) scale(1.03); }
+  100% { transform: translateX(0) scale(1); }
+}
+/* Move name banner */
+#move-banner {
+  display: none;
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, rgba(10,5,24,0.97), rgba(30,58,110,0.97));
+  border: 1px solid #3b82f6; border-radius: 8px;
+  padding: 0.5rem 1.4rem; color: #fff; font-size: 1rem; font-weight: 800;
+  letter-spacing: 1px; text-align: center; z-index: 9999;
+  animation: banner-pop 0.28s ease-out;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgba(96,165,250,0.7);
+  box-shadow: 0 0 24px rgba(59,130,246,0.4);
+}
+#move-banner.combo-banner-style {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, rgba(10,5,24,0.97), rgba(120,53,15,0.97));
+  text-shadow: 0 0 12px rgba(251,191,36,0.8);
+  box-shadow: 0 0 28px rgba(251,191,36,0.4);
+}
+@keyframes banner-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+/* Combo badge */
+#combo-badge {
+  display: none;
+  position: fixed; top: 38%; right: 6%;
+  background: linear-gradient(135deg, #92400e, #f59e0b);
+  color: #fff; font-size: 1.5rem; font-weight: 900;
+  border-radius: 50%; width: 64px; height: 64px;
+  align-items: center; justify-content: center;
+  z-index: 9999; pointer-events: none;
+  animation: combo-pulse 0.4s ease-out;
+  box-shadow: 0 0 20px rgba(245,158,11,0.6);
+}
+@keyframes combo-pulse {
+  0%   { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+/* Log entry fade-in */
+.log-entry { animation: log-fade-in 0.25s ease-out; }
+@keyframes log-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Card layout */
 .card-name {
-  font-size: 0.85rem; font-weight: 700;
+  font-size: 0.8rem; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
 }
-.card-pos-label {
-  font-size: 0.65rem; color: #6b7280; text-transform: uppercase;
+.card-hp-row {
+  display: flex; align-items: center; gap: 5px;
 }
-.card-hp-text { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
-
 .hp-bar-wrap {
-  background: #374151; border-radius: 4px; height: 5px;
-  overflow: hidden; margin-top: 4px;
+  flex: 1; background: #1f2937; border-radius: 3px; height: 7px; overflow: hidden;
 }
 .hp-bar {
-  height: 100%; border-radius: 4px;
+  height: 100%; border-radius: 3px;
   transition: width 0.6s ease-in-out;
 }
-.hp-green  { background: #4ade80; }
-.hp-yellow { background: #facc15; }
-.hp-red    { background: #f87171; }
+.hp-green  { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.hp-yellow { background: linear-gradient(90deg, #b45309, #facc15); }
+.hp-red    { background: linear-gradient(90deg, #991b1b, #f87171); box-shadow: 0 0 4px rgba(248,113,113,0.4); }
+.card-hp-text { font-size: 0.6rem; color: #4b5563; white-space: nowrap; flex-shrink: 0; }
 
 .status-badges { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 2px; }
 
-/* Selection indicator on player card */
 .card-selection-info {
-  margin-top: 5px; font-size: 0.65rem; color: #93c5fd; line-height: 1.3;
+  margin-top: 4px; font-size: 0.6rem; color: #3b82f6; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Bench row */
-.bench-row {
-  display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;
+/* ── VS column ────────────────────────────────────────────── */
+.vs-column {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px; padding-top: 10px; height: 100%;
 }
+.vs-label {
+  font-size: 1.1rem; font-weight: 900; color: #e94560;
+  text-shadow: 0 0 10px rgba(233,69,96,0.5);
+}
+.vs-round {
+  font-size: 0.65rem; color: #4b5563; text-transform: uppercase;
+  letter-spacing: 1px; text-align: center;
+}
+
+/* ── Bench ────────────────────────────────────────────────────── */
+.bench-row { display: flex; gap: 0.35rem; margin-top: 0.4rem; flex-wrap: wrap; }
 .bench-label {
-  font-size: 0.7rem; color: #6b7280; text-transform: uppercase;
-  letter-spacing: 1px; margin-bottom: 0.25rem;
+  font-size: 0.55rem; color: #374151; text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 0.15rem;
 }
 .bench-card {
-  background: #0f1a2e; border: 1px dashed #374151;
-  border-radius: 6px; padding: 0.4rem 0.6rem;
-  font-size: 0.75rem; color: #9ca3af; min-width: 100px;
+  background: #060d1a; border: 1px dashed #1e3a6e;
+  border-radius: 6px; padding: 0.35rem 0.5rem;
+  font-size: 0.7rem; color: #4b5563; min-width: 80px;
 }
-.bench-card.fainted { opacity: 0.35; }
-
-/* Switch mode */
-.switch-mode-btn {
-  background: #1c1917; border: 1px solid #78350f;
-  border-radius: 20px; padding: 0.3rem 0.75rem;
-  font-size: 0.78rem; cursor: pointer; color: #fcd34d;
-  transition: all 0.15s; user-select: none;
-}
-.switch-mode-btn:hover { border-color: #f59e0b; }
-.switch-mode-btn.active { background: #78350f; border-color: #f59e0b; }
-.switch-panel { display: none; margin-top: 0.5rem; }
-.switch-panel.visible { display: block; }
-.switch-option {
-  display: inline-block; background: #0f1a2e; border: 2px solid #374151;
-  border-radius: 8px; padding: 0.5rem 0.85rem;
-  cursor: pointer; transition: all 0.15s; margin: 0.25rem 0.25rem 0 0;
-  min-width: 120px; text-align: left;
-}
-.switch-option:hover:not(.switch-fainted) { border-color: #f59e0b; background: #1c1917; }
-.switch-option.selected-switch { border-color: #f59e0b; background: #78350f; }
-.switch-option.switch-fainted { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-.switch-pending-label {
-  font-size: 0.72rem; color: #fcd34d; margin-top: 0.4rem; display: none;
-}
+.bench-card.fainted { opacity: 0.25; }
 
 /* ── Action panel ────────────────────────────────────────────── */
 .action-panel {
-  background: #16213e; border: 1px solid #0f3460;
-  border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;
+  background: #0a1020; border: 1px solid #1e3a6e;
+  border-radius: 10px; padding: 0.85rem; margin-bottom: 1rem;
 }
 .action-panel-header {
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 1rem; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.8rem; flex-wrap: wrap;
 }
-.action-panel-title { font-weight: 700; font-size: 1rem; }
+.action-panel-title { font-weight: 700; font-size: 0.88rem; color: #d1d5db; }
 
-/* Pokemon switcher tabs */
-.slot-tabs {
-  display: flex; gap: 0.4rem; flex-wrap: wrap;
+.action-progress {
+  margin-left: auto; font-size: 0.7rem; color: #4b5563;
+  background: #060d1a; border: 1px solid #1e3a6e;
+  border-radius: 20px; padding: 0.12rem 0.55rem;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
 }
+.action-progress.ready { color: #4ade80; border-color: #16a34a; background: rgba(22,163,74,0.08); }
+
+.slot-tabs { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .slot-tab {
-  background: #0f3460; border: 1px solid #1e3a6e;
-  border-radius: 20px; padding: 0.3rem 0.75rem;
-  font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
-  color: #d1d5db; user-select: none;
+  background: #060d1a; border: 1px solid #1e3a6e;
+  border-radius: 20px; padding: 0.22rem 0.65rem;
+  font-size: 0.73rem; cursor: pointer; transition: all 0.15s;
+  color: #6b7280; user-select: none;
 }
 .slot-tab:hover { border-color: #60a5fa; color: #93c5fd; }
-.slot-tab.active { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
-.slot-tab.fainted-tab { opacity: 0.4; cursor: not-allowed; }
+.slot-tab.active { background: #1e3a8a; border-color: #3b82f6; color: #fff; }
+.slot-tab.fainted-tab { opacity: 0.3; cursor: not-allowed; }
+.slot-tab.assigned { border-color: #166534; color: #4ade80; }
 
-/* Per-slot action block */
 .slot-action-block { display: none; }
 .slot-action-block.visible { display: block; }
 
 .slot-action-info {
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 0.75rem; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 0.65rem;
+  margin-bottom: 0.6rem; flex-wrap: wrap;
 }
-.slot-action-name { font-size: 0.9rem; font-weight: 700; }
-.slot-action-hp   { font-size: 0.8rem; color: #9ca3af; }
+.slot-action-name { font-size: 0.88rem; font-weight: 700; }
+.slot-action-hp   { font-size: 0.73rem; color: #4b5563; }
 
-/* Move buttons */
-.move-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.move-buttons { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
 
 .move-btn {
-  background: #0f3460; border: 2px solid #1e3a6e;
-  border-radius: 8px; padding: 0.5rem 0.85rem;
+  background: #060d1a; border: 1px solid #1e3a6e;
+  border-radius: 8px; padding: 0.5rem 0.7rem;
   cursor: pointer; transition: all 0.15s; text-align: left;
-  min-width: 130px; max-width: 180px;
+  min-width: 115px; max-width: 165px; flex: 1 0 115px;
 }
-.move-btn:hover:not(.on-cooldown) { border-color: #3b82f6; background: #1a3a6e; }
-.move-btn.selected-move { border-color: #3b82f6; background: #1d4ed8; }
-.move-btn.on-cooldown {
-  opacity: 0.45; cursor: not-allowed;
-  border-color: #374151; background: #0f1a2e;
-}
-.move-btn-name  { font-size: 0.82rem; font-weight: 700; display: block; }
-.move-btn-meta  { font-size: 0.68rem; color: #9ca3af; display: block; margin-top: 1px; }
-.move-btn-cd    { font-size: 0.68rem; color: #f87171; display: block; }
+.move-btn:hover:not(.on-cooldown) { border-color: #3b82f6; background: #0f1a2e; }
+.move-btn.selected-move { border-color: #3b82f6; background: #1e3a8a; box-shadow: 0 0 8px rgba(59,130,246,0.25); }
+.move-btn.on-cooldown { opacity: 0.35; cursor: not-allowed; border-color: #1f2937; background: #060d1a; }
+.move-btn-name  { font-size: 0.78rem; font-weight: 700; display: block; }
+.move-btn-meta  { font-size: 0.63rem; color: #4b5563; display: block; margin-top: 2px; }
+.move-btn-cd    { font-size: 0.63rem; color: #f87171; display: block; }
 .move-btn-slot  {
-  display: inline-block; font-size: 0.6rem; text-transform: uppercase;
-  padding: 1px 5px; border-radius: 10px; margin-bottom: 2px;
+  display: inline-block; font-size: 0.57rem; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 10px; margin-bottom: 3px;
+  letter-spacing: 0.5px; font-weight: 700;
 }
-.slot-standard { background: #166534; color: #bbf7d0; }
-.slot-chase    { background: #1e3a8a; color: #bfdbfe; }
-.slot-special  { background: #581c87; color: #e9d5ff; }
-.slot-support  { background: #92400e; color: #fde68a; }
+.slot-standard  { background: rgba(22,101,52,0.4);  color: #4ade80; border: 1px solid rgba(22,101,52,0.7); }
+.slot-chase     { background: rgba(30,58,138,0.4);  color: #93c5fd; border: 1px solid rgba(30,58,138,0.7); }
+.slot-mystery   { background: rgba(88,28,135,0.4);  color: #d8b4fe; border: 1px solid rgba(88,28,135,0.7); }
+.slot-passive_1 { background: rgba(146,64,14,0.4);  color: #fde68a; border: 1px solid rgba(146,64,14,0.7); }
+.slot-passive_2 { background: rgba(20,83,45,0.4);   color: #6ee7b7; border: 1px solid rgba(20,83,45,0.7); }
 
-/* Ninja Trait display */
+/* ── Pokemon sprite ──────────────────────────────────── */
+.pokemon-sprite {
+  width: 64px; height: 64px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px rgba(96,165,250,0.25));
+  transition: filter 0.2s;
+}
+.pokemon-card.fainted .pokemon-sprite {
+  filter: grayscale(1) opacity(0.4);
+}
+.pokemon-card.selected-attacker .pokemon-sprite {
+  filter: drop-shadow(0 0 8px rgba(96,165,250,0.6));
+}
+.enemy-card .pokemon-sprite {
+  filter: drop-shadow(0 0 6px rgba(249,115,22,0.2));
+}
+
 .passive-display {
-  background: #0f1a2e; border: 1px solid #1e3a6e;
-  border-radius: 6px; padding: 0.5rem 0.85rem;
-  font-size: 0.78rem; color: #9ca3af;
+  background: #060d1a; border: 1px solid #1e3a6e;
+  border-radius: 6px; padding: 0.4rem 0.7rem;
+  font-size: 0.73rem; color: #4b5563;
 }
-.passive-display strong { color: #d1d5db; }
+.passive-display strong { color: #6b7280; }
 
-/* Target info */
-.target-info-line {
-  font-size: 0.78rem; color: #9ca3af; margin-bottom: 0.5rem;
-}
+.target-info-line { font-size: 0.73rem; color: #4b5563; margin-bottom: 0.45rem; }
 .target-info-line span { color: #fb923c; font-weight: 700; }
 
-/* Execute button */
 .execute-btn {
-  width: 100%; padding: 0.75rem;
-  font-size: 1rem; font-weight: 700;
-  background: #1d4ed8; border: none; border-radius: 8px;
-  color: #fff; cursor: pointer; transition: background 0.15s;
-  margin-top: 0.75rem;
+  width: 100%; padding: 0.65rem;
+  font-size: 0.92rem; font-weight: 700;
+  background: #1e3a8a; border: 1px solid #2563eb; border-radius: 8px;
+  color: #fff; cursor: pointer; transition: all 0.2s;
+  margin-top: 0.6rem; letter-spacing: 0.3px; text-transform: uppercase;
 }
-.execute-btn:hover:not(:disabled) { background: #2563eb; }
-.execute-btn:disabled { background: #374151; cursor: not-allowed; }
+.execute-btn:hover:not(:disabled) { background: #1d4ed8; box-shadow: 0 0 14px rgba(59,130,246,0.35); }
+.execute-btn.all-ready {
+  background: #14532d; border-color: #4ade80; color: #4ade80;
+  animation: pulse-ready 2s ease-in-out infinite;
+}
+@keyframes pulse-ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  50%       { box-shadow: 0 0 14px 4px rgba(74,222,128,0.2); }
+}
+.execute-btn:disabled { background: #0f1a2e; border-color: #1e3a6e; color: #374151; cursor: not-allowed; }
 
-/* ── Substitution panel ─────────────────────────────────────── */
+.switch-mode-btn {
+  background: #060d1a; border: 1px solid #374151;
+  border-radius: 20px; padding: 0.22rem 0.65rem;
+  font-size: 0.73rem; cursor: pointer; color: #6b7280;
+  transition: all 0.15s; user-select: none;
+}
+.switch-mode-btn:hover { border-color: #f59e0b; color: #fcd34d; }
+.switch-mode-btn.active { background: #78350f; border-color: #f59e0b; color: #fcd34d; }
+.switch-panel { display: none; margin-top: 0.4rem; }
+.switch-panel.visible { display: block; }
+.switch-option {
+  display: inline-block; background: #060d1a; border: 1px solid #374151;
+  border-radius: 8px; padding: 0.4rem 0.7rem;
+  cursor: pointer; transition: all 0.15s; margin: 0.15rem 0.15rem 0 0;
+  min-width: 105px; text-align: left;
+}
+.switch-option:hover:not(.switch-fainted) { border-color: #f59e0b; background: #1c1917; }
+.switch-option.selected-switch { border-color: #f59e0b; background: #78350f; }
+.switch-option.switch-fainted { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+.switch-pending-label { font-size: 0.68rem; color: #fcd34d; margin-top: 0.3rem; display: none; }
+
+/* ── Substitution panel ───────────────────────────────────── */
 .sub-panel {
-  background: #1c1917; border: 2px solid #f97316;
-  border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;
+  background: #150700; border: 1px solid #f97316;
+  border-radius: 10px; padding: 0.85rem; margin-bottom: 1rem;
 }
-.sub-panel h3 { color: #fb923c; margin-bottom: 0.75rem; }
-.sub-options { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.sub-panel h3 { color: #fb923c; margin-bottom: 0.6rem; font-size: 0.88rem; }
+.sub-options { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .sub-option {
-  background: #0f1a2e; border: 1px solid #374151;
-  border-radius: 8px; padding: 0.75rem 1rem; min-width: 140px;
+  background: #060d1a; border: 1px solid #374151;
+  border-radius: 8px; padding: 0.6rem 0.8rem; min-width: 125px;
 }
-.sub-option-name { font-weight: 700; font-size: 0.9rem; }
+.sub-option-name { font-weight: 700; font-size: 0.85rem; }
 
-/* ── Combo log ──────────────────────────────────────────────── */
+/* ── Combo log ────────────────────────────────────────────── */
 .combo-log {
-  background: #0f3460; border: 1px solid #e94560;
-  border-radius: 8px; padding: 0.9rem; margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #08060f, #0f1020);
+  border: 1px solid rgba(233,69,96,0.35);
+  border-radius: 8px; padding: 0.7rem; margin-bottom: 1rem;
 }
-.combo-log h3 { color: #e94560; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+.combo-log h3 {
+  color: #e94560; font-size: 0.68rem; text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 0.35rem;
+}
 .combo-entry {
-  font-size: 0.85rem; padding: 0.25rem 0;
-  border-bottom: 1px solid #1a3a6e;
-  opacity: 0; transform: translateX(-12px);
+  font-size: 0.8rem; padding: 0.18rem 0;
+  border-bottom: 1px solid rgba(30,58,110,0.4);
+  opacity: 0; transform: translateX(-10px);
   animation: slide-in 0.3s ease forwards;
 }
 .combo-entry:last-child { border-bottom: none; }
 .combo-entry:nth-child(1)  { animation-delay: 0.00s; }
-.combo-entry:nth-child(2)  { animation-delay: 0.20s; }
-.combo-entry:nth-child(3)  { animation-delay: 0.40s; }
-.combo-entry:nth-child(4)  { animation-delay: 0.60s; }
-.combo-entry:nth-child(5)  { animation-delay: 0.80s; }
-.combo-entry:nth-child(6)  { animation-delay: 1.00s; }
-.combo-entry:nth-child(7)  { animation-delay: 1.20s; }
-.combo-entry:nth-child(8)  { animation-delay: 1.40s; }
-.combo-entry:nth-child(9)  { animation-delay: 1.60s; }
-.combo-entry:nth-child(10) { animation-delay: 1.80s; }
+.combo-entry:nth-child(2)  { animation-delay: 0.12s; }
+.combo-entry:nth-child(3)  { animation-delay: 0.24s; }
+.combo-entry:nth-child(4)  { animation-delay: 0.36s; }
+.combo-entry:nth-child(5)  { animation-delay: 0.48s; }
+.combo-entry:nth-child(6)  { animation-delay: 0.60s; }
+.combo-entry:nth-child(7)  { animation-delay: 0.72s; }
+.combo-entry:nth-child(8)  { animation-delay: 0.84s; }
+.combo-entry:nth-child(9)  { animation-delay: 0.96s; }
+.combo-entry:nth-child(10) { animation-delay: 1.08s; }
 @keyframes slide-in { to { opacity: 1; transform: translateX(0); } }
 .combo-chain-label { font-weight: 700; color: #fbbf24; }
 
@@ -269,43 +421,176 @@
   display: none; position: fixed; top: 18%; left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #e94560, #fbbf24);
-  color: #fff; font-size: 2.2rem; font-weight: 900;
-  padding: 0.6rem 2rem; border-radius: 12px;
+  color: #fff; font-size: 2rem; font-weight: 900;
+  padding: 0.5rem 2rem; border-radius: 12px;
   z-index: 9999; pointer-events: none;
+  box-shadow: 0 0 40px rgba(233,69,96,0.6);
   animation: banner-pop 2.5s ease forwards;
 }
 @keyframes banner-pop {
   0%   { opacity: 0; transform: translateX(-50%) scale(0.5); }
-  15%  { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  15%  { opacity: 1; transform: translateX(-50%) scale(1.08); }
   25%  { transform: translateX(-50%) scale(1.0); }
   75%  { opacity: 1; }
   100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
 }
 
-/* ── WS waiting spinner ─────────────────────────────────────── */
+/* ── WS waiting spinner ───────────────────────────────────────── */
 .ws-waiting {
-  display: none; align-items: center; gap: 0.5rem;
-  color: #9ca3af; font-size: 0.82rem; margin-bottom: 0.5rem;
+  display: none; align-items: center; gap: 0.4rem;
+  color: #4b5563; font-size: 0.78rem; margin-bottom: 0.4rem;
 }
 .ws-waiting.visible { display: flex; }
 .spinner {
-  width: 15px; height: 15px;
-  border: 2px solid #374151; border-top-color: #e94560;
+  width: 13px; height: 13px;
+  border: 2px solid #1e3a6e; border-top-color: #e94560;
   border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Round log ──────────────────────────────────────────────── */
-.round-log {
-  max-height: 220px; overflow-y: auto;
-  background: #0f1a2e; border-radius: 6px; padding: 0.65rem;
+/* ── Round log ────────────────────────────────────────────────────── */
+.log-section-header {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+  color: #374151; margin-bottom: 0.35rem;
+  display: flex; align-items: center; gap: 0.5rem;
 }
-.log-entry { padding: 0.15rem 0; font-size: 0.82rem; }
+.log-section-header::after { content: ''; flex: 1; height: 1px; background: #0f1f3d; }
+
+.round-log {
+  max-height: 240px; overflow-y: auto;
+  background: #050b16; border: 1px solid #0f1f3d;
+  border-radius: 6px; padding: 0.45rem 0.6rem;
+}
+.round-log::-webkit-scrollbar { width: 3px; }
+.round-log::-webkit-scrollbar-track { background: transparent; }
+.round-log::-webkit-scrollbar-thumb { background: #1e3a6e; border-radius: 3px; }
+.log-entry {
+  padding: 0.12rem 0.25rem; font-size: 0.76rem; line-height: 1.5;
+  border-radius: 3px; margin-bottom: 1px;
+}
 .log-action  { color: #d1d5db; }
-.log-combo   { color: #fbbf24; font-weight: 600; }
-.log-faint   { color: #f87171; }
+.log-combo   {
+  color: #fbbf24; font-weight: 700;
+  background: rgba(251,191,36,0.07);
+  border-left: 2px solid #fbbf24;
+  padding-left: 0.4rem !important;
+}
+.log-faint   { color: #f87171; font-weight: 600; }
 .log-status  { color: #a78bfa; }
-.log-info    { color: #9ca3af; font-style: italic; }
+.log-info    { color: #4b5563; font-style: italic; }
+/* Combo chain indentation */
+.chain-link  { margin-left: 0.75rem; }
+.log-round-sep {
+  color: #1e3a6e; font-size: 0.65rem; letter-spacing: 1px;
+  text-transform: uppercase; padding: 0.2rem 0; border-top: 1px solid #0f1f3d;
+  margin-top: 0.2rem;
+}
+
+/* ── Mystery toggle ─────────────────────────────────────────── */
+.mystery-toggle {
+  width: 100%; background: #0a0518;
+  border: 1px solid rgba(139,92,246,0.4);
+  border-radius: 8px; padding: 0.55rem 0.8rem;
+  cursor: pointer; color: #d8b4fe;
+  display: flex; align-items: center; gap: 0.65rem;
+  text-align: left; transition: all 0.15s; margin-bottom: 0.4rem;
+}
+.mystery-toggle:hover:not(.on-cooldown):not(.mystery-active) {
+  border-color: rgba(139,92,246,0.7); background: #1a0a35;
+}
+.mystery-toggle.mystery-active {
+  background: #2e1065; border-color: #7c3aed;
+  box-shadow: 0 0 12px rgba(124,58,237,0.4); color: #e9d5ff;
+}
+.mystery-toggle.on-cooldown { opacity: 0.5; cursor: not-allowed; border-color: #1f2937; }
+.mystery-toggle-icon { font-size: 1.3rem; flex-shrink: 0; }
+.mystery-toggle-label { display: block; font-size: 0.78rem; font-weight: 700; }
+.mystery-toggle-name  { display: block; font-size: 0.72rem; color: #a78bfa; }
+.mystery-toggle-meta  { display: block; font-size: 0.62rem; color: #6b7280; margin-top: 1px; }
+.mystery-toggle-cd    { display: block; font-size: 0.68rem; color: #f87171; }
+/* Chakra bar */
+.chakra-bar-wrap {
+  width: 100%; background: #0a0518; border-radius: 3px; height: 5px;
+  margin-top: 4px; overflow: hidden; border: 1px solid rgba(139,92,246,0.2);
+}
+.chakra-bar {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #4c1d95, #7c3aed, #a78bfa);
+  transition: width 0.5s ease-in-out;
+  box-shadow: 0 0 6px rgba(167,139,250,0.5);
+}
+.chakra-bar.chakra-full {
+  background: linear-gradient(90deg, #7c3aed, #c4b5fd, #7c3aed);
+  animation: chakra-pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(196,181,253,0.8);
+}
+@keyframes chakra-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+.mystery-toggle.chakra-ready {
+  border-color: rgba(167,139,250,0.8);
+  box-shadow: 0 0 14px rgba(124,58,237,0.5);
+  animation: mystery-ready-glow 1.5s ease-in-out infinite;
+}
+@keyframes mystery-ready-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(124,58,237,0.4); }
+  50%       { box-shadow: 0 0 20px rgba(167,139,250,0.8); }
+}
+.chakra-ready-label {
+  display: inline-block; font-size: 0.58rem; font-weight: 700;
+  color: #c4b5fd; letter-spacing: 0.5px; text-transform: uppercase;
+  margin-left: 4px;
+}
+
+/* ── Passive badge ───────────────────────────────────────────── */
+.passive-badge {
+  background: #060d1a; border: 1px solid #1e3a6e;
+  border-radius: 6px; padding: 0.3rem 0.5rem;
+  font-size: 0.7rem; color: #4b5563;
+  display: flex; align-items: center; gap: 0.3rem;
+}
+
+/* ── Physical state badges (P5-1) ────────────────────────────── */
+.badge-physical {
+  background: rgba(30,58,138,0.5); color: #93c5fd;
+  border: 1px solid rgba(59,130,246,0.5);
+  border-radius: 4px; padding: 1px 5px; font-size: 0.62rem;
+}
+.badge-phys-airborne  { background: rgba(109,40,217,0.4); color: #c4b5fd; border-color: rgba(124,58,237,0.5); }
+.badge-phys-launched  { background: rgba(220,38,38,0.4);  color: #fca5a5; border-color: rgba(239,68,68,0.5); }
+.badge-phys-knockback { background: rgba(180,83,9,0.4);   color: #fed7aa; border-color: rgba(234,88,12,0.5); }
+.badge-phys-grounded  { background: rgba(22,101,52,0.3);  color: #86efac; border-color: rgba(34,197,94,0.4); }
+
+/* ── Utility / Advanced badges (P5-1) ───────────────────────── */
+.badge-utility {
+  background: rgba(15,23,42,0.6); color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px; padding: 1px 5px; font-size: 0.62rem;
+}
+.badge-util-shielded     { background: rgba(30,64,175,0.5); color: #bfdbfe; border-color: rgba(59,130,246,0.6); }
+.badge-util-hidden       { background: rgba(55,65,81,0.6);  color: #9ca3af; border-color: #4b5563; }
+.badge-util-immune       { background: rgba(6,78,59,0.5);   color: #6ee7b7; border-color: rgba(16,185,129,0.5); }
+.badge-util-chain_breaker{ background: rgba(127,29,29,0.5); color: #fca5a5; border-color: rgba(239,68,68,0.5); }
+.badge-util-state_locked { background: rgba(76,29,149,0.5); color: #e9d5ff; border-color: rgba(139,92,246,0.5); }
+.badge-util-charging     { background: rgba(217,119,6,0.5);  color: #fde68a; border-color: rgba(251,191,36,0.5); animation: pulse-charge 0.8s ease-in-out infinite alternate; }
+@keyframes pulse-charge  { from { opacity: 0.7; } to { opacity: 1; box-shadow: 0 0 6px rgba(251,191,36,0.7); } }
+
+/* ── Status tooltip (P5-2) ───────────────────────────────────── */
+.status-badges .badge[title] { cursor: help; }
+
+/* ── Round log: combo chain indentation (P5-4) ──────────────── */
+.log-entry.chain-link   { color: #fbbf24; }
+.log-entry.chain-link-1 { padding-left: 0.8rem; }
+.log-entry.chain-link-2 { padding-left: 1.4rem; }
+.log-entry.chain-link-3 { padding-left: 2.0rem; }
+.log-entry.chain-link-4 { padding-left: 2.6rem; }
+.log-entry.chain-link-5 { padding-left: 3.0rem; }
+.log-entry.auto-chase   { color: #7dd3fc; }
+.log-auto-prefix { color: #38bdf8; font-weight: 700; font-size: 0.7rem; margin-right: 3px; }
+
+/* ── Cooldown countdown highlight (P5-3) ────────────────────── */
+.mystery-toggle-cd { font-size: 0.68rem; color: #f87171; font-weight: 700; }
 </style>
 {% endblock %}
 
@@ -315,32 +600,48 @@
 {% if battle.is_tutorial %}
 <div
   x-data="{
+    storageKey: 'sensei_kira_{{ battle.pk }}',
     step: 0,
     steps: [
       { title: 'Welcome to your first battle!', body: 'This is a training match arranged by Sensei Kira. Defeat the AI opponent to complete your tutorial.' },
-      { title: 'The Battlefield', body: 'Each side has 4 active Pokemon on a 2×2 grid. Front-row Pokemon deal full damage. Back-row Pokemon deal 80% — but they&rsquo;re harder to target first.' },
-      { title: 'Combo Chains (Kizuna Method)', body: 'When one Pokemon applies a status (Burn, Poison…), another Pokemon with a matching trigger move fires automatically. That&rsquo;s a Combo Chain! Each link boosts damage up to ×2.50.' },
-      { title: 'Your Turn', body: 'Select a move and a target for each of your active Pokemon, then click Submit. Close this guide whenever you&rsquo;re ready.' }
-    ]
+      { title: 'The Battlefield', body: 'Each side has 6 active Pokémon on a 3×2 grid. Front-row Pokémon deal full damage. Back-row Pokémon deal 80% — but they&rsquo;re harder to target first.' },
+      { title: 'Combo Chains (Kizuna Method)', body: 'When one Pokémon applies a status (Burn, Poison…), another Pokémon with a matching trigger move fires automatically. That&rsquo;s a Combo Chain! Each link boosts damage up to ×2.50.' },
+      { title: 'Your Turn', body: 'Activate Mystery moves for your Pokémon, then click Execute Round. Standard attacks fire automatically. Close this guide whenever you&rsquo;re ready.' }
+    ],
+    init() {
+      const saved = localStorage.getItem(this.storageKey);
+      this.step = saved !== null ? parseInt(saved) : 0;
+    },
+    dismiss() {
+      this.step = 999;
+      localStorage.setItem(this.storageKey, '999');
+    },
+    next() {
+      this.step++;
+      localStorage.setItem(this.storageKey, String(this.step));
+    },
+    back() {
+      this.step--;
+      localStorage.setItem(this.storageKey, String(this.step));
+    }
   }"
+  x-show="step < steps.length"
   style="background:#0f1a2e;border:1px solid #e94560;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;"
 >
   <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;">
     <span style="color:#e94560;font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;">Sensei Kira</span>
     <span style="color:#6b7280;font-size:0.78rem;" x-text="`(${step + 1} / ${steps.length})`"></span>
-    <button @click="step = 999" style="margin-left:auto;background:none;border:none;color:#6b7280;cursor:pointer;font-size:0.8rem;">Dismiss</button>
+    <button @click="dismiss()" style="margin-left:auto;background:none;border:none;color:#6b7280;cursor:pointer;font-size:0.8rem;">Dismiss</button>
   </div>
-  <template x-if="step < steps.length">
-    <div>
-      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;" x-text="steps[step].title"></div>
-      <div style="color:#9ca3af;font-size:0.85rem;line-height:1.5;" x-html="steps[step].body"></div>
-      <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-        <button x-show="step > 0" @click="step--" class="btn btn-secondary btn-sm">Back</button>
-        <button x-show="step < steps.length - 1" @click="step++" class="btn btn-primary btn-sm">Next</button>
-        <button x-show="step === steps.length - 1" @click="step = 999" class="btn btn-primary btn-sm">Got it!</button>
-      </div>
+  <div>
+    <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;" x-text="steps[step].title"></div>
+    <div style="color:#9ca3af;font-size:0.85rem;line-height:1.5;" x-html="steps[step].body"></div>
+    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+      <button x-show="step > 0" @click="back()" class="btn btn-secondary btn-sm">Back</button>
+      <button x-show="step < steps.length - 1" @click="next()" class="btn btn-primary btn-sm">Next</button>
+      <button x-show="step === steps.length - 1" @click="dismiss()" class="btn btn-primary btn-sm">Got it!</button>
     </div>
-  </template>
+  </div>
 </div>
 {% endif %}
 
@@ -350,7 +651,7 @@
   <span id="battle-status-badge" class="badge badge-{% if battle.status == 'active' %}info{% elif battle.status == 'finished' %}danger{% else %}secondary{% endif %}">
     {{ battle.status|upper }}
   </span>
-  <span id="round-label" style="color:#9ca3af;font-size:0.85rem;">Round {{ battle.current_round }}</span>
+  <span style="color:#9ca3af;font-size:0.85rem;">Round <span id="round-label-header">{{ battle.current_round }}</span></span>
   {% if battle.is_ai_battle %}
     <span class="badge badge-warning" style="background:#78350f;color:#fcd34d;">vs AI ({{ battle.ai_difficulty|upper }})</span>
   {% endif %}
@@ -402,26 +703,40 @@
   <!-- Player side -->
   <div class="team-side">
     <div class="team-side-label">Your Team ({{ battle.player_one }})</div>
-    <div class="pokemon-grid-2x2" id="player-grid">
+    <div class="grid-col-labels">
+      <div class="grid-col-label">Back</div>
+      <div class="grid-col-label is-front">Front</div>
+    </div>
+    <div class="pokemon-grid" id="player-grid">
       {% for slot in player_active_slots %}
-        <div class="pokemon-card {% if slot.is_fainted %}fainted{% endif %}"
+        <div class="pokemon-card pos-{{ slot.grid_position }} {% if slot.is_fainted %}fainted{% endif %}"
              id="slot-{{ slot.pk }}"
              data-slot="{{ slot.pk }}"
              onclick="focusSlot({{ slot.pk }})"
              style="cursor:pointer;">
-          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+          {% if slot.pokemon.pokedex_number %}
+            <img src="/media/pokemon/sprites/{{ slot.pokemon.pokedex_number|stringformat:'03d' }}.png"
+                 alt="{{ slot.pokemon.name }}" class="pokemon-sprite">
+          {% elif slot.pokemon.sprite_url %}
+            <img src="{{ slot.pokemon.sprite_url }}" alt="{{ slot.pokemon.name }}" class="pokemon-sprite">
+          {% endif %}
           <div class="card-name">{{ slot.pokemon.name }}</div>
-          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
-          <div class="hp-bar-wrap">
-            <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
-                 id="hp-bar-{{ slot.pk }}"
-                 style="width:{{ slot.hp_percentage }}%"></div>
+          <div class="card-hp-row">
+            <div class="hp-bar-wrap">
+              <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
+                   id="hp-bar-{{ slot.pk }}"
+                   style="width:{{ slot.hp_percentage }}%"></div>
+            </div>
+            <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
           </div>
           <div class="status-badges" id="status-badges-{{ slot.pk }}">
             {% for active in slot.active_statuses.all %}
-              <span class="badge {{ active.status.name|status_badge_class }}">
-                {{ active.status.get_name_display }}{% if active.remaining_turns %} ({{ active.remaining_turns }}){% endif %}
+              {% with icon=active.status.name|status_icon turns=active.remaining_turns %}
+              <span class="badge {{ active.status.name|status_badge_class }}"
+                    title="{{ active.status.get_name_display }}{% if turns %} — {{ turns }}r left{% endif %}">
+                {% if icon %}{{ icon }} {% endif %}{{ active.status.get_name_display }}{% if turns %} <span style="opacity:.7;font-size:0.58rem;">{{ turns }}r</span>{% endif %}
               </span>
+              {% endwith %}
             {% endfor %}
           </div>
           <div class="card-selection-info" id="sel-info-{{ slot.pk }}">
@@ -453,30 +768,46 @@
     {% endif %}
   </div>
 
-  <div class="vs-label">VS</div>
+  <div class="vs-column">
+    <div class="vs-label">VS</div>
+    <div class="vs-round" id="round-label">Round {{ battle.current_round }}</div>
+  </div>
 
   <!-- Opponent side -->
   <div class="team-side">
     <div class="team-side-label">Opponent ({% if battle.player_two %}{{ battle.player_two }}{% else %}AI{% endif %})</div>
-    <div class="pokemon-grid-2x2" id="opponent-grid">
+    <div class="grid-col-labels">
+      <div class="grid-col-label is-front">Front</div>
+      <div class="grid-col-label">Back</div>
+    </div>
+    <div class="pokemon-grid" id="opponent-grid">
       {% for slot in opponent_active_slots %}
-        <div class="pokemon-card enemy-card {% if slot.is_fainted %}fainted{% endif %}"
+        <div class="pokemon-card enemy-card pos-{{ slot.grid_position }} {% if slot.is_fainted %}fainted{% endif %}"
              id="slot-{{ slot.pk }}"
-             data-slot="{{ slot.pk }}"
-             onclick="selectTarget({{ slot.pk }}, '{{ slot.pokemon.name }}')">
-          <div class="card-pos-label">{{ slot.get_grid_position_display }}</div>
+             data-slot="{{ slot.pk }}">
+          {% if slot.pokemon.pokedex_number %}
+            <img src="/media/pokemon/sprites/{{ slot.pokemon.pokedex_number|stringformat:'03d' }}.png"
+                 alt="{{ slot.pokemon.name }}" class="pokemon-sprite">
+          {% elif slot.pokemon.sprite_url %}
+            <img src="{{ slot.pokemon.sprite_url }}" alt="{{ slot.pokemon.name }}" class="pokemon-sprite">
+          {% endif %}
           <div class="card-name">{{ slot.pokemon.name }}</div>
-          <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
-          <div class="hp-bar-wrap">
-            <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
-                 id="hp-bar-{{ slot.pk }}"
-                 style="width:{{ slot.hp_percentage }}%"></div>
+          <div class="card-hp-row">
+            <div class="hp-bar-wrap">
+              <div class="hp-bar {{ slot.hp_percentage|hp_color }}"
+                   id="hp-bar-{{ slot.pk }}"
+                   style="width:{{ slot.hp_percentage }}%"></div>
+            </div>
+            <div class="card-hp-text" id="hp-text-{{ slot.pk }}">{{ slot.current_hp }}/{{ slot.max_hp }}</div>
           </div>
           <div class="status-badges" id="status-badges-{{ slot.pk }}">
             {% for active in slot.active_statuses.all %}
-              <span class="badge {{ active.status.name|status_badge_class }}">
-                {{ active.status.get_name_display }}
+              {% with icon=active.status.name|status_icon turns=active.remaining_turns %}
+              <span class="badge {{ active.status.name|status_badge_class }}"
+                    title="{{ active.status.get_name_display }}{% if turns %} — {{ turns }}r left{% endif %}">
+                {% if icon %}{{ icon }} {% endif %}{{ active.status.get_name_display }}{% if turns %} <span style="opacity:.7;font-size:0.58rem;">{{ turns }}r</span>{% endif %}
               </span>
+              {% endwith %}
             {% endfor %}
           </div>
         </div>
@@ -534,7 +865,8 @@
 {% if battle.status == 'active' and player_team and not substitution_needed %}
 <div class="action-panel" id="action-form-wrap">
   <div class="action-panel-header">
-    <span class="action-panel-title">Select Actions</span>
+    <span class="action-panel-title">Choose Mystery Moves</span>
+    <span class="action-progress" id="action-progress">Standard attacks auto-fire</span>
     <div class="slot-tabs" id="slot-tabs">
       {% for slot in player_active_slots %}
         {% if not slot.is_fainted %}
@@ -553,15 +885,9 @@
 
     {% for slot in player_active_slots %}
       {% if not slot.is_fainted %}
-        {# Persist selections as hidden inputs — updated by JS #}
-        <input type="hidden"
-               id="move-input-{{ slot.pk }}"
-               name="move_{{ slot.pk }}"
-               value="{% if slot.selected_move %}{{ slot.selected_move.pk }}{% endif %}">
-        <input type="hidden"
-               id="target-input-{{ slot.pk }}"
-               name="target_{{ slot.pk }}"
-               value="{% if slot.selected_target %}{{ slot.selected_target.pk }}{% endif %}">
+        {# Mystery toggle checkbox — submitted as mystery_{slot_pk} = "on" #}
+        <input type="checkbox" id="mystery-check-{{ slot.pk }}" name="mystery_{{ slot.pk }}"
+               value="on" style="display:none;">
         {# Switch input — set by JS when player chooses to switch this slot #}
         <input type="hidden" id="switch-input-{{ slot.pk }}" name="switch_{{ slot.pk }}" value="" disabled>
 
@@ -572,13 +898,8 @@
           <div class="slot-action-info">
             <span class="slot-action-name">{{ slot.pokemon.name }}</span>
             <span class="slot-action-hp">HP: {{ slot.current_hp }}/{{ slot.max_hp }}</span>
-            <span class="target-info-line" id="target-label-{{ slot.pk }}">
-              Target:
-              {% if slot.selected_target and not slot.selected_target.is_fainted %}
-                <span>{{ slot.selected_target.pokemon.name }}</span>
-              {% else %}
-                <span style="color:#6b7280;">— click an enemy —</span>
-              {% endif %}
+            <span style="font-size:0.72rem;color:#374151;margin-left:auto;">
+              Auto: {% if slot.owned_pokemon and slot.owned_pokemon.move_standard %}{{ slot.owned_pokemon.move_standard.themed_name|default:slot.owned_pokemon.move_standard.name }}{% else %}Standard{% endif %}
             </span>
           </div>
 
@@ -599,70 +920,90 @@
           </div>
           {% endif %}
 
-          <!-- Move buttons -->
-          <div class="move-buttons" id="move-buttons-{{ slot.pk }}">
-            {% if slot.owned_pokemon %}
-              {% get_owned_active_moves slot.owned_pokemon as active_moves %}
-              {% for move in active_moves %}
+          <!-- Mystery toggle -->
+          <div id="mystery-area-{{ slot.pk }}">
+            {% if slot.owned_pokemon and slot.owned_pokemon.move_special %}
+              {% with move=slot.owned_pokemon.move_special %}
                 {% with cd=cooldown_map|get_item:slot.pk|get_item:move.pk %}
                   {% with is_cd=cd|is_on_cooldown %}
-                    <button type="button"
-                            class="move-btn {% if slot.selected_move and slot.selected_move.pk == move.pk %}selected-move{% endif %} {% if is_cd %}on-cooldown{% endif %}"
-                            id="move-btn-{{ slot.pk }}-{{ move.pk }}"
-                            data-slot="{{ slot.pk }}"
-                            data-move="{{ move.pk }}"
-                            {% if is_cd %}disabled{% endif %}
-                            onclick="selectMove({{ slot.pk }}, {{ move.pk }}, this)">
-                      <span class="move-btn-slot slot-{{ move.slot_type }}">{{ move.get_slot_type_display }}</span>
-                      <span class="move-btn-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</span>
-                      <span class="move-btn-meta">
-                        {% if move.power %}{{ move.power }} pwr{% endif %}
-                        {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
-                        {% if move.trigger_status %} · COMBO{% endif %}
-                      </span>
-                      {% if is_cd %}
-                        <span class="move-btn-cd">Cooldown: {{ cd }}r</span>
-                      {% elif move.cooldown > 0 %}
-                        <span class="move-btn-meta">CD: {{ move.cooldown }}r</span>
-                      {% endif %}
-                    </button>
+                    {% if is_cd %}
+                      {# Chakra bar: cd remaining / total cooldown → fill% = (1 - cd/cooldown)*100 #}
+                      {% with fill=cd|chakra_fill:move.cooldown %}
+                      <button type="button" class="mystery-toggle on-cooldown" disabled
+                              id="mystery-btn-{{ slot.pk }}">
+                        <span class="mystery-toggle-icon" style="font-size:1rem;">🔮</span>
+                        <div style="flex:1;min-width:0;">
+                          <span class="mystery-toggle-label">{{ move.themed_name|default:move.name }}</span>
+                          <span class="mystery-toggle-meta">Charging chakra… {{ cd }}r remaining</span>
+                          <div class="chakra-bar-wrap">
+                            <div class="chakra-bar" style="width:{{ fill }}%"></div>
+                          </div>
+                        </div>
+                      </button>
+                      {% endwith %}
+                    {% else %}
+                      <button type="button"
+                              class="mystery-toggle chakra-ready"
+                              id="mystery-btn-{{ slot.pk }}"
+                              data-slot="{{ slot.pk }}"
+                              onclick="toggleMystery({{ slot.pk }})">
+                        <span class="mystery-toggle-icon">⚡</span>
+                        <div style="flex:1;min-width:0;">
+                          <span class="mystery-toggle-label">
+                            Unleash Mystery
+                            <span class="chakra-ready-label">● CHAKRA READY</span>
+                          </span>
+                          <span class="mystery-toggle-name">{{ move.themed_name|default:move.name }}</span>
+                          <span class="mystery-toggle-meta">
+                            {% if move.power %}{{ move.power }} pwr{% endif %}
+                            {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
+                          </span>
+                          <div class="chakra-bar-wrap">
+                            <div class="chakra-bar chakra-full" style="width:100%"></div>
+                          </div>
+                        </div>
+                      </button>
+                    {% endif %}
                   {% endwith %}
                 {% endwith %}
-              {% endfor %}
+              {% endwith %}
             {% else %}
-              {# Fallback for AI / legacy slots without OwnedPokemon #}
+              <div style="font-size:0.73rem;color:#374151;padding:0.4rem 0;">No mystery move assigned.</div>
+            {% endif %}
+          </div>
+
+          <!-- Passive badges (always-on, non-interactive) -->
+          <div style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+            {% if slot.owned_pokemon %}
+              {% if slot.owned_pokemon.move_support %}
+                {% with move=slot.owned_pokemon.move_support %}
+                  <div class="passive-badge">
+                    <span class="move-btn-slot slot-passive_1">Passive 1</span>
+                    <span>{{ move.themed_name|default:move.name }}</span>
+                  </div>
+                {% endwith %}
+              {% endif %}
+              {% if slot.owned_pokemon.move_passive %}
+                {% with move=slot.owned_pokemon.move_passive %}
+                  <div class="passive-badge">
+                    <span class="move-btn-slot slot-passive_2">Passive 2</span>
+                    <span>{{ move.themed_name|default:move.name }}</span>
+                  </div>
+                {% endwith %}
+              {% endif %}
+            {% else %}
               {% for move in slot.pokemon.moves.all %}
-                {% if move.slot_type != 'passive' %}
-                  {% with cd=cooldown_map|get_item:slot.pk|get_item:move.pk %}
-                    {% with is_cd=cd|is_on_cooldown %}
-                      <button type="button"
-                              class="move-btn {% if slot.selected_move and slot.selected_move.pk == move.pk %}selected-move{% endif %} {% if is_cd %}on-cooldown{% endif %}"
-                              id="move-btn-{{ slot.pk }}-{{ move.pk }}"
-                              data-slot="{{ slot.pk }}"
-                              data-move="{{ move.pk }}"
-                              {% if is_cd %}disabled{% endif %}
-                              onclick="selectMove({{ slot.pk }}, {{ move.pk }}, this)">
-                        <span class="move-btn-slot slot-{{ move.slot_type }}">{{ move.get_slot_type_display }}</span>
-                        <span class="move-btn-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</span>
-                        <span class="move-btn-meta">
-                          {% if move.power %}{{ move.power }} pwr{% endif %}
-                          {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
-                          {% if move.trigger_status %} · COMBO{% endif %}
-                        </span>
-                        {% if is_cd %}
-                          <span class="move-btn-cd">Cooldown: {{ cd }}r</span>
-                        {% elif move.cooldown > 0 %}
-                          <span class="move-btn-meta">CD: {{ move.cooldown }}r</span>
-                        {% endif %}
-                      </button>
-                    {% endwith %}
-                  {% endwith %}
+                {% if move.slot_type == 'passive_1' or move.slot_type == 'passive_2' %}
+                  <div class="passive-badge">
+                    <span class="move-btn-slot slot-{{ move.slot_type }}">{{ move.get_slot_type_display }}</span>
+                    <span>{{ move.themed_name|default:move.name }}</span>
+                  </div>
                 {% endif %}
               {% endfor %}
             {% endif %}
           </div>
 
-          <!-- Switch panel — shown when player selects Switch mode for this slot -->
+          <!-- Switch panel -->
           {% if player_bench_slots %}
           <div class="switch-panel" id="switch-panel-{{ slot.pk }}">
             <div style="font-size:0.78rem;color:#fcd34d;margin-bottom:0.4rem;">
@@ -679,33 +1020,11 @@
           </div>
           {% endif %}
 
-          <!-- Ninja Trait display -->
-          {% if slot.owned_pokemon %}
-            {% if slot.owned_pokemon.move_passive %}
-              {% with move=slot.owned_pokemon.move_passive %}
-                <div class="passive-display">
-                  <strong>Ninja Trait — {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}:</strong>
-                  {% if move.description %}{{ move.description }}{% else %}{{ move.move_type }} · {{ move.power }} pwr{% endif %}
-                </div>
-              {% endwith %}
-            {% endif %}
-          {% else %}
-            {# Fallback for AI / legacy slots without OwnedPokemon #}
-            {% for move in slot.pokemon.moves.all %}
-              {% if move.slot_type == 'passive' %}
-                <div class="passive-display">
-                  <strong>Ninja Trait — {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}:</strong>
-                  {% if move.description %}{{ move.description }}{% else %}{{ move.move_type }} · {{ move.power }} pwr{% endif %}
-                </div>
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-
         </div><!-- /slot-action-block -->
       {% endif %}
     {% endfor %}
 
-    <button type="submit" class="execute-btn" id="execute-btn">
+    <button type="submit" class="execute-btn all-ready" id="execute-btn">
       Execute Round →
     </button>
   </form>
@@ -714,20 +1033,41 @@
 
 <!-- ── Round log ───────────────────────────────────────────── -->
 <div style="margin-bottom:1.25rem;">
-  <h3 style="font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;margin-bottom:0.5rem;">
-    Round Log
-  </h3>
+  <div class="log-section-header">Round Log</div>
   <div class="round-log" id="round-log">
-    {% for log in logs %}
-      <div class="log-entry log-{{ log.log_type }}">
-        {% if log.log_type == 'combo' %}⚡ {% elif log.log_type == 'faint' %}💀 {% elif log.log_type == 'status' %}✦ {% endif %}
-        {{ log.message }}
-      </div>
+    {% regroup logs by round_number as logs_by_round %}
+    {% for round_group in logs_by_round %}
+      {% if not forloop.first %}
+        <div class="log-round-sep">— Round {{ round_group.grouper }} —</div>
+      {% endif %}
+      {% for log in round_group.list %}
+        {% with chain_pos=log.chain_position|default:0 %}
+        <div class="log-entry log-{{ log.log_type }}{% if chain_pos > 0 %} chain-link{% endif %}">
+          {% if log.log_type == 'combo' %}
+            <span style="color:#fb923c;margin-right:3px;">↳⚡</span>
+          {% elif log.log_type == 'faint' %}
+            <span style="margin-right:3px;">💀</span>
+          {% elif log.log_type == 'status' %}
+            <span style="color:#a78bfa;margin-right:3px;">✦</span>
+          {% elif log.log_type == 'action' %}
+            <span style="color:#6b7280;margin-right:3px;">›</span>
+          {% endif %}
+          {{ log.message }}
+          {% if log.chain_position %}
+            <span style="color:#78350f;font-size:0.68rem;margin-left:4px;font-weight:700;">COMBO ×{{ log.chain_position }}</span>
+          {% endif %}
+        </div>
+        {% endwith %}
+      {% endfor %}
     {% empty %}
       <div style="color:#6b7280;font-size:0.82rem;">No log entries yet.</div>
     {% endfor %}
   </div>
 </div>
+
+<!-- ── Combat animation overlays ────────────────────────────── -->
+<div id="move-banner"></div>
+<div id="combo-badge" style="display:none;"></div>
 
 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
   <a href="{% url 'game:battle_log' battle.pk %}" class="btn btn-secondary btn-sm">Full Log</a>
@@ -744,109 +1084,41 @@
   const BATTLE_PK = {{ battle.pk }};
   const IS_ACTIVE = {% if battle.status == 'active' %}true{% else %}false{% endif %};
 
-  // ── State ────────────────────────────────────────────────────
-  // focusedSlot: the slot pk whose move buttons are currently shown
-  let focusedSlot = null;
+  // ── Mystery toggle state ─────────────────────────────────────
+  const mysteryActive = {};  // { slotPk: bool }
 
-  // selectedTargetPk: the currently chosen enemy pk (applied to focusedSlot)
-  // Per-slot persistent state (pre-loaded from Django context)
-  const slotState = {};  // { slotPk: { movePk, targetPk, targetName } }
+  window.toggleMystery = function (slotPk) {
+    mysteryActive[slotPk] = !mysteryActive[slotPk];
 
-  // Initialise from hidden inputs already present in the DOM
-  document.querySelectorAll("input[id^='move-input-']").forEach(function (inp) {
-    const slotPk = parseInt(inp.id.replace("move-input-", ""));
-    slotState[slotPk] = slotState[slotPk] || {};
-    if (inp.value) slotState[slotPk].movePk = parseInt(inp.value);
-  });
-  document.querySelectorAll("input[id^='target-input-']").forEach(function (inp) {
-    const slotPk = parseInt(inp.id.replace("target-input-", ""));
-    slotState[slotPk] = slotState[slotPk] || {};
-    if (inp.value) slotState[slotPk].targetPk = parseInt(inp.value);
-  });
+    const btn = document.getElementById("mystery-btn-" + slotPk);
+    const check = document.getElementById("mystery-check-" + slotPk);
+    if (btn) btn.classList.toggle("mystery-active", !!mysteryActive[slotPk]);
+    if (check) check.checked = !!mysteryActive[slotPk];
 
-  // Focus the first non-fainted slot on load
-  const firstTab = document.querySelector(".slot-tab:not(.fainted-tab)");
-  if (firstTab) {
-    focusedSlot = parseInt(firstTab.dataset.slot);
-  }
+    // Update label
+    const label = btn ? btn.querySelector(".mystery-toggle-label") : null;
+    if (label) {
+      label.textContent = mysteryActive[slotPk] ? "Mystery Active ✓" : "Unleash Mystery";
+    }
+
+    updateProgress();
+  };
 
   // ── focusSlot ────────────────────────────────────────────────
   window.focusSlot = function (slotPk) {
     const tab = document.querySelector(`.slot-tab[data-slot="${slotPk}"]`);
     if (!tab || tab.classList.contains("fainted-tab")) return;
 
-    focusedSlot = slotPk;
-
-    // Update tab highlight
     document.querySelectorAll(".slot-tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
 
-    // Update player card border
     document.querySelectorAll("#player-grid .pokemon-card").forEach(c => c.classList.remove("selected-attacker"));
     const card = document.querySelector(`#player-grid [data-slot="${slotPk}"]`);
     if (card) card.classList.add("selected-attacker");
 
-    // Show correct action block
     document.querySelectorAll(".slot-action-block").forEach(b => b.classList.remove("visible"));
     const block = document.getElementById("action-block-" + slotPk);
     if (block) block.classList.add("visible");
-  };
-
-  // ── selectMove ───────────────────────────────────────────────
-  window.selectMove = function (slotPk, movePk, btn) {
-    if (btn.disabled) return;
-
-    // Update hidden input
-    const inp = document.getElementById("move-input-" + slotPk);
-    if (inp) inp.value = movePk;
-
-    // Update state
-    slotState[slotPk] = slotState[slotPk] || {};
-    slotState[slotPk].movePk = movePk;
-
-    // Highlight selected button within this slot
-    document.querySelectorAll(`.move-btn[data-slot="${slotPk}"]`).forEach(b => b.classList.remove("selected-move"));
-    btn.classList.add("selected-move");
-
-    // Update selection info on battlefield card
-    const selInfo = document.getElementById("sel-info-" + slotPk);
-    if (selInfo) selInfo.textContent = "→ " + btn.querySelector(".move-btn-name").textContent;
-  };
-
-  // ── selectTarget ─────────────────────────────────────────────
-  window.selectTarget = function (targetPk, targetName) {
-    if (focusedSlot === null) return;
-    const targetCard = document.querySelector(`#opponent-grid [data-slot="${targetPk}"]`);
-    if (targetCard && targetCard.classList.contains("fainted")) return;
-
-    // Update hidden input for the focused slot
-    const inp = document.getElementById("target-input-" + focusedSlot);
-    if (inp) inp.value = targetPk;
-
-    slotState[focusedSlot] = slotState[focusedSlot] || {};
-    slotState[focusedSlot].targetPk = targetPk;
-    slotState[focusedSlot].targetName = targetName;
-
-    // Highlight selected enemy card
-    document.querySelectorAll("#opponent-grid .enemy-card").forEach(c => c.classList.remove("selected-target"));
-    if (targetCard) targetCard.classList.add("selected-target");
-
-    // Update target label in action block
-    const label = document.getElementById("target-label-" + focusedSlot);
-    if (label) label.innerHTML = `Target: <span>${targetName}</span>`;
-  };
-
-  // ── Re-highlight target when switching focused slot ──────────
-  const origFocus = window.focusSlot;
-  window.focusSlot = function (slotPk) {
-    origFocus(slotPk);
-    // Restore target highlight for this slot
-    const state = slotState[slotPk];
-    document.querySelectorAll("#opponent-grid .enemy-card").forEach(c => c.classList.remove("selected-target"));
-    if (state && state.targetPk) {
-      const tc = document.querySelector(`#opponent-grid [data-slot="${state.targetPk}"]`);
-      if (tc && !tc.classList.contains("fainted")) tc.classList.add("selected-target");
-    }
   };
 
   // ── WebSocket ────────────────────────────────────────────────
@@ -881,20 +1153,124 @@
   function applyBattleUpdate(payload) {
     const roundLabel = document.getElementById("round-label");
     if (roundLabel) roundLabel.textContent = "Round " + payload.current_round;
+    const roundLabelHeader = document.getElementById("round-label-header");
+    if (roundLabelHeader) roundLabelHeader.textContent = payload.current_round;
 
-    payload.teams.forEach(function (team) {
-      team.slots.forEach(function (slot) { updateSlot(slot); });
-    });
+    // Play action animation sequence first, then apply final state
+    if (payload.action_sequence && payload.action_sequence.length > 0) {
+      playActionSequence(payload.action_sequence, function () {
+        payload.teams.forEach(function (team) {
+          team.slots.forEach(function (slot) { updateSlot(slot); });
+        });
+        if (payload.combo_logs && payload.combo_logs.length > 0) {
+          renderComboLog(payload.combo_logs);
+        }
+        if (payload.status === "finished") {
+          setTimeout(function () { location.reload(); }, 1500);
+        }
+      });
+    } else {
+      payload.teams.forEach(function (team) {
+        team.slots.forEach(function (slot) { updateSlot(slot); });
+      });
+      if (payload.combo_logs && payload.combo_logs.length > 0) {
+        renderComboLog(payload.combo_logs);
+      }
+      if (payload.status === "finished") {
+        setTimeout(function () { location.reload(); }, 1500);
+      }
+    }
+  }
 
-    if (payload.combo_logs && payload.combo_logs.length > 0) {
-      renderComboLog(payload.combo_logs);
-      const maxChain = payload.combo_logs.reduce((m, l) => Math.max(m, l.chain_total || 0), 0);
-      if (maxChain >= 5) showComboBanner(maxChain);
+  // ── Combat action sequencer ──────────────────────────────────
+  function playActionSequence(actions, onDone) {
+    let i = 0;
+    let comboCount = 0;
+
+    function playNext() {
+      if (i >= actions.length) {
+        hideBanner();
+        hideCombobadge();
+        if (onDone) onDone();
+        return;
+      }
+      const act = actions[i++];
+      const isCombo = act.is_combo;
+
+      // Show move banner
+      showMoveBanner(act.move_name, isCombo);
+
+      // Animate attacker card
+      const attackerCard = document.getElementById("slot-" + act.attacker_slot_pk);
+      if (attackerCard) {
+        const isEnemy = !attackerCard.closest("#player-grid");
+        attackerCard.classList.remove("attacking", "enemy-attacker");
+        void attackerCard.offsetWidth;
+        attackerCard.classList.add("attacking");
+        if (isEnemy) attackerCard.classList.add("enemy-attacker");
+        setTimeout(function () { attackerCard.classList.remove("attacking", "enemy-attacker"); }, 400);
+      }
+
+      // After lunge hits: flash target + increment combo badge
+      setTimeout(function () {
+        const targetCard = document.getElementById("slot-" + act.target_slot_pk);
+        if (targetCard && act.damage > 0) {
+          targetCard.classList.remove("damage-flash");
+          void targetCard.offsetWidth;
+          targetCard.classList.add("damage-flash");
+          setTimeout(function () { targetCard.classList.remove("damage-flash"); }, 600);
+        }
+
+        if (isCombo) {
+          comboCount++;
+          showComboCount(comboCount + 1);
+        }
+      }, 250);
+
+      // Delay before next action (combo slightly faster for flow)
+      const delay = isCombo ? 700 : 900;
+      setTimeout(playNext, delay);
     }
 
-    if (payload.status === "finished") {
-      setTimeout(function () { location.reload(); }, 1500);
-    }
+    playNext();
+  }
+
+  function showMoveBanner(moveName, isCombo) {
+    const banner = document.getElementById("move-banner");
+    if (!banner) return;
+    banner.textContent = isCombo ? "⚡ " + moveName : moveName;
+    banner.className = isCombo ? "combo-banner-style" : "";
+    banner.style.display = "block";
+    // Force reflow for re-animation
+    void banner.offsetWidth;
+    banner.style.animation = "none";
+    void banner.offsetWidth;
+    banner.style.animation = "";
+    clearTimeout(banner._hideTimer);
+    banner._hideTimer = setTimeout(hideBanner, 600);
+  }
+
+  function hideBanner() {
+    const banner = document.getElementById("move-banner");
+    if (banner) banner.style.display = "none";
+  }
+
+  function showComboCount(count) {
+    const badge = document.getElementById("combo-badge");
+    if (!badge) return;
+    badge.textContent = "×" + count;
+    badge.style.display = "flex";
+    void badge.offsetWidth;
+    badge.style.animation = "none";
+    void badge.offsetWidth;
+    badge.style.animation = "combo-pulse 0.4s ease-out";
+    clearTimeout(badge._hideTimer);
+    badge._hideTimer = setTimeout(hideCombobadge, 2400);
+  }
+
+  function hideCombobadge() {
+    const badge = document.getElementById("combo-badge");
+    if (badge) badge.style.display = "none";
   }
 
   function updateSlot(slot) {
@@ -912,6 +1288,30 @@
       bar.className = "hp-bar " + hpColorClass(slot.hp_percentage);
     }
 
+    // Update chakra bar for player slots if cooldown data is present
+    if (slot.cooldowns) {
+      Object.keys(slot.cooldowns).forEach(function (movePk) {
+        const remaining = slot.cooldowns[movePk];
+        const btn = document.getElementById("mystery-btn-" + slot.pk);
+        if (!btn) return;
+        // Find chakra bar inside this button
+        const bar = btn.querySelector(".chakra-bar");
+        if (!bar) return;
+        // We don't know total_cooldown from WS, but 0 means ready
+        if (remaining === 0) {
+          bar.style.width = "100%";
+          bar.classList.add("chakra-full");
+          btn.classList.add("chakra-ready");
+          btn.disabled = false;
+          const label = btn.querySelector(".mystery-toggle-label");
+          if (label) label.innerHTML = 'Unleash Mystery <span class="chakra-ready-label">● CHAKRA READY</span>';
+        } else {
+          bar.classList.remove("chakra-full");
+          btn.classList.remove("chakra-ready");
+        }
+      });
+    }
+
     if (slot.current_hp < oldHp) {
       card.classList.remove("damage-flash");
       void card.offsetWidth;
@@ -923,8 +1323,16 @@
 
     const badgesEl = document.getElementById("status-badges-" + slot.pk);
     if (badgesEl) {
+      const PHYSICAL_ICONS = { airborne:"🌀", launched:"⬆", knockback:"💨", grounded:"⬇" };
+      const UTILITY_ICONS  = { shielded:"🛡", hidden:"👁", immune:"✦", chain_breaker:"⛓", state_locked:"🔒", charging:"⚡" };
       badgesEl.innerHTML = (slot.statuses || []).map(function (s) {
-        return `<span class="badge badge-info">${s.display}</span>`;
+        const icon = PHYSICAL_ICONS[s.name] || UTILITY_ICONS[s.name] || "";
+        const turns = s.remaining_turns ? ` <span style="opacity:.7;font-size:0.58rem;">${s.remaining_turns}r</span>` : "";
+        const title = s.display + (s.remaining_turns ? ` — ${s.remaining_turns}r left` : "");
+        const cls = PHYSICAL_ICONS[s.name] ? `badge badge-physical badge-phys-${s.name}`
+                  : UTILITY_ICONS[s.name]  ? `badge badge-utility badge-util-${s.name}`
+                  : "badge badge-info";
+        return `<span class="${cls}" title="${title}">${icon ? icon + " " : ""}${s.display}${turns}</span>`;
       }).join("");
     }
   }
@@ -957,7 +1365,6 @@
   }
 
   // ── Bench switching ──────────────────────────────────────────
-  // switchingSlots: set of active slot PKs that are in switch mode
   const switchingSlots = new Set();
 
   window.setSwitchMode = function (slotPk) {
@@ -965,21 +1372,22 @@
 
     const switchBtn = document.getElementById("switch-mode-btn-" + slotPk);
     const attackBtn = document.getElementById("attack-mode-btn-" + slotPk);
-    const moveButtons = document.getElementById("move-buttons-" + slotPk);
+    const mysteryArea = document.getElementById("mystery-area-" + slotPk);
     const switchPanel = document.getElementById("switch-panel-" + slotPk);
 
     if (attackBtn) { attackBtn.style.background = ""; attackBtn.style.borderColor = ""; attackBtn.style.color = ""; }
     if (switchBtn) { switchBtn.style.background = "#78350f"; switchBtn.style.borderColor = "#f59e0b"; switchBtn.style.color = "#fcd34d"; }
-    if (moveButtons) moveButtons.style.display = "none";
+    if (mysteryArea) mysteryArea.style.display = "none";
     if (switchPanel) switchPanel.classList.add("visible");
 
-    // Disable move/target inputs for this slot (they are excluded from round).
-    const moveInp = document.getElementById("move-input-" + slotPk);
-    const targetInp = document.getElementById("target-input-" + slotPk);
-    if (moveInp) moveInp.disabled = true;
-    if (targetInp) targetInp.disabled = true;
+    // Uncheck mystery for this slot if switching
+    const check = document.getElementById("mystery-check-" + slotPk);
+    if (check) check.checked = false;
+    mysteryActive[slotPk] = false;
 
-    // Show pending label
+    const switchInpSwitch = document.getElementById("switch-input-" + slotPk);
+    if (switchInpSwitch) switchInpSwitch.disabled = false;
+
     const pending = document.getElementById("switch-pending-" + slotPk);
     if (pending) pending.style.display = "inline";
   };
@@ -989,25 +1397,17 @@
 
     const switchBtn = document.getElementById("switch-mode-btn-" + slotPk);
     const attackBtn = document.getElementById("attack-mode-btn-" + slotPk);
-    const moveButtons = document.getElementById("move-buttons-" + slotPk);
+    const mysteryArea = document.getElementById("mystery-area-" + slotPk);
     const switchPanel = document.getElementById("switch-panel-" + slotPk);
 
     if (attackBtn) { attackBtn.style.background = "#1d4ed8"; attackBtn.style.borderColor = "#3b82f6"; attackBtn.style.color = "#fff"; }
     if (switchBtn) { switchBtn.style.background = ""; switchBtn.style.borderColor = ""; switchBtn.style.color = ""; }
-    if (moveButtons) moveButtons.style.display = "";
+    if (mysteryArea) mysteryArea.style.display = "";
     if (switchPanel) switchPanel.classList.remove("visible");
 
-    // Re-enable move/target inputs.
-    const moveInp = document.getElementById("move-input-" + slotPk);
-    const targetInp = document.getElementById("target-input-" + slotPk);
-    if (moveInp) moveInp.disabled = false;
-    if (targetInp) targetInp.disabled = false;
-
-    // Clear switch input.
     const switchInp = document.getElementById("switch-input-" + slotPk);
     if (switchInp) { switchInp.value = ""; switchInp.disabled = true; }
 
-    // Clear selection
     document.querySelectorAll(`[id^="switch-opt-${slotPk}-"]`).forEach(function (el) {
       el.classList.remove("selected-switch");
     });
@@ -1017,14 +1417,12 @@
   };
 
   window.selectSwitch = function (activeSlotPk, benchSlotPk, benchName) {
-    // Highlight selection
     document.querySelectorAll(`[id^="switch-opt-${activeSlotPk}-"]`).forEach(function (el) {
       el.classList.remove("selected-switch");
     });
     const opt = document.getElementById("switch-opt-" + activeSlotPk + "-" + benchSlotPk);
     if (opt) opt.classList.add("selected-switch");
 
-    // Enable the switch hidden input with the bench slot pk.
     const switchInp = document.getElementById("switch-input-" + activeSlotPk);
     if (switchInp) { switchInp.value = benchSlotPk; switchInp.disabled = false; }
 
@@ -1043,17 +1441,34 @@
     });
   }
 
-  // ── Boot ─────────────────────────────────────────────────────
-  // Apply initial focus highlight
-  if (focusedSlot) {
-    const card = document.querySelector(`#player-grid [data-slot="${focusedSlot}"]`);
-    if (card) card.classList.add("selected-attacker");
-    // Restore stored target highlight
-    const state = slotState[focusedSlot];
-    if (state && state.targetPk) {
-      const tc = document.querySelector(`#opponent-grid [data-slot="${state.targetPk}"]`);
-      if (tc) tc.classList.add("selected-target");
+  // ── Progress tracking ────────────────────────────────────────
+  function updateProgress() {
+    const activeTabs = document.querySelectorAll(".slot-tab:not(.fainted-tab)");
+    let mysteryCount = 0;
+    activeTabs.forEach(function (tab) {
+      const pk = parseInt(tab.dataset.slot);
+      if (mysteryActive[pk]) {
+        mysteryCount++;
+        tab.classList.add("assigned");
+      } else {
+        tab.classList.remove("assigned");
+      }
+    });
+    const prog = document.getElementById("action-progress");
+    if (prog) {
+      prog.textContent = mysteryCount > 0
+        ? mysteryCount + " mystery active"
+        : "Standard attacks auto-fire";
+      prog.classList.toggle("ready", mysteryCount > 0);
     }
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────
+  const firstTab = document.querySelector(".slot-tab:not(.fainted-tab)");
+  if (firstTab) {
+    const firstSlotPk = parseInt(firstTab.dataset.slot);
+    const card = document.querySelector(`#player-grid [data-slot="${firstSlotPk}"]`);
+    if (card) card.classList.add("selected-attacker");
   }
 
   connectWS();

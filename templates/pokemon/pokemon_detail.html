@@ -137,19 +137,13 @@
         {% endif %}
       </div>
       <a href="{% url 'pokemon:pokedex' %}" class="btn btn-secondary btn-sm">&larr; Back to Pokedex</a>
-      {% if user.is_authenticated %}
-      <form method="post" action="{% url 'pokemon:catch' pokemon.pk %}" style="display:inline;margin-left:0.5rem;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary btn-sm">Catch {{ pokemon.name }}</button>
-      </form>
-      {% endif %}
     </div>
     <div class="detail-hero-img">
-      {% if pokemon.sprite_url %}
-        <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
-      {% elif pokemon.pokedex_number %}
-        <img src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
+      {% if pokemon.pokedex_number %}
+        <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
              alt="{{ pokemon.name }}">
+      {% elif pokemon.sprite_url %}
+        <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
       {% else %}
         <div style="font-size:8rem;line-height:1;padding-bottom:1rem;">&#10067;</div>
       {% endif %}
@@ -188,10 +182,10 @@
         </div>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Sp. Atk</span>
-        <span class="stat-val" style="color:#f97316;">{{ pokemon.base_sp_attack }}</span>
+        <span class="stat-label">Ninjutsu</span>
+        <span class="stat-val" style="color:#f97316;">{{ pokemon.base_ninjutsu }}</span>
         <div class="stat-bar-track">
-          <div class="stat-bar-fill stat-spatk" style="width:{{ pokemon.base_sp_attack|floatformat:0 }}%;max-width:100%;"></div>
+          <div class="stat-bar-fill stat-spatk" style="width:{{ pokemon.base_ninjutsu|floatformat:0 }}%;max-width:100%;"></div>
         </div>
       </div>
       <div class="stat-row">
@@ -202,10 +196,10 @@
         </div>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Speed</span>
-        <span class="stat-val" style="color:#fbbf24;">{{ pokemon.base_speed }}</span>
+        <span class="stat-label">Initiative</span>
+        <span class="stat-val" style="color:#fbbf24;">{{ pokemon.base_initiative }}</span>
         <div class="stat-bar-track">
-          <div class="stat-bar-fill stat-speed" style="width:{{ pokemon.base_speed|floatformat:0 }}%;max-width:100%;"></div>
+          <div class="stat-bar-fill stat-speed" style="width:{{ pokemon.base_initiative|floatformat:0 }}%;max-width:100%;"></div>
         </div>
       </div>
     </div>
@@ -240,6 +234,51 @@
 
   </div>
 
+  <!-- PAIRING HINTS -->
+  {% if pairing_hints %}
+  <div class="panel" style="margin-bottom:2rem;">
+    <div class="panel-title">&#9889; Combo Synergy — Recommended Partners</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.75rem;">
+      {% for hint in pairing_hints %}
+        <a href="{% url 'pokemon:detail' hint.partner.pk %}"
+           style="display:block;text-decoration:none;background:#1a1a2e;border:1px solid {% if hint.role == 'primer' %}#7c3aed55{% else %}#b4530955{% endif %};border-radius:8px;padding:0.85rem 1rem;transition:border-color 0.15s;"
+           onmouseover="this.style.borderColor='{% if hint.role == 'primer' %}#7c3aed{% else %}#f59e0b{% endif %}'"
+           onmouseout="this.style.borderColor='{% if hint.role == 'primer' %}#7c3aed55{% else %}#b4530955{% endif %}'">
+          <div style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;color:{% if hint.role == 'primer' %}#a78bfa{% else %}#fbbf24{% endif %};">
+            {% if hint.role == 'primer' %}You prime &#8594; they chain{% else %}They prime &#8594; you chain{% endif %}
+          </div>
+          <div style="font-weight:700;color:#f1f5f9;margin-bottom:4px;">{{ hint.partner.name }}</div>
+          <div style="font-size:0.75rem;color:#9ca3af;">{{ hint.detail }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- FOUND IN ZONES -->
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <div class="panel-title">&#127758; Found in Expedition Zones</div>
+    {% if spawn_zones %}
+      <div style="display:flex;flex-wrap:wrap;gap:0.6rem;">
+        {% for entry in spawn_zones %}
+        <a href="{% url 'expedition:hub' %}" style="text-decoration:none;">
+          <div style="background:#0f1a2e;border:1px solid #2a4a8e;border-radius:8px;padding:0.5rem 0.9rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:0.82rem;font-weight:700;color:#e2e8f0;">{{ entry.zone.name }}</span>
+            {% if entry.weight >= 20 %}
+              <span style="font-size:0.62rem;background:#052e16;border:1px solid #4ade80;border-radius:4px;padding:1px 6px;color:#4ade80;font-weight:700;">Common</span>
+            {% else %}
+              <span style="font-size:0.62rem;background:#1a1a2e;border:1px solid #6366f1;border-radius:4px;padding:1px 6px;color:#a78bfa;font-weight:700;">Rare</span>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <p style="font-size:0.7rem;color:#4b5563;margin-top:0.6rem;">Go on an expedition to bond with {{ pokemon.name }}.</p>
+    {% else %}
+      <p style="font-size:0.8rem;color:#4b5563;font-style:italic;">{{ pokemon.name }} has not been spotted in any active expedition zones.</p>
+    {% endif %}
+  </div>
+
   <!-- BATTLE MOVE POOL (organized by slot type) -->
   <div class="panel">
     <div class="panel-title">Battle Move Pool</div>
@@ -258,7 +297,7 @@
                   <th>Type</th>
                   <th>Power</th>
                   <th>Acc</th>
-                  <th>PP</th>
+
                   <th>Status</th>
                 </tr>
               </thead>
@@ -273,7 +312,7 @@
                   </td>
                   <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
                   <td>{{ move.accuracy }}%</td>
-                  <td>{{ move.pp }}</td>
+
                   <td>
                     {% if move.applies_status %}
                       <span class="badge-status badge-applies">{{ move.applies_status.get_name_display }}</span>

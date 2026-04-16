@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}My Sticker Album{% endblock %}
+{% load sticker_tags %}
+{% block title %}My Collection{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -106,10 +107,18 @@
 .showcase-card {
   background: #16213e;
   border: 1px solid #1e3a6e;
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
   text-align: center;
-  min-width: 100px;
+  min-width: 90px;
+}
+.showcase-card img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 0.3rem;
+  image-rendering: pixelated;
 }
 
 /* ── Filter bar ──────────────────────────────────────────────── */
@@ -175,7 +184,7 @@
   background: #16213e;
   border: 1px solid #1e3a6e;
   border-radius: 8px;
-  padding: 0.55rem 0.4rem;
+  padding: 0.4rem 0.3rem 0.5rem;
   text-align: center;
   position: relative;
   cursor: pointer;
@@ -184,9 +193,19 @@
   transition: border-color 0.15s, transform 0.1s;
 }
 .poke-card:hover { border-color: #3b82f6; transform: translateY(-1px); }
-.poke-card.locked { opacity: 0.28; filter: grayscale(90%); }
+.poke-card.locked { opacity: 0.25; filter: grayscale(100%) brightness(0.4); }
 .poke-card.complete { border-color: #4ade80; }
 .poke-card.complete:hover { border-color: #22d3ee; }
+
+.poke-card img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 0.2rem;
+  image-rendering: pixelated;
+}
+.poke-card.locked img { filter: brightness(0); }
 
 .poke-complete-mark {
   position: absolute;
@@ -196,7 +215,7 @@
   font-weight: 900;
 }
 .poke-name {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #e2e8f0;
   margin-bottom: 0.1rem;
@@ -204,21 +223,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.poke-dex { font-size: 0.62rem; color: #6b7280; }
-.poke-lock-icon { font-size: 1rem; color: #374151; margin-bottom: 0.15rem; }
+.poke-dex { font-size: 0.6rem; color: #6b7280; }
+.poke-lock-icon { font-size: 1.2rem; color: #374151; margin-bottom: 0.15rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 {# ── Top bar ──────────────────────────────────────────────────── #}
 <div class="album-topbar">
-  <h2>Sticker Album</h2>
+  <h2>My Collection</h2>
   <div class="album-actions">
     <a href="{% url 'stickers:buy_pack' %}" class="btn btn-primary btn-sm">Buy Pack</a>
+    <a href="{% url 'stickers:album_scene_index' region='kanto' %}" class="btn btn-secondary btn-sm">&#127218; Pokédex Pages</a>
     <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Trade</a>
-    <a href="{% url 'stickers:craft' %}" class="btn btn-secondary btn-sm">Craft ({{ request.user.sticker_dust }} dust)</a>
-    <a href="{% url 'stickers:dismantle' %}" class="btn btn-secondary btn-sm">Dismantle</a>
-    <a href="{% url 'stickers:dust_convert' %}" class="btn btn-secondary btn-sm">Convert Dupes</a>
+    <a href="{% url 'stickers:workshop' %}" class="btn btn-secondary btn-sm">&#9878; Workshop <span style="color:#a78bfa;font-weight:800;">{{ request.user.sticker_dust }}&#10022;</span></a>
   </div>
 </div>
 
@@ -297,11 +315,17 @@
   <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:0.5rem;">Showcase</div>
   <div class="showcase-row">
     {% for sticker in showcase %}
-    <div class="showcase-card r-{{ sticker.rarity }}">
-      <div style="font-size:0.75rem;font-weight:700;color:#e2e8f0;">{{ sticker.pokemon.name }}</div>
-      <div style="font-size:0.65rem;color:var(--rc,#9ca3af);margin-top:0.15rem;">{{ sticker.get_rarity_display }}</div>
-      <div style="font-size:0.62rem;color:#6b7280;">{{ sticker.get_variant_display }}</div>
-    </div>
+    <a href="{% url 'stickers:pokemon_album' sticker.pokemon.pk %}" class="showcase-card r-{{ sticker.rarity }}" style="text-decoration:none;display:block;">
+      {% if sticker.pokemon.pokedex_number %}
+        <img src="{{ sticker.pokemon.pokedex_number|sticker_sprite:sticker.variant }}"
+             alt="{{ sticker.pokemon.name }}"
+             loading="lazy"
+             onerror="this.src='{{ sticker.pokemon.pokedex_number|official_artwork }}'">
+      {% endif %}
+      <div style="font-size:0.72rem;font-weight:700;color:#e2e8f0;">{{ sticker.pokemon.name }}</div>
+      <div style="font-size:0.62rem;color:var(--rc,#9ca3af);margin-top:0.1rem;">{{ sticker.get_rarity_display }}</div>
+      <div style="font-size:0.6rem;color:#6b7280;">{{ sticker.get_variant_display }}</div>
+    </a>
     {% endfor %}
   </div>
 </div>
@@ -347,6 +371,7 @@
          class="poke-card complete"
          x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
         <div class="poke-complete-mark">✓</div>
+        {% if pokemon.pokedex_number %}<img src="{{ pokemon.pokedex_number|official_artwork }}" alt="{{ pokemon.name }}" loading="lazy">{% endif %}
         <div class="poke-name">{{ pokemon.name }}</div>
         {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
       </a>
@@ -354,6 +379,7 @@
       <a href="{% url 'stickers:pokemon_album' pokemon.pk %}"
          class="poke-card"
          x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
+        {% if pokemon.pokedex_number %}<img src="{{ pokemon.pokedex_number|official_artwork }}" alt="{{ pokemon.name }}" loading="lazy">{% endif %}
         <div class="poke-name">{{ pokemon.name }}</div>
         {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
       </a>
@@ -361,7 +387,7 @@
       <a href="{% url 'stickers:pokemon_album' pokemon.pk %}"
          class="poke-card locked"
          x-show="matches('{{ pokemon.name|escapejs }}', {{ o }}, {{ c }})">
-        <div class="poke-lock-icon">?</div>
+        {% if pokemon.pokedex_number %}<img src="{{ pokemon.pokedex_number|official_artwork }}" alt="" loading="lazy">{% endif %}
         <div class="poke-name">???</div>
         {% if pokemon.pokedex_number %}<div class="poke-dex">#{{ pokemon.pokedex_number }}</div>{% endif %}
       </a>

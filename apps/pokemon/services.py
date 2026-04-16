@@ -5,14 +5,21 @@ All functions that change database state accept an OwnedPokemon instance
 and call .save() themselves — callers do not need to save manually.
 
 EXP rules (as designed):
-  - Battle EXP bracket:  Lv 1–9 = 10, Lv 10–19 = 20, Lv 20–29 = 30, …
+  - Battle EXP:          Lv 1–50 = 5 XP | Lv 51–100 = 10 XP (flat per bracket)
   - Win:                 full battle EXP
   - Lose:                half battle EXP (rounded down)
   - Training tick:       3× battle EXP for that Pokemon's level bracket
   - Training ticks:      one tick per 2 minutes of training duration
-  - Duration bonuses:    30 min = no bonus | 60 min = +10% | 240 min = +50%
-  - Level-up threshold:  current_level × 10  (resets to 0 on level-up)
+  - Duration bonuses:    30 min = ×1.0 | 60 min = ×1.10 | 240 min = ×1.50
+  - Level-up threshold:  three-phase exponential curve (see OwnedPokemon.exp_to_next_level)
   - Training Pokemon:    cannot receive battle EXP; must stop/cancel training first
+  - Level-up Ryo:        min(level × 50, 5000) Ryo awarded per level-up
+
+Level-up total time estimates (240-min sessions):
+  Lv 1–20:   ~0.8 sessions  (3.4h) — hooks the player fast
+  Lv 21–85:  ~10.5 sessions (42h)  — steady grind
+  Lv 86–100: ~12.9 sessions (52h)  — 60% of total XP, genuinely hard
+  Lv 1–100:  ~24 sessions   (97h)  — roughly 25 days at 1 session/day
 
 Valid training durations (minutes): 30, 60, 240
 """
@@ -296,9 +303,9 @@ def assign_random_moveset(owned: OwnedPokemon) -> None:
     slot_field_map: dict[str, str] = {
         MoveSlotType.STANDARD: "move_standard",
         MoveSlotType.CHASE: "move_chase",
-        MoveSlotType.SPECIAL: "move_special",
-        MoveSlotType.SUPPORT: "move_support",
-        MoveSlotType.PASSIVE: "move_passive",
+        MoveSlotType.MYSTERY: "move_special",
+        MoveSlotType.PASSIVE_1: "move_support",
+        MoveSlotType.PASSIVE_2: "move_passive",
     }
 
     # Only target slots that are actually empty.
@@ -367,30 +374,38 @@ def assign_random_moveset(owned: OwnedPokemon) -> None:
 # Internal helper
 # ---------------------------------------------------------------------------
 
-def _apply_exp(owned: OwnedPokemon, earned: int) -> None:
+def _apply_exp(owned: OwnedPokemon, earned: int) -> int:
     """
     Add `earned` EXP to the Pokemon, triggering level-ups as needed.
 
-    Level-up rule: experience resets to 0 (carrying over any remainder)
-    each time the Pokemon reaches exp_to_next_level for its current level.
+    On each level-up, awards Ryo to the owner (min(level × 50, 5000)).
+    Saves only changed fields to avoid overwriting concurrent updates.
 
-    Saves only the changed fields to avoid overwriting concurrent updates.
+    Returns:
+        Total Ryo awarded from level-ups (0 if no level-up occurred).
     """
-    owned.experience += earned
+    from apps.users.services import award_ryo
 
-    leveled_up = False
+    owned.experience += earned
+    total_ryo = 0
+
     while owned.level < MAX_LEVEL and owned.experience >= owned.exp_to_next_level:
-        owned.experience -= owned.exp_to_next_level   # carry over remainder
+        owned.experience -= owned.exp_to_next_level
         owned.level += 1
-        leveled_up = True
-        logger.info("%s leveled up to Lv.%d!", owned.species.name, owned.level)
+        ryo = owned.level_up_ryo
+        total_ryo += ryo
+        logger.info(
+            "%s leveled up to Lv.%d! (+%d Ryo)",
+            owned.species.name, owned.level, ryo,
+        )
 
     owned.save(update_fields=["experience", "level"])
 
-    if leveled_up:
+    if total_ryo:
+        award_ryo(owned.owner, total_ryo)
         logger.info(
-            "%s is now Lv.%d with %d EXP toward next level.",
-            owned.species.name,
-            owned.level,
-            owned.experience,
+            "%s owner earned %d Ryo total from level-ups (now Lv.%d).",
+            owned.species.name, total_ryo, owned.level,
         )
+
+    return total_ryo

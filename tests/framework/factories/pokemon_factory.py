@@ -51,9 +51,9 @@ class PokemonFactory(factory.django.DjangoModelFactory):
     base_hp = 80
     base_attack = 80
     base_defense = 80
-    base_sp_attack = 80
+    base_ninjutsu = 80
     base_sp_defense = 80
-    base_speed = 80
+    base_initiative = 80
     sprite_url = ""
     pokedex_number = factory.Sequence(lambda n: 900 + n)
 

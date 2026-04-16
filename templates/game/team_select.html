@@ -24,7 +24,7 @@
         <div style="font-size:0.75rem;color:#9ca3af;">
           {{ op.species.primary_type }}{% if op.species.secondary_type %}/{{ op.species.secondary_type }}{% endif %}
         </div>
-        <div style="font-size:0.75rem;color:#6b7280;">HP: {{ op.species.base_hp }} | SPD: {{ op.species.base_speed }}</div>
+        <div style="font-size:0.75rem;color:#6b7280;">HP: {{ op.species.base_hp }} | INI: {{ op.species.base_initiative }}</div>
         {% if op.is_training %}
           <div style="font-size:0.7rem;color:#f59e0b;margin-top:4px;">⏳ Training</div>
         {% else %}

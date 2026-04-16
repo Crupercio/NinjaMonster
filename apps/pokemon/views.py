@@ -1,9 +1,10 @@
 """Class-based views for the pokemon app."""
+import json
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Min
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
@@ -82,6 +83,67 @@ class PokemonDetailView(DetailView):
         ]
         context["combo_moves"] = combo_moves
         context["is_battle_ready"] = self.object.is_battle_ready
+
+        # Pairing hints -------------------------------------------------------
+        # statuses this species can APPLY (via standard/mystery moves)
+        applies_ids = {
+            m.applies_status_id
+            for m in combo_moves
+            if m.applies_status_id and m.slot_type in ("standard", "mystery", "passive_1", "passive_2")
+        }
+        # statuses this species can CHASE (via chase moves)
+        triggers_on_ids = {
+            m.trigger_status_id
+            for m in combo_moves
+            if m.trigger_status_id and m.slot_type == "chase"
+        }
+
+        pairing_hints: list[dict] = []
+
+        if applies_ids:
+            # Find other species whose CHASE move triggers on a status we apply
+            from apps.pokemon.models import SpeciesMovePool  # local import
+            chase_partners = (
+                SpeciesMovePool.objects
+                .filter(slot_type="chase", move__trigger_status_id__in=applies_ids)
+                .exclude(species=self.object)
+                .select_related("species", "move__trigger_status")
+                .distinct()
+            )
+            for entry in chase_partners[:6]:
+                pairing_hints.append({
+                    "role": "primer",
+                    "partner": entry.species,
+                    "detail": f"This Pokemon primes {entry.move.trigger_status.get_name_display()} \u2192 {entry.species.name} can chain",
+                })
+
+        if triggers_on_ids:
+            # Find other species whose STANDARD move applies a status we chase
+            from apps.pokemon.models import SpeciesMovePool  # local import (already imported above if applies_ids set)
+            primer_partners = (
+                SpeciesMovePool.objects
+                .filter(slot_type__in=("standard", "mystery", "passive_1", "passive_2"), move__applies_status_id__in=triggers_on_ids)
+                .exclude(species=self.object)
+                .select_related("species", "move__applies_status")
+                .distinct()
+            )
+            for entry in primer_partners[:6]:
+                pairing_hints.append({
+                    "role": "chaser",
+                    "partner": entry.species,
+                    "detail": f"{entry.species.name} applies {entry.move.applies_status.get_name_display()} \u2192 this Pokemon chains",
+                })
+
+        context["pairing_hints"] = pairing_hints
+
+        # Expedition zones where this species can be encountered
+        from apps.expedition.models import ZoneSpawnEntry
+        context["spawn_zones"] = (
+            ZoneSpawnEntry.objects
+            .filter(species=self.object, zone__is_active=True)
+            .select_related("zone")
+            .order_by("zone__order")
+        )
         return context
 
 
@@ -344,6 +406,7 @@ class OwnedPokemonDetailView(LoginRequiredMixin, DetailView):
             "move_passive__move_type",
             "move_standard__applies_status",
             "move_chase__applies_status",
+            "move_chase__trigger_status",
             "move_special__applies_status",
             "move_support__applies_status",
             "move_passive__applies_status",
@@ -358,17 +421,68 @@ class OwnedPokemonDetailView(LoginRequiredMixin, DetailView):
             ("HP", sp.calculate_max_hp(lv), sp.base_hp),
             ("Attack", sp.calculate_stat(sp.base_attack, lv), sp.base_attack),
             ("Defense", sp.calculate_stat(sp.base_defense, lv), sp.base_defense),
-            ("Sp. Atk", sp.calculate_stat(sp.base_sp_attack, lv), sp.base_sp_attack),
+            ("Ninjutsu", sp.calculate_stat(sp.base_ninjutsu, lv), sp.base_ninjutsu),
             ("Sp. Def", sp.calculate_stat(sp.base_sp_defense, lv), sp.base_sp_defense),
-            ("Speed", sp.calculate_stat(sp.base_speed, lv), sp.base_speed),
+            ("Initiative", sp.calculate_stat(sp.base_initiative, lv), sp.base_initiative),
         ]
         context["move_slots"] = [
             ("Basic Technique", "standard", op.move_standard),
             ("Chase Technique", "chase", op.move_chase),
-            ("Secret Technique", "special", op.move_special),
-            ("Support Technique", "support", op.move_support),
-            ("Ninja Trait", "passive", op.move_passive),
+            ("Mystery", "mystery", op.move_special),
+            ("Passive 1", "passive_1", op.move_support),
+            ("Passive 2", "passive_2", op.move_passive),
         ]
+
+        # Combo synergy hints based on this pokemon's equipped moves
+        from apps.pokemon.models import SpeciesMovePool  # local import
+
+        # Statuses this pokemon APPLIES (standard / mystery moves with applies_status)
+        applies_ids = {
+            m.applies_status_id
+            for m in (op.move_standard, op.move_special, op.move_support)
+            if m is not None and m.applies_status_id
+        }
+        # Status this pokemon CHASES (chase move trigger_status)
+        triggers_on_ids = {
+            op.move_chase.trigger_status_id
+        } if op.move_chase and op.move_chase.trigger_status_id else set()
+
+        pairing_hints: list[dict] = []
+
+        if applies_ids:
+            chase_partners = (
+                SpeciesMovePool.objects
+                .filter(slot_type="chase", move__trigger_status_id__in=applies_ids)
+                .exclude(species=sp)
+                .select_related("species__primary_type", "move__trigger_status")
+                .distinct()
+            )
+            for entry in chase_partners[:6]:
+                pairing_hints.append({
+                    "role": "primer",
+                    "partner": entry.species,
+                    "detail": f"Primes {entry.move.trigger_status.get_name_display()} \u2192 {entry.species.name} chains",
+                })
+
+        if triggers_on_ids:
+            primer_partners = (
+                SpeciesMovePool.objects
+                .filter(
+                    slot_type__in=("standard", "mystery", "passive_1", "passive_2"),
+                    move__applies_status_id__in=triggers_on_ids,
+                )
+                .exclude(species=sp)
+                .select_related("species__primary_type", "move__applies_status")
+                .distinct()
+            )
+            for entry in primer_partners[:6]:
+                pairing_hints.append({
+                    "role": "chaser",
+                    "partner": entry.species,
+                    "detail": f"{entry.species.name} applies {entry.move.applies_status.get_name_display()} \u2192 you chain",
+                })
+
+        context["pairing_hints"] = pairing_hints
         return context
 
 
@@ -402,3 +516,258 @@ class TypeChartView(TemplateView):
                 "immune_to":          [a for a in ALL_TYPES if get_effectiveness(a, ft) == 0.0],
             }
         return context
+
+
+class ComboAtlasView(TemplateView):
+    """Public page showing the full combo chain matrix — which moves/statuses link to which chasers."""
+
+    template_name = "pokemon/combo_atlas.html"
+
+    # All statuses that exist in the game but have no moves assigned yet
+    _PLANNED_STATUSES: list[dict] = [
+        # --- Missing chasers (primers exist, nothing to chase them) ---
+        {"name": "Asleep",   "key": "asleep",   "gap": "chasers", "primers": 27, "chasers": 0,
+         "note": "27 Pokémon can put targets to sleep but no chase moves trigger on it yet."},
+        {"name": "Flinched", "key": "flinched", "gap": "chasers", "primers": 66, "chasers": 0,
+         "note": "66 Pokémon cause flinch but no chase moves follow up on it yet."},
+        {"name": "Seeded",   "key": "seeded",   "gap": "chasers", "primers": 53, "chasers": 0,
+         "note": "53 Pokémon can seed targets but no chase moves trigger on it yet."},
+        # --- Missing primers (chasers exist, nothing to start the chain) ---
+        {"name": "Bound",    "key": "bound",    "gap": "primers", "primers": 0,  "chasers": 53,
+         "note": "53 chase moves trigger on Bound but no standard moves apply it yet."},
+        # --- Physical states (combo infrastructure exists, no moves assigned) ---
+        {"name": "Airborne",  "key": "airborne",  "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Launch mechanic designed; no moves assign Airborne or chase it yet."},
+        {"name": "Launched",  "key": "launched",  "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Juggle mechanic designed; no moves assign Launched or chase it yet."},
+        {"name": "Knockback", "key": "knockback", "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Knockback mechanic designed; no moves assigned yet."},
+        {"name": "Grounded",  "key": "grounded",  "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Ground-state chase mechanic designed; no moves assigned yet."},
+        # --- Naruto statuses (no moves at all) ---
+        {"name": "Ignited",      "key": "ignited",      "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Naruto-inspired DOT + heal-disable. No moves assign or chase it yet."},
+        {"name": "Immobile",     "key": "immobile",     "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Full turn-loss effect. No moves assign or chase it yet."},
+        {"name": "Chaos",        "key": "chaos",        "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Friendly-fire confusion variant. No moves assigned yet."},
+        {"name": "Blinded",      "key": "blinded",      "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Blocks standard attacks. No moves assigned yet."},
+        {"name": "Acupunctured", "key": "acupunctured", "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Blocks mystery moves. No moves assigned yet."},
+        {"name": "Imprisoned",   "key": "imprisoned",   "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Punishes special move use. No moves assigned yet."},
+        {"name": "Tagged",       "key": "tagged",       "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Defense -30%, enables special combo triggers. No moves assigned yet."},
+        {"name": "Enfeebled",    "key": "enfeebled",    "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Attack + Sp.Atk halved. No moves assigned yet."},
+        {"name": "Weakened",     "key": "weakened",     "gap": "both", "primers": 0, "chasers": 0,
+         "note": "All damage output halved. No moves assigned yet."},
+        {"name": "Corroded",     "key": "corroded",     "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Strips Sp.Defense, worsens each turn. No moves assigned yet."},
+        {"name": "Interrupted",  "key": "interrupted",  "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Cancels current move, wastes the turn. No moves assigned yet."},
+        # --- Other volatile statuses with no moves ---
+        {"name": "Badly Poisoned", "key": "badly_poisoned", "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Escalating poison variant. No moves assigned yet."},
+        {"name": "Infatuated",   "key": "infatuated",   "gap": "both", "primers": 0, "chasers": 0,
+         "note": "No moves assign or chase it yet."},
+        {"name": "Cursed",       "key": "cursed",       "gap": "both", "primers": 0, "chasers": 0,
+         "note": "1/4 HP per turn. No moves assigned yet."},
+        {"name": "Nightmare",    "key": "nightmare",    "gap": "both", "primers": 0, "chasers": 0,
+         "note": "Damage while asleep. Requires Asleep first. No moves assigned yet."},
+    ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.pokemon.models import SpeciesMovePool
+
+        primer_entries = (
+            SpeciesMovePool.objects
+            .filter(move__applies_status__isnull=False, slot_type__in=("standard", "mystery", "passive_1", "passive_2"))
+            .select_related("species__primary_type", "move__applies_status", "move__move_type")
+            .order_by("move__applies_status__name", "species__name")
+        )
+        chaser_entries = (
+            SpeciesMovePool.objects
+            .filter(move__trigger_status__isnull=False, slot_type="chase")
+            .select_related("species__primary_type", "move__trigger_status", "move__move_type")
+            .order_by("move__trigger_status__name", "species__name")
+        )
+
+        status_map: dict[str, dict] = {}
+
+        for entry in primer_entries:
+            sname = entry.move.applies_status.get_name_display()
+            skey = entry.move.applies_status.name
+            bucket = status_map.setdefault(sname, {"key": skey, "primers": [], "chasers": []})
+            bucket["primers"].append({
+                "species": entry.species,
+                "move_name": entry.move.themed_name or entry.move.name,
+                "move_type": entry.move.move_type,
+                "power": entry.move.power,
+                "slot": entry.slot_type,
+            })
+
+        for entry in chaser_entries:
+            sname = entry.move.trigger_status.get_name_display()
+            skey = entry.move.trigger_status.name
+            bucket = status_map.setdefault(sname, {"key": skey, "primers": [], "chasers": []})
+            bucket["chasers"].append({
+                "species": entry.species,
+                "move_name": entry.move.themed_name or entry.move.name,
+                "move_type": entry.move.move_type,
+                "power": entry.move.power,
+                "condition": entry.move.chase_condition or "",
+            })
+
+        combo_chains = [
+            {
+                "status": status,
+                "key": data["key"],
+                "primers": data["primers"],
+                "chasers": data["chasers"],
+                "complete": bool(data["primers"] and data["chasers"]),
+            }
+            for status, data in sorted(status_map.items())
+            if data["primers"] and data["chasers"]
+        ]
+
+        context["combo_chains"] = combo_chains
+        context["planned_statuses"] = self._PLANNED_STATUSES
+        context["total_links"] = sum(
+            len(c["primers"]) * len(c["chasers"]) for c in combo_chains
+        )
+        context["active_status_count"] = len(combo_chains)
+        return context
+
+
+class ComboSimulatorView(TemplateView):
+    """Team combo simulator — pick up to 6 species, configure their movesets, see all chains."""
+
+    template_name = "pokemon/combo_simulator.html"
+
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["all_species"] = (
+            Pokemon.objects
+            .filter(pokedex_number__isnull=False)
+            .order_by("pokedex_number")
+            .values("id", "name", "pokedex_number")
+        )
+        return context
+
+
+class ComboSimulatorMovesAPI(View):
+    """JSON: return move options per slot for a given species pk."""
+
+    def get(self, _request, pk: int) -> JsonResponse:
+        from .models import MoveSlotType, SpeciesMovePool
+
+        species = get_object_or_404(Pokemon, pk=pk)
+        pool = (
+            SpeciesMovePool.objects
+            .filter(species=species)
+            .select_related("move__move_type", "move__applies_status", "move__trigger_status")
+            .order_by("slot_type", "move__name")
+        )
+
+        slots: dict[str, list] = {}
+        for entry in pool:
+            slot = entry.slot_type
+            slots.setdefault(slot, []).append({
+                "id": entry.move.id,
+                "name": entry.move.themed_name or entry.move.name,
+                "type": entry.move.move_type.name if entry.move.move_type else None,
+                "power": entry.move.power,
+                "applies_status": entry.move.applies_status.name if entry.move.applies_status_id else None,
+                "applies_status_label": entry.move.applies_status.get_name_display() if entry.move.applies_status_id else None,
+                "trigger_status": entry.move.trigger_status.name if entry.move.trigger_status_id else None,
+                "trigger_status_label": entry.move.trigger_status.get_name_display() if entry.move.trigger_status_id else None,
+                "chase_condition": entry.move.chase_condition or "",
+            })
+
+        return JsonResponse({
+            "species_id": species.pk,
+            "species_name": species.name,
+            "pokedex_number": species.pokedex_number,
+            "slots": slots,
+        })
+
+
+class ComboSimulatorChainsAPI(View):
+    """JSON: given a configured team, return all primer→chaser pairs within that team."""
+
+    def post(self, request) -> JsonResponse:
+        try:
+            body = json.loads(request.body)
+            team: list[dict] = body.get("team", [])
+        except (json.JSONDecodeError, AttributeError):
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        if not team:
+            return JsonResponse({"chains": [], "total_links": 0})
+
+        from .models import Move
+
+        # Build per-member primer/chaser lists from their chosen moves
+        # status_key → {primers: [...], chasers: [...]}
+        status_map: dict[str, dict] = {}
+
+        for member in team:
+            species_name: str = member.get("species_name", "?")
+            chosen_moves: dict[str, int] = member.get("moves", {})  # slot → move_id
+
+            move_ids = [mid for mid in chosen_moves.values() if mid]
+            if not move_ids:
+                continue
+
+            moves = Move.objects.filter(id__in=move_ids).select_related(
+                "move_type", "applies_status", "trigger_status"
+            )
+            slot_by_move = {v: k for k, v in chosen_moves.items() if v}
+
+            for move in moves:
+                slot = slot_by_move.get(move.id, "")
+                move_label = move.themed_name or move.name
+                type_name = move.move_type.name if move.move_type else None
+
+                if move.applies_status_id and slot != "chase":
+                    skey = move.applies_status.name
+                    slabel = move.applies_status.get_name_display()
+                    bucket = status_map.setdefault(skey, {"label": slabel, "primers": [], "chasers": []})
+                    bucket["primers"].append({
+                        "species": species_name,
+                        "move": move_label,
+                        "type": type_name,
+                        "power": move.power,
+                        "slot": slot,
+                    })
+
+                if move.trigger_status_id and slot == "chase":
+                    skey = move.trigger_status.name
+                    slabel = move.trigger_status.get_name_display()
+                    bucket = status_map.setdefault(skey, {"label": slabel, "primers": [], "chasers": []})
+                    bucket["chasers"].append({
+                        "species": species_name,
+                        "move": move_label,
+                        "type": type_name,
+                        "power": move.power,
+                        "condition": move.chase_condition or "",
+                    })
+
+        chains = [
+            {
+                "status": data["label"],
+                "status_key": skey,
+                "primers": data["primers"],
+                "chasers": data["chasers"],
+            }
+            for skey, data in sorted(status_map.items(), key=lambda x: x[1]["label"])
+            if data["primers"] and data["chasers"]
+        ]
+
+        return JsonResponse({
+            "chains": chains,
+            "total_links": sum(len(c["primers"]) * len(c["chasers"]) for c in chains),
+        })

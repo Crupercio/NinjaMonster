@@ -13,6 +13,9 @@ class StatusCategory(models.TextChoices):
     PERSISTENT = "persistent", "Persistent"
     VOLATILE = "volatile", "Volatile"
     NARUTO = "naruto", "Naruto Inspired"
+    PHYSICAL = "physical", "Physical State"
+    UTILITY = "utility", "Utility"
+    ADVANCED = "advanced", "Advanced"
 
 
 class StatusName(models.TextChoices):
@@ -57,6 +60,28 @@ class StatusName(models.TextChoices):
     WEAKENED = "weakened", "Weakened"         # All damage output reduced
     CORRODED = "corroded", "Corroded"         # Sp. Defense stripped, worsens each turn
     INTERRUPTED = "interrupted", "Interrupted"  # Current move cancelled, turn lost
+
+    # ------------------------------------------------------------------
+    # PHYSICAL states (mutually exclusive; track positional/launch state)
+    # ------------------------------------------------------------------
+    GROUNDED = "grounded", "Grounded"        # Default; no special state
+    AIRBORNE = "airborne", "Airborne"        # Knocked up; enables aerial chases
+    LAUNCHED = "launched", "Launched"        # Hit while airborne; extended juggle
+    KNOCKBACK = "knockback", "Knockback"     # Pushed back; position changes
+
+    # ------------------------------------------------------------------
+    # UTILITY states (persistent buffs/protections)
+    # ------------------------------------------------------------------
+    SHIELDED = "shielded", "Shielded"        # Absorbs one hit
+    HIDDEN = "hidden", "Hidden"              # Cannot be targeted
+    IMMUNE = "immune", "Immune"              # Immune to status effects
+
+    # ------------------------------------------------------------------
+    # ADVANCED states (chain/state meta effects)
+    # ------------------------------------------------------------------
+    CHAIN_BREAKER = "chain_breaker", "Chain Breaker"  # Stops combo chain on hit
+    STATE_LOCKED = "state_locked", "State Locked"      # Physical state cannot change
+    CHARGING = "charging", "Charging"                  # 2-round charge; releases next round
 
 
 # Persistent statuses are mutually exclusive — only one allowed at a time
@@ -106,6 +131,32 @@ NARUTO_STATUSES: frozenset[str] = frozenset(
     ]
 )
 
+# Physical states are mutually exclusive — only one at a time.
+# GROUNDED is the implicit default; not stored as an ActiveStatusEffect.
+PHYSICAL_STATUSES: frozenset[str] = frozenset(
+    [
+        StatusName.AIRBORNE,
+        StatusName.LAUNCHED,
+        StatusName.KNOCKBACK,
+    ]
+)
+
+UTILITY_STATUSES: frozenset[str] = frozenset(
+    [
+        StatusName.SHIELDED,
+        StatusName.HIDDEN,
+        StatusName.IMMUNE,
+    ]
+)
+
+ADVANCED_STATUSES: frozenset[str] = frozenset(
+    [
+        StatusName.CHAIN_BREAKER,
+        StatusName.STATE_LOCKED,
+        StatusName.CHARGING,
+    ]
+)
+
 # Default durations (in rounds). None = indefinite until cured.
 DEFAULT_DURATIONS: dict[str, int | None] = {
     # Persistent — no timer
@@ -143,6 +194,22 @@ DEFAULT_DURATIONS: dict[str, int | None] = {
     StatusName.WEAKENED: None,
     StatusName.CORRODED: None,
     StatusName.INTERRUPTED: 1,
+
+    # Physical states
+    StatusName.GROUNDED: None,    # implicit default; infinite if explicitly applied
+    StatusName.AIRBORNE: None,    # lasts until hit or round end
+    StatusName.LAUNCHED: 1,       # 1 round juggle window
+    StatusName.KNOCKBACK: 1,      # resolved at round end
+
+    # Utility states
+    StatusName.SHIELDED: None,    # lasts until hit absorbs it
+    StatusName.HIDDEN: None,      # lasts until damaged or round end
+    StatusName.IMMUNE: 2,         # 2-round immunity window
+
+    # Advanced states
+    StatusName.CHAIN_BREAKER: None,  # indefinite; explicitly removed
+    StatusName.STATE_LOCKED: 2,      # 2-round state lock
+    StatusName.CHARGING: 1,          # 1-round charge; released next turn
 }
 
 # Stat modifier multipliers applied by statuses

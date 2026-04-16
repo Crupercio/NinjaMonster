@@ -18,6 +18,8 @@ class QuestCondition(models.TextChoices):
     WIN_BATTLES = "win_battles", "Win N Battles"
     ACHIEVE_COMBO = "achieve_combo", "Achieve N-Link Combo Chain"
     OPEN_PACKS = "open_packs", "Open N Sticker Packs"
+    COMPLETE_EXPEDITIONS = "complete_expeditions", "Complete N Expeditions"
+    BOND_POKEMON = "bond_pokemon", "Bond N Pokémon on Expeditions"
 
 
 class RewardType(models.TextChoices):

@@ -233,7 +233,7 @@ class BattleAIService:
         """Return moves that are not passive and not on cooldown."""
         available = [
             m for m in slot.pokemon.moves.all()
-            if m.slot_type != MoveSlotType.PASSIVE
+            if m.slot_type != MoveSlotType.PASSIVE_2
             and (slot.pk, m.pk) not in cooldown_set
         ]
         if available:

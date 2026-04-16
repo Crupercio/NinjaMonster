@@ -7,15 +7,21 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
 
-from .models import DISMANTLE_VALUES, Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
+from .models import Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
+from .models import REGION_LABELS, REGION_RANGES, StickerRarity
 from .services import (
     PACK_PRICE_RYO,
     POKEMON_COMPLETION_SLOTS,
+    AlbumService,
+    SceneAlbumService,
     StickerService,
     TradeService,
     _COMPLETION_RARITIES,
     _COMPLETION_VARIANTS,
 )
+
+_album_service = AlbumService()
+_scene_service = SceneAlbumService()
 
 logger = logging.getLogger(__name__)
 
@@ -266,99 +272,301 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
         return redirect("stickers:pack_open", pk=pack.pk)
 
 
-class DustConvertView(LoginRequiredMixin, TemplateView):
-    """Convert duplicate stickers to sticker dust."""
+class DustWorkshopView(LoginRequiredMixin, TemplateView):
+    """
+    Unified dust economy hub — three tabs:
+      • Convert Duplicates  (POST action=convert)
+      • Craft a Sticker     (POST action=craft)
+      • Forge a Badge       (Phase 3 — display only for now)
+    """
 
-    template_name = "stickers/dust_convert.html"
+    template_name = "stickers/workshop.html"
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        from django.db.models import Count
+        from django.db.models import Count, Min
 
-        # Show stickers where owner has more than one copy of the same combination
+        from .models import BADGE_CRAFT_REQUIREMENTS, CRAFT_COSTS, BadgeTier, StickerVariant
+
+        context = super().get_context_data(**kwargs)
+        context["sticker_dust"] = self.request.user.sticker_dust
+
+        # Convert tab
         context["duplicates"] = (
             Sticker.objects.filter(owner=self.request.user, is_trading=False)
-            .values("pokemon", "rarity", "variant")
-            .annotate(count=Count("id"))
+            .values("pokemon", "pokemon__name", "rarity", "variant")
+            .annotate(count=Count("id"), id=Min("id"))
             .filter(count__gt=1)
-            .select_related()
         )
-        context["sticker_dust"] = self.request.user.sticker_dust
-        return context
 
-    def post(self, request, *args, **kwargs):
-        sticker_id = request.POST.get("sticker_id")
-        sticker = get_object_or_404(Sticker, pk=sticker_id, owner=request.user)
-        try:
-            dust = _sticker_service.convert_duplicate(request.user, sticker)
-        except ValueError as exc:
-            context = self.get_context_data(error=str(exc), **kwargs)
-            return self.render_to_response(context)
-        return redirect("stickers:album")
-
-
-class DismantleView(LoginRequiredMixin, TemplateView):
-    """
-    Album sub-view: shows all owned stickers with a Dismantle button.
-
-    GET  → renders the dismantle page with owned stickers + dust values.
-    POST → calls dismantle_sticker() and redirects back to album.
-    """
-
-    template_name = "stickers/dismantle.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        stickers = list(
-            Sticker.objects.filter(owner=self.request.user)
-            .select_related("pokemon__primary_type")
-            .order_by("rarity", "pokemon__name")
-        )
-        # Pair each sticker with its dismantle dust value for easy template access
-        context["sticker_rows"] = [
-            (s, DISMANTLE_VALUES.get(s.rarity, 5)) for s in stickers
-        ]
-        context["dust_values"] = DISMANTLE_VALUES
-        context["rarity_labels"] = dict(StickerRarity.choices)
-        context["sticker_dust"] = self.request.user.sticker_dust
-        return context
-
-    def post(self, request, *args, **kwargs):
-        sticker_id = request.POST.get("sticker_id")
-        if not sticker_id:
-            return redirect("stickers:dismantle")
-        try:
-            dust = _sticker_service.dismantle_sticker(request.user, int(sticker_id))
-        except ValueError as exc:
-            context = self.get_context_data(error=str(exc), **kwargs)
-            return self.render_to_response(context)
-        return redirect("stickers:album")
-
-
-class CraftView(LoginRequiredMixin, TemplateView):
-    """Spend sticker dust to craft a specific sticker."""
-
-    template_name = "stickers/craft.html"
-
-    def get_context_data(self, **kwargs):
-        from .models import CRAFT_COSTS, StickerVariant
-
-        context = super().get_context_data(**kwargs)
+        # Craft tab
         context["pokemon_list"] = Pokemon.objects.select_related("primary_type").order_by("name")
         context["craft_costs"] = CRAFT_COSTS
         context["variants"] = StickerVariant.choices
-        context["sticker_dust"] = self.request.user.sticker_dust
+
+        # Badge Forge tab (Phase 3 — display only)
+        context["badge_requirements"] = BADGE_CRAFT_REQUIREMENTS
+        context["badge_tiers"] = BadgeTier.choices
+
+        # Active tab (passed as query param after redirect)
+        context["active_tab"] = self.request.GET.get("tab", "convert")
+
         return context
 
     def post(self, request, *args, **kwargs):
-        pokemon_id = request.POST.get("pokemon_id")
-        variant = request.POST.get("variant")
+        action = request.POST.get("action")
+
+        if action == "convert":
+            sticker_id = request.POST.get("sticker_id")
+            sticker = get_object_or_404(Sticker, pk=sticker_id, owner=request.user)
+            try:
+                _sticker_service.convert_duplicate(request.user, sticker)
+            except ValueError as exc:
+                context = self.get_context_data(error=str(exc), **kwargs)
+                return self.render_to_response(context)
+            return redirect("/stickers/workshop/?tab=convert")
+
+        if action == "craft":
+            pokemon_id = request.POST.get("pokemon_id")
+            variant = request.POST.get("variant")
+            rarity = request.POST.get("rarity")
+            pokemon = get_object_or_404(Pokemon, pk=pokemon_id)
+            try:
+                _sticker_service.craft_sticker(request.user, pokemon, variant, rarity)
+            except ValueError as exc:
+                context = self.get_context_data(error=str(exc), **kwargs)
+                return self.render_to_response(context)
+            return redirect("/stickers/workshop/?tab=craft")
+
+        return redirect("/stickers/workshop/")
+
+
+# ---------------------------------------------------------------------------
+# Sticker Generator (AI preview via Pollinations.ai)
+# ---------------------------------------------------------------------------
+
+class StickerGeneratorView(LoginRequiredMixin, TemplateView):
+    """
+    Interactive AI sticker preview tool.
+
+    Uses Pollinations.ai as a free image source — URLs are built client-side
+    in Alpine.js. No API key, no backend call, no cost.
+    Prompts are tuned to the Naruto-online / chakra-ninja theme of the game.
+    """
+
+    template_name = "stickers/sticker_generator.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.pokemon.models import ChakraElement
+
+        context = super().get_context_data(**kwargs)
+        context["pokemon_list"] = (
+            Pokemon.objects.select_related("primary_type__chakra_element")
+            .filter(pokedex_number__isnull=False)
+            .order_by("pokedex_number")
+            .values("pk", "name", "pokedex_number", "primary_type__name", "primary_type__chakra_element__name")
+        )
+        context["variants"] = StickerVariant.choices
+        context["rarities"] = StickerRarity.choices
+        context["chakra_elements"] = ChakraElement.Name.choices
+        return context
+
+
+# ---------------------------------------------------------------------------
+# Regional Album views
+# ---------------------------------------------------------------------------
+
+class RegionalAlbumIndexView(LoginRequiredMixin, TemplateView):
+    """
+    Hub page showing all 9 regions with per-rarity completion stats.
+
+    GET /stickers/album/regional/
+    """
+
+    template_name = "stickers/regional_album_index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["regions"] = _album_service.get_region_index(self.request.user)
+        context["rarity_choices"] = StickerRarity.choices
+        context["region_labels"] = REGION_LABELS
+        return context
+
+
+class RegionalAlbumDetailView(LoginRequiredMixin, TemplateView):
+    """
+    One (region × rarity) album page — grid of Pokémon slots.
+
+    GET /stickers/album/regional/<region>/<rarity>/
+    """
+
+    template_name = "stickers/regional_album_detail.html"
+
+    def get(self, request, *args, **kwargs):
+        region = kwargs["region"]
+        rarity = kwargs["rarity"]
+        if region not in REGION_RANGES or rarity not in StickerRarity.values:
+            from django.http import Http404
+            raise Http404("Invalid region or rarity")
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        region = self.kwargs["region"]
+        rarity = self.kwargs["rarity"]
+        page_data = _album_service.get_page_detail(self.request.user, region, rarity)
+        context.update(page_data)
+        context["all_rarities"] = StickerRarity.choices
+        context["region_labels"] = REGION_LABELS
+        # Adjacent rarity navigation
+        rarity_values = list(StickerRarity.values)
+        idx = rarity_values.index(rarity)
+        context["prev_rarity"] = rarity_values[idx - 1] if idx > 0 else None
+        context["next_rarity"] = rarity_values[idx + 1] if idx < len(rarity_values) - 1 else None
+        return context
+
+
+class PlaceStickerView(LoginRequiredMixin, TemplateView):
+    """
+    POST /stickers/album/regional/place/
+
+    Places a sticker into its regional album slot.
+    Redirects back to the (region, rarity) detail page.
+    """
+
+    def post(self, request, *args, **kwargs):
+        sticker_id = request.POST.get("sticker_id")
+        region = request.POST.get("region")
+        rarity = request.POST.get("rarity")
+        redirect_to = request.POST.get("redirect_to", "regional")
+        page_number = request.POST.get("page_number")
+
+        if not sticker_id:
+            return redirect("stickers:regional_album_index")
+
+        try:
+            _album_service.place_sticker(request.user, int(sticker_id))
+        except ValueError as exc:
+            # Re-render the detail page with the error
+            page_data = _album_service.get_page_detail(request.user, region, rarity)
+            return self.response_class(
+                request=request,
+                template=["stickers/regional_album_detail.html"],
+                context={**page_data, "error": str(exc), "region_labels": REGION_LABELS,
+                         "all_rarities": StickerRarity.choices},
+            )
+
+        if redirect_to == "scene" and page_number:
+            return redirect("stickers:album_scene_page", region=region,
+                            page_number=int(page_number), rarity=rarity)
+        return redirect("stickers:regional_album_detail", region=region, rarity=rarity)
+
+
+class RemoveStickerView(LoginRequiredMixin, TemplateView):
+    """
+    POST /stickers/album/regional/remove/
+
+    Removes a placed sticker from its album slot.
+    """
+
+    def post(self, request, *args, **kwargs):
+        sticker_id = request.POST.get("sticker_id")
+        region = request.POST.get("region")
         rarity = request.POST.get("rarity")
 
-        pokemon = get_object_or_404(Pokemon, pk=pokemon_id)
+        if not sticker_id:
+            return redirect("stickers:regional_album_index")
+
         try:
-            _sticker_service.craft_sticker(request.user, pokemon, variant, rarity)
-        except ValueError as exc:
-            context = self.get_context_data(error=str(exc), **kwargs)
-            return self.render_to_response(context)
-        return redirect("stickers:album")
+            _album_service.remove_sticker(request.user, int(sticker_id))
+        except ValueError:
+            pass
+
+        return redirect("stickers:regional_album_detail", region=region, rarity=rarity)
+
+
+class ClaimPageRewardView(LoginRequiredMixin, TemplateView):
+    """
+    POST /stickers/album/regional/claim/
+
+    Claims the reward for a completed (region, rarity) page.
+    """
+
+    def post(self, request, *args, **kwargs):
+        region = request.POST.get("region")
+        rarity = request.POST.get("rarity")
+
+        if not region or not rarity:
+            return redirect("stickers:regional_album_index")
+
+        try:
+            reward = _album_service.claim_page_reward(request.user, region, rarity)
+            # Pass reward summary via session for display after redirect
+            request.session["last_page_reward"] = reward
+        except ValueError:
+            pass
+
+        return redirect("stickers:regional_album_detail", region=region, rarity=rarity)
+
+
+# ---------------------------------------------------------------------------
+# Scene Album views (card-flip, per-location pages)
+# ---------------------------------------------------------------------------
+
+class AlbumPageIndexView(LoginRequiredMixin, TemplateView):
+    """
+    Page-picker for a region — shows all AlbumPage thumbnails with overall
+    progress per page so the player can jump to a specific location.
+
+    GET /stickers/album/scene/<region>/
+    """
+
+    template_name = "stickers/album_scene_index.html"
+
+    def get(self, request, *args, **kwargs):
+        region = kwargs["region"]
+        if region not in REGION_RANGES:
+            from django.http import Http404
+            raise Http404("Unknown region")
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        region = self.kwargs["region"]
+        pages_summary = _scene_service.get_all_pages_summary(self.request.user, region)
+        context["region"] = region
+        context["region_label"] = REGION_LABELS.get(region, region.title())
+        context["pages_summary"] = pages_summary
+        context["rarity_choices"] = StickerRarity.choices
+        context["default_rarity"] = StickerRarity.COMMON
+        return context
+
+
+class AlbumScenePageView(LoginRequiredMixin, TemplateView):
+    """
+    One scene page at a given rarity — shows all Pokémon cards for the
+    location; each card can be flipped (Alpine.js) to reveal 6 variant slots.
+
+    GET /stickers/album/scene/<region>/<int:page_number>/<str:rarity>/
+    """
+
+    template_name = "stickers/album_scene_page.html"
+
+    def get(self, request, *args, **kwargs):
+        from django.http import Http404
+        from .models import AlbumPage as _AlbumPage
+        region = kwargs["region"]
+        page_number = kwargs["page_number"]
+        rarity = kwargs["rarity"]
+        if region not in REGION_RANGES or rarity not in StickerRarity.values:
+            raise Http404("Invalid region or rarity")
+        self._album_page = get_object_or_404(_AlbumPage, region=region, page_number=page_number)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rarity = self.kwargs["rarity"]
+        scene_data = _scene_service.get_scene_page(self.request.user, self._album_page, rarity)
+        context.update(scene_data)
+        context["region"] = self.kwargs["region"]
+        context["region_label"] = REGION_LABELS.get(self.kwargs["region"], self.kwargs["region"].title())
+        return context

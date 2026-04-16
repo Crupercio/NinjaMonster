@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from apps.effects.constants import StatusName
 from apps.effects.engine import StatusEffectEngine
-from apps.pokemon.models import Move, MoveSlotType, OwnedPokemon, Pokemon, Team
+from apps.pokemon.models import Move, MoveSlotType, OwnedPokemon, Pokemon, SpeciesMovePool, Team
 from apps.pokemon.services import award_battle_exp as _award_battle_exp  # noqa: F401
 from apps.events.services import SeasonalEventService
 from apps.quests.services import QuestService
@@ -33,6 +34,7 @@ from .models import (
     BattleLog,
     BattleRound,
     BattleSlot,
+    BattleSlotHeldEffect,
     BattleStatus,
     BattleTeam,
     GridPosition,
@@ -65,7 +67,99 @@ COMBO_AMP: tuple[float, ...] = (
     2.50,  # Link 10 (maximum)
 )
 
+# Chakra element advantage cycle (Phase 2 — GDD Section 7).
+# Key chakra beats value chakra: Fire→Wind, Wind→Lightning, Lightning→Earth, Earth→Water, Water→Fire.
+CHAKRA_BEATS: dict[str, str] = {
+    "fire": "wind",
+    "wind": "lightning",
+    "lightning": "earth",
+    "earth": "water",
+    "water": "fire",
+}
+
+# Phase 3 — penetration by primary_role (fraction of defense ignored)
+_ROLE_PENETRATION: dict[str, float] = {
+    "combo": 0.10,
+    "burst": 0.05,
+    "control": 0.08,
+    "tank": 0.0,
+    "support": 0.0,
+}
+
 _effect_engine = StatusEffectEngine()
+
+
+def _resolve_held_effect(
+    trigger: str,
+    slot: "BattleSlot",
+    round_obj: "BattleRound",
+    *,
+    damage_taken: int = 0,
+    attacker_slot: "BattleSlot | None" = None,
+) -> None:
+    """
+    Fire a slot's held effect if trigger matches, chance passes, and cap not reached.
+
+    Implements: heal_fraction, damage_reflect, status_cleanse, revive_hp_fraction.
+    Called from ComboChainEngine._execute_move (on_hit / on_faint / on_status)
+    and BattleService.execute_round (passive).
+    """
+    try:
+        hes: BattleSlotHeldEffect = slot.held_effect_state  # type: ignore[attr-defined]
+    except Exception:
+        return
+
+    effect = hes.effect
+    if effect.trigger_condition != trigger:
+        return
+    if not hes.can_activate:
+        return
+    if random.random() > effect.activation_chance:
+        return
+
+    hes.activations_used += 1
+    hes.save(update_fields=["activations_used"])
+
+    data: dict = effect.effect_data
+    parts: list[str] = [f"{slot.pokemon.name}'s {effect.name} activates!"]
+
+    # heal_fraction: restore fraction of max HP to self
+    if "heal_fraction" in data:
+        heal = max(1, int(slot.max_hp * data["heal_fraction"]))
+        slot.current_hp = min(slot.max_hp, slot.current_hp + heal)
+        slot.save(update_fields=["current_hp"])
+        parts.append(f"+{heal} HP")
+
+    # damage_reflect: deal fraction of damage_taken back to attacker
+    if "damage_reflect" in data and damage_taken > 0 and attacker_slot and not attacker_slot.is_fainted:
+        reflected = max(1, int(damage_taken * data["damage_reflect"]))
+        attacker_slot.current_hp = max(0, attacker_slot.current_hp - reflected)
+        if attacker_slot.current_hp == 0:
+            attacker_slot.is_fainted = True
+        attacker_slot.save(update_fields=["current_hp", "is_fainted"])
+        parts.append(f"{attacker_slot.pokemon.name} takes {reflected} reflected damage")
+
+    # status_cleanse: remove all active statuses from self
+    if data.get("status_cleanse"):
+        from apps.effects.models import ActiveStatusEffect
+        ActiveStatusEffect.objects.filter(slot=slot).delete()
+        parts.append("all statuses cleared")
+
+    # revive_hp_fraction: revive a fainted slot (on_faint only)
+    if "revive_hp_fraction" in data and slot.is_fainted:
+        revive_hp = max(1, int(slot.max_hp * data["revive_hp_fraction"]))
+        slot.current_hp = revive_hp
+        slot.is_fainted = False
+        slot.save(update_fields=["current_hp", "is_fainted"])
+        parts.append(f"revived with {revive_hp} HP!")
+
+    BattleLog.objects.create(
+        battle=round_obj.battle,
+        round_number=round_obj.round_number,
+        message=" — ".join(parts),
+        log_type=LogType.STATUS,
+    )
+    logger.debug("Held effect %s fired on %s (trigger=%s)", effect.name, slot.pokemon.name, trigger)
 
 
 class BattleValidator:
@@ -76,14 +170,14 @@ class BattleValidator:
     failures found, so the caller can surface them to the user in one shot.
     """
 
-    _REQUIRED_SLOTS = 4  # active field slots per team
+    _REQUIRED_SLOTS = 6  # active field slots per team (Phase 3 — 6v6)
 
     def validate(self, battle: "Battle") -> None:
         """
         Verify that both teams are ready to fight.
 
         Checks:
-          1. Both teams exist and each has exactly 4 active (non-bench) slots.
+          1. Both teams exist and each has exactly 6 active slots.
           2. Every slot's OwnedPokemon has all 4 active move slots assigned
              (standard, chase, special, support).  AI slots (no owned_pokemon)
              are validated against the species move pool instead.
@@ -120,8 +214,8 @@ class BattleValidator:
                         for attr, label in (
                             ("move_standard", "standard"),
                             ("move_chase", "chase"),
-                            ("move_special", "special"),
-                            ("move_support", "support"),
+                            ("move_special", "mystery"),
+                            ("move_support", "passive_1"),
                         )
                         if getattr(op, attr) is None
                     ]
@@ -137,7 +231,9 @@ class BattleValidator:
                                 move_ids_to_check.add(m.pk)
                 else:
                     # AI / legacy slot — must have at least one move in the species pool.
-                    species_move_count = slot.pokemon.moves.count()
+                    species_move_count = SpeciesMovePool.objects.filter(
+                        species=slot.pokemon
+                    ).count()
                     if species_move_count == 0:
                         errors.append(
                             f"{slot.pokemon.name} (AI team) has no moves in its species pool."
@@ -234,6 +330,15 @@ class ComboChainEngine:
                 if combo_target is None:
                     continue
 
+                # Phase 6: chase_condition — move only fires if target is in the required physical state
+                if trigger_move.chase_condition:
+                    cond = trigger_move.chase_condition
+                    if cond == StatusName.GROUNDED:
+                        if not _effect_engine.is_grounded(combo_target):
+                            continue
+                    elif not _effect_engine.has_status(combo_target, cond):
+                        continue
+
                 combo_action = self._execute_move(
                     round_obj=round_obj,
                     attacker_slot=trigger_slot,
@@ -246,6 +351,14 @@ class ComboChainEngine:
                 fired_pairs.add((trigger_slot.pk, trigger_move.pk))
                 fired_any = True
                 chain_depth += 1
+
+                # Phase 6: CHAIN_BREAKER — target's state halts chain after this hit
+                if _effect_engine.has_status(combo_target, StatusName.CHAIN_BREAKER):
+                    logger.debug(
+                        "Combo chain broken by CHAIN_BREAKER on %s", combo_target.pokemon.name
+                    )
+                    fired_any = False  # force loop exit
+                    break
 
             if not fired_any:
                 break
@@ -275,22 +388,142 @@ class ComboChainEngine:
         damage = 0
         status_applied = None
 
+        # Phase 6: Charge move — 2-round wind-up mechanic
+        if move.is_charge_move:
+            from apps.effects.models import StatusEffect as _ChargeSE
+            if _effect_engine.has_status(attacker_slot, StatusName.CHARGING):
+                # Round 2: release — remove CHARGING and fall through to deal damage
+                try:
+                    charging_se = _ChargeSE.objects.get(name=StatusName.CHARGING)
+                    _effect_engine.remove_status(attacker_slot, charging_se)
+                except _ChargeSE.DoesNotExist:
+                    pass
+                BattleLog.objects.create(
+                    battle=round_obj.battle,
+                    round_number=round_obj.round_number,
+                    message=f"{attacker_slot.pokemon.name} released {move.name}!",
+                    log_type=LogType.INFO,
+                )
+            else:
+                # Round 1: enter charging — apply CHARGING, skip damage this round
+                try:
+                    charging_se = _ChargeSE.objects.get(name=StatusName.CHARGING)
+                    _effect_engine.apply_status(attacker_slot, charging_se, round_obj.round_number)
+                except _ChargeSE.DoesNotExist:
+                    pass
+                BattleLog.objects.create(
+                    battle=round_obj.battle,
+                    round_number=round_obj.round_number,
+                    message=f"{attacker_slot.pokemon.name} is charging {move.name}...",
+                    log_type=LogType.STATUS,
+                )
+                attacker_slot.last_move_used = move
+                attacker_slot.save(update_fields=["last_move_used"])
+                return BattleAction.objects.create(
+                    round=round_obj,
+                    attacker_slot=attacker_slot,
+                    move=move,
+                    target_slot=target_slot,
+                    damage_dealt=0,
+                    status_applied=None,
+                    is_combo_triggered=is_combo,
+                    order_in_chain=chain_position,
+                )
+
         if not target_slot.is_fainted:
-            damage = self._calculate_damage(attacker_slot, move, target_slot, chain_position)
-            if damage > 0:
-                target_slot.current_hp = max(0, target_slot.current_hp - damage)
-                if target_slot.current_hp == 0:
-                    target_slot.is_fainted = True
-                target_slot.save(update_fields=["current_hp", "is_fainted"])
+            # Phase 6: SHIELDED absorbs one incoming hit entirely
+            if _effect_engine.has_status(target_slot, StatusName.SHIELDED):
+                from apps.effects.models import StatusEffect as _SE
+                try:
+                    shield_se = _SE.objects.get(name=StatusName.SHIELDED)
+                    _effect_engine.remove_status(target_slot, shield_se)
+                except _SE.DoesNotExist:
+                    pass
+                BattleLog.objects.create(
+                    battle=round_obj.battle,
+                    round_number=round_obj.round_number,
+                    message=f"{target_slot.pokemon.name}'s shield absorbed the hit!",
+                    log_type=LogType.STATUS,
+                )
+            else:
+                damage = self._calculate_damage(attacker_slot, move, target_slot, chain_position)
+                if damage > 0:
+                    target_slot.current_hp = max(0, target_slot.current_hp - damage)
+                    if target_slot.current_hp == 0:
+                        target_slot.is_fainted = True
+                    target_slot.save(update_fields=["current_hp", "is_fainted"])
+
+                    # on_hit: fires whenever damage lands
+                    _resolve_held_effect(
+                        "on_hit", target_slot, round_obj,
+                        damage_taken=damage, attacker_slot=attacker_slot,
+                    )
+                    # on_faint: fires if the hit was lethal
+                    if target_slot.is_fainted:
+                        _resolve_held_effect(
+                            "on_faint", target_slot, round_obj,
+                            damage_taken=damage, attacker_slot=attacker_slot,
+                        )
+
+                    # Phase 6: Airborne → Launched transition on any damaging hit
+                    if (
+                        not target_slot.is_fainted
+                        and _effect_engine.has_status(target_slot, StatusName.AIRBORNE)
+                        and not _effect_engine.has_status(target_slot, StatusName.STATE_LOCKED)
+                    ):
+                        from apps.effects.models import StatusEffect as _SE2
+                        try:
+                            airborne_se = _SE2.objects.get(name=StatusName.AIRBORNE)
+                            launched_se = _SE2.objects.get(name=StatusName.LAUNCHED)
+                            _effect_engine.remove_status(target_slot, airborne_se)
+                            _effect_engine.apply_status(
+                                target_slot, launched_se, round_obj.round_number
+                            )
+                            BattleLog.objects.create(
+                                battle=round_obj.battle,
+                                round_number=round_obj.round_number,
+                                message=f"{target_slot.pokemon.name} was Launched!",
+                                log_type=LogType.STATUS,
+                            )
+                        except _SE2.DoesNotExist:
+                            pass
 
             if move.applies_status and not target_slot.is_fainted:
-                applied = _effect_engine.apply_status(
-                    slot=target_slot,
-                    status=move.applies_status,
-                    round_number=round_obj.round_number,
-                )
-                if applied:
-                    status_applied = move.applies_status
+                # Phase 6: IMMUNE — skip status application entirely
+                if _effect_engine.has_status(target_slot, StatusName.IMMUNE):
+                    BattleLog.objects.create(
+                        battle=round_obj.battle,
+                        round_number=round_obj.round_number,
+                        message=f"{target_slot.pokemon.name} is immune to status effects!",
+                        log_type=LogType.STATUS,
+                    )
+                else:
+                    # CC resist formula (Phase 3): success prob = control / (control + control_resist * 1000)
+                    cc_success_prob = attacker_slot.control / (
+                        attacker_slot.control + target_slot.control_resist * 1000
+                    )
+                    resisted = random.random() >= cc_success_prob
+                    if resisted:
+                        BattleLog.objects.create(
+                            battle=round_obj.battle,
+                            round_number=round_obj.round_number,
+                            message=f"{target_slot.pokemon.name} resisted the status effect!",
+                            log_type=LogType.STATUS,
+                        )
+                    else:
+                        applied = _effect_engine.apply_status(
+                            slot=target_slot,
+                            status=move.applies_status,
+                            round_number=round_obj.round_number,
+                            applied_by_slot=attacker_slot if move.applies_status.name == StatusName.SEEDED else None,
+                        )
+                        if applied:
+                            status_applied = move.applies_status
+                            # on_status: fires when a status is successfully applied
+                            _resolve_held_effect("on_status", target_slot, round_obj)
+                            # Phase 6: KNOCKBACK — shift the target to back-row position
+                            if move.applies_status.name == StatusName.KNOCKBACK:
+                                self._apply_knockback_position(target_slot)
 
         attacker_slot.last_move_used = move
         attacker_slot.save(update_fields=["last_move_used"])
@@ -305,6 +538,36 @@ class ComboChainEngine:
             is_combo_triggered=is_combo,
             order_in_chain=chain_position,
         )
+
+        # Build the per-action combat log line visible in the battle log panel.
+        move_display = move.themed_name or move.name
+        if is_combo:
+            msg_parts = [f"↳ [COMBO] {attacker_slot.pokemon.name} → {move_display} → {target_slot.pokemon.name}"]
+        else:
+            msg_parts = [f"{attacker_slot.pokemon.name} → {move_display} → {target_slot.pokemon.name}"]
+
+        if damage > 0:
+            msg_parts.append(f"({damage} dmg)")
+        if status_applied is not None:
+            msg_parts.append(f"[{status_applied.name} applied!]")
+        if target_slot.is_fainted:
+            msg_parts.append("💀 KO!")
+
+        BattleLog.objects.create(
+            battle=round_obj.battle,
+            round_number=round_obj.round_number,
+            message=" ".join(msg_parts),
+            log_type=LogType.COMBO if is_combo else LogType.ACTION,
+            chain_position=chain_position if is_combo else None,
+        )
+
+        if target_slot.is_fainted:
+            BattleLog.objects.create(
+                battle=round_obj.battle,
+                round_number=round_obj.round_number,
+                message=f"{target_slot.pokemon.name} fainted!",
+                log_type=LogType.FAINT,
+            )
 
         logger.debug(
             "Executed: %s uses %s on %s (damage=%d, chain=%d)",
@@ -332,7 +595,10 @@ class ComboChainEngine:
         attack_stat = int(attack_stat * atk_modifiers.get("attack", 1.0))
         defense_stat = int(defense_stat * def_modifiers.get("defense", 1.0))
 
-        damage = int(((2 * attacker.level / 5 + 2) * move.power * attack_stat / defense_stat) / 50 + 2)
+        # Penetration (Phase 3): fraction of defense ignored based on attacker role
+        effective_defense = max(1, int(defense_stat * (1.0 - attacker.penetration)))
+
+        damage = int(((2 * attacker.level / 5 + 2) * move.power * attack_stat / effective_defense) / 50 + 2)
 
         attacker_types = {attacker.pokemon.primary_type.name}
         if attacker.pokemon.secondary_type:
@@ -344,13 +610,61 @@ class ComboChainEngine:
             damage = int(damage * atk_modifiers["damage_output"])
 
         # Positional modifier: back-row targets take 80% damage from direct attacks
-        if defender.grid_position in (GridPosition.BACK_LEFT, GridPosition.BACK_RIGHT):
+        if defender.grid_position in (
+            GridPosition.BACK_LEFT, GridPosition.BACK_CENTER, GridPosition.BACK_RIGHT
+        ):
             damage = int(damage * 0.80)
 
         # Combo chain amplification (GDD Section 6.3): Link 1 = ×1.00, Link 10 = ×2.50
         amp = COMBO_AMP[min(chain_position, len(COMBO_AMP) - 1)]
         if amp != 1.0:
             damage = int(damage * amp)
+
+        # combo_rate bonus: non-initial chain links gain extra damage from the attacker's combo rate
+        if chain_position > 0 and attacker.combo_rate > 0:
+            damage = int(damage * (1.0 + attacker.combo_rate))
+
+        # Critical hit (Phase 5): attacker.critical_rate chance → ×1.5 damage
+        if random.random() < attacker.critical_rate:
+            damage = int(damage * 1.5)
+
+        # Chakra element modifiers (Phase 2 — GDD Section 7)
+        # Mastery  (+20%): move chakra == attacker species chakra
+        # Advantage (+15%): move chakra beats defender species chakra
+        # Both      (+35%): mastery + advantage stack
+        # Resistance(−10%): defender chakra beats move chakra
+        move_el = getattr(getattr(move.move_type, "chakra_element", None), "name", None)
+        atk_el = getattr(getattr(attacker.pokemon.primary_type, "chakra_element", None), "name", None)
+        def_el = getattr(getattr(defender.pokemon.primary_type, "chakra_element", None), "name", None)
+
+        if move_el:
+            mastery = move_el == atk_el
+            advantage = def_el is not None and CHAKRA_BEATS.get(move_el) == def_el
+            resistance = def_el is not None and CHAKRA_BEATS.get(def_el) == move_el
+
+            if mastery and advantage:
+                damage = int(damage * 1.35)
+            elif mastery:
+                damage = int(damage * 1.20)
+            elif advantage:
+                damage = int(damage * 1.15)
+            elif resistance:
+                damage = int(damage * 0.90)
+
+        # Formation bonus (Phase F): same-type allies alive on the attacker's team
+        # 2 same-type alive (including self) → +10%
+        # 3+ same-type alive (including self) → +25%
+        attacker_primary_type = attacker.pokemon.primary_type_id
+        same_type_alive = BattleSlot.objects.filter(
+            team=attacker.team,
+            is_fainted=False,
+            is_active=True,
+            pokemon__primary_type_id=attacker_primary_type,
+        ).count()
+        if same_type_alive >= 3:
+            damage = int(damage * 1.25)
+        elif same_type_alive == 2:
+            damage = int(damage * 1.10)
 
         damage = int(damage * random.randint(85, 100) / 100)
         return max(1, damage)
@@ -380,12 +694,35 @@ class ComboChainEngine:
         candidates: list[tuple[BattleSlot, Move]] = []
         slots = (
             BattleSlot.objects.filter(team=friendly_team, is_fainted=False, is_active=True)
+            .select_related(
+                "owned_pokemon__move_standard__trigger_status",
+                "owned_pokemon__move_chase__trigger_status",
+                "owned_pokemon__move_special__trigger_status",
+                "owned_pokemon__move_support__trigger_status",
+            )
             .prefetch_related("pokemon__moves__trigger_status")
         )
 
         for slot in slots:
-            for move in slot.pokemon.moves.all():
-                if move.slot_type == MoveSlotType.PASSIVE:
+            # Use the OwnedPokemon's 4 equipped moves when available (the actual
+            # assigned moves carry trigger_status). Fall back to the species pool
+            # for AI/legacy slots that have no owned_pokemon.
+            if slot.owned_pokemon_id:
+                op = slot.owned_pokemon
+                candidate_moves: list[Move] = [
+                    m for m in (
+                        op.move_standard,
+                        op.move_chase,
+                        op.move_special,
+                        op.move_support,
+                    )
+                    if m is not None
+                ]
+            else:
+                candidate_moves = list(slot.pokemon.moves.all())
+
+            for move in candidate_moves:
+                if move.slot_type == MoveSlotType.PASSIVE_2:
                     continue
                 if move.trigger_status is None:
                     continue
@@ -411,6 +748,8 @@ class ComboChainEngine:
                 team=enemy_team, is_fainted=False, is_active=True
             ).order_by("current_hp")
         )
+        # Phase 6: HIDDEN slots cannot be targeted
+        alive_slots = [s for s in alive_slots if not _effect_engine.has_status(s, StatusName.HIDDEN)]
         if not alive_slots:
             return None
 
@@ -419,6 +758,25 @@ class ComboChainEngine:
         if front_alive:
             return min(front_alive, key=lambda s: s.current_hp)
         return alive_slots[0]
+
+    def _apply_knockback_position(self, slot: BattleSlot) -> None:
+        """
+        Shift a slot from front row to its back-row equivalent when KNOCKBACK is applied.
+
+        Only moves front-row slots; back-row slots are already at the furthest position.
+        """
+        knockback_map = {
+            GridPosition.FRONT_LEFT:   GridPosition.BACK_LEFT,
+            GridPosition.FRONT_CENTER: GridPosition.BACK_CENTER,
+            GridPosition.FRONT_RIGHT:  GridPosition.BACK_RIGHT,
+        }
+        new_pos = knockback_map.get(slot.grid_position)
+        if new_pos is not None:
+            slot.grid_position = new_pos
+            slot.save(update_fields=["grid_position"])
+            logger.debug(
+                "Knockback: %s pushed from front row to %s", slot.pokemon.name, new_pos
+            )
 
     def _log_combo_chain(
         self, battle: Battle, actions: list[BattleAction], round_number: int
@@ -611,7 +969,7 @@ class BattleService:
             OwnedPokemon.objects.filter(
                 pk__in=owned_pokemon_ids,
                 owner=user,
-            ).select_related("species__primary_type", "species__secondary_type")
+            ).select_related("species__primary_type", "species__secondary_type", "held_effect")
             .prefetch_related("species__moves")
         )
         if len(owned_list) != 6:
@@ -635,6 +993,9 @@ class BattleService:
             grid_pos = POSITION_TO_GRID[position]
             is_active = grid_pos in ACTIVE_GRID_POSITIONS
             selected_move = op.move_standard or self._pick_default_move(op.species)
+            # Phase 3 — control scales 50–150 from base_ninjutsu (0–255)
+            slot_control = 50.0 + (op.species.base_ninjutsu / 255.0) * 100.0
+            slot_penetration = _ROLE_PENETRATION.get(op.species.primary_role, 0.0)
             slots_to_create.append(
                 BattleSlot(
                     team=team,
@@ -647,10 +1008,25 @@ class BattleService:
                     current_hp=max_hp,
                     max_hp=max_hp,
                     selected_move=selected_move,
+                    control=slot_control,
+                    penetration=slot_penetration,
                 )
             )
 
-        BattleSlot.objects.bulk_create(slots_to_create)
+        created_slots = BattleSlot.objects.bulk_create(slots_to_create)
+
+        # Create BattleSlotHeldEffect for slots whose OwnedPokemon has a held effect
+        held_effect_rows = []
+        for slot in created_slots:
+            if slot.owned_pokemon_id:
+                op = owned_map.get(slot.owned_pokemon_id)
+                if op and op.held_effect_id:
+                    held_effect_rows.append(
+                        BattleSlotHeldEffect(slot=slot, effect_id=op.held_effect_id)
+                    )
+        if held_effect_rows:
+            BattleSlotHeldEffect.objects.bulk_create(held_effect_rows)
+
         logger.info("Set team (owned) for %s in Battle #%d", user, battle.pk)
         return team
 
@@ -671,7 +1047,7 @@ class BattleService:
         BattleLog.objects.create(
             battle=battle,
             round_number=0,
-            message="Battle started! (4v4 — 2 front, 2 back, 2 bench per side)",
+            message="Battle started! (6v6 — 3 front, 3 back per side)",
             log_type=LogType.INFO,
         )
         logger.info("Battle #%d started", battle.pk)
@@ -704,6 +1080,12 @@ class BattleService:
             round_number=battle.current_round,
         )
 
+        # Passive held effects fire at the start of each round
+        for team in battle.teams.prefetch_related("slots__held_effect_state__effect").all():
+            for slot in team.slots.all():
+                if not slot.is_fainted and slot.is_active:
+                    _resolve_held_effect("passive", slot, round_obj)
+
         all_actions = player_one_actions + player_two_actions
         sorted_actions = self._sort_actions(all_actions)
 
@@ -728,8 +1110,8 @@ class BattleService:
             if attacker_slot.is_fainted or not attacker_slot.is_active:
                 continue
 
-            # Passive moves never execute directly
-            if move.slot_type == MoveSlotType.PASSIVE:
+            # Passive 2 moves never execute directly
+            if move.slot_type == MoveSlotType.PASSIVE_2:
                 continue
 
             can_act, reason = _effect_engine.can_act(attacker_slot)
@@ -742,6 +1124,41 @@ class BattleService:
                 )
                 continue
 
+            # P2-1: BLINDED — cannot use standard attacks
+            if (
+                move.slot_type == MoveSlotType.STANDARD
+                and _effect_engine.has_status(attacker_slot, StatusName.BLINDED)
+            ):
+                BattleLog.objects.create(
+                    battle=battle,
+                    round_number=battle.current_round,
+                    message=f"{attacker_slot.pokemon.name} is blinded and cannot use standard attacks!",
+                    log_type=LogType.STATUS,
+                )
+                continue
+
+            # P2-3: CONFUSED — 33% chance to hit self instead
+            if _effect_engine.has_status(attacker_slot, StatusName.CONFUSED):
+                if random.random() < 0.33:
+                    atk = attacker_slot.pokemon.calculate_stat(
+                        attacker_slot.pokemon.base_attack, attacker_slot.level
+                    )
+                    def_ = attacker_slot.pokemon.calculate_stat(
+                        attacker_slot.pokemon.base_defense, attacker_slot.level
+                    )
+                    self_dmg = max(1, int(((2 * attacker_slot.level / 5 + 2) * 40 * atk / def_) / 50 + 2))
+                    attacker_slot.current_hp = max(0, attacker_slot.current_hp - self_dmg)
+                    if attacker_slot.current_hp == 0:
+                        attacker_slot.is_fainted = True
+                    attacker_slot.save(update_fields=["current_hp", "is_fainted"])
+                    BattleLog.objects.create(
+                        battle=battle,
+                        round_number=battle.current_round,
+                        message=f"{attacker_slot.pokemon.name} is confused and hurt itself! ({self_dmg} damage)",
+                        log_type=LogType.STATUS,
+                    )
+                    continue
+
             self._combo_engine.resolve_combo_chain(
                 battle=battle,
                 attacker_slot=attacker_slot,
@@ -752,6 +1169,10 @@ class BattleService:
 
             # Apply cooldown for this move
             self._apply_move_cooldown(attacker_slot, move)
+
+        # ── Support move rotation (PASSIVE_1 fires automatically on cooldown) ──
+        self._execute_support_moves(battle, round_obj)
+        self._apply_formation_passives(battle, round_obj)
 
         # Decrement all cooldowns at end of round
         self._tick_cooldowns(battle)
@@ -948,27 +1369,44 @@ class BattleService:
         submitted: dict[int, dict],
     ) -> list[dict]:
         """
-        Build the validated player_actions list from submitted move/target choices.
+        Build player actions from mystery toggle inputs (Naruto Online style).
 
-        submitted: {slot_id: {"move_id": int | None, "target_id": int | None}}
+        submitted: {slot_id: {"use_mystery": bool}}
 
         For each active non-fainted slot:
-        - Persist submitted move/target if provided.
-        - Fall back to standard attack if the chosen move is on cooldown.
-        - Clear target if it has fainted; auto-pick first valid enemy.
-        - Use persisted selection if nothing new submitted.
+        - If use_mystery=True and mystery move not on cooldown → fire mystery move
+        - Otherwise → fire standard move (auto)
+        - Target auto-selected: lowest-HP front-row enemy (front-row-first rule)
 
         Returns list[{"slot_id": int, "move_id": int, "target_id": int}].
         """
-        # Identify enemy team
         enemy_team = battle.teams.exclude(pk=player_team.pk).first()
         alive_enemies = list(
             BattleSlot.objects.filter(
                 team=enemy_team, is_fainted=False, is_active=True
-            )
+            ).select_related("pokemon")
         ) if enemy_team else []
 
-        # Cooldowns indexed by (slot_id, move_id)
+        if not alive_enemies:
+            return []
+
+        # Auto-select target: lowest-HP front-row enemy, else lowest-HP alive.
+        # Exclude HIDDEN slots (Phase 6 — cannot be targeted).
+        front_positions = {
+            GridPosition.FRONT_LEFT,
+            GridPosition.FRONT_CENTER,
+            GridPosition.FRONT_RIGHT,
+        }
+        alive_visible = [
+            s for s in alive_enemies
+            if not _effect_engine.has_status(s, StatusName.HIDDEN)
+        ]
+        front_alive = [s for s in alive_visible if s.grid_position in front_positions]
+        pool = front_alive or alive_visible
+        if not pool:
+            return []
+        auto_target = min(pool, key=lambda s: s.current_hp)
+
         cooldown_set: set[tuple[int, int]] = set(
             MoveCooldown.objects.filter(
                 slot__team=player_team,
@@ -980,12 +1418,10 @@ class BattleService:
             BattleSlot.objects.filter(
                 team=player_team, is_fainted=False, is_active=True
             ).select_related(
-                "pokemon", "selected_move", "selected_target",
+                "pokemon",
                 "owned_pokemon",
                 "owned_pokemon__move_standard",
-                "owned_pokemon__move_chase",
                 "owned_pokemon__move_special",
-                "owned_pokemon__move_support",
             )
             .prefetch_related("pokemon__moves")
         )
@@ -993,55 +1429,36 @@ class BattleService:
         actions: list[dict] = []
         for slot in active_slots:
             sub = submitted.get(slot.pk, {})
-            new_move_id = sub.get("move_id")
-            new_target_id = sub.get("target_id")
+            use_mystery = sub.get("use_mystery", False)
 
-            # --- Resolve move ---
-            if new_move_id:
-                move = self._get_move_for_slot(slot, new_move_id)
-            else:
-                move = slot.selected_move
+            move = None
+            if use_mystery:
+                # P2-2: ACUPUNCTURED — cannot use mystery moves
+                # P2-5: TAUNTED — forced to use standard, mystery blocked
+                mystery_blocked = (
+                    _effect_engine.has_status(slot, StatusName.ACUPUNCTURED)
+                    or _effect_engine.has_status(slot, StatusName.TAUNTED)
+                )
+                if not mystery_blocked:
+                    mystery = self._get_mystery_move(slot)
+                    if mystery and (slot.pk, mystery.pk) not in cooldown_set:
+                        move = mystery
 
-            if move is None or move.slot_type == MoveSlotType.PASSIVE:
-                move = self._get_standard_move(slot)
-
-            # Fallback to standard if on cooldown
-            if move and (slot.pk, move.pk) in cooldown_set:
+            if move is None:
                 move = self._get_standard_move(slot)
 
             if move is None:
-                logger.warning("Slot %d (%s) has no usable move, skipping.", slot.pk, slot.pokemon.name)
-                continue
-
-            # Persist selected move
-            if slot.selected_move_id != move.pk:
-                slot.selected_move = move
-                slot.save(update_fields=["selected_move"])
-
-            # --- Resolve target ---
-            if new_target_id:
-                target = self._validate_target(new_target_id, alive_enemies)
-            else:
-                target = self._validate_target(
-                    slot.selected_target_id, alive_enemies
+                logger.warning(
+                    "Slot %d (%s) has no usable move, skipping.",
+                    slot.pk,
+                    slot.pokemon.name,
                 )
-
-            if target is None and alive_enemies:
-                target = alive_enemies[0]
-
-            if target is None:
-                logger.warning("No valid target for slot %d, skipping.", slot.pk)
                 continue
-
-            # Persist selected target
-            if slot.selected_target_id != target.pk:
-                slot.selected_target = target
-                slot.save(update_fields=["selected_target"])
 
             actions.append({
                 "slot_id": slot.pk,
                 "move_id": move.pk,
-                "target_id": target.pk,
+                "target_id": auto_target.pk,
             })
 
         return actions
@@ -1086,6 +1503,13 @@ class BattleService:
             return slot.pokemon.moves.filter(slot_type=MoveSlotType.STANDARD).first()
         except Move.DoesNotExist:
             return None
+
+    @staticmethod
+    def _get_mystery_move(slot: BattleSlot) -> Move | None:
+        """Return the mystery-type move for the slot."""
+        if slot.owned_pokemon_id is not None and slot.owned_pokemon.move_special:
+            return slot.owned_pokemon.move_special
+        return slot.pokemon.moves.filter(slot_type=MoveSlotType.MYSTERY).first()
 
     @staticmethod
     def _validate_target(
@@ -1152,13 +1576,114 @@ class BattleService:
 
             forced = -1 if move.always_first else (1 if move.always_last else 0)
             priority = -move.priority
-            speed = slot.pokemon.calculate_stat(slot.pokemon.base_speed, slot.level)
+            speed = slot.pokemon.calculate_stat(slot.pokemon.base_initiative, slot.level)
             modifiers = _effect_engine.get_stat_modifiers(slot)
             effective_speed = -int(speed * modifiers.get("speed", 1.0))
             grid_order = GRID_TURN_ORDER.get(slot.grid_position, 99)
             return (forced, priority, effective_speed, grid_order, random.random())
 
         return sorted(actions, key=sort_key)
+
+    def _execute_support_moves(self, battle: Battle, round_obj: BattleRound) -> None:
+        """
+        Fire PASSIVE_1 (support) moves automatically on their cooldown schedule.
+
+        A support move fires for a slot when:
+          - The slot has an OwnedPokemon with move_support assigned
+          - The move_support has no active MoveCooldown for that slot (i.e. cooldown expired)
+          - The slot is alive and active
+
+        Support moves target the lowest-HP ally on the same team (heal/buff scenario).
+        If the move has power > 0 (offensive support), it targets the lowest-HP enemy.
+        """
+        slots = BattleSlot.objects.filter(
+            team__battle=battle,
+            is_fainted=False,
+            is_active=True,
+            owned_pokemon__isnull=False,
+        ).select_related(
+            "owned_pokemon__move_support__applies_status",
+            "team",
+        )
+
+        for slot in slots:
+            support_move = slot.owned_pokemon.move_support
+            if support_move is None:
+                continue
+
+            # Check whether support move is on cooldown
+            on_cd = MoveCooldown.objects.filter(slot=slot, move=support_move).exists()
+            if on_cd:
+                continue
+
+            # Choose target: offensive (power > 0) → lowest-HP enemy; otherwise → lowest-HP ally
+            if support_move.power and support_move.power > 0:
+                enemy_team = battle.teams.exclude(pk=slot.team_id).first()
+                target = self._combo_engine._select_target(enemy_team, support_move) if enemy_team else None
+            else:
+                # Friendly target: lowest-HP non-fainted ally (heal the most wounded)
+                allies = BattleSlot.objects.filter(
+                    team=slot.team, is_fainted=False, is_active=True
+                ).order_by("current_hp")
+                target = allies.first()
+
+            if target is None:
+                continue
+
+            BattleLog.objects.create(
+                battle=battle,
+                round_number=round_obj.round_number,
+                message=(
+                    f"✦ {slot.pokemon.name} used {support_move.themed_name or support_move.name} "
+                    f"[Support]!"
+                ),
+                log_type=LogType.STATUS,
+            )
+
+            self._combo_engine._execute_move(
+                round_obj=round_obj,
+                attacker_slot=slot,
+                move=support_move,
+                target_slot=target,
+                chain_position=0,
+                is_combo=False,
+            )
+            self._apply_move_cooldown(slot, support_move)
+
+    def _apply_formation_passives(self, battle: Battle, round_obj: BattleRound) -> None:
+        """
+        End-of-round formation passive effects:
+
+        Last Stand  — if a slot's current HP <= 30% of max, it gets a +30% attack bonus
+                      (stored as a BattleLog STATUS message; the attack buff is handled in
+                      _calculate_damage via the slot's stat modifiers on the NEXT round).
+        Medic       — if a slot's current HP <= 50% of max, heal 10% of max HP.
+        """
+        slots = BattleSlot.objects.filter(
+            team__battle=battle,
+            is_fainted=False,
+            is_active=True,
+        ).select_related("pokemon", "team")
+
+        for slot in slots:
+            max_hp = slot.pokemon.calculate_stat(slot.pokemon.base_hp, slot.level)
+            if max_hp <= 0:
+                continue
+            hp_pct = slot.current_hp / max_hp
+
+            # Medic: heal 10% of max HP if below 50%
+            if hp_pct <= 0.50:
+                heal = max(1, int(max_hp * 0.10))
+                new_hp = min(max_hp, slot.current_hp + heal)
+                if new_hp != slot.current_hp:
+                    slot.current_hp = new_hp
+                    slot.save(update_fields=["current_hp"])
+                    BattleLog.objects.create(
+                        battle=battle,
+                        round_number=round_obj.round_number,
+                        message=f"+ {slot.pokemon.name} recovers {heal} HP [Medic Passive]",
+                        log_type=LogType.STATUS,
+                    )
 
     @staticmethod
     def _apply_move_cooldown(slot: BattleSlot, move: Move) -> None:

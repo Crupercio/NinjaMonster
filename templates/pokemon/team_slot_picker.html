@@ -73,7 +73,10 @@
       <input type="hidden" name="owned_id" value="{{ op.pk }}">
       <button type="submit" class="picker-card {% if op.is_current %}current-slot{% elif op.is_assigned %}already-assigned{% endif %}"
               style="width:100%;font-family:inherit;">
-        {% if op.species.sprite_url %}
+        {% if op.species.pokedex_number %}
+          <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
+               alt="{{ op.species.name }}">
+        {% elif op.species.sprite_url %}
           <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}">
         {% else %}
           <div style="width:64px;height:64px;display:inline-flex;align-items:center;justify-content:center;color:#4b5563;font-size:1.5rem;">?</div>

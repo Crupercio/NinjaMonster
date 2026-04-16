@@ -1,0 +1,7 @@
+[
+  {"model": "pokemon.chakraelement", "pk": 1, "fields": {"name": "earth"}},
+  {"model": "pokemon.chakraelement", "pk": 2, "fields": {"name": "fire"}},
+  {"model": "pokemon.chakraelement", "pk": 3, "fields": {"name": "lightning"}},
+  {"model": "pokemon.chakraelement", "pk": 4, "fields": {"name": "water"}},
+  {"model": "pokemon.chakraelement", "pk": 5, "fields": {"name": "wind"}}
+]

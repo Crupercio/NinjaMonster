@@ -28,47 +28,56 @@ class AIDifficulty(models.TextChoices):
 
 
 class GridPosition(models.TextChoices):
-    """Named 2×2 grid positions per team side, plus two bench slots."""
+    """Named 3×2 grid positions per team side (Phase 3 — 6v6 expansion)."""
 
     FRONT_LEFT = "front_left", "Front Left"
+    FRONT_CENTER = "front_center", "Front Center"
     FRONT_RIGHT = "front_right", "Front Right"
     BACK_LEFT = "back_left", "Back Left"
+    BACK_CENTER = "back_center", "Back Center"
     BACK_RIGHT = "back_right", "Back Right"
+    # Legacy bench slots — kept for DB compatibility with pre-Phase 3 battles.
     BENCH_1 = "bench_1", "Bench 1"
     BENCH_2 = "bench_2", "Bench 2"
 
 
-# Positions considered "on the field" (not bench).
+# All six field positions — bench is implicit (no bench in 6v6).
 ACTIVE_GRID_POSITIONS: frozenset[str] = frozenset({
     GridPosition.FRONT_LEFT,
+    GridPosition.FRONT_CENTER,
     GridPosition.FRONT_RIGHT,
     GridPosition.BACK_LEFT,
+    GridPosition.BACK_CENTER,
     GridPosition.BACK_RIGHT,
 })
 
 # Integer order used for tie-breaking turn resolution (lower = higher priority).
+# Front row acts before back row; left→center→right within each row.
 GRID_TURN_ORDER: dict[str, int] = {
-    GridPosition.FRONT_LEFT: 1,
-    GridPosition.FRONT_RIGHT: 2,
-    GridPosition.BACK_LEFT: 3,
-    GridPosition.BACK_RIGHT: 4,
-    GridPosition.BENCH_1: 5,
-    GridPosition.BENCH_2: 6,
+    GridPosition.FRONT_LEFT:   1,
+    GridPosition.FRONT_CENTER: 2,
+    GridPosition.FRONT_RIGHT:  3,
+    GridPosition.BACK_LEFT:    4,
+    GridPosition.BACK_CENTER:  5,
+    GridPosition.BACK_RIGHT:   6,
+    GridPosition.BENCH_1:      7,
+    GridPosition.BENCH_2:      8,
 }
 
 # Maps slot position (1-6) → GridPosition value.
+# Positions 1–3: front row (L/C/R); Positions 4–6: back row (L/C/R).
 POSITION_TO_GRID: dict[int, str] = {
     1: GridPosition.FRONT_LEFT,
-    2: GridPosition.FRONT_RIGHT,
-    3: GridPosition.BACK_LEFT,
-    4: GridPosition.BACK_RIGHT,
-    5: GridPosition.BENCH_1,
-    6: GridPosition.BENCH_2,
+    2: GridPosition.FRONT_CENTER,
+    3: GridPosition.FRONT_RIGHT,
+    4: GridPosition.BACK_LEFT,
+    5: GridPosition.BACK_CENTER,
+    6: GridPosition.BACK_RIGHT,
 }
 
 
 class Battle(models.Model):
-    """Represents a single 4v4 battle between two players (or player vs AI)."""
+    """Represents a single 6v6 battle between two players (or player vs AI)."""
 
     player_one = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -187,6 +196,28 @@ class BattleSlot(models.Model):
     current_hp = models.PositiveIntegerField()
     max_hp = models.PositiveIntegerField()
     is_fainted = models.BooleanField(default=False)
+    # Phase 5 — Stat Expansion
+    critical_rate = models.FloatField(
+        default=0.05,
+        help_text="Probability (0.0–1.0) of landing a critical hit (×1.5 damage).",
+    )
+    combo_rate = models.FloatField(
+        default=0.10,
+        help_text="Bonus damage multiplier applied to non-initial combo chain hits.",
+    )
+    control_resist = models.FloatField(
+        default=0.00,
+        help_text="Probability (0.0–1.0) to resist a status/CC application.",
+    )
+    # Phase 3 — Control + Penetration
+    control = models.FloatField(
+        default=100.0,
+        help_text="CC success rate; higher values improve status application vs control_resist.",
+    )
+    penetration = models.FloatField(
+        default=0.0,
+        help_text="Fraction of target's defense ignored (0.0–1.0). Derived from primary_role.",
+    )
 
     # Track last move used (for Encore / Torment logic)
     last_move_used = models.ForeignKey(
@@ -261,6 +292,40 @@ class MoveCooldown(models.Model):
 
     def __str__(self) -> str:
         return f"{self.slot.pokemon.name} — {self.move.name}: {self.remaining_rounds} round(s) left"
+
+
+class BattleSlotHeldEffect(models.Model):
+    """
+    Tracks in-battle state of a slot's held effect: how many times it has fired.
+
+    Created by BattleService.set_team_from_owned() when OwnedPokemon.held_effect is set.
+    """
+
+    slot = models.OneToOneField(
+        BattleSlot,
+        on_delete=models.CASCADE,
+        related_name="held_effect_state",
+    )
+    effect = models.ForeignKey(
+        "pokemon.HeldEffect",
+        on_delete=models.CASCADE,
+        related_name="battle_states",
+    )
+    activations_used = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "battle slot held effect"
+        verbose_name_plural = "battle slot held effects"
+
+    def __str__(self) -> str:
+        return f"{self.slot.pokemon.name} — {self.effect.name}"
+
+    @property
+    def can_activate(self) -> bool:
+        """True if the effect has not reached its per-battle cap (0 = unlimited)."""
+        if self.effect.max_activations == 0:
+            return True
+        return self.activations_used < self.effect.max_activations
 
 
 class BattleRound(models.Model):

@@ -7,11 +7,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render
+from django.http import JsonResponse
 from django.views import View
 from django.views.generic import DetailView, FormView
 
 from .forms import RegistrationForm
-from .services import DAILY_REWARD_RYO, can_claim_daily, claim_daily_reward
+from .services import CANDY_COSTS, DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_daily_reward, get_candy_inventory
 
 User = get_user_model()
 
@@ -267,3 +268,30 @@ class DailyClaimView(LoginRequiredMixin, View):
         except ValueError as exc:
             messages.error(request, str(exc))
         return redirect("users:daily_claim")
+
+
+class BuyCandyAPI(LoginRequiredMixin, View):
+    """POST /accounts/buy-candy/ — purchase one candy with Ryo."""
+
+    def post(self, request):
+        import json
+        try:
+            body = json.loads(request.body)
+            candy_type = body.get("candy_type", "")
+        except (ValueError, KeyError):
+            return JsonResponse({"error": "Invalid request."}, status=400)
+
+        try:
+            buy_candy(request.user, candy_type)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+
+        request.user.refresh_from_db()
+        inventory = get_candy_inventory(request.user)
+        return JsonResponse({
+            "ryo": request.user.ryo,
+            "candy_trail_mix": request.user.candy_trail_mix,
+            "candy_sweet_berry": request.user.candy_sweet_berry,
+            "candy_golden_apple": request.user.candy_golden_apple,
+            "costs": {k: v["cost"] for k, v in inventory.items()},
+        })

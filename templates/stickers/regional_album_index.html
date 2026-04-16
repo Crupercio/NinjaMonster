@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Regional Albums{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Rarity color tokens ─────────────────────────────────────── */
+.r-common      { --rc:#9ca3af; }
+.r-uncommon    { --rc:#4ade80; }
+.r-rare        { --rc:#60a5fa; }
+.r-epic        { --rc:#a78bfa; }
+.r-holographic { --rc:#fbbf24; }
+.r-full_art    { --rc:#f97316; }
+.r-secret_rare { --rc:#f43f5e; }
+
+/* ── Page header ─────────────────────────────────────────────── */
+.ra-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+}
+.ra-header h2 { margin: 0; font-size: 1.4rem; font-weight: 800; }
+
+/* ── Region grid ─────────────────────────────────────────────── */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Region card ─────────────────────────────────────────────── */
+.region-card {
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.region-card:hover { border-color: #3b82f6; }
+.region-card.locked { opacity: 0.45; pointer-events: none; }
+
+/* ── Region background scenes (CSS gradient placeholders) ───── */
+.region-banner {
+  height: 90px;
+  display: flex;
+  align-items: flex-end;
+  padding: 0.5rem 0.8rem;
+  position: relative;
+  overflow: hidden;
+}
+.region-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(22,33,62,0.85), transparent);
+  z-index: 1;
+}
+.region-banner-text {
+  position: relative;
+  z-index: 2;
+}
+.region-banner-text h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.region-banner-text .dex-range {
+  font-size: 0.65rem;
+  color: #cbd5e1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Region background colors — replace with background-image when art is ready */
+.rb-kanto   { background: linear-gradient(135deg, #1a3a2a 0%, #0f2318 50%, #162130 100%); }
+.rb-johto   { background: linear-gradient(135deg, #2a1a3a 0%, #1a0f33 50%, #16162e 100%); }
+.rb-hoenn   { background: linear-gradient(135deg, #1a2e3a 0%, #0f2038 50%, #0e2030 100%); }
+.rb-sinnoh  { background: linear-gradient(135deg, #2a2a3a 0%, #1a1a30 50%, #161628 100%); }
+.rb-unova   { background: linear-gradient(135deg, #3a2a1a 0%, #2a1a0f 50%, #231610 100%); }
+.rb-kalos   { background: linear-gradient(135deg, #3a1a2a 0%, #2a0f1a 50%, #231016 100%); }
+.rb-alola   { background: linear-gradient(135deg, #1a3a2e 0%, #0f2a20 50%, #0e2018 100%); }
+.rb-galar   { background: linear-gradient(135deg, #2a3a1a 0%, #1a2a0f 50%, #162010 100%); }
+.rb-paldea  { background: linear-gradient(135deg, #3a3a1a 0%, #282810 50%, #201e0e 100%); }
+.rb-default { background: linear-gradient(135deg, #1e2a3a 0%, #131c2e 100%); }
+
+/* Lock badge */
+.lock-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 3;
+  background: rgba(0,0,0,0.6);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+/* ── Rarity row inside card ───────────────────────────────────── */
+.region-body { padding: 0.7rem 0.85rem; }
+
+.region-progress-bar {
+  height: 5px;
+  background: #1e3a6e;
+  border-radius: 4px;
+  margin-bottom: 0.7rem;
+  overflow: hidden;
+}
+.region-progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+
+.rarity-rows { display: flex; flex-direction: column; gap: 4px; }
+
+.rarity-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 6px;
+  border-radius: 7px;
+  background: #0f172a;
+  font-size: 0.72rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+.rarity-row:hover { background: #1e293b; }
+.rarity-row.complete { background: #0f2a1a; }
+.rarity-row.claimed  { opacity: 0.55; }
+
+.rarity-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--rc, #9ca3af);
+}
+.rarity-name { flex: 1; color: #e2e8f0; font-weight: 600; }
+.rarity-count { color: #94a3b8; white-space: nowrap; }
+
+.mini-bar-wrap { width: 60px; height: 4px; background: #1e3a6e; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.mini-bar-fill { height: 100%; background: var(--rc, #3b82f6); border-radius: 3px; transition: width 0.3s; }
+
+.complete-badge {
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #16533a;
+  color: #4ade80;
+  white-space: nowrap;
+}
+.claimed-badge {
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #1e293b;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* ── Overall pages complete ───────────────────────────────────── */
+.pages-footer {
+  margin-top: 0.6rem;
+  font-size: 0.68rem;
+  color: #64748b;
+  text-align: right;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ra-header">
+  <h2>📖 Regional Albums</h2>
+  <a href="{% url 'stickers:album' %}" class="btn btn-sm btn-secondary">← Classic Album</a>
+</div>
+
+<div class="region-grid">
+  {% for region in regions %}
+  <div class="region-card {% if region.locked %}locked{% endif %}">
+
+    {# ── Banner ── #}
+    <div class="region-banner rb-{{ region.region }}">
+      {% if region.locked %}
+      <span class="lock-badge">🔒 Coming soon</span>
+      {% endif %}
+      <div class="region-banner-text">
+        <h3>{{ region.label }}</h3>
+        <div class="dex-range">{{ region.dex_range }} · {{ region.total_pokemon }} Pokémon</div>
+      </div>
+    </div>
+
+    {# ── Body ── #}
+    <div class="region-body">
+
+      {# overall region progress bar #}
+      {% with total_slots=region.pages_total %}
+      <div class="region-progress-bar">
+        <div class="region-progress-fill"
+             style="width:{% if total_slots %}{{ region.pages_complete|floatformat:0 }}{% else %}0{% endif %}%"></div>
+      </div>
+      {% endwith %}
+
+      <div class="rarity-rows">
+        {% for row in region.rarities %}
+        {% if not region.locked %}
+        <a href="{% url 'stickers:regional_album_detail' region=region.region rarity=row.rarity %}"
+           class="rarity-row r-{{ row.rarity }} {% if row.complete %}complete{% endif %} {% if row.reward_claimed %}claimed{% endif %}">
+        {% else %}
+        <div class="rarity-row r-{{ row.rarity }}">
+        {% endif %}
+
+          <div class="rarity-dot"></div>
+          <span class="rarity-name">{{ row.label }}</span>
+
+          <div class="mini-bar-wrap">
+            <div class="mini-bar-fill"
+                 style="width:{% if row.total %}{% widthratio row.placed row.total 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+
+          <span class="rarity-count">{{ row.placed }}/{{ row.total }}</span>
+
+          {% if row.reward_claimed %}
+            <span class="claimed-badge">✓ Claimed</span>
+          {% elif row.complete %}
+            <span class="complete-badge">⭐ Claim</span>
+          {% endif %}
+
+        {% if not region.locked %}</a>{% else %}</div>{% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="pages-footer">
+        {{ region.pages_complete }}/{{ region.pages_total }} pages complete
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

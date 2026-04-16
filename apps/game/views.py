@@ -19,7 +19,7 @@ from .tutorial_service import STARTER_INFO, STARTER_NAMES, TutorialService
 from apps.pokemon.models import OwnedPokemon
 
 from .ai import BattleAIService
-from .models import Battle, BattleSlot, BattleStatus, BattleTeam
+from .models import Battle, BattleAction, BattleRound, BattleSlot, BattleStatus, BattleTeam
 from .services import BattleService
 
 logger = logging.getLogger(__name__)
@@ -209,6 +209,9 @@ class BattleView(LoginRequiredMixin, DetailView):
         context["combo_logs"] = list(
             battle.logs.filter(log_type="combo").order_by("-created_at")[:10]
         )
+        context["logs"] = list(
+            battle.logs.order_by("created_at")
+        )
 
         # Build cooldown lookup: {slot_pk: {move_pk: remaining_rounds}}
         player_team = context.get("player_team")
@@ -268,7 +271,7 @@ class BattleActionView(LoginRequiredMixin, FormView):
         if player_team is None:
             return redirect(self.get_success_url())
 
-        # Parse per-slot submissions: move_{slot_pk}, target_{slot_pk}, switch_{slot_pk}
+        # Parse per-slot mystery toggles: mystery_{slot_pk}, switch_{slot_pk}
         submitted: dict[int, dict] = {}
         switches: dict[int, int] = {}
         for key, value in request.POST.items():
@@ -278,16 +281,10 @@ class BattleActionView(LoginRequiredMixin, FormView):
                     switches[active_slot_id] = int(value)
                 except (ValueError, TypeError):
                     pass
-            elif key.startswith("move_"):
+            elif key.startswith("mystery_"):
                 try:
-                    slot_id = int(key[5:])
-                    submitted.setdefault(slot_id, {})["move_id"] = int(value)
-                except (ValueError, TypeError):
-                    pass
-            elif key.startswith("target_"):
-                try:
-                    slot_id = int(key[7:])
-                    submitted.setdefault(slot_id, {})["target_id"] = int(value)
+                    slot_id = int(key[8:])
+                    submitted[slot_id] = {"use_mystery": value == "on"}
                 except (ValueError, TypeError):
                     pass
 
@@ -375,6 +372,37 @@ class BattleActionView(LoginRequiredMixin, FormView):
             for log in battle.logs.filter(log_type="combo").order_by("-created_at")[:10]
         ]
 
+        # Build the action sequence for the just-completed round (for frontend animation).
+        last_round_number = max(battle.current_round - 1, 1)
+        last_round = BattleRound.objects.filter(
+            battle=battle, round_number=last_round_number
+        ).first()
+        action_sequence = []
+        if last_round:
+            actions_qs = (
+                BattleAction.objects.filter(round=last_round)
+                .select_related(
+                    "attacker_slot__pokemon",
+                    "target_slot__pokemon",
+                    "move",
+                    "status_applied",
+                )
+                .order_by("order_in_chain")
+            )
+            for act in actions_qs:
+                action_sequence.append({
+                    "attacker_slot_pk": act.attacker_slot_id,
+                    "attacker_name": act.attacker_slot.pokemon.name,
+                    "target_slot_pk": act.target_slot_id,
+                    "target_name": act.target_slot.pokemon.name if act.target_slot else "",
+                    "move_name": act.move.themed_name or act.move.name,
+                    "damage": act.damage_dealt,
+                    "is_combo": act.is_combo_triggered,
+                    "chain_position": act.order_in_chain,
+                    "status_applied": act.status_applied.name if act.status_applied else None,
+                    "target_fainted": act.target_slot.is_fainted if act.target_slot else False,
+                })
+
         payload = {
             "battle_pk": battle.pk,
             "current_round": battle.current_round,
@@ -383,6 +411,7 @@ class BattleActionView(LoginRequiredMixin, FormView):
             "max_combo_chain": battle.max_combo_chain,
             "teams": teams_data,
             "combo_logs": combo_logs,
+            "action_sequence": action_sequence,
         }
 
         group_name = f"battle_{battle.pk}"
