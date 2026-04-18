@@ -20,6 +20,7 @@ from .models import (
     CRAFT_COSTS,
     DISMANTLE_VALUES,
     DUST_VALUES,
+    GEN_PACK_GEN_NUMBER,
     PAGE_REWARDS,
     REGION_LABELS,
     REGION_RANGES,
@@ -251,18 +252,23 @@ class StickerService:
         return sticker
 
     @transaction.atomic
-    def buy_pack(self, player: User) -> StickerPack:
+    def buy_pack(self, player: User, pack_type: str = PackType.STANDARD) -> StickerPack:
         """
         Spend PACK_PRICE_RYO to purchase and immediately receive a sticker pack.
 
-        Raises ValueError if the player cannot afford the pack.
+        pack_type may be any PackType value (standard, bundle, gen1–gen8).
+        Gen packs cost the same as standard packs but draw only from that generation.
+        Raises ValueError if the player cannot afford the pack or pack_type is invalid.
         Returns the new (unopened) StickerPack.
         """
+        if pack_type not in PackType.values:
+            raise ValueError(f"Invalid pack type: {pack_type}")
         deduct_ryo(player, PACK_PRICE_RYO)
-        pack = StickerPack.objects.create(owner=player)
+        pack = StickerPack.objects.create(owner=player, pack_type=pack_type)
         logger.info(
-            "Player %s bought a sticker pack for %d Ryo",
+            "Player %s bought a %s for %d Ryo",
             player,
+            pack_type,
             PACK_PRICE_RYO,
         )
         return pack
@@ -330,7 +336,17 @@ class StickerService:
         # Lock player row so pity counters update atomically across concurrent opens
         player = User.objects.select_for_update().get(pk=player.pk)
 
-        all_pokemon = list(Pokemon.objects.all())
+        # Build pokemon pool — gen packs restrict to that generation's pokemon
+        gen_number = GEN_PACK_GEN_NUMBER.get(pack.pack_type)
+        if gen_number is not None:
+            all_pokemon = list(
+                Pokemon.objects.filter(generation__number=gen_number)
+            )
+            if not all_pokemon:
+                # Fallback to full pool if gen not yet seeded
+                all_pokemon = list(Pokemon.objects.all())
+        else:
+            all_pokemon = list(Pokemon.objects.all())
         if not all_pokemon:
             raise ValueError("No Pokemon in database to generate stickers from")
 

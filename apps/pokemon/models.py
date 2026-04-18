@@ -323,6 +323,15 @@ class Pokemon(models.Model):
             "At least one generation source is required per species."
         ),
     )
+    generation = models.ForeignKey(
+        Generation,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="introduced_pokemon",
+        db_index=True,
+        help_text="The generation this species was first introduced in.",
+    )
     sprite_url = models.TextField(blank=True, default="")
     pokedex_number = models.PositiveIntegerField(unique=True, null=True, blank=True)
     primary_role = models.TextField(

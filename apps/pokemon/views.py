@@ -3,7 +3,7 @@ import json
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Min
+
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
@@ -28,9 +28,7 @@ class PokedexView(ListView):
 
     def get_queryset(self):
         return (
-            Pokemon.objects.select_related("primary_type", "secondary_type")
-            .prefetch_related("generation_sources")
-            .annotate(primary_gen=Min("generation_sources__number"))
+            Pokemon.objects.select_related("primary_type", "secondary_type", "generation")
             .order_by("pokedex_number", "name")
         )
 
@@ -385,8 +383,8 @@ class MiCasaView(LoginRequiredMixin, TemplateView):
             .select_related(
                 "species__primary_type__chakra_element",
                 "species__secondary_type__chakra_element",
+                "species__generation",
             )
-            .prefetch_related("species__generation_sources")
             .order_by("species__pokedex_number", "species__name")
         )
         context["all_types"] = PokemonType.objects.order_by("name")

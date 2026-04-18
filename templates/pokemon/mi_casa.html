@@ -154,7 +154,7 @@ const CASA_POKEMON = [
       {% if op.species.secondary_type %},"{{ op.species.secondary_type.name|lower|escapejs }}"{% endif %}
     ],
     chakra: "{{ op.species.primary_type.chakra_element.name|lower|escapejs }}",
-    gens: [{% for g in op.species.generation_sources.all %}{{ g.number }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    gens: [{% if op.species.generation %}{{ op.species.generation.number }}{% endif %}],
     level: {{ op.level }},
     sell_value: {{ op.sell_value }},
     is_training: {{ op.is_training|yesno:"true,false" }},

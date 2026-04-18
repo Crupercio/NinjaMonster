@@ -274,7 +274,7 @@ function pokedex() {
        data-name="{{ pokemon.name|lower }}"
        data-primary="{{ pokemon.primary_type.name }}"
        data-secondary="{{ pokemon.secondary_type.name|default:'' }}"
-       data-gen="{{ pokemon.primary_gen|default:'' }}"
+       data-gen="{{ pokemon.generation.number|default:'' }}"
        data-role="{{ pokemon.primary_role }}">
 
       {% if pokemon.pokedex_number %}
@@ -297,9 +297,9 @@ function pokedex() {
         {% endif %}
       </div>
 
-      {% if pokemon.primary_gen %}
-      <span class="pdex-gen" x-text="genLabel({{ pokemon.primary_gen }})">
-        Gen {{ pokemon.primary_gen }}
+      {% if pokemon.generation %}
+      <span class="pdex-gen" x-text="genLabel({{ pokemon.generation.number }})">
+        Gen {{ pokemon.generation.number }}
       </span>
       {% endif %}
 

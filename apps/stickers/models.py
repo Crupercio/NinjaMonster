@@ -161,6 +161,22 @@ class StickerAlbum(models.Model):
 class PackType(models.TextChoices):
     STANDARD = "standard", "Standard Pack"
     BUNDLE = "bundle", "Bundle Pack"
+    # Generation-specific packs — pool limited to that gen's Pokémon
+    GEN1 = "gen1", "Kanto Pack (Gen 1)"
+    GEN2 = "gen2", "Johto Pack (Gen 2)"
+    GEN3 = "gen3", "Hoenn Pack (Gen 3)"
+    GEN4 = "gen4", "Sinnoh Pack (Gen 4)"
+    GEN5 = "gen5", "Unova Pack (Gen 5)"
+    GEN6 = "gen6", "Kalos Pack (Gen 6)"
+    GEN7 = "gen7", "Alola Pack (Gen 7)"
+    GEN8 = "gen8", "Galar Pack (Gen 8)"
+
+
+# Maps gen pack type values to generation numbers for pool filtering
+GEN_PACK_GEN_NUMBER: dict[str, int] = {
+    "gen1": 1, "gen2": 2, "gen3": 3, "gen4": 4,
+    "gen5": 5, "gen6": 6, "gen7": 7, "gen8": 8,
+}
 
 
 class StickerPack(models.Model):
@@ -199,12 +215,16 @@ class StickerPack(models.Model):
 
     def __str__(self) -> str:
         state = "opened" if self.opened else "unopened"
-        kind = "Bundle" if self.pack_type == PackType.BUNDLE else "Standard"
-        return f"{self.owner}'s {kind} sticker pack ({state})"
+        label = PackType(self.pack_type).label if self.pack_type in PackType.values else self.pack_type
+        return f"{self.owner}'s {label} ({state})"
 
     @property
     def is_bundle(self) -> bool:
         return self.pack_type == PackType.BUNDLE
+
+    @property
+    def is_gen_pack(self) -> bool:
+        return self.pack_type in GEN_PACK_GEN_NUMBER
 
 
 class TradeOffer(models.Model):

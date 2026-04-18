@@ -7,7 +7,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
 
-from .models import Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
+from .models import GEN_PACK_GEN_NUMBER, PackType, Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
 from .models import REGION_LABELS, REGION_RANGES, StickerRarity
 from .services import (
     PACK_PRICE_RYO,
@@ -279,11 +279,20 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
         context["pack_price_10"] = PACK_PRICE_RYO * 10
         context["can_afford"] = self.request.user.ryo >= PACK_PRICE_RYO
         context["can_afford_10"] = self.request.user.ryo >= PACK_PRICE_RYO * 10
+        context["pack_types"] = [
+            {"value": pt.value, "label": pt.label}
+            for pt in PackType
+            if pt not in (PackType.BUNDLE,)  # bundle is granted, not bought
+        ]
+        context["gen_pack_numbers"] = GEN_PACK_GEN_NUMBER
         return context
 
     def post(self, request, *args, **kwargs):
+        pack_type = request.POST.get("pack_type", PackType.STANDARD)
+        if pack_type not in PackType.values or pack_type == PackType.BUNDLE:
+            pack_type = PackType.STANDARD
         try:
-            pack = _sticker_service.buy_pack(request.user)
+            pack = _sticker_service.buy_pack(request.user, pack_type=pack_type)
         except ValueError as exc:
             context = self.get_context_data(error=str(exc), **kwargs)
             return self.render_to_response(context)
