@@ -1,8 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Select Your Team{% endblock %}
+
+{% block extra_css %}
+<style>
+.ts-page-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem;
+  color: var(--text-1);
+}
+.ts-subtitle { color: var(--text-2); font-size: 0.875rem; margin-bottom: 1rem; }
+.ts-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+.ts-card:hover:not(.fainted) { border-color: var(--border-hi); transform: translateY(-2px); }
+.ts-card.fainted { opacity: 0.45; cursor: not-allowed; }
+.ts-card.selected { border: 2px solid var(--accent-red); box-shadow: 0 0 12px rgba(233,69,96,0.25); }
+.ts-name { font-weight: 700; font-size: 0.9rem; color: var(--text-1); }
+.ts-level { font-size: 0.75rem; color: #a78bfa; }
+.ts-exp { font-size: 0.7rem; color: var(--text-3); }
+.ts-type { font-size: 0.75rem; color: var(--text-2); }
+.ts-stats { font-size: 0.72rem; color: var(--text-3); }
+.ts-training { font-size: 0.7rem; color: #f59e0b; margin-top: 2px; }
+.ts-move { font-size: 0.7rem; color: #a78bfa; }
+.ts-footer {
+  position: sticky; bottom: 0;
+  background: rgba(8,8,16,0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-md);
+  padding: 0.75rem 0;
+  display: flex; align-items: center; gap: 1rem;
+}
+.ts-counter { color: var(--text-2); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 style="margin-bottom:0.5rem;">Select Your Team (6 Pokemon)</h2>
-<p style="color:#9ca3af;margin-bottom:1rem;">Choose exactly 6 of your Pokemon to bring into battle. Training Pokemon cannot be selected.</p>
+<h2 class="ts-page-title">Select Your Team</h2>
+<p class="ts-subtitle">Choose exactly 6 of your Pokémon to bring into battle. Training Pokémon cannot be selected.</p>
 
 {% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
 
@@ -10,26 +50,21 @@
   {% csrf_token %}
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.5rem;margin-bottom:1rem;">
     {% for op in owned_pokemon %}
-      <label class="pokemon-card{% if op.is_training %} fainted{% endif %}"
-             style="cursor:{% if op.is_training %}not-allowed{% else %}pointer{% endif %};"
+      <label class="ts-card{% if op.is_training %} fainted{% endif %}"
              id="card-{{ op.pk }}">
         <input type="checkbox" name="owned_ids" value="{{ op.pk }}"
                {% if op.is_training %}disabled{% endif %}
                style="display:none;" onchange="toggleCard(this, 'card-{{ op.pk }}')">
-        <div class="pokemon-name">{{ op.species.name }}</div>
-        <div style="font-size:0.75rem;color:#a78bfa;">Lv.{{ op.level }}</div>
-        <div style="font-size:0.7rem;color:#6b7280;">
-          EXP {{ op.experience }}/{{ op.exp_to_next_level }}
-        </div>
-        <div style="font-size:0.75rem;color:#9ca3af;">
-          {{ op.species.primary_type }}{% if op.species.secondary_type %}/{{ op.species.secondary_type }}{% endif %}
-        </div>
-        <div style="font-size:0.75rem;color:#6b7280;">HP: {{ op.species.base_hp }} | INI: {{ op.species.base_initiative }}</div>
+        <div class="ts-name">{{ op.species.name }}</div>
+        <div class="ts-level">Lv.{{ op.level }}</div>
+        <div class="ts-exp">EXP {{ op.experience }}/{{ op.exp_to_next_level }}</div>
+        <div class="ts-type">{{ op.species.primary_type }}{% if op.species.secondary_type %}/{{ op.species.secondary_type }}{% endif %}</div>
+        <div class="ts-stats">HP: {{ op.species.base_hp }} | INI: {{ op.species.base_initiative }}</div>
         {% if op.is_training %}
-          <div style="font-size:0.7rem;color:#f59e0b;margin-top:4px;">⏳ Training</div>
+          <div class="ts-training">⏳ Training</div>
         {% else %}
           {% for move in op.species.moves.all|slice:":2" %}
-            <div style="font-size:0.7rem;color:#a78bfa;">
+            <div class="ts-move">
               {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}
               {% if move.applies_status %}→{% endif %}
               {% if move.trigger_status %}⚡{% endif %}
@@ -38,11 +73,11 @@
         {% endif %}
       </label>
     {% empty %}
-      <p style="color:#9ca3af;">You have no Pokemon yet. Try registering again or contact support.</p>
+      <p style="color:var(--text-2);">You have no Pokémon yet. Try registering again or contact support.</p>
     {% endfor %}
   </div>
-  <div style="position:sticky;bottom:0;background:#1a1a2e;padding:0.75rem 0;display:flex;align-items:center;gap:1rem;">
-    <span id="counter" style="color:#9ca3af;">0 / 6 selected</span>
+  <div class="ts-footer">
+    <span id="counter" class="ts-counter">0 / 6 selected</span>
     <button type="submit" class="btn btn-primary">Confirm Team</button>
     <a href="{% url 'game:battle_list' %}" class="btn btn-secondary">Cancel</a>
   </div>
@@ -55,10 +90,10 @@
     if (checkbox.checked) {
       if (count >= 6) { checkbox.checked = false; return; }
       count++;
-      card.style.border = '2px solid #e94560';
+      card.classList.add('selected');
     } else {
       count--;
-      card.style.border = '1px solid #0f3460';
+      card.classList.remove('selected');
     }
     document.getElementById('counter').textContent = count + ' / 6 selected';
   }

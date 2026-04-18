@@ -1,48 +1,189 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Daily Reward{% endblock %}
+
+{% block extra_css %}
+<style>
+.daily-wrap { max-width: 520px; margin: 3rem auto; }
+
+.daily-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  color: var(--text-1); margin-bottom: 0.25rem;
+}
+.daily-sub { color: var(--text-2); font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+.daily-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+.daily-ryo-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem; font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 0.2rem;
+}
+.daily-ryo-label { color: var(--text-3); font-size: 0.8rem; margin-bottom: 1.25rem; }
+.daily-balance { font-size: 0.875rem; color: var(--text-2); margin-bottom: 1.5rem; }
+.daily-balance strong { color: var(--accent-gold); }
+
+/* 7-day streak tracker */
+.streak-section {
+  background: var(--bg-void);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+.streak-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.streak-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--accent-gold);
+}
+.streak-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem; color: var(--text-2);
+}
+
+.streak-days {
+  display: flex; gap: 0.5rem; justify-content: center;
+  margin-bottom: 1rem;
+}
+.streak-day {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+  color: var(--text-3);
+  background: var(--bg-felt);
+  position: relative;
+  flex-shrink: 0;
+}
+.streak-day.done {
+  border-color: var(--accent-gold);
+  background: rgba(232,184,75,0.12);
+  color: var(--accent-gold);
+}
+.streak-day.today {
+  border-color: #4ade80;
+  background: rgba(74,222,128,0.12);
+  color: #4ade80;
+}
+.streak-day.bundle {
+  border-color: #7dd3fc;
+  background: rgba(125,211,252,0.1);
+}
+.streak-day.bundle.done { border-color: #38bdf8; background: rgba(56,189,248,0.2); }
+
+.bundle-prize {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: rgba(125,211,252,0.07);
+  border: 1px solid rgba(125,211,252,0.25);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+}
+.bundle-prize img { width: 144px; height: 144px; object-fit: contain; }
+.bundle-prize-text { text-align: left; }
+.bundle-prize-name {
+  font-weight: 700; font-size: 0.875rem; color: #7dd3fc;
+  margin-bottom: 0.1rem;
+}
+.bundle-prize-desc { font-size: 0.75rem; color: var(--text-3); }
+.bundle-prize-days {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  margin-left: auto;
+  white-space: nowrap;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="max-width:480px;margin:3rem auto;">
-  <h2 style="margin-bottom:0.25rem;">Daily Reward</h2>
-  <p style="color:#9ca3af;margin-bottom:1.5rem;font-size:0.9rem;">
-    Come back every day to collect your Ryo bonus.
-  </p>
+<div class="daily-wrap">
+  <div class="daily-title">Daily Reward</div>
+  <div class="daily-sub">Come back every day to collect your Ryo bonus.</div>
 
   {% for message in messages %}
     {% if message.tags == 'success' %}
-      <div style="background:#14532d;color:#86efac;padding:0.6rem 1rem;border-radius:6px;margin-bottom:1rem;font-weight:600;">
+      <div style="background:#14532d;color:#86efac;padding:0.6rem 1rem;border-radius:8px;margin-bottom:1rem;font-weight:600;">
         {{ message }}
       </div>
     {% else %}
-      <div class="msg-error">{{ message }}</div>
+      <div style="background:#450a0a;color:#fca5a5;padding:0.6rem 1rem;border-radius:8px;margin-bottom:1rem;">
+        {{ message }}
+      </div>
     {% endif %}
   {% endfor %}
 
-  <div style="background:#16213e;border:1px solid #0f3460;border-radius:10px;padding:1.5rem;text-align:center;">
-    <div style="font-size:2.5rem;margin-bottom:0.5rem;">💰</div>
-    <div style="font-size:1.1rem;color:#fbbf24;font-weight:700;margin-bottom:0.25rem;">
-      {{ daily_amount }} Ryo
-    </div>
-    <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:1.25rem;">daily bonus</div>
-
-    <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:1.25rem;">
-      Current balance: <strong style="color:#fbbf24;">{{ ryo }} Ryo</strong>
-    </div>
+  <div class="daily-card">
+    <img src="{% static 'images/ryo_reward.png' %}" alt="Ryo" style="width:120px;height:120px;object-fit:contain;margin-bottom:0.5rem;">
+    <div class="daily-ryo-amount">{{ daily_amount }} Ryo</div>
+    <div class="daily-ryo-label">daily bonus</div>
+    <div class="daily-balance">Current balance: <strong>{{ ryo }} Ryo</strong></div>
 
     {% if can_claim %}
       <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:0.6rem 2rem;">
+        <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:0.6rem 2.5rem;">
           Claim {{ daily_amount }} Ryo
         </button>
       </form>
     {% else %}
-      <div style="background:#0f3460;border-radius:6px;padding:0.6rem 1rem;display:inline-block;font-size:0.9rem;color:#9ca3af;">
-        ✅ Already claimed today
-        {% if last_claim %}
-          &mdash; come back tomorrow!
-        {% endif %}
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border-md);border-radius:8px;padding:0.6rem 1.25rem;display:inline-block;font-size:0.9rem;color:var(--text-3);">
+        Already claimed today — come back tomorrow!
       </div>
     {% endif %}
+  </div>
+
+  {# ── 7-day streak tracker ──────────────────────────────────── #}
+  <div class="streak-section">
+    <div class="streak-header">
+      <div class="streak-title">Login Streak</div>
+      <div class="streak-count">{{ streak }} day{{ streak|pluralize }} consecutive</div>
+    </div>
+
+    <div class="streak-days">
+      {% for i in "1234567" %}
+      {% with day_num=forloop.counter %}
+      {% if day_num == weekly_streak %}
+        {# Day 7 — bundle day #}
+        <div class="streak-day bundle {% if streak|divisibleby:weekly_streak and streak > 0 %}done{% elif day_num <= streak|add:0 %}done{% endif %}"
+             title="Day 7 — Bundle Pack!">
+          <img src="{% static 'images/bundle_pack.png' %}" alt="Bundle" style="width:22px;height:22px;object-fit:contain;">
+        </div>
+      {% else %}
+        <div class="streak-day {% if day_num <= streak %}done{% endif %}" title="Day {{ day_num }}">
+          {{ day_num }}
+        </div>
+      {% endif %}
+      {% endwith %}
+      {% endfor %}
+    </div>
+
+    <div class="bundle-prize">
+      <img src="{% static 'images/bundle_pack.png' %}" alt="Bundle Pack">
+      <div class="bundle-prize-text">
+        <div class="bundle-prize-name">Bundle Pack</div>
+        <div class="bundle-prize-desc">10 stickers · boosted rare odds · awarded every 7 days</div>
+      </div>
+      <div class="bundle-prize-days">
+        {% if days_until_bundle == 0 %}
+          🎁 Earned!
+        {% else %}
+          {{ days_until_bundle }} day{{ days_until_bundle|pluralize }} left
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

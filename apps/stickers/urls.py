@@ -6,9 +6,11 @@ from .views import (
     AlbumPageIndexView,
     AlbumScenePageView,
     AlbumView,
+    BuyMultiPackView,
     BuyPackView,
     ClaimPageRewardView,
     DustWorkshopView,
+    MyPacksView,
     PackOpenView,
     PlaceStickerView,
     PokemonAlbumDetailView,
@@ -38,6 +40,8 @@ urlpatterns = [
     path("album/pages/<str:region>/<int:page_number>/<str:rarity>/", AlbumScenePageView.as_view(), name="album_scene_page"),
     # Shop & packs
     path("shop/buy/", BuyPackView.as_view(), name="buy_pack"),
+    path("shop/buy/10/", BuyMultiPackView.as_view(), name="buy_10_packs"),
+    path("packs/", MyPacksView.as_view(), name="my_packs"),
     path("pack/<int:pk>/open/", PackOpenView.as_view(), name="pack_open"),
     # Trading
     path("trade/", TradeListView.as_view(), name="trade_list"),

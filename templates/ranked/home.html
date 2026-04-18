@@ -7,12 +7,16 @@
 .ranked-header h2 { margin: 0 0 0.25rem; }
 
 .tier-card {
-  background: #16213e; border: 2px solid #0f3460;
-  border-radius: 10px; padding: 1.25rem 1.5rem;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1.5rem;
   flex-wrap: wrap;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
+.tier-card:hover { border-color: var(--border-hi); box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
 .tier-badge {
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 2rem; font-weight: 900; letter-spacing: 1px;
   padding: 0.4rem 1rem; border-radius: 8px;
 }
@@ -23,47 +27,58 @@
 .tier-diamond  { background: #1e1b4b; color: #a5b4fc; border: 2px solid #6366f1; }
 .tier-champion { background: #7f1d1d; color: #fca5a5; border: 2px solid #e94560; }
 
-.rank-pts { font-size: 1.4rem; font-weight: 700; color: #fbbf24; }
-.rank-pts-label { font-size: 0.78rem; color: #9ca3af; }
+.rank-pts {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 700; color: var(--accent-gold);
+}
+.rank-pts-label { font-size: 0.78rem; color: var(--text-2); }
 
-.season-info { font-size: 0.85rem; color: #9ca3af; }
-.season-info strong { color: #d1d5db; }
+.season-info { font-size: 0.85rem; color: var(--text-2); }
+.season-info strong { color: var(--text-1); }
 
 /* Progress bar toward next tier */
 .tier-progress-wrap {
-  background: #0f3460; border-radius: 6px; height: 8px;
+  background: rgba(255,255,255,0.06); border-radius: 6px; height: 8px;
   overflow: hidden; flex: 1; min-width: 120px;
 }
 .tier-progress-bar {
-  height: 100%; border-radius: 6px; background: #e94560;
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold));
   transition: width 0.5s ease;
 }
 
 /* Queue panel */
 .queue-panel {
-  background: #16213e; border: 1px solid #0f3460;
-  border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
 }
-.queue-panel h3 { margin: 0 0 0.75rem; font-size: 1rem; }
+.queue-panel h3 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--text-1); }
 
 .queue-status {
-  font-size: 0.85rem; color: #9ca3af; margin-bottom: 0.75rem;
+  font-size: 0.85rem; color: var(--text-2); margin-bottom: 0.75rem;
 }
-.queue-status strong { color: #d1d5db; }
+.queue-status strong { color: var(--text-1); }
 
 /* Stats row */
 .stats-row {
   display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;
 }
 .stat-item { text-align: center; }
-.stat-value { font-size: 1.4rem; font-weight: 700; color: #f1f5f9; }
-.stat-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 700; color: var(--accent-gold);
+}
+.stat-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em;
+}
 
 /* No-season placeholder */
 .no-season {
-  background: #1c1917; border: 1px solid #78350f;
-  border-radius: 10px; padding: 1.25rem; text-align: center;
-  color: #9ca3af;
+  background: var(--bg-surface); border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); padding: 1.25rem; text-align: center;
+  color: var(--text-2);
 }
 </style>
 {% endblock %}
@@ -85,10 +100,10 @@
 {% else %}
 
 <!-- Season banner -->
-<div style="background:#0f3460;border-radius:8px;padding:0.6rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-  <span style="font-weight:700;color:#e94560;">Season {{ season.number }}</span>
-  <span style="color:#d1d5db;font-size:0.9rem;">{{ season.name }}</span>
-  <span style="color:#9ca3af;font-size:0.78rem;margin-left:auto;">
+<div style="background:linear-gradient(135deg,rgba(232,184,75,0.08),rgba(232,184,75,0.03));border:1px solid var(--border-hi);border-radius:var(--radius-md);padding:0.6rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+  <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:var(--accent-gold);">Season {{ season.number }}</span>
+  <span style="color:var(--text-1);font-size:0.9rem;">{{ season.name }}</span>
+  <span style="color:var(--text-3);font-size:0.78rem;margin-left:auto;">
     {{ season.start_date }} — {{ season.end_date }}
   </span>
 </div>

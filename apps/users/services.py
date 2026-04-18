@@ -211,11 +211,16 @@ def can_claim_daily(user: "User") -> bool:  # type: ignore[name-defined]
     return user.last_daily_claim != date.today()
 
 
+WEEKLY_LOGIN_STREAK = 7  # day on which a bundle pack is awarded
+
+
 @transaction.atomic
-def claim_daily_reward(user: "User") -> int:  # type: ignore[name-defined]
+def claim_daily_reward(user: "User") -> dict:  # type: ignore[name-defined]
     """Award DAILY_REWARD_RYO to *user* if they haven't claimed today.
 
-    Returns the amount awarded.
+    On every 7th consecutive day, also grants a Bundle Sticker Pack.
+
+    Returns a dict: {"ryo": int, "bundle_pack": StickerPack | None}.
     Raises ValueError if already claimed today.
     """
     user.refresh_from_db(fields=["last_daily_claim", "ryo", "daily_claim_streak", "max_daily_claim_streak"])
@@ -234,5 +239,13 @@ def claim_daily_reward(user: "User") -> int:  # type: ignore[name-defined]
         max_daily_claim_streak=new_max,
     )
     user.refresh_from_db(fields=["ryo", "last_daily_claim", "daily_claim_streak", "max_daily_claim_streak"])
+
+    # Weekly bonus: grant a Bundle Pack on every 7th consecutive day
+    bundle_pack = None
+    if new_streak % WEEKLY_LOGIN_STREAK == 0:
+        from apps.stickers.models import PackType, StickerPack
+        bundle_pack = StickerPack.objects.create(owner=user, pack_type=PackType.BUNDLE)
+        logger.info("Weekly login bonus: bundle pack granted to %s (streak=%d)", user, new_streak)
+
     logger.info("Daily reward claimed by %s (+%d Ryo, streak=%d)", user, DAILY_REWARD_RYO, new_streak)
-    return DAILY_REWARD_RYO
+    return {"ryo": DAILY_REWARD_RYO, "bundle_pack": bundle_pack}

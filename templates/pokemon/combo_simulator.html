@@ -294,7 +294,8 @@
 
 {% block content %}
 <div class="sim-hero">
-  <h1>&#9889; Combo Simulator</h1>
+  <img src="/static/images/combo.png" alt="" aria-hidden="true" style="width:160px;height:160px;object-fit:contain;margin-bottom:0.5rem;">
+  <h1>Combo Simulator</h1>
   <p>Build a team of up to 6 species and discover every possible combo chain between them.</p>
   <div class="sim-hero-links">
     <a href="{% url 'pokemon:combo_atlas' %}">&#8592; Back to Combo Atlas</a>
@@ -330,7 +331,7 @@
     {# ── Results panel ───────────────────────────────────────── #}
     <div class="results-panel" id="results-panel">
       <div class="results-empty">
-        <div class="icon">&#9889;</div>
+        <div class="icon"><img src="/static/images/combo.png" alt="" style="width:48px;height:48px;object-fit:contain;"></div>
         <div>Add at least 2 Pokémon and click <strong>Simulate Combos</strong> to see chains.</div>
       </div>
     </div>

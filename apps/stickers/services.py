@@ -32,6 +32,7 @@ from .models import (
     RegionalAlbumPage,
     Sticker,
     StickerAlbum,
+    PackType,
     StickerPack,
     StickerRarity,
     StickerVariant,
@@ -279,30 +280,52 @@ class StickerService:
             return pack
         return None
 
+    # Bundle pack rarity weights — boosted rare+ odds compared to standard
+    _BUNDLE_COMMON_POOL_WEIGHTS = [
+        (StickerRarity.COMMON, 60),
+        (StickerRarity.UNCOMMON, 40),
+    ]
+    _BUNDLE_GUARANTEED_RARE_WEIGHTS = [
+        (StickerRarity.RARE, 55),
+        (StickerRarity.EPIC, 25),
+        (StickerRarity.HOLOGRAPHIC, 15),
+        (StickerRarity.FULL_ART, 4),
+        (StickerRarity.SECRET_RARE, 1),
+    ]
+    _BUNDLE_ANY_RARITY_WEIGHTS = [
+        (StickerRarity.COMMON, 35),
+        (StickerRarity.UNCOMMON, 30),
+        (StickerRarity.RARE, 20),
+        (StickerRarity.EPIC, 10),
+        (StickerRarity.HOLOGRAPHIC, 4),
+        (StickerRarity.FULL_ART, 1),
+    ]
+
     @transaction.atomic
     def open_pack(self, player: User, pack: StickerPack) -> list[Sticker]:
         """
-        Open a sticker pack and reveal 5 stickers.
+        Open a sticker pack and reveal stickers.
 
-        Pack contents:
+        Standard (5 stickers):
           Slots 1-3: common or uncommon (weighted)
           Slot 4: guaranteed rare or above (may be overridden by pity)
           Slot 5: any rarity (full weighted table)
 
-        Pity system — counters track packs opened without each premium rarity.
-        When a threshold is reached, slot 4 is guaranteed that rarity (highest
-        threshold wins). Counters reset when that rarity (or higher) is pulled.
+        Bundle (10 stickers):
+          Slots 1-5: common or uncommon (boosted weights)
+          Slots 6-9: guaranteed rare or above (boosted weights, each slot independent)
+          Slot 10: any rarity (boosted table)
 
-          Holographic: guaranteed after 10 packs without one
-          Full Art:    guaranteed after 50 packs without one
-          Secret Rare: guaranteed after 200 packs without one
+        Pity system applies to both types (slot 4 for standard, slot 6 for bundle).
 
-        Returns the list of 5 Sticker instances.
+        Returns the list of Sticker instances.
         """
         if pack.owner != player:
             raise ValueError("This pack does not belong to the player")
         if pack.opened:
             raise ValueError("This pack has already been opened")
+
+        is_bundle = pack.pack_type == PackType.BUNDLE
 
         # Lock player row so pity counters update atomically across concurrent opens
         player = User.objects.select_for_update().get(pk=player.pk)
@@ -311,7 +334,7 @@ class StickerService:
         if not all_pokemon:
             raise ValueError("No Pokemon in database to generate stickers from")
 
-        # Determine pity override for slot 4 (highest triggered threshold wins)
+        # Determine pity override for the guaranteed-rare slot
         pity_override: str | None = None
         if player.pity_secret_rare >= _PITY_SECRET_RARE:
             pity_override = StickerRarity.SECRET_RARE
@@ -321,19 +344,28 @@ class StickerService:
             pity_override = StickerRarity.HOLOGRAPHIC
 
         stickers: list[Sticker] = []
+        common_weights = self._BUNDLE_COMMON_POOL_WEIGHTS if is_bundle else _COMMON_POOL_WEIGHTS
+        rare_weights = self._BUNDLE_GUARANTEED_RARE_WEIGHTS if is_bundle else _GUARANTEED_RARE_WEIGHTS
+        any_weights = self._BUNDLE_ANY_RARITY_WEIGHTS if is_bundle else _ANY_RARITY_WEIGHTS
+        common_slots = 5 if is_bundle else 3
+        rare_slots = 4 if is_bundle else 1  # slots 6-9 for bundle, slot 4 for standard
 
-        # Slots 1–3: common/uncommon
-        for _ in range(3):
-            rarity = _weighted_choice(_COMMON_POOL_WEIGHTS)
-            sticker = self._create_random_sticker(player, all_pokemon, rarity, "pack")
-            stickers.append(sticker)
+        # Common/uncommon slots
+        for _ in range(common_slots):
+            rarity = _weighted_choice(common_weights)
+            stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
-        # Slot 4: guaranteed rare+ (or pity-guaranteed rarity)
-        rarity = pity_override if pity_override is not None else _weighted_choice(_GUARANTEED_RARE_WEIGHTS)
+        # First guaranteed-rare slot — apply pity
+        rarity = pity_override if pity_override is not None else _weighted_choice(rare_weights)
         stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
-        # Slot 5: any rarity
-        rarity = _weighted_choice(_ANY_RARITY_WEIGHTS)
+        # Extra guaranteed-rare slots for bundle (no pity applied to extras)
+        for _ in range(rare_slots - 1):
+            rarity = _weighted_choice(rare_weights)
+            stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
+
+        # Final any-rarity slot
+        rarity = _weighted_choice(any_weights)
         stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
         pack.stickers.add(*stickers)

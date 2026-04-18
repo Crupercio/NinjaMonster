@@ -124,6 +124,22 @@ class PokemonAlbumDetailView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class MyPacksView(LoginRequiredMixin, TemplateView):
+    """Lists all unopened packs owned by the user. Redirects directly if only one."""
+
+    template_name = "stickers/my_packs.html"
+
+    def get(self, request, *args, **kwargs):
+        packs = list(
+            StickerPack.objects.filter(owner=request.user, opened=False).order_by("created_at")
+        )
+        if len(packs) == 1:
+            return redirect("stickers:pack_open", pk=packs[0].pk)
+        context = self.get_context_data(**kwargs)
+        context["packs"] = packs
+        return self.render_to_response(context)
+
+
 class PackOpenView(LoginRequiredMixin, TemplateView):
     """Pack opening — reveals 5 stickers with their details."""
 
@@ -260,7 +276,9 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["pack_price"] = PACK_PRICE_RYO
+        context["pack_price_10"] = PACK_PRICE_RYO * 10
         context["can_afford"] = self.request.user.ryo >= PACK_PRICE_RYO
+        context["can_afford_10"] = self.request.user.ryo >= PACK_PRICE_RYO * 10
         return context
 
     def post(self, request, *args, **kwargs):
@@ -270,6 +288,29 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
             context = self.get_context_data(error=str(exc), **kwargs)
             return self.render_to_response(context)
         return redirect("stickers:pack_open", pk=pack.pk)
+
+
+class BuyMultiPackView(LoginRequiredMixin, TemplateView):
+    """Buy 10 sticker packs at once and open them all immediately."""
+
+    template_name = "stickers/multi_pack_open.html"
+
+    def post(self, request, *args, **kwargs):
+        total_cost = PACK_PRICE_RYO * 10
+        if request.user.ryo < total_cost:
+            return redirect("stickers:buy_pack")
+        try:
+            all_stickers = []
+            for _ in range(10):
+                pack = _sticker_service.buy_pack(request.user)
+                stickers = _sticker_service.open_pack(request.user, pack)
+                all_stickers.extend(stickers)
+        except ValueError as exc:
+            return redirect("stickers:buy_pack")
+        context = self.get_context_data(**kwargs)
+        context["all_stickers"] = all_stickers
+        context["pack_count"] = 10
+        return self.render_to_response(context)
 
 
 class DustWorkshopView(LoginRequiredMixin, TemplateView):

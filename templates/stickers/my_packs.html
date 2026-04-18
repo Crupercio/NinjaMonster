@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My Unopened Packs{% endblock %}
+
+{% block extra_css %}
+<style>
+.packs-wrap { max-width: 680px; margin: 0 auto; }
+.packs-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 0.25rem;
+}
+.packs-sub { color: var(--text-2); font-size: 0.875rem; margin-bottom: 2rem; }
+
+.pack-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.pack-row {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color 0.18s;
+}
+.pack-row:hover { border-color: var(--border-hi); }
+
+.pack-icon { flex-shrink: 0; display: flex; align-items: center; }
+.pack-info { flex: 1; }
+.pack-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-1);
+  margin-bottom: 0.1rem;
+}
+.pack-date { font-size: 0.75rem; color: var(--text-3); }
+
+.empty-state {
+  background: var(--bg-felt);
+  border: 1px dashed var(--border-md);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="packs-wrap">
+  <div class="packs-title">Unopened Packs</div>
+  <div class="packs-sub">You have {{ packs|length }} pack{{ packs|length|pluralize }} waiting to be opened.</div>
+
+  {% if packs %}
+  <div class="pack-list">
+    {% for pack in packs %}
+    <div class="pack-row">
+      <div class="pack-icon">
+        {% if pack.is_bundle %}
+          <img src="{% static 'images/bundle_pack.png' %}" alt="Bundle Pack" style="width:240px;height:240px;object-fit:contain;">
+        {% else %}
+          <img src="{% static 'images/pack.png' %}" alt="Sticker Pack" style="width:240px;height:240px;object-fit:contain;">
+        {% endif %}
+      </div>
+      <div class="pack-info">
+        <div class="pack-name">{% if pack.is_bundle %}Bundle Pack{% else %}Sticker Pack{% endif %} #{{ pack.pk }}</div>
+        <div class="pack-date">Received {{ pack.created_at|date:"M d, Y" }}</div>
+      </div>
+      <form method="post" action="{% url 'stickers:pack_open' pk=pack.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-sm">Open</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    No unopened packs — <a href="{% url 'stickers:buy_pack' %}">visit the shop</a> to get one.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

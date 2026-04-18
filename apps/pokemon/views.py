@@ -11,7 +11,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.users.services import award_ryo, sell_value_for_level
 
-from .models import Generation, OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
+from .models import ChakraElement, Generation, OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
 from .services import claim_training, create_owned_pokemon, start_training, stop_training
 from .type_chart import ALL_TYPES, TYPE_COLORS, build_chart_matrix, get_effectiveness
 
@@ -343,7 +343,7 @@ class TeamSlotPickerView(LoginRequiredMixin, TemplateView):
 
 
 class SellPokemonView(LoginRequiredMixin, View):
-    """POST /pokemon/my/<pk>/sell/ — sell an owned Pokémon for Ryo."""
+    """POST /pokemon/my/<pk>/sell/ — release bond with an owned Pokémon for Ryo."""
 
     def post(self, request, pk: int):
         try:
@@ -351,16 +351,16 @@ class SellPokemonView(LoginRequiredMixin, View):
                 pk=pk, owner=request.user
             )
         except OwnedPokemon.DoesNotExist:
-            return redirect("pokemon:my_pokemon")
+            return redirect("pokemon:mi_casa")
 
         if owned.is_training:
-            return redirect("/pokemon/my/?error=Cannot+sell+a+Pokemon+that+is+training.")
+            return redirect("/pokemon/casa/?error=Cannot+release+a+Pokemon+that+is+training.")
 
-        # Prevent selling a Pokemon assigned to the persistent team
+        # Prevent releasing a Pokemon assigned to the persistent team
         team = Team.get_team(request.user)
         if team.slots.filter(pokemon=owned).exists():
             return redirect(
-                f"/pokemon/my/?error=Remove+{owned.species.name}+from+your+team+first."
+                f"/pokemon/casa/?error=Remove+{owned.species.name}+from+your+team+first."
             )
 
         value = sell_value_for_level(owned.level)
@@ -368,9 +368,31 @@ class SellPokemonView(LoginRequiredMixin, View):
         owned.delete()
         award_ryo(request.user, value)
         logger.info(
-            "User '%s' sold %s for %d Ryo.", request.user, name, value
+            "User '%s' released bond with %s for %d Ryo.", request.user, name, value
         )
-        return redirect(f"/pokemon/my/?sold={name}&ryo={value}")
+        return redirect(f"/pokemon/casa/?released={name}&ryo={value}")
+
+
+class MiCasaView(LoginRequiredMixin, TemplateView):
+    """Show the trainer's full Pokémon collection with stackable filters and Release Bond action."""
+
+    template_name = "pokemon/mi_casa.html"
+
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["owned_pokemon"] = (
+            OwnedPokemon.objects.filter(owner=self.request.user)
+            .select_related(
+                "species__primary_type__chakra_element",
+                "species__secondary_type__chakra_element",
+            )
+            .prefetch_related("species__generation_sources")
+            .order_by("species__pokedex_number", "species__name")
+        )
+        context["all_types"] = PokemonType.objects.order_by("name")
+        context["all_chakras"] = ChakraElement.objects.order_by("name")
+        context["all_generations"] = Generation.objects.order_by("number")
+        return context
 
 
 class CatchPokemonView(LoginRequiredMixin, View):

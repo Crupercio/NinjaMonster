@@ -243,10 +243,11 @@
 
 {% block content %}
 <div class="atlas-hero">
-  <h1>&#9889; Combo Chain Atlas</h1>
+  <img src="/static/images/combo.png" alt="" aria-hidden="true" style="width:320px;height:320px;object-fit:contain;margin-bottom:0.5rem;">
+  <h1>Combo Chain Atlas</h1>
   <p>Which Pokémon prime statuses — and which ones chain off them for bonus damage.</p>
   <div style="margin-top:0.6rem;">
-    <a href="{% url 'pokemon:combo_simulator' %}" style="display:inline-block;background:#1d4ed8;color:#fff;border-radius:7px;padding:5px 16px;font-size:0.78rem;font-weight:700;text-decoration:none;">&#9889; Open Team Simulator</a>
+    <a href="{% url 'pokemon:combo_simulator' %}" style="display:inline-block;background:#1d4ed8;color:#fff;border-radius:7px;padding:5px 16px;font-size:0.78rem;font-weight:700;text-decoration:none;">Open Team Simulator</a>
   </div>
   <div class="atlas-stats">
     <span class="atlas-stat green">{{ active_status_count }} active status{{ active_status_count|pluralize:"es" }}</span>

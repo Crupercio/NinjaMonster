@@ -11,41 +11,49 @@
   display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap;
 }
 .lb-tab {
-  background: #0f3460; border: 1px solid #1e3a6e;
+  background: var(--bg-raised); border: 1px solid var(--border-md);
   border-radius: 20px; padding: 0.35rem 1rem;
-  font-size: 0.82rem; color: #9ca3af;
+  font-size: 0.82rem; color: var(--text-2);
   text-decoration: none; transition: all 0.15s;
 }
-.lb-tab:hover { border-color: #e94560; color: #f1f5f9; }
-.lb-tab.active { background: #e94560; border-color: #e94560; color: #fff; font-weight: 700; }
+.lb-tab:hover { border-color: var(--border-hi); color: var(--text-1); }
+.lb-tab.active {
+  background: linear-gradient(135deg, var(--gold-dark), var(--accent-gold));
+  border-color: var(--accent-gold); color: var(--bg-void); font-weight: 700;
+}
 
 /* Table */
 .lb-table {
   width: 100%; border-collapse: collapse;
-  background: #16213e; border-radius: 10px; overflow: hidden;
-  font-size: 0.85rem;
+  background: var(--bg-surface); border-radius: var(--radius-lg); overflow: hidden;
+  font-size: 0.85rem; border: 1px solid var(--border-md);
 }
 .lb-table th {
-  background: #0f3460; color: #9ca3af; font-size: 0.72rem;
-  text-transform: uppercase; letter-spacing: 1px;
+  background: var(--bg-raised); color: var(--text-2);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 0.1em;
   padding: 0.6rem 1rem; text-align: left;
 }
-.lb-table td { padding: 0.55rem 1rem; border-bottom: 1px solid #0f3460; }
+.lb-table td { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border-lo); color: var(--text-1); }
 .lb-table tr:last-child td { border-bottom: none; }
-.lb-table tr:hover td { background: #1e3a6e; }
+.lb-table tr:hover td { background: rgba(232,184,75,0.04); }
 
 /* Rank medal */
 .rank-medal { font-weight: 900; font-size: 1rem; }
 .rank-1 { color: #fbbf24; }
 .rank-2 { color: #d1d5db; }
 .rank-3 { color: #d97706; }
-.rank-other { color: #6b7280; font-size: 0.82rem; }
+.rank-other { color: var(--text-3); font-size: 0.82rem; }
 
 /* Highlight own row */
-.lb-table tr.own-row td { background: #0f3460; }
+.lb-table tr.own-row td {
+  background: rgba(232,184,75,0.06);
+  border-left: 2px solid var(--accent-gold);
+}
 
-.lb-stat-main { font-weight: 700; color: #f1f5f9; }
-.lb-stat-sub  { font-size: 0.72rem; color: #6b7280; margin-top: 1px; }
+.lb-stat-main { font-weight: 700; color: var(--text-1); }
+.lb-stat-sub  { font-size: 0.72rem; color: var(--text-3); margin-top: 1px; }
 
 .tier-pill {
   display: inline-block; font-size: 0.65rem; font-weight: 700;
@@ -59,7 +67,7 @@
 .tier-champion { background: #7f1d1d; color: #fca5a5; }
 
 .empty-state {
-  text-align: center; padding: 2.5rem; color: #6b7280; font-size: 0.9rem;
+  text-align: center; padding: 2.5rem; color: var(--text-3); font-size: 0.9rem;
 }
 </style>
 {% endblock %}

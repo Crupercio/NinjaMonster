@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Open Sticker Pack{% endblock %}
 
-{% load sticker_tags %}
+{% load sticker_tags static %}
 {% block extra_css %}
 <style>
   /* ── Card flip container ──────────────────────────────────────────────── */
@@ -45,53 +45,82 @@
     text-align: center;
   }
 
-  /* ── Back of card (face-down) ─────────────────────────────────────────── */
+  /* ── Back of card (face-down) — TCG Premium ──────────────────── */
   .card-back {
     background:
-      radial-gradient(ellipse at 50% 42%, rgba(233,69,96,0.18) 0%, transparent 65%),
-      linear-gradient(160deg, #1a0a2e 0%, #0f3460 50%, #16213e 100%);
-    border: 2px solid #e94560;
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(232,184,75,0.07) 0%, transparent 65%),
+      linear-gradient(160deg, #0e1020 0%, #0b1628 50%, #080810 100%);
+    border: 1px solid rgba(232,184,75,0.35);
     cursor: pointer;
     overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
   }
 
-  /* Pokeball SVG watermark on the back */
+  /* Gold Pokeball watermark */
   .card-back::before {
     content: "";
     position: absolute;
     width: 90px;
     height: 90px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23e94560' stroke-width='4'/%3E%3Cpath d='M2 50 h96' stroke='%23e94560' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%230f3460' stroke='%23e94560' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23e94560'/%3E%3C/svg%3E") center/contain no-repeat;
-    opacity: 0.55;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23e8b84b' stroke-width='3'/%3E%3Cpath d='M2 50 h96' stroke='%23e8b84b' stroke-width='3'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%230b1628' stroke='%23e8b84b' stroke-width='3'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23e8b84b'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity: 0.3;
+    transition: opacity 0.2s;
   }
 
-  /* decorative corner diamonds */
+  /* Gold inner frame */
   .card-back::after {
     content: "";
     position: absolute;
     inset: 8px;
-    border: 1px solid rgba(233,69,96,0.25);
-    border-radius: 8px;
+    border: 1px solid rgba(232,184,75,0.15);
+    border-radius: 6px;
     pointer-events: none;
   }
 
+  /* Gold top ornament line */
+  .card-back .card-top-line {
+    position: absolute;
+    top: 0; left: 15%; right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,184,75,0.5), transparent);
+  }
+
   .card-back:hover {
-    border-color: #fbbf24;
-    box-shadow: 0 0 20px rgba(251,191,36,0.45);
+    border-color: rgba(232,184,75,0.7);
+    box-shadow: 0 0 24px rgba(232,184,75,0.2);
   }
 
   .card-back:hover::before {
-    opacity: 0.8;
-    filter: drop-shadow(0 0 6px #fbbf24);
+    opacity: 0.65;
+    filter: drop-shadow(0 0 6px rgba(232,184,75,0.6));
   }
 
-  /* ── Front of card (revealed) ─────────────────────────────────────────── */
+  /* ── Front of card (revealed) — TCG art style ─────────────────── */
   .card-front {
-    background: linear-gradient(160deg, #16213e 0%, #0f1e38 100%);
-    border: 2px solid #2d3748;
+    background: linear-gradient(160deg, #172040 0%, #0b1628 100%);
+    border: 1px solid rgba(232,184,75,0.2);
     transform: rotateY(180deg);
-    padding: 0.6rem 0.5rem;
+    padding: 0 0 0.6rem;
     gap: 0;
+    overflow: hidden;
+  }
+
+  /* Art zone — top portion */
+  .card-art-zone {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #0a1020, #080c18);
+    position: relative;
+    padding: 0.5rem;
+  }
+
+  /* Holographic sweep on the art zone */
+  @keyframes holo-sweep {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   .card-sprite {
@@ -113,33 +142,59 @@
     margin-bottom: 0.3rem;
   }
 
-  /* ── Rarity colour classes ────────────────────────────────────────────── */
+  /* ── Rarity colour classes (border + text on card-front) ─────── */
   .rarity-common    { color: #9ca3af; }
-  .rarity-uncommon  { color: #4ade80; }
-  .rarity-rare      { color: #60a5fa; }
-  .rarity-epic      { color: #a78bfa; }
-  .rarity-holographic { color: #fbbf24; border-color: #fbbf24 !important; }
-  .rarity-full_art    { color: #f97316; border-color: #f97316 !important; }
-  .rarity-secret_rare { color: #e94560; border-color: #e94560 !important; }
+  .rarity-uncommon  { color: #4ade80; border-color: rgba(74,222,128,0.4) !important; }
+  .rarity-rare      { color: #60a5fa; border-color: rgba(96,165,250,0.4) !important; }
+  .rarity-epic      { color: #a78bfa; border-color: rgba(167,139,250,0.45) !important; }
+  .rarity-holographic { color: #fbbf24; border-color: rgba(251,191,36,0.55) !important; }
+  .rarity-full_art    { color: #f97316; border-color: rgba(249,115,22,0.5) !important; }
+  .rarity-secret_rare { color: #f43f5e; border-color: rgba(244,63,94,0.5) !important; }
 
-  /* ── Shimmer for premium pulls ────────────────────────────────────────── */
+  /* ── Premium reveal shimmer ────────────────────────────────────── */
   @keyframes shimmer {
-    0%   { box-shadow: 0 0 0   rgba(251,191,36,0); }
-    40%  { box-shadow: 0 0 28px rgba(251,191,36,0.8); }
-    100% { box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+    0%   { box-shadow: 0 0 0 rgba(232,184,75,0); }
+    30%  { box-shadow: 0 0 40px rgba(232,184,75,0.8), 0 0 80px rgba(232,184,75,0.3); }
+    100% { box-shadow: 0 0 16px rgba(232,184,75,0.25); }
   }
-  .premium-shimmer {
-    animation: shimmer 0.7s ease forwards;
+  @keyframes shimmer-secret {
+    0%   { box-shadow: 0 0 0 rgba(244,63,94,0); }
+    30%  { box-shadow: 0 0 40px rgba(244,63,94,0.9), 0 0 80px rgba(244,63,94,0.3); }
+    100% { box-shadow: 0 0 16px rgba(244,63,94,0.3); }
+  }
+  .premium-shimmer { animation: shimmer 0.8s ease forwards; }
+  .rarity-secret_rare.premium-shimmer { animation: shimmer-secret 0.8s ease forwards; }
+
+  /* ── Holographic art sweep ─────────────────────────────────────── */
+  .rarity-holographic .card-art-zone::after,
+  .rarity-full_art .card-art-zone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 25%,
+      rgba(232,184,75,0.08) 45%,
+      rgba(255,255,255,0.06) 50%,
+      rgba(232,184,75,0.08) 55%,
+      transparent 75%
+    );
+    background-size: 300%;
+    animation: holo-sweep 2.5s linear infinite;
+    pointer-events: none;
   }
 
-  /* ── "Tap to reveal" hint ─────────────────────────────────────────────── */
+  /* ── "Tap to reveal" hint ─────────────────────────────────────── */
   .tap-hint {
-    font-size: 0.7rem;
-    color: #6b7280;
-    margin-top: 0.5rem;
-    animation: pulse 1.4s ease-in-out infinite;
+    font-size: 0.62rem;
+    font-family: 'Chakra Petch', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(232,184,75,0.4);
+    animation: pulse 1.6s ease-in-out infinite;
   }
-  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:0.8} }
 
   /* ── CTA appears after all revealed ──────────────────────────────────── */
   [x-cloak] { display: none !important; }
@@ -147,16 +202,21 @@
 {% endblock %}
 
 {% block content %}
-<h2 style="margin-bottom:0.5rem;">Sticker Pack</h2>
+<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border-md);">
+  <h2 style="margin:0;font-family:'Chakra Petch',sans-serif;font-size:1.3rem;letter-spacing:0.04em;">Sticker Pack</h2>
+  <span style="font-family:'Chakra Petch',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent-gold);opacity:0.6;">◆ Collector's Edition</span>
+</div>
 
 {% if not pack.opened %}
   {# ── Pre-open state ─────────────────────────────────────────────────── #}
-  <div style="text-align:center;padding:3rem;">
-    <div style="font-size:4rem;margin-bottom:1rem;">🎴</div>
-    <p style="color:#9ca3af;margin-bottom:1.5rem;">You have an unopened sticker pack! Ready to reveal 5 stickers?</p>
+  <div style="text-align:center;padding:3rem 2rem;background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-xl);position:relative;overflow:hidden;max-width:420px;margin:0 auto;">
+    <div style="position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(232,184,75,0.4),transparent);"></div>
+    <img src="{% static 'images/pack.png' %}" alt="Sticker Pack" style="width:180px;height:240px;object-fit:contain;margin-bottom:1rem;filter:drop-shadow(0 0 30px rgba(56,189,248,0.5));animation:pack-float 3s ease-in-out infinite;">
+    <style>@keyframes pack-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}</style>
+    <p style="color:var(--text-2);margin-bottom:1.75rem;font-size:0.9rem;">An unopened pack awaits. Ready to discover what&#39;s inside?</p>
     <form method="post">
       {% csrf_token %}
-      <button type="submit" class="btn btn-primary">Open Pack!</button>
+      <button type="submit" class="btn btn-primary">◆ Open Pack</button>
     </form>
   </div>
 
@@ -201,9 +261,9 @@
         }"
         x-cloak
       >
-        <p style="color:#9ca3af;margin-bottom:0.25rem;">
+        <p style="color:var(--text-2);margin-bottom:0.25rem;font-size:0.85rem;">
           Tap each card to reveal — or
-          <button @click="flipAll()" class="btn btn-primary" style="padding:0.2rem 0.8rem;font-size:0.85rem;">Reveal All</button>
+          <button @click="flipAll()" class="btn btn-primary btn-sm">◆ Reveal All</button>
         </p>
 
         <div class="reveal-grid">
@@ -214,29 +274,36 @@
                 :class="{ flipped: card.flipped }"
                 @click="flip(i)"
               >
-                {# Back face #}
+                {# Back face — TCG gold design #}
                 <div class="card-face card-back">
-                  <span class="tap-hint" x-show="!card.flipped" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;">tap</span>
+                  <div class="card-top-line"></div>
+                  <span class="tap-hint" x-show="!card.flipped" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;">tap</span>
                 </div>
 
-                {# Front face #}
+                {# Front face — TCG art card #}
                 <div
                   class="card-face card-front"
                   :class="[`rarity-${card.rarity.replace('_', '-')}`, { 'premium-shimmer': card.shimmer }]"
-                  :style="card.premium ? 'border-color: currentColor; box-shadow: 0 0 14px currentColor;' : ''"
                 >
-                  {# Sprite or placeholder #}
-                  <template x-if="card.sprite">
-                    <img :src="card.sprite" :alt="card.name" class="card-sprite" loading="lazy">
-                  </template>
-                  <template x-if="!card.sprite">
-                    <div class="card-sprite-placeholder">🎴</div>
-                  </template>
+                  {# Art zone with sprite #}
+                  <div class="card-art-zone">
+                    <template x-if="card.sprite">
+                      <img :src="card.sprite" :alt="card.name" class="card-sprite" loading="lazy">
+                    </template>
+                    <template x-if="!card.sprite">
+                      <div class="card-sprite-placeholder">◆</div>
+                    </template>
+                  </div>
 
-                  <div style="font-size:0.65rem;color:#6b7280;margin-bottom:0.25rem;" x-text="`#${card.dexNum}`"></div>
-                  <div style="font-size:0.95rem;font-weight:700;line-height:1.1;" x-text="card.name"></div>
-                  <div style="font-size:0.72rem;font-weight:700;margin:0.25rem 0;" x-text="card.rarityLabel"></div>
-                  <div style="font-size:0.65rem;color:#9ca3af;" x-text="card.ptype"></div>
+                  {# Info zone #}
+                  <div style="padding:0.4rem 0.6rem 0;width:100%;">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:0.1rem;" x-text="card.dexNum ? `#${card.dexNum}` : ''"></div>
+                    <div style="font-family:'Chakra Petch',sans-serif;font-size:0.88rem;font-weight:700;line-height:1.1;margin-bottom:0.25rem;" x-text="card.name"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <span style="font-family:'Chakra Petch',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);" x-text="card.ptype"></span>
+                      <span style="font-family:'Chakra Petch',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;" x-text="card.rarityLabel"></span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -244,9 +311,11 @@
         </div>
 
         {# CTA only visible once all cards are revealed #}
-        <div x-show="allFlipped" x-transition style="text-align:center;margin-top:1rem;">
-          <p style="color:#4ade80;margin-bottom:0.75rem;">All stickers revealed!</p>
-          <a href="{% url 'stickers:album' %}" class="btn btn-primary">View Album</a>
+        <div x-show="allFlipped" x-transition style="text-align:center;margin-top:1.5rem;padding:1.5rem;background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-lg);max-width:340px;margin-left:auto;margin-right:auto;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(232,184,75,0.4),transparent);"></div>
+          <p style="font-family:'Chakra Petch',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent-gold);margin-bottom:0.5rem;opacity:0.8;">◆ ◆ ◆</p>
+          <p style="color:var(--text-1);font-weight:600;margin-bottom:1rem;font-size:0.9rem;">Collection updated!</p>
+          <a href="{% url 'stickers:album' %}" class="btn btn-primary">View My Collection →</a>
         </div>
 
       </div>

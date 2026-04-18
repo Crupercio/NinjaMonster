@@ -8,9 +8,9 @@
     grid-template-columns: 220px 1fr;
     gap: 2rem;
     align-items: start;
-    background: radial-gradient(ellipse at top left, #1e1b4b 0%, #16213e 60%, #1a1a2e 100%);
-    border: 1px solid #0f3460;
-    border-radius: 12px;
+    background: radial-gradient(ellipse at top left, var(--bg-felt) 0%, var(--bg-surface) 60%, var(--bg-void) 100%);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 1.5rem;
   }
@@ -23,24 +23,25 @@
     height: 180px;
     image-rendering: pixelated;
     display: block;
-    filter: drop-shadow(0 0 24px rgba(233,69,96,0.35));
+    filter: drop-shadow(0 0 24px rgba(232,184,75,0.3));
   }
   .detail-name {
+    font-family: 'Chakra Petch', sans-serif;
     font-size: 2rem;
-    font-weight: 800;
-    color: #fff;
+    font-weight: 700;
+    color: var(--text-1);
     margin: 0 0 0.25rem;
     letter-spacing: 0.02em;
   }
   .detail-meta {
     font-size: 0.85rem;
-    color: #9ca3af;
+    color: var(--text-2);
     margin-bottom: 0.75rem;
   }
   .level-badge {
     display: inline-block;
-    background: #e94560;
-    color: #fff;
+    background: var(--accent-gold);
+    color: var(--bg-void);
     font-weight: 700;
     font-size: 1rem;
     border-radius: 6px;
@@ -58,8 +59,8 @@
     margin-right: 4px;
   }
   .exp-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
-  .exp-label { font-size: 0.8rem; color: #9ca3af; white-space: nowrap; }
-  .exp-bar-wrap { flex: 1; background: #0f3460; border-radius: 4px; height: 8px; overflow: hidden; }
+  .exp-label { font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
+  .exp-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
   .exp-bar { height: 100%; background: #7c3aed; border-radius: 4px; }
   .training-badge {
     display: inline-block;
@@ -74,19 +75,21 @@
 
   /* ── stats panel ── */
   .panel {
-    background: #16213e;
-    border: 1px solid #0f3460;
-    border-radius: 10px;
+    background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
     padding: 1.25rem 1.5rem;
     margin-bottom: 1rem;
   }
   .panel-title {
-    font-size: 0.7rem;
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #6b7280;
+    letter-spacing: 0.12em;
+    color: var(--accent-gold);
     margin-bottom: 1rem;
     font-weight: 700;
+    opacity: 0.85;
   }
   .stat-row {
     display: grid;
@@ -95,9 +98,9 @@
     gap: 0.75rem;
     margin-bottom: 0.55rem;
   }
-  .stat-label { font-size: 0.8rem; color: #9ca3af; }
-  .stat-value { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; text-align: right; }
-  .stat-bar-wrap { background: #0f3460; border-radius: 4px; height: 8px; overflow: hidden; }
+  .stat-label { font-size: 0.8rem; color: var(--text-2); }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--text-1); text-align: right; }
+  .stat-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
   .stat-bar { height: 100%; border-radius: 4px; }
 
   /* ── moves grid ── */
@@ -107,30 +110,32 @@
     gap: 0.75rem;
   }
   .move-card {
-    background: #1a1a2e;
-    border: 1px solid #0f3460;
-    border-radius: 8px;
+    background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
     padding: 0.9rem 1rem;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, transform 0.15s;
   }
-  .move-card:hover { border-color: #e94560; }
+  .move-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
   .move-slot-label {
-    font-size: 0.65rem;
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 0.6rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #6b7280;
+    letter-spacing: 0.1em;
+    color: var(--accent-gold);
     font-weight: 700;
     margin-bottom: 4px;
+    opacity: 0.75;
   }
   .move-display-name {
     font-size: 1rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-1);
     margin-bottom: 2px;
   }
   .move-canonical {
     font-size: 0.72rem;
-    color: #6b7280;
+    color: var(--text-3);
     margin-bottom: 6px;
   }
   .move-stats {
@@ -138,23 +143,23 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--text-2);
     margin-bottom: 6px;
   }
   .move-stat-chip {
-    background: #0f3460;
+    background: var(--bg-raised);
     border-radius: 4px;
     padding: 1px 6px;
   }
   .move-desc {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-3);
     line-height: 1.4;
     margin-top: 4px;
   }
   .move-empty {
     font-size: 0.8rem;
-    color: #4b5563;
+    color: var(--text-3);
     font-style: italic;
   }
 
@@ -173,16 +178,17 @@
     transition: border-color 0.15s, background 0.15s;
   }
   .synergy-primer {
-    background: #1a1a2e;
-    border-color: #7c3aed44;
+    background: var(--bg-surface);
+    border-color: rgba(124,58,237,0.27);
   }
   .synergy-primer:hover { border-color: #7c3aed; }
   .synergy-chaser {
-    background: #1a1a2e;
-    border-color: #b4530944;
+    background: var(--bg-surface);
+    border-color: rgba(180,83,9,0.27);
   }
   .synergy-chaser:hover { border-color: #f59e0b; }
   .synergy-role-tag {
+    font-family: 'Chakra Petch', sans-serif;
     font-size: 0.58rem;
     font-weight: 800;
     letter-spacing: 0.1em;
@@ -194,21 +200,21 @@
   .synergy-name {
     font-weight: 700;
     font-size: 0.9rem;
-    color: #f1f5f9;
+    color: var(--text-1);
     margin-bottom: 3px;
     display: flex;
     align-items: center;
   }
   .synergy-detail {
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--text-2);
     line-height: 1.4;
   }
 
   /* ── passive / chase card variants ── */
-  .move-card-passive { border-color: #7c3aed44; background: #1a1a2e; }
+  .move-card-passive { border-color: rgba(124,58,237,0.27); }
   .move-card-passive:hover { border-color: #7c3aed; }
-  .move-card-chase { border-color: #b45309aa; background: #1a1a2e; }
+  .move-card-chase { border-color: rgba(180,83,9,0.5); }
   .move-card-chase:hover { border-color: #f59e0b; }
 
   .slot-auto-tag {

@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Mi Casa{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page header ───────────────────────────────────────────── */
+.casa-header {
+  margin-bottom: 1rem;
+}
+.casa-header h2 { margin-bottom: .2rem; }
+.casa-header p  { color: var(--text-2); font-size: .85rem; }
+
+/* ── Filter bar ────────────────────────────────────────────── */
+.filter-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: .85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.filter-row {
+  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+}
+.filter-label {
+  font-size: .72rem; font-weight: 700; color: var(--text-3);
+  min-width: 56px; text-transform: uppercase; letter-spacing: .04em;
+}
+.filter-search {
+  flex: 1; min-width: 160px; max-width: 280px;
+  background: var(--border-lo); border: 1px solid #2d4a7a;
+  border-radius: var(--radius-sm); padding: .35rem .75rem;
+  font-size: .88rem; color: var(--text-1); outline: none;
+  transition: border-color .2s;
+}
+.filter-search:focus { border-color: var(--accent-red); }
+
+/* Chip toggles */
+.chip {
+  font-size: .72rem; padding: .2rem .55rem; border-radius: 20px;
+  border: 1px solid #374151; cursor: pointer; color: var(--text-2);
+  background: none; transition: border-color .15s, color .15s, background .15s;
+  user-select: none;
+}
+.chip.active {
+  border-color: var(--accent-red); color: var(--text-1);
+  background: rgba(239,68,68,.12);
+}
+
+/* Level range */
+.level-range-wrap {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+}
+.level-range-wrap input[type=range] {
+  width: 110px; accent-color: var(--accent-red);
+}
+.level-val {
+  font-size: .8rem; font-weight: 700; color: var(--accent-red);
+  min-width: 28px; text-align: center;
+}
+
+.filter-clear {
+  font-size: .72rem; color: var(--text-3); background: none; border: none;
+  cursor: pointer; padding: .2rem .4rem; margin-left: auto;
+  transition: color .15s;
+}
+.filter-clear:hover { color: var(--text-1); }
+
+/* ── Result count ──────────────────────────────────────────── */
+.result-count {
+  font-size: .8rem; color: var(--text-3); margin-bottom: .75rem;
+}
+
+/* ── Card grid ─────────────────────────────────────────────── */
+.poke-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.poke-card {
+  background: var(--bg-card); border: 1px solid var(--border-md);
+  border-radius: var(--radius-md); padding: .9rem;
+  display: flex; flex-direction: column; position: relative;
+  transition: border-color .2s;
+}
+.poke-card.is-max { border-color: #fbbf24; }
+
+.poke-sprite-link { display: block; text-decoration: none; color: inherit; text-align: center; }
+.poke-sprite-wrap { display: flex; justify-content: center; margin-bottom: .5rem; }
+.poke-sprite-wrap img {
+  width: 108px; height: 108px; object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
+  transition: transform .2s;
+}
+.poke-card:hover .poke-sprite-wrap img { transform: scale(1.06) translateY(-3px); }
+
+.poke-name { font-weight: 800; font-size: 1rem; text-align: center; margin-bottom: .15rem; }
+.poke-meta { font-size: .75rem; color: var(--text-2); text-align: center; margin-bottom: .5rem; }
+
+.poke-level-row {
+  display: flex; align-items: baseline; gap: .4rem; margin-bottom: .25rem;
+}
+.poke-level     { font-size: .95rem; font-weight: 700; color: var(--accent-red); }
+.poke-exp-label { font-size: .72rem; color: var(--text-3); margin-left: auto; }
+.poke-exp-bar-bg   { background: #1e3a6e; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: .75rem; }
+.poke-exp-bar-fill { height: 100%; border-radius: 4px; background: #7c3aed; }
+
+.max-level-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .72rem; font-weight: 700; padding: .15rem .5rem;
+  border-radius: 20px; margin-bottom: .5rem; align-self: center;
+  background: #1a1a2e; color: #fbbf24; border: 1px solid #fbbf24;
+}
+
+.release-btn {
+  font-size: .78rem; color: #f87171; background: none;
+  border: 1px solid #374151; border-radius: var(--radius-sm);
+  padding: .3rem .6rem; cursor: pointer; margin-top: auto;
+  width: 100%; transition: border-color .15s, color .15s;
+}
+.release-btn:hover { border-color: #f87171; }
+.release-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.training-note {
+  font-size: .7rem; color: #f59e0b; text-align: center; margin-top: .4rem;
+}
+.team-note {
+  font-size: .7rem; color: var(--text-3); text-align: center; margin-top: .4rem;
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-3);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{#
+  Serialize owned pokemon data for Alpine filtering.
+  Each pokemon carries: pk, name, types[], chakra, gens[], level, sell_value,
+  is_training, is_on_team (checked server-side via template tag workaround).
+#}
+<script>
+const CASA_POKEMON = [
+  {% for op in owned_pokemon %}
+  {
+    pk: {{ op.pk }},
+    name: "{{ op.species.name|escapejs }}",
+    nameL: "{{ op.species.name|lower|escapejs }}",
+    types: [
+      "{{ op.species.primary_type.name|lower|escapejs }}"
+      {% if op.species.secondary_type %},"{{ op.species.secondary_type.name|lower|escapejs }}"{% endif %}
+    ],
+    chakra: "{{ op.species.primary_type.chakra_element.name|lower|escapejs }}",
+    gens: [{% for g in op.species.generation_sources.all %}{{ g.number }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    level: {{ op.level }},
+    sell_value: {{ op.sell_value }},
+    is_training: {{ op.is_training|yesno:"true,false" }},
+    pokedex_number: {{ op.species.pokedex_number|default:"null" }},
+    sprite_url: "{{ op.species.sprite_url|default:''|escapejs }}",
+    detail_url: "{% url 'pokemon:owned_detail' op.pk %}",
+    sell_url: "{% url 'pokemon:sell' op.pk %}",
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+</script>
+
+<div x-data="casaApp()" x-init="init()">
+
+  <div class="casa-header">
+    <h2>Mi Casa</h2>
+    <p>Your full Pokémon collection. Use filters to find them — and release bonds to earn Ryo.</p>
+  </div>
+
+  {% if request.GET.released %}
+    <div class="msg-success" style="margin-bottom:1rem;">
+      Released bond with {{ request.GET.released }} — earned {{ request.GET.ryo }} Ryo!
+    </div>
+  {% endif %}
+  {% if request.GET.error %}
+    <div class="msg-error" style="margin-bottom:1rem;">{{ request.GET.error }}</div>
+  {% endif %}
+
+  {# ── Filter bar ───────────────────────────────────────────── #}
+  <div class="filter-bar">
+
+    {# Name search #}
+    <div class="filter-row">
+      <span class="filter-label">Name</span>
+      <input class="filter-search" x-model="search" type="search"
+             placeholder="Search by name…" autocomplete="off">
+      <button class="filter-clear" @click="clearAll()" x-show="isDirty()">✕ Clear all</button>
+    </div>
+
+    {# Type chips #}
+    <div class="filter-row">
+      <span class="filter-label">Type</span>
+      {% for t in all_types %}
+      <button class="chip" :class="{ active: types.includes('{{ t.name|lower }}') }"
+              @click="toggle(types, '{{ t.name|lower }}')">{{ t.name }}</button>
+      {% endfor %}
+    </div>
+
+    {# Chakra chips #}
+    <div class="filter-row">
+      <span class="filter-label">Chakra</span>
+      {% for c in all_chakras %}
+      <button class="chip" :class="{ active: chakras.includes('{{ c.name|lower }}') }"
+              @click="toggle(chakras, '{{ c.name|lower }}')">{{ c.name }}</button>
+      {% endfor %}
+    </div>
+
+    {# Generation chips #}
+    <div class="filter-row">
+      <span class="filter-label">Gen</span>
+      {% for g in all_generations %}
+      <button class="chip" :class="{ active: gens.includes({{ g.number }}) }"
+              @click="toggle(gens, {{ g.number }})">Gen {{ g.number }}</button>
+      {% endfor %}
+    </div>
+
+    {# Level range #}
+    <div class="filter-row">
+      <span class="filter-label">Level</span>
+      <div class="level-range-wrap">
+        <span style="font-size:.75rem;color:var(--text-3);">Min</span>
+        <input type="range" min="1" max="100" x-model.number="minLevel"
+               @input="if(minLevel > maxLevel) maxLevel = minLevel">
+        <span class="level-val" x-text="minLevel"></span>
+        <span style="font-size:.75rem;color:var(--text-3);">Max</span>
+        <input type="range" min="1" max="100" x-model.number="maxLevel"
+               @input="if(maxLevel < minLevel) minLevel = maxLevel">
+        <span class="level-val" x-text="maxLevel"></span>
+      </div>
+    </div>
+
+  </div>
+
+  {# Result count #}
+  <div class="result-count">
+    Showing <strong x-text="visible.length"></strong> of <strong>{{ owned_pokemon|length }}</strong> Pokémon
+  </div>
+
+  {# ── Card grid ─────────────────────────────────────────────── #}
+  <div class="poke-grid">
+
+    <template x-for="op in visible" :key="op.pk">
+      <div class="poke-card" :class="{ 'is-max': op.level >= 100 }">
+
+        {# Sprite + name → owned detail page #}
+        <a :href="op.detail_url" class="poke-sprite-link">
+          <div class="poke-sprite-wrap">
+            <img :src="op.pokedex_number
+                        ? '/media/pokemon/sprites/' + String(op.pokedex_number).padStart(3,'0') + '.png'
+                        : (op.sprite_url || '')"
+                 :alt="op.name"
+                 @error="$el.style.opacity='.2'">
+          </div>
+          <div class="poke-name" x-text="op.name"></div>
+          <div class="poke-meta">
+            #<span x-text="op.pokedex_number || '?'"></span>
+            &nbsp;·&nbsp;
+            <span x-text="op.types.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(' / ')"></span>
+          </div>
+        </a>
+
+        {# Level + EXP bar (full at 100) #}
+        <div class="poke-level-row">
+          <span class="poke-level" x-text="'Lv.' + op.level"></span>
+          <span class="poke-exp-label" x-show="op.level < 100">training available</span>
+          <span class="poke-exp-label" x-show="op.level >= 100" style="color:#fbbf24;">MAX</span>
+        </div>
+        <div class="poke-exp-bar-bg" style="margin-bottom:.75rem;">
+          <div class="poke-exp-bar-fill"
+               :style="'width:' + (op.level >= 100 ? 100 : Math.min(op.level, 99)) + '%;'"></div>
+        </div>
+
+        {# Max Level badge #}
+        <template x-if="op.level >= 100">
+          <span class="max-level-badge">★ Max Level</span>
+        </template>
+
+        {# Release Bond button #}
+        <form :action="op.sell_url" method="post" style="margin-top:auto;"
+              @submit.prevent="if(confirm('Release bond with ' + op.name + ' for ' + op.sell_value + ' Ryo?')) $el.submit()">
+          {% csrf_token %}
+          <template x-if="op.is_training">
+            <div>
+              <button type="button" class="release-btn" disabled>Release Bond</button>
+              <div class="training-note">⏳ Currently training</div>
+            </div>
+          </template>
+          <template x-if="!op.is_training">
+            <button type="submit" class="release-btn">
+              Release Bond · <span x-text="op.sell_value"></span> Ryo
+            </button>
+          </template>
+        </form>
+
+      </div>
+    </template>
+
+    {# Empty state #}
+    <div class="empty-state" x-show="CASA_POKEMON.length === 0">
+      <div style="font-size:3rem;margin-bottom:.75rem;">🏠</div>
+      <div>No Pokémon yet — visit the <a href="{% url 'pokemon:pokedex' %}">Pokédex</a> to catch some!</div>
+    </div>
+    <div class="empty-state" x-show="CASA_POKEMON.length > 0 && visible.length === 0">
+      <div style="font-size:2rem;margin-bottom:.5rem;">🔍</div>
+      <div>No Pokémon match your filters.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function casaApp() {
+  return {
+    all: CASA_POKEMON,
+    visible: [],
+    search: '',
+    types: [],
+    chakras: [],
+    gens: [],
+    minLevel: 1,
+    maxLevel: 100,
+
+    init() {
+      this.$watch('search',   () => this.filter());
+      this.$watch('types',    () => this.filter());
+      this.$watch('chakras',  () => this.filter());
+      this.$watch('gens',     () => this.filter());
+      this.$watch('minLevel', () => this.filter());
+      this.$watch('maxLevel', () => this.filter());
+      this.filter();
+    },
+
+    filter() {
+      const s = this.search.toLowerCase().trim();
+      this.visible = this.all.filter(op => {
+        if (s && !op.nameL.includes(s)) return false;
+        if (this.types.length && !this.types.some(t => op.types.includes(t))) return false;
+        if (this.chakras.length && !this.chakras.includes(op.chakra)) return false;
+        if (this.gens.length && !this.gens.some(g => op.gens.includes(g))) return false;
+        if (op.level < this.minLevel || op.level > this.maxLevel) return false;
+        return true;
+      });
+    },
+
+    toggle(arr, val) {
+      const idx = arr.indexOf(val);
+      if (idx === -1) arr.push(val);
+      else arr.splice(idx, 1);
+      this.filter();
+    },
+
+    clearAll() {
+      this.search   = '';
+      this.types    = [];
+      this.chakras  = [];
+      this.gens     = [];
+      this.minLevel = 1;
+      this.maxLevel = 100;
+    },
+
+    isDirty() {
+      return this.search || this.types.length || this.chakras.length ||
+             this.gens.length || this.minLevel > 1 || this.maxLevel < 100;
+    },
+  };
+}
+</script>
+{% endblock %}

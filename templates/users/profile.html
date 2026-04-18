@@ -6,43 +6,55 @@
 /* ── Header ───────────────────────────────────────────────────── */
 .profile-header {
   display: flex; align-items: flex-start; gap: 1.5rem;
-  background: #16213e; border: 1px solid #1e3a6e;
-  border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 .profile-avatar {
   width: 72px; height: 72px; border-radius: 50%;
-  background: #0f3460; border: 2px solid #e94560;
+  background: var(--bg-raised); border: 2px solid var(--border-hi);
   display: flex; align-items: center; justify-content: center;
   font-size: 2rem; flex-shrink: 0;
 }
 .profile-info { flex: 1; min-width: 160px; }
 .profile-name {
-  font-size: 1.4rem; font-weight: 800; margin-bottom: 0.15rem;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.4rem; font-weight: 700; margin-bottom: 0.15rem;
+  color: var(--text-1);
 }
-.profile-username { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.75rem; }
+.profile-username { color: var(--text-3); font-size: 0.85rem; margin-bottom: 0.75rem; }
 
 /* ── Stats row ────────────────────────────────────────────────── */
 .stat-row {
   display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
 }
 .stat-box {
-  background: #16213e; border: 1px solid #1e3a6e;
-  border-radius: 10px; padding: 0.9rem 1.25rem;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md); padding: 0.9rem 1.25rem;
   text-align: center; flex: 1; min-width: 110px;
+  transition: border-color 0.2s;
 }
+.stat-box:hover { border-color: var(--border-hi); }
 .stat-value {
-  font-size: 1.5rem; font-weight: 800; color: #60a5fa;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);
   line-height: 1.2; margin-bottom: 0.2rem;
 }
-.stat-label { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+.stat-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em;
+}
 
 /* ── Section header ───────────────────────────────────────────── */
 .section-title {
-  font-size: 0.75rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 1.5px; color: #6b7280;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent-gold);
   margin-bottom: 0.75rem; padding-bottom: 0.4rem;
-  border-bottom: 1px solid #1e3a6e;
+  border-bottom: 1px solid var(--border-md);
+  opacity: 0.85;
 }
 
 /* ── Showcase ─────────────────────────────────────────────────── */
@@ -51,14 +63,16 @@
   gap: 0.6rem; margin-bottom: 1.5rem;
 }
 .showcase-card {
-  background: #0f1a2e; border: 1px solid #1e3a6e;
-  border-radius: 8px; padding: 0.75rem 0.5rem;
+  background: var(--bg-surface); border: 1px solid var(--border-md);
+  border-radius: var(--radius-md); padding: 0.75rem 0.5rem;
   text-align: center; font-size: 0.72rem;
+  transition: border-color 0.2s;
 }
-.showcase-card .s-name { font-weight: 700; margin-bottom: 0.2rem; }
-.showcase-card .s-rarity { color: #6b7280; font-size: 0.65rem; }
+.showcase-card:hover { border-color: var(--border-hi); }
+.showcase-card .s-name { font-weight: 700; margin-bottom: 0.2rem; color: var(--text-1); }
+.showcase-card .s-rarity { color: var(--text-3); font-size: 0.65rem; }
 .showcase-empty {
-  color: #4b5563; font-size: 0.875rem; font-style: italic;
+  color: var(--text-3); font-size: 0.875rem; font-style: italic;
   padding: 0.75rem 0; margin-bottom: 1.5rem;
 }
 
@@ -67,21 +81,22 @@
   display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem;
 }
 .badge-item {
-  background: #0f1a2e; border: 1px solid #1e3a6e;
-  border-radius: 8px; padding: 0.5rem 0.75rem;
+  background: var(--bg-surface); border: 1px solid var(--border-lo);
+  border-radius: var(--radius-md); padding: 0.5rem 0.75rem;
   display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.8rem; opacity: 0.4; transition: opacity 0.2s;
+  font-size: 0.8rem; opacity: 0.35; transition: opacity 0.2s;
 }
 .badge-item.earned { opacity: 1; border-color: #4ade80; }
 .badge-icon { font-size: 1.1rem; }
-.badge-info .badge-name { font-weight: 700; font-size: 0.78rem; }
-.badge-info .badge-desc { color: #9ca3af; font-size: 0.68rem; }
+.badge-info .badge-name { font-weight: 700; font-size: 0.78rem; color: var(--text-1); }
+.badge-info .badge-desc { color: var(--text-2); font-size: 0.68rem; }
 
 /* ── Recent battles ───────────────────────────────────────────── */
 .battle-row {
   display: flex; align-items: center; gap: 0.75rem;
-  background: #16213e; border: 1px solid #1e3a6e;
-  border-radius: 8px; padding: 0.6rem 0.9rem;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md); padding: 0.6rem 0.9rem;
   margin-bottom: 0.4rem; font-size: 0.82rem;
   flex-wrap: wrap;
 }
@@ -91,22 +106,22 @@
 }
 .result-win  { color: #4ade80; }
 .result-loss { color: #f87171; }
-.battle-opponent { flex: 1; color: #9ca3af; }
-.battle-chain { color: #fbbf24; font-size: 0.75rem; }
-.battle-link { color: #6b7280; font-size: 0.72rem; margin-left: auto; }
-.battle-link a { color: #60a5fa; }
+.battle-opponent { flex: 1; color: var(--text-2); }
+.battle-chain { color: var(--accent-gold); font-size: 0.75rem; }
+.battle-link { color: var(--text-3); font-size: 0.72rem; margin-left: auto; }
+.battle-link a { color: var(--accent-gold); }
 
 /* ── Story quests ─────────────────────────────────────────────── */
 .story-row {
   display: flex; align-items: center; gap: 0.75rem;
   font-size: 0.82rem; padding: 0.35rem 0;
-  border-bottom: 1px solid #1e3a6e;
+  border-bottom: 1px solid var(--border-lo);
 }
 .story-row:last-child { border-bottom: none; }
 .story-check { font-size: 0.9rem; }
-.story-name { flex: 1; }
+.story-name { flex: 1; color: var(--text-1); }
 .story-name.done { color: #4ade80; }
-.story-name.pending { color: #6b7280; }
+.story-name.pending { color: var(--text-3); }
 </style>
 {% endblock %}
 
@@ -166,6 +181,47 @@
     <div class="stat-label">Ryo</div>
   </div>
 </div>
+
+{# ── Bundle pack streak (own profile only) ───────────────────────────────── #}
+{% if is_own_profile and weekly_streak %}
+{% load static %}
+<div class="section-title">Login Streak</div>
+<div style="background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+  {# Day pips #}
+  <div style="display:flex;gap:0.4rem;align-items:center;">
+    {% for i in "1234567" %}
+    {% with d=forloop.counter %}
+    {% if d == weekly_streak %}
+      <div style="width:34px;height:34px;border-radius:50%;border:2px solid {% if days_until_bundle == 0 %}#38bdf8{% else %}rgba(125,211,252,0.4){% endif %};background:rgba(125,211,252,0.1);display:flex;align-items:center;justify-content:center;" title="Day 7 — Bundle Pack">
+        <img src="{% static 'images/bundle_pack.png' %}" style="width:18px;height:18px;object-fit:contain;">
+      </div>
+    {% else %}
+      <div style="width:34px;height:34px;border-radius:50%;border:2px solid {% if d <= days_filled %}var(--accent-gold){% else %}var(--border-md){% endif %};background:{% if d <= days_filled %}rgba(232,184,75,0.12){% else %}var(--bg-felt){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:{% if d <= days_filled %}var(--accent-gold){% else %}var(--text-3){% endif %};">{{ d }}</div>
+    {% endif %}
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {# Bundle info #}
+  <div style="display:flex;align-items:center;gap:0.6rem;flex:1;min-width:180px;">
+    <img src="{% static 'images/bundle_pack.png' %}" style="width:40px;height:40px;object-fit:contain;">
+    <div>
+      <div style="font-weight:700;font-size:0.875rem;color:#7dd3fc;">Bundle Pack</div>
+      <div style="font-size:0.75rem;color:var(--text-3);">10 stickers · boosted rare odds</div>
+    </div>
+  </div>
+  {# Countdown #}
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.875rem;color:var(--accent-gold);white-space:nowrap;">
+    {% if days_until_bundle == 0 %}
+      🎁 Earned today!
+    {% else %}
+      {{ days_until_bundle }} day{{ days_until_bundle|pluralize }} to next bundle
+    {% endif %}
+  </div>
+  <a href="{% url 'users:daily_claim' %}" class="btn btn-primary btn-sm" style="white-space:nowrap;">
+    {% if can_claim_daily %}Claim Daily{% else %}View Streak{% endif %}
+  </a>
+</div>
+{% endif %}
 
 {# ── Showcase stickers ────────────────────────────────────────────────────── #}
 <div class="section-title">Showcase</div>

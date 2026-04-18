@@ -121,6 +121,93 @@ class QuestService:
     # Progress hooks (called from BattleService / StickerService)
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Type-constraint helpers (for condition_meta on achieve_combo quests)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _get_user_team_types(user: User, battle: "Battle") -> tuple[list[str], list[str]]:
+        """
+        Return (type_names, chakra_elements) for the user's team in this battle.
+
+        type_names — lowercase primary+secondary type names of every slot (no duplicates).
+        chakra_elements — lowercase chakra element names present in the team.
+        """
+        from apps.game.models import BattleSlot, BattleTeam
+        try:
+            team = BattleTeam.objects.get(battle=battle, owner=user)
+        except BattleTeam.DoesNotExist:
+            return [], []
+
+        slots = list(
+            BattleSlot.objects.filter(team=team)
+            .select_related(
+                "pokemon__primary_type__chakra_element",
+                "pokemon__secondary_type__chakra_element",
+            )
+        )
+
+        slot_primary_types: list[list[str]] = []  # per-slot type lists
+        all_types: set[str] = set()
+        all_chakra: set[str] = set()
+
+        for slot in slots:
+            poke = slot.pokemon
+            slot_types: list[str] = []
+            for ptype in [poke.primary_type, poke.secondary_type]:
+                if ptype is None:
+                    continue
+                name = ptype.name.lower()
+                slot_types.append(name)
+                all_types.add(name)
+                if ptype.chakra_element:
+                    all_chakra.add(ptype.chakra_element.name.lower())
+            slot_primary_types.append(slot_types)
+
+        return list(all_types), list(all_chakra), slot_primary_types  # type: ignore[return-value]
+
+    @staticmethod
+    def _team_meets_meta(meta: dict, _all_types: list[str], all_chakra: list[str], slot_types: list[list[str]]) -> bool:
+        """
+        Return True if the team satisfies the condition_meta constraints.
+
+        Supported keys:
+          type_names       list[str]  — at least min_type_count slots share one of these types
+          min_type_count   int        — minimum slots that must carry the required type (default 3)
+          mono_type        bool       — all 6 slots must share at least one common type
+          all_chakra_elements bool   — team must have ≥1 Pokémon from each of the 5 chakra elements
+        """
+        if not meta:
+            return True  # no constraints → always satisfied
+
+        if meta.get("mono_type"):
+            if not slot_types:
+                return False
+            # Find types common to every slot
+            common = set(slot_types[0])
+            for st in slot_types[1:]:
+                common &= set(st)
+            if not common:
+                return False
+
+        if meta.get("all_chakra_elements"):
+            required = {"fire", "water", "earth", "lightning", "wind"}
+            if not required.issubset(set(all_chakra)):
+                return False
+
+        if "type_names" in meta:
+            required_types = {t.lower() for t in meta["type_names"]}
+            min_count = meta.get("min_type_count", 3)
+            # Count slots that have at least one of the required types
+            qualifying = sum(
+                1 for st in slot_types
+                if required_types.intersection(st)
+            )
+            if qualifying < min_count:
+                return False
+
+        return True
+
     def on_battle_won(self, user: User, battle: "Battle") -> None:
         """
         Update active WIN_BATTLES and ACHIEVE_COMBO quests after the user wins.
@@ -140,15 +227,29 @@ class QuestService:
             ).select_related("template")
         )
 
+        # Lazy-load team type data only if any combo quest has condition_meta
+        _types_loaded = False
+        all_types: list[str] = []
+        all_chakra: list[str] = []
+        slot_types: list[list[str]] = []
+
         for uq in active_quests:
             tmpl = uq.template
             if tmpl.condition == QuestCondition.WIN_BATTLES:
                 uq.progress = min(uq.progress + 1, tmpl.condition_value)
             elif tmpl.condition == QuestCondition.ACHIEVE_COMBO:
-                if battle.max_combo_chain >= tmpl.condition_value:
-                    uq.progress = tmpl.condition_value
-                else:
+                if battle.max_combo_chain < tmpl.condition_value:
                     continue  # chain not long enough — no change
+
+                # Check type constraints if present
+                if tmpl.condition_meta:
+                    if not _types_loaded:
+                        all_types, all_chakra, slot_types = self._get_user_team_types(user, battle)  # type: ignore[assignment]
+                        _types_loaded = True
+                    if not self._team_meets_meta(tmpl.condition_meta, all_types, all_chakra, slot_types):
+                        continue  # team composition doesn't satisfy the constraint
+
+                uq.progress = tmpl.condition_value
 
             if uq.progress >= tmpl.condition_value:
                 uq.completed = True

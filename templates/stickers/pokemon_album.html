@@ -13,7 +13,7 @@
   flex-wrap: wrap;
 }
 .pa-back {
-  color: #6b7280;
+  color: var(--text-3);
   font-size: 0.8rem;
   text-decoration: none;
   display: inline-flex;
@@ -21,13 +21,17 @@
   gap: 0.3rem;
   margin-bottom: 0.5rem;
 }
-.pa-back:hover { color: #d1d5db; }
-.pa-title { font-size: 1.4rem; font-weight: 800; }
-.pa-dex   { font-size: 0.8rem; color: #6b7280; }
+.pa-back:hover { color: var(--accent-gold); }
+.pa-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.4rem; font-weight: 700; color: var(--text-1);
+}
+.pa-dex   { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-3); }
 .pa-types { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
 .type-badge {
-  background: #1e3a6e;
-  color: #93c5fd;
+  background: var(--bg-raised);
+  color: var(--accent-gold);
+  border: 1px solid var(--border-md);
   border-radius: 20px;
   padding: 0.1rem 0.55rem;
   font-size: 0.68rem;
@@ -38,9 +42,9 @@
 
 /* ── Progress bar ────────────────────────────────────────────── */
 .pa-progress {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 10px;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
   padding: 0.8rem 1rem;
   margin-bottom: 1.2rem;
   display: flex;
@@ -53,11 +57,11 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.72rem;
-  color: #9ca3af;
+  color: var(--text-2);
   margin-bottom: 4px;
 }
 .pa-bar-bg {
-  background: #0f3460;
+  background: rgba(232,184,75,0.06);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
@@ -65,12 +69,12 @@
 .pa-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, #3b82f6, #a78bfa);
+  background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold), var(--gold-light));
   transition: width 0.5s ease;
 }
 .pa-bar-fill.complete { background: linear-gradient(90deg, #4ade80, #22d3ee); }
 .pa-complete-badge {
-  background: #052e16;
+  background: rgba(5,46,22,0.7);
   color: #4ade80;
   border: 1px solid #4ade80;
   border-radius: 20px;
@@ -110,13 +114,13 @@
 
 /* ── Slot card ───────────────────────────────────────────────── */
 .slot-card {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 8px;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.6rem;
   text-align: center;
   position: relative;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .slot-card.owned {
   border-color: var(--rc, #3b82f6);

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theme 2 — CINEMATIC WORLD (Genshin × Fire Emblem × TCG Art)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   THEME 2 — CINEMATIC WORLD
+   Aesthetic: Genshin Impact × Fire Emblem × Legends of Runeterra
+   Mood: Atmospheric, immersive, environmental, wonder-inducing
+   Key traits: Deep gradients, environmental backdrops,
+               soft glows, layered depth, card art focus
+═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-void:    #060b14;
+  --bg-deep:    #0a1020;
+  --bg-mid:     #0f1e38;
+  --bg-surface: #162035;
+  --bg-raised:  #1e2d4a;
+  --accent:     #e94560;
+  --gold:       #f5c842;
+  --gold-dim:   #a07a20;
+  --cyan:       #4dd9f5;
+  --purple:     #9d6fff;
+  --green:      #4ade80;
+  --text-1:     #e8eaf6;
+  --text-2:     #8899bb;
+  --text-3:     #3d4f70;
+  --font-d:     'Chakra Petch', sans-serif;
+  --font-b:     'Plus Jakarta Sans', sans-serif;
+  --font-m:     'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--text-1);
+  font-family: var(--font-b);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ══════════════════ NAV — Frosted glass bar ══════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  height: 58px;
+  background: rgba(6, 11, 20, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(77, 217, 245, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 2.5rem;
+  gap: 2.5rem;
+}
+
+.nav-brand {
+  font-family: var(--font-d);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.nav-brand-icon {
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, rgba(233,69,96,0.5), rgba(157,111,255,0.2));
+  border-radius: 50%;
+  border: 1px solid rgba(233,69,96,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+.nav-brand-text { background: linear-gradient(135deg, #e8eaf6, #9d6fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.nav-link {
+  font-family: var(--font-d);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  position: relative;
+}
+.nav-link:hover {
+  color: var(--text-1);
+  background: rgba(255,255,255,0.05);
+}
+.nav-link.active {
+  color: var(--text-1);
+  background: rgba(77, 217, 245, 0.08);
+}
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 50%;
+  transform: translateX(-50%);
+  width: 20px; height: 2px;
+  background: var(--cyan);
+  border-radius: 2px;
+}
+
+.nav-end {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-left: auto;
+}
+.nav-coins {
+  font-family: var(--font-m);
+  font-size: 0.8rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.nav-coin-icon {
+  width: 18px; height: 18px;
+  background: radial-gradient(circle, #f5c842, #a07a20);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+}
+.nav-user {
+  font-family: var(--font-d);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+
+/* ══════════════════ HERO — Cinematic fullwidth ══════════════════ */
+.hero {
+  position: relative;
+  min-height: 460px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Multi-layer atmospheric background */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(157,111,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 80% at 85% 20%, rgba(77,217,245,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(233,69,96,0.08) 0%, transparent 50%),
+    linear-gradient(160deg, #0a1020 0%, #060b14 100%);
+}
+
+/* Vignette from left */
+.hero-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6,11,20,0.95) 30%, transparent 70%);
+}
+
+/* Atmospheric particles (CSS only) */
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(77,217,245,0.6);
+  animation: float-particle linear infinite;
+}
+@keyframes float-particle {
+  0%   { transform: translateY(100%) translateX(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-20vh) translateX(30px); opacity: 0; }
+}
+.p1 { left: 15%; animation-duration: 8s;  animation-delay: 0s;   width: 3px; height: 3px; background: rgba(157,111,255,0.5); }
+.p2 { left: 30%; animation-duration: 12s; animation-delay: 2s; }
+.p3 { left: 50%; animation-duration: 9s;  animation-delay: 1s;   background: rgba(245,200,66,0.4); }
+.p4 { left: 65%; animation-duration: 14s; animation-delay: 4s;   width: 4px; height: 4px; }
+.p5 { left: 80%; animation-duration: 10s; animation-delay: 3s;   background: rgba(233,69,96,0.4); }
+
+.hero-content {
+  position: relative;
+  z-index: 5;
+  padding: 4rem 2.5rem;
+  max-width: 560px;
+}
+
+.hero-world-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-d);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.2rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid rgba(77,217,245,0.25);
+  border-radius: 100px;
+  background: rgba(77,217,245,0.06);
+}
+.hero-world-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+
+.hero-title {
+  font-family: var(--font-d);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.2rem;
+}
+.hero-title .accent-word {
+  background: linear-gradient(135deg, #e94560, #9d6fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-desc {
+  font-size: 0.95rem;
+  color: var(--text-2);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 420px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.btn-cin {
+  font-family: var(--font-d);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.8rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out, ease);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-cin-primary {
+  background: linear-gradient(135deg, #e94560, #c0304c);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(233,69,96,0.3);
+}
+.btn-cin-primary:hover {
+  box-shadow: 0 6px 28px rgba(233,69,96,0.55);
+  transform: translateY(-2px);
+}
+.btn-cin-outline {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-2);
+  backdrop-filter: blur(4px);
+}
+.btn-cin-outline:hover {
+  border-color: rgba(77,217,245,0.4);
+  color: var(--cyan);
+  background: rgba(77,217,245,0.06);
+}
+
+/* Right side — featured card art */
+.hero-card-showcase {
+  position: absolute;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+}
+.showcase-card {
+  width: 180px;
+  height: 260px;
+  background: linear-gradient(160deg, #1a2a4a, #0d1628);
+  border: 1px solid rgba(157,111,255,0.4);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 40px rgba(157,111,255,0.2),
+    0 20px 60px rgba(0,0,0,0.6);
+  position: relative;
+  overflow: hidden;
+  transform: rotate(3deg);
+}
+.showcase-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(157,111,255,0.08), rgba(77,217,245,0.04), transparent);
+}
+.showcase-card-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 16px rgba(157,111,255,0.5));
+}
+.showcase-card-name {
+  font-family: var(--font-d);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-top: 0.5rem;
+}
+.showcase-card-rarity {
+  font-family: var(--font-d);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--purple);
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+/* Behind card — glow aura */
+.showcase-glow {
+  position: absolute;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(157,111,255,0.2), transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: aura-pulse 3s ease-in-out infinite;
+}
+@keyframes aura-pulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+  50%      { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+}
+
+/* ══════════════════ MAIN LAYOUT ══════════════════ */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2.5rem;
+}
+
+/* ══════════════════ STAT CARDS ══════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--bg-surface), var(--bg-mid));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 1.4rem 1.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--bar-color, rgba(255,255,255,0.1));
+  border-radius: 0 0 12px 12px;
+}
+.stat-card.gold-accent { --bar-color: linear-gradient(90deg, var(--gold), var(--gold-dim)); }
+.stat-card.red-accent  { --bar-color: linear-gradient(90deg, var(--accent), #9d1a2e); }
+.stat-card.cyan-accent { --bar-color: linear-gradient(90deg, var(--cyan), #1a8aaa); }
+.stat-card.purple-accent { --bar-color: linear-gradient(90deg, var(--purple), #5a3aa0); }
+
+/* Apply bottom bar color properly */
+.stat-card.gold-accent::after   { background: linear-gradient(90deg, var(--gold), var(--gold-dim)); }
+.stat-card.red-accent::after    { background: linear-gradient(90deg, var(--accent), #9d1a2e); }
+.stat-card.cyan-accent::after   { background: linear-gradient(90deg, var(--cyan), #1a8aaa); }
+.stat-card.purple-accent::after { background: linear-gradient(90deg, var(--purple), #5a3aa0); }
+
+.stat-icon {
+  font-size: 1.4rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.stat-value {
+  font-family: var(--font-m);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-1);
+  display: block;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.stat-label {
+  font-family: var(--font-d);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.stat-delta {
+  font-family: var(--font-m);
+  font-size: 0.65rem;
+  color: var(--green);
+  margin-top: 0.4rem;
+  display: block;
+}
+
+/* ══════════════════ SECTION HEADER ══════════════════ */
+.section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.section-title {
+  font-family: var(--font-d);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px; height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.section-link {
+  font-family: var(--font-d);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.section-link:hover { opacity: 1; }
+
+/* ══════════════════ POKEMON CARDS — Cinematic style ══════════════════ */
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.cin-card {
+  background: linear-gradient(160deg, var(--bg-surface) 0%, var(--bg-mid) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 1.25rem 1rem 1rem;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.cin-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+/* Rarity top glow bar */
+.cin-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: var(--rarity-color, rgba(255,255,255,0.1));
+  border-radius: 0 0 50% 50%;
+  box-shadow: 0 0 12px 2px var(--rarity-color, transparent);
+}
+
+/* Ambient type gradient in image zone */
+.cin-card-img-wrap {
+  width: 90px; height: 90px;
+  margin: 0 auto 0.75rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cin-card-img-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--type-glow, rgba(100,100,255,0.1)), transparent 70%);
+}
+.cin-card-img {
+  width: 80px; height: 80px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  position: relative;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  transition: filter 0.22s ease, transform 0.22s ease;
+}
+.cin-card:hover .cin-card-img {
+  filter: drop-shadow(0 6px 20px var(--type-glow, rgba(100,100,255,0.4)));
+  transform: scale(1.05);
+}
+
+.cin-card-num {
+  font-family: var(--font-m);
+  font-size: 0.55rem;
+  color: var(--text-3);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.cin-card-name {
+  font-family: var(--font-d);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-1);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.cin-card-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-d);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.6rem;
+  border-radius: 100px;
+  margin-bottom: 0.5rem;
+}
+.cin-card-rarity {
+  font-family: var(--font-d);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rarity-color, var(--text-3));
+}
+
+/* Holographic shimmer */
+@keyframes holo-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.cin-card.rarity-holo {
+  background: linear-gradient(160deg, #1a2040, #0f1628);
+  border-color: rgba(251,191,36,0.25);
+}
+.cin-card.rarity-holo .cin-card-rarity {
+  background: linear-gradient(90deg, #fbbf24, #f97316, #fbbf24);
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: holo-shimmer 2.5s linear infinite;
+}
+
+/* ══════════════════ PACK SECTION ══════════════════ */
+.packs-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 3.5rem;
+}
+
+.pack-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 1.8rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.pack-card:hover { transform: translateY(-4px); }
+
+/* Pack background environment */
+.pack-card.kanto {
+  background: linear-gradient(160deg, #1a1028, #0f1e38);
+  border-color: rgba(233,69,96,0.2);
+}
+.pack-card.kanto:hover { box-shadow: 0 12px 40px rgba(233,69,96,0.15); }
+
+.pack-card.johto {
+  background: linear-gradient(160deg, #101a10, #0f1e38);
+  border-color: rgba(74,222,128,0.2);
+}
+.pack-card.johto:hover { box-shadow: 0 12px 40px rgba(74,222,128,0.12); }
+
+.pack-card.hoenn {
+  background: linear-gradient(160deg, #101828, #0d1a2d);
+  border-color: rgba(77,217,245,0.2);
+}
+.pack-card.hoenn:hover { box-shadow: 0 12px 40px rgba(77,217,245,0.12); }
+
+.pack-region {
+  font-family: var(--font-d);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.pack-name {
+  font-family: var(--font-d);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+.pack-preview {
+  display: flex;
+  justify-content: center;
+  gap: -0.5rem;
+  margin-bottom: 1rem;
+  height: 60px;
+}
+.pack-mini-card {
+  width: 40px; height: 58px;
+  background: var(--bg-mid);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  margin: 0 -4px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.4);
+}
+.pack-price {
+  font-family: var(--font-m);
+  font-size: 0.8rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.pack-progress {
+  margin-top: 0.8rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 100px;
+  height: 4px;
+  overflow: hidden;
+}
+.pack-progress-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+
+/* ══════════════════ RARITY SHOWCASE ══════════════════ */
+.rarity-showcase {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 3rem;
+}
+.rarity-gem {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 1rem 0.5rem;
+  text-align: center;
+  transition: transform 0.18s ease;
+}
+.rarity-gem:hover { transform: translateY(-4px); }
+.rarity-gem-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin: 0 auto 0.6rem;
+  box-shadow: 0 0 8px currentColor;
+}
+.rarity-gem-name {
+  font-family: var(--font-d);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.rg-common    { color: #9ca3af; } .rg-common .rarity-gem-dot    { background: #9ca3af; color: #9ca3af; }
+.rg-uncommon  { color: #4ade80; } .rg-uncommon .rarity-gem-dot  { background: #4ade80; color: #4ade80; }
+.rg-rare      { color: #60a5fa; } .rg-rare .rarity-gem-dot      { background: #60a5fa; color: #60a5fa; }
+.rg-epic      { color: #a78bfa; } .rg-epic .rarity-gem-dot      { background: #a78bfa; color: #a78bfa; }
+.rg-holo      { color: #fbbf24; } .rg-holo .rarity-gem-dot      { background: linear-gradient(135deg,#fbbf24,#f97316); color: #fbbf24; }
+.rg-fullart   { color: #f97316; } .rg-fullart .rarity-gem-dot   { background: #f97316; color: #f97316; }
+.rg-secret    { color: #f43f5e; } .rg-secret .rarity-gem-dot    { background: #f43f5e; color: #f43f5e; }
+
+/* ══════════════════ THEME LABEL ══════════════════ */
+.theme-badge {
+  position: fixed;
+  top: 70px;
+  right: 1.5rem;
+  background: linear-gradient(135deg, #162035, #0f1628);
+  border: 1px solid rgba(77,217,245,0.3);
+  color: var(--cyan);
+  font-family: var(--font-d);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  border-radius: 100px;
+  z-index: 300;
+  box-shadow: 0 0 16px rgba(77,217,245,0.15);
+}
+</style>
+</head>
+<body>
+
+<div class="theme-badge">Theme 2 — Cinematic World</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-brand-icon">🌐</div>
+    <span class="nav-brand-text">MPKM</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">⚔️ Battle</a>
+    <a class="nav-link" href="#">🥷 Trainer</a>
+    <a class="nav-link active" href="#">📦 Collect</a>
+    <a class="nav-link" href="#">🏆 Compete</a>
+  </div>
+  <div class="nav-end">
+    <div class="nav-coins">
+      <span class="nav-coin-icon">🪙</span>
+      29,510
+    </div>
+    <div class="nav-user">Jose</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-fade"></div>
+  <div class="hero-particles">
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+    <div class="particle p4"></div>
+    <div class="particle p5"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-world-label">
+      <span class="hero-world-dot"></span>
+      Kanto Region — Season 4
+    </div>
+    <h1 class="hero-title">
+      Your world.<br>
+      <span class="accent-word">Your legend.</span>
+    </h1>
+    <p class="hero-desc">
+      Discover rare Pokémon, build powerful teams, and etch your name
+      into the Pokémon world's history. The journey is yours to write.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-cin btn-cin-primary" href="#">✦ Open a Pack</a>
+      <a class="btn-cin btn-cin-outline" href="#">View Album →</a>
+    </div>
+  </div>
+  <div class="hero-card-showcase">
+    <div class="showcase-glow"></div>
+    <div class="showcase-card">
+      <img class="showcase-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/149.png" alt="Dragonite">
+      <div class="showcase-card-name">Dragonite</div>
+      <div class="showcase-card-rarity">✦ Epic</div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card gold-accent">
+      <span class="stat-icon">🪙</span>
+      <span class="stat-value">29,510</span>
+      <span class="stat-label">Ryo Balance</span>
+      <span class="stat-delta">+150 today</span>
+    </div>
+    <div class="stat-card red-accent">
+      <span class="stat-icon">📖</span>
+      <span class="stat-value">247</span>
+      <span class="stat-label">Pokédex</span>
+      <span class="stat-delta">27.5% complete</span>
+    </div>
+    <div class="stat-card cyan-accent">
+      <span class="stat-icon">⚔️</span>
+      <span class="stat-value">84</span>
+      <span class="stat-label">Battles Won</span>
+      <span class="stat-delta">80% win rate</span>
+    </div>
+    <div class="stat-card purple-accent">
+      <span class="stat-icon">🏆</span>
+      <span class="stat-value">S+</span>
+      <span class="stat-label">Rank</span>
+      <span class="stat-delta" style="color:#a78bfa">Top 2%</span>
+    </div>
+  </div>
+
+  <!-- RECENT POKEMON -->
+  <div class="section-hdr">
+    <div class="section-title">Recent Collection</div>
+    <a class="section-link" href="#">View All →</a>
+  </div>
+
+  <div class="pokemon-grid">
+    <div class="cin-card rarity-holo" style="--rarity-color:#fbbf24; --type-glow:rgba(239,68,68,0.4)">
+      <span class="cin-card-num">#006</span>
+      <div class="cin-card-img-wrap">
+        <img class="cin-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png" alt="Charizard">
+      </div>
+      <span class="cin-card-name">Charizard</span>
+      <span class="cin-card-type" style="background:rgba(239,68,68,0.12);color:#fca5a5">🔥 Fire</span>
+      <span class="cin-card-rarity">Holographic</span>
+    </div>
+    <div class="cin-card" style="--rarity-color:#a78bfa; --type-glow:rgba(124,58,237,0.4)">
+      <span class="cin-card-num">#149</span>
+      <div class="cin-card-img-wrap">
+        <img class="cin-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/149.png" alt="Dragonite">
+      </div>
+      <span class="cin-card-name">Dragonite</span>
+      <span class="cin-card-type" style="background:rgba(124,58,237,0.12);color:#c4b5fd">🐉 Dragon</span>
+      <span class="cin-card-rarity" style="color:#a78bfa">Epic</span>
+    </div>
+    <div class="cin-card" style="--rarity-color:#60a5fa; --type-glow:rgba(59,130,246,0.35)">
+      <span class="cin-card-num">#131</span>
+      <div class="cin-card-img-wrap">
+        <img class="cin-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/131.png" alt="Lapras">
+      </div>
+      <span class="cin-card-name">Lapras</span>
+      <span class="cin-card-type" style="background:rgba(59,130,246,0.12);color:#93c5fd">🌊 Water</span>
+      <span class="cin-card-rarity" style="color:#60a5fa">Rare</span>
+    </div>
+    <div class="cin-card" style="--rarity-color:#9ca3af; --type-glow:rgba(234,179,8,0.3)">
+      <span class="cin-card-num">#025</span>
+      <div class="cin-card-img-wrap">
+        <img class="cin-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="Pikachu">
+      </div>
+      <span class="cin-card-name">Pikachu</span>
+      <span class="cin-card-type" style="background:rgba(234,179,8,0.12);color:#fde68a">⚡ Electric</span>
+      <span class="cin-card-rarity" style="color:#9ca3af">Common</span>
+    </div>
+    <div class="cin-card" style="opacity:0.25;filter:grayscale(80%);pointer-events:none">
+      <span class="cin-card-num">#???</span>
+      <div class="cin-card-img-wrap">
+        <div style="width:80px;height:80px;background:var(--bg-raised);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem">?</div>
+      </div>
+      <span class="cin-card-name">???</span>
+      <span class="cin-card-type" style="background:rgba(100,100,100,0.1);color:#555">— —</span>
+      <span class="cin-card-rarity">Undiscovered</span>
+    </div>
+  </div>
+
+  <!-- PACKS -->
+  <div class="section-hdr">
+    <div class="section-title">Pack Collections</div>
+    <a class="section-link" href="#">Shop →</a>
+  </div>
+
+  <div class="packs-row">
+    <div class="pack-card kanto">
+      <div class="pack-region" style="color:#e94560">🌋 Kanto Region</div>
+      <div class="pack-name">Kanto Pack</div>
+      <div class="pack-preview">
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+      </div>
+      <div class="pack-price">🪙 50 Ryo</div>
+      <div class="pack-progress"><div class="pack-progress-fill" style="width:27%;background:linear-gradient(90deg,#e94560,#a78bfa)"></div></div>
+      <div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text-3);margin-top:0.4rem">41/151 collected</div>
+    </div>
+    <div class="pack-card johto">
+      <div class="pack-region" style="color:#4ade80">🌿 Johto Region</div>
+      <div class="pack-name">Johto Pack</div>
+      <div class="pack-preview">
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+      </div>
+      <div class="pack-price">🪙 50 Ryo</div>
+      <div class="pack-progress"><div class="pack-progress-fill" style="width:5%;background:linear-gradient(90deg,#4ade80,#22d3ee)"></div></div>
+      <div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text-3);margin-top:0.4rem">5/100 collected</div>
+    </div>
+    <div class="pack-card hoenn">
+      <div class="pack-region" style="color:#4dd9f5">🌊 Hoenn Region</div>
+      <div class="pack-name">Hoenn Pack</div>
+      <div class="pack-preview">
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+        <div class="pack-mini-card"></div>
+      </div>
+      <div class="pack-price">🪙 50 Ryo</div>
+      <div class="pack-progress"><div class="pack-progress-fill" style="width:0%;"></div></div>
+      <div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text-3);margin-top:0.4rem">0/135 collected</div>
+    </div>
+  </div>
+
+  <!-- RARITY SHOWCASE -->
+  <div class="section-hdr">
+    <div class="section-title">Rarity System</div>
+  </div>
+  <div class="rarity-showcase">
+    <div class="rarity-gem rg-common"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Common</div></div>
+    <div class="rarity-gem rg-uncommon"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Uncommon</div></div>
+    <div class="rarity-gem rg-rare"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Rare</div></div>
+    <div class="rarity-gem rg-epic"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Epic</div></div>
+    <div class="rarity-gem rg-holo"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Holo</div></div>
+    <div class="rarity-gem rg-fullart"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Full Art</div></div>
+    <div class="rarity-gem rg-secret"><div class="rarity-gem-dot"></div><div class="rarity-gem-name">Secret</div></div>
+  </div>
+
+</div>
+</body>
+</html>

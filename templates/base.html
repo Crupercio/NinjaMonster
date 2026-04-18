@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   {% block extra_css %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
@@ -34,7 +35,7 @@
          role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'battle' ? 'true' : 'false'"
          @mouseenter="tab = 'battle'"
          @click.prevent="tab = tab === 'battle' ? null : 'battle'">
-        <span class="nav-tab-icon" aria-hidden="true">⚔️</span>
+        <img src="{% static 'images/battle_icon.png' %}" alt="" aria-hidden="true" class="nav-tab-icon-img">
         Battle
         <span class="nav-tab-caret" :class="tab === 'battle' ? 'open' : ''" aria-hidden="true">▾</span>
       </a>
@@ -65,7 +66,7 @@
          role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'trainer' ? 'true' : 'false'"
          @mouseenter="tab = 'trainer'"
          @click.prevent="tab = tab === 'trainer' ? null : 'trainer'">
-        <span class="nav-tab-icon" aria-hidden="true">🥷</span>
+        <img src="{% static 'images/trainer.png' %}" alt="" aria-hidden="true" class="nav-tab-icon-img">
         Trainer
         <span class="nav-tab-caret" :class="tab === 'trainer' ? 'open' : ''" aria-hidden="true">▾</span>
       </a>
@@ -90,11 +91,11 @@
 
     {# 📦 Collect #}
     <div class="nav-tab-wrap" role="none">
-      <a class="nav-tab{% if '/stickers' in path or '/expedition' in path or '/pokemon' in path and '/my' not in path and '/team' not in path %} active{% endif %}"
+      <a class="nav-tab{% if '/stickers' in path or '/expedition' in path or '/pokemon/casa' in path or '/pokemon' in path and '/my' not in path and '/team' not in path and '/casa' not in path %} active{% endif %}"
          role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'collect' ? 'true' : 'false'"
          @mouseenter="tab = 'collect'"
          @click.prevent="tab = tab === 'collect' ? null : 'collect'">
-        <span class="nav-tab-icon" aria-hidden="true">📦</span>
+        <img src="{% static 'images/collect.png' %}" alt="" aria-hidden="true" class="nav-tab-icon-img">
         Collect
         <span class="nav-tab-caret" :class="tab === 'collect' ? 'open' : ''" aria-hidden="true">▾</span>
       </a>
@@ -109,13 +110,17 @@
            x-transition:leave-end="dd-from"
            style="display:none"
            @mouseenter="tab = 'collect'">
-        <a href="{% url 'pokemon:pokedex' %}"     role="menuitem" class="{% if '/pokemon' in path and '/my' not in path and '/team' not in path and '/combos' not in path %}active{% endif %}">Pokédex</a>
-        <a href="{% url 'pokemon:combo_atlas' %}" role="menuitem" class="{% if '/pokemon/combos' in path %}active{% endif %}">&#9889; Combo Atlas</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'pokemon:mi_casa' %}"     role="menuitem" class="{% if '/pokemon/casa' in path %}active{% endif %}">Mi Casa</a>
+        <div class="nav-dropdown-divider" role="separator"></div>
+        {% endif %}
+        <a href="{% url 'pokemon:pokedex' %}"     role="menuitem" class="{% if '/pokemon' in path and '/my' not in path and '/team' not in path and '/combos' not in path and '/casa' not in path %}active{% endif %}">Pokédex</a>
+        <a href="{% url 'pokemon:combo_atlas' %}" role="menuitem" class="{% if '/pokemon/combos' in path %}active{% endif %}"><img src="{% static 'images/combo.png' %}" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;vertical-align:middle;margin-right:4px;"> Combo Atlas</a>
         <div class="nav-dropdown-divider" role="separator"></div>
         <a href="{% url 'stickers:album' %}"      role="menuitem" class="{% if '/stickers/album' in path %}active{% endif %}">Sticker Album</a>
         <a href="{% url 'stickers:trade_list' %}" role="menuitem" class="{% if '/stickers/trade' in path %}active{% endif %}">Trade</a>
         <div class="nav-dropdown-divider" role="separator"></div>
-        <a href="{% url 'expedition:hub' %}"      role="menuitem" class="{% if '/expedition' in path %}active{% endif %}">&#127758; Expedition</a>
+        <a href="{% url 'expedition:hub' %}"      role="menuitem" class="{% if '/expedition' in path %}active{% endif %}"><img src="{% static 'images/explore.png' %}" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;vertical-align:middle;margin-right:4px;"> Expedition</a>
       </div>
     </div>
 
@@ -125,7 +130,7 @@
          role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'compete' ? 'true' : 'false'"
          @mouseenter="tab = 'compete'"
          @click.prevent="tab = tab === 'compete' ? null : 'compete'">
-        <span class="nav-tab-icon" aria-hidden="true">🏆</span>
+        <img src="{% static 'images/compete.png' %}" alt="" aria-hidden="true" class="nav-tab-icon-img">
         Compete
         <span class="nav-tab-caret" :class="tab === 'compete' ? 'open' : ''" aria-hidden="true">▾</span>
       </a>
@@ -163,7 +168,7 @@
         {{ user.display_name|default:user.username }}
       </a>
       <a href="{% url 'users:daily_claim' %}" class="nav-ryo" title="Ryo — click to claim daily reward">
-        &#x1F4B0; {{ user.ryo }}
+        {{ user.ryo }}
       </a>
       <form method="post" action="{% url 'logout' %}" style="display:inline;">
         {% csrf_token %}

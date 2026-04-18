@@ -158,11 +158,17 @@ class StickerAlbum(models.Model):
         return f"{self.owner}'s sticker album"
 
 
+class PackType(models.TextChoices):
+    STANDARD = "standard", "Standard Pack"
+    BUNDLE = "bundle", "Bundle Pack"
+
+
 class StickerPack(models.Model):
     """
-    A pack of 5 stickers earned every 10 battle wins.
+    A pack of stickers.
 
-    Inspired by Pokemon TCG Pocket pack-opening mechanics.
+    Standard: 5 stickers with normal rarity odds.
+    Bundle:   10 stickers with improved rarity odds (weekly login reward).
     """
 
     owner = models.ForeignKey(
@@ -170,6 +176,12 @@ class StickerPack(models.Model):
         on_delete=models.CASCADE,
         related_name="sticker_packs",
         db_index=True,
+    )
+    pack_type = models.TextField(
+        choices=PackType.choices,
+        default=PackType.STANDARD,
+        db_index=True,
+        help_text="standard = 5 stickers; bundle = 10 stickers with improved rarity odds.",
     )
     opened = models.BooleanField(default=False)
     opened_at = models.DateTimeField(null=True, blank=True)
@@ -187,7 +199,12 @@ class StickerPack(models.Model):
 
     def __str__(self) -> str:
         state = "opened" if self.opened else "unopened"
-        return f"{self.owner}'s sticker pack ({state})"
+        kind = "Bundle" if self.pack_type == PackType.BUNDLE else "Standard"
+        return f"{self.owner}'s {kind} sticker pack ({state})"
+
+    @property
+    def is_bundle(self) -> bool:
+        return self.pack_type == PackType.BUNDLE
 
 
 class TradeOffer(models.Model):

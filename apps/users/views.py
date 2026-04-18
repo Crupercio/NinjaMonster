@@ -12,7 +12,7 @@ from django.views import View
 from django.views.generic import DetailView, FormView
 
 from .forms import RegistrationForm
-from .services import CANDY_COSTS, DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_daily_reward, get_candy_inventory
+from .services import DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_daily_reward, get_candy_inventory
 
 User = get_user_model()
 
@@ -133,6 +133,21 @@ class TrainerProfileView(LoginRequiredMixin, DetailView):
         )
 
         context["is_own_profile"] = self.request.user == profile_user
+
+        # ── Bundle pack progress (only shown on own profile) ─────────────────
+        if self.request.user == profile_user:
+            from .services import WEEKLY_LOGIN_STREAK, can_claim_daily
+            streak = profile_user.daily_claim_streak
+            days_until_bundle = WEEKLY_LOGIN_STREAK - (streak % WEEKLY_LOGIN_STREAK)
+            if days_until_bundle == WEEKLY_LOGIN_STREAK:
+                days_until_bundle = 0
+            days_filled = WEEKLY_LOGIN_STREAK - days_until_bundle
+            context["login_streak"] = streak
+            context["days_until_bundle"] = days_until_bundle
+            context["days_filled"] = days_filled
+            context["weekly_streak"] = WEEKLY_LOGIN_STREAK
+            context["can_claim_daily"] = can_claim_daily(profile_user)
+
         return context
 
 
@@ -248,7 +263,12 @@ class DailyClaimView(LoginRequiredMixin, View):
 
     def get(self, request):
         user = request.user
-        user.refresh_from_db(fields=["ryo", "last_daily_claim"])
+        user.refresh_from_db(fields=["ryo", "last_daily_claim", "daily_claim_streak"])
+        from .services import WEEKLY_LOGIN_STREAK
+        streak = user.daily_claim_streak
+        days_until_bundle = WEEKLY_LOGIN_STREAK - (streak % WEEKLY_LOGIN_STREAK)
+        if days_until_bundle == WEEKLY_LOGIN_STREAK:
+            days_until_bundle = 0  # just earned one this claim
         return render(
             request,
             "users/daily_claim.html",
@@ -257,14 +277,20 @@ class DailyClaimView(LoginRequiredMixin, View):
                 "daily_amount": DAILY_REWARD_RYO,
                 "ryo": user.ryo,
                 "last_claim": user.last_daily_claim,
+                "streak": streak,
+                "days_until_bundle": days_until_bundle,
+                "weekly_streak": WEEKLY_LOGIN_STREAK,
             },
         )
 
     def post(self, request):
         user = request.user
         try:
-            amount = claim_daily_reward(user)
-            messages.success(request, f"Daily reward claimed! +{amount} Ryo")
+            result = claim_daily_reward(user)
+            msg = f"Daily reward claimed! +{result['ryo']} Ryo"
+            if result["bundle_pack"]:
+                msg += " + 🎁 Bundle Pack (7-day streak bonus!)"
+            messages.success(request, msg)
         except ValueError as exc:
             messages.error(request, str(exc))
         return redirect("users:daily_claim")

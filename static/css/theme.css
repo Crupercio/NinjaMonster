@@ -1,0 +1,525 @@
+/* ============================================================
+   TCG PREMIUM — Global Theme Overrides
+   Fixes hardcoded old colors across all template <style> blocks
+   without editing each file. Load AFTER base.css.
+   ============================================================ */
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL SURFACE RESET
+   Every element with the old navy backgrounds gets the new felt
+   ───────────────────────────────────────────────────────────── */
+
+/* Any element using these patterns becomes TCG surfaces */
+[style*="background:#16213e"],
+[style*="background: #16213e"] { background: var(--bg-surface) !important; }
+[style*="background:#1a1a2e"],
+[style*="background: #1a1a2e"] { background: var(--bg-primary) !important; }
+[style*="background:#0f3460"],
+[style*="background: #0f3460"] { background: var(--bg-raised) !important; }
+[style*="border:1px solid #1e3a6e"],
+[style*="border: 1px solid #1e3a6e"] { border-color: var(--border-md) !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   POKEDEX PAGE
+   ───────────────────────────────────────────────────────────── */
+.pdex-controls {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.pdex-search,
+.pdex-select {
+  background: var(--bg-felt) !important;
+  border: 1px solid var(--border-md) !important;
+  color: var(--text-1) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  transition: border-color 0.18s, box-shadow 0.18s !important;
+}
+.pdex-search:focus,
+.pdex-select:focus {
+  border-color: rgba(232,184,75,0.55) !important;
+  box-shadow: 0 0 0 2px rgba(232,184,75,0.1) !important;
+  outline: none !important;
+}
+
+.pdex-card {
+  background: linear-gradient(
+    160deg,
+    rgba(var(--tc,30,45,80), 0.18) 0%,
+    var(--bg-surface) 60%
+  ) !important;
+  border-radius: var(--radius-lg) !important;
+  /* keep existing border logic — just ensure fallback is TCG color */
+}
+
+.pdex-count { color: var(--text-2) !important; }
+.pdex-count strong { color: var(--text-1) !important; }
+.pdex-clear { color: var(--accent-gold) !important; }
+.pdex-num { color: var(--text-3) !important; }
+.pdex-gen { color: var(--text-3) !important; }
+
+.pdex-empty { color: var(--text-3) !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   HOME PAGE
+   ───────────────────────────────────────────────────────────── */
+.home-greeting span { color: var(--accent-gold) !important; }
+
+.play-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border-color: var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* VS AI card — red border stays but modernized */
+.play-card[style*="accent-red"] {
+  border-color: var(--accent-red) !important;
+}
+
+/* PvP card — update old blue border */
+.play-card[style*="1e3a8a"] {
+  border-color: rgba(232,184,75,0.25) !important;
+}
+
+.diff-group {
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+}
+.diff-btn {
+  border-right: 1px solid var(--border-md) !important;
+  color: var(--text-2) !important;
+}
+.diff-btn.sel-easy   { background: rgba(74,222,128,0.15) !important; color: #86efac !important; }
+.diff-btn.sel-medium { background: rgba(251,191,36,0.15) !important; color: #fcd34d !important; }
+.diff-btn.sel-hard   { background: rgba(233,69,96,0.15)  !important; color: #fca5a5 !important; }
+
+/* Event banner — replace old blue gradient */
+[style*="linear-gradient(135deg,#1a1a4e,#0f3460)"],
+[style*="linear-gradient(135deg, #1a1a4e, #0f3460)"] {
+  background: linear-gradient(135deg, rgba(232,184,75,0.08), rgba(232,184,75,0.03)) !important;
+  border-color: rgba(232,184,75,0.35) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BATTLE PAGES
+   ───────────────────────────────────────────────────────────── */
+
+/* Battle pokemon cards */
+[style*="background:#0a1020"],
+[style*="background: #0a1020"],
+[style*="background:#0f1a2e"],
+[style*="background: #0f1a2e"] {
+  background: var(--bg-felt) !important;
+}
+[style*="border:1px solid #1e3a6e"],
+[style*="border: 1px solid #1e3a6e"],
+[style*="border-color: #1e3a6e"] {
+  border-color: var(--border-md) !important;
+}
+
+/* Winner banner */
+[style*="background:#052e16"] { background: rgba(5,46,22,0.6) !important; }
+[style*="border-color:#4ade80"] { border-color: rgba(74,222,128,0.4) !important; }
+
+/* VS label */
+[style*="color:#e94560"] { color: var(--accent-red) !important; }
+
+/* Bench cards */
+[style*="background:#060d1a"] { background: var(--bg-void) !important; }
+
+/* Combo log backgrounds */
+[style*="background:#08060f"],
+[style*="background: #08060f"],
+[style*="background:#0f1020"],
+[style*="background: #0f1020"] {
+  background: var(--bg-void) !important;
+}
+
+/* Chakra / mystery mode buttons */
+[style*="background:#0a0518"],
+[style*="background: #0a0518"],
+[style*="background:#1a0a35"],
+[style*="background: #1a0a35"] {
+  background: var(--bg-felt) !important;
+}
+
+/* HP bar backgrounds */
+[style*="background:#1f2937"] { background: rgba(255,255,255,0.06) !important; }
+
+/* Grid column labels */
+[style*="color:#374151"] { color: var(--text-3) !important; }
+[style*="color:#3b82f6"]  { color: var(--combo-blue) !important; }
+[style*="color:#4b5563"]  { color: var(--text-2) !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   POKEMON DETAIL & OWNED POKEMON PAGES
+   ───────────────────────────────────────────────────────────── */
+
+/* Hero gradient panels */
+[style*="#1e1b4b"],
+[style*="#1a1a2e"] {
+  background: var(--bg-primary) !important;
+}
+
+/* Move cards, synergy cards */
+[style*="background:#1a1a2e;"],
+[style*="background: #1a1a2e;"] {
+  background: var(--bg-surface) !important;
+}
+
+/* Panel borders */
+[style*="border:1px solid #0f3460"],
+[style*="border: 1px solid #0f3460"] {
+  border-color: var(--border-md) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TEAM & MY POKEMON PAGES
+   ───────────────────────────────────────────────────────────── */
+
+/* Front row label */
+[style*="background:#1e3a8a"],
+[style*="background: #1e3a8a"] {
+  background: rgba(232,184,75,0.12) !important;
+  color: var(--accent-gold) !important;
+}
+
+/* Back row label */
+[style*="background:#374151"],
+[style*="background: #374151"] {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* Type badge backgrounds that use old colors */
+[style*="background:#1e3a5f"],
+[style*="background: #1e3a5f"] {
+  background: rgba(59,130,246,0.12) !important;
+}
+
+/* EXP bar */
+[style*="background:#1e3a6e"],
+[style*="background: #1e3a6e"] {
+  background: rgba(232,184,75,0.06) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   USER PROFILE PAGE
+   ───────────────────────────────────────────────────────────── */
+
+/* Stat boxes, battle rows */
+.profile-stat-box,
+.battle-row,
+.profile-showcase-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border-color: var(--border-md) !important;
+}
+
+/* Avatar background circle */
+[style*="background:#0f3460;border-radius:50%"],
+[style*="background: #0f3460; border-radius: 50%"] {
+  background: var(--bg-raised) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GUILD PAGES
+   ───────────────────────────────────────────────────────────── */
+.guild-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.guild-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: var(--border-hi) !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.5) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RANKED / LEADERBOARD PAGES
+   ───────────────────────────────────────────────────────────── */
+.tier-card,
+.rank-row,
+.leaderboard-row {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-md) !important;
+}
+.tier-card:hover,
+.rank-row:hover,
+.leaderboard-row:hover {
+  border-color: var(--border-hi) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   QUEST / EVENTS PAGES
+   ───────────────────────────────────────────────────────────── */
+.quest-card,
+.event-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+.quest-card:hover,
+.event-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--border-hi) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   EXPEDITION PAGE
+   ───────────────────────────────────────────────────────────── */
+.expedition-zone,
+.zone-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   STICKER WORKSHOP / CRAFT / DISMANTLE
+   ───────────────────────────────────────────────────────────── */
+.workshop-card,
+.craft-card,
+.trade-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FORMS — Global input style enforcement
+   ───────────────────────────────────────────────────────────── */
+textarea {
+  background: var(--bg-surface) !important;
+  color: var(--text-1) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+textarea:focus {
+  outline: none !important;
+  border-color: rgba(232,184,75,0.5) !important;
+  box-shadow: 0 0 0 2px rgba(232,184,75,0.08) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PANELS — Any .panel class site-wide
+   ───────────────────────────────────────────────────────────── */
+.panel {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOVE CARDS (pokemon detail pages)
+   ───────────────────────────────────────────────────────────── */
+.move-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-md) !important;
+  transition: border-color 0.18s, transform 0.18s !important;
+}
+.move-card:hover {
+  border-color: var(--border-hi) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION LABELS — Ensure gold ornament style everywhere
+   ───────────────────────────────────────────────────────────── */
+.section-label {
+  color: var(--accent-gold) !important;
+  border-bottom-color: var(--border-md) !important;
+  opacity: 0.85;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLE ELEMENTS — Used in leaderboard, type chart, etc.
+   ───────────────────────────────────────────────────────────── */
+table { border-collapse: collapse; width: 100%; }
+th {
+  background: var(--bg-raised) !important;
+  color: var(--text-2) !important;
+  font-family: 'Chakra Petch', sans-serif !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  padding: 0.7rem 0.9rem !important;
+  border-bottom: 1px solid var(--border-md) !important;
+}
+td {
+  padding: 0.65rem 0.9rem !important;
+  border-bottom: 1px solid var(--border-lo) !important;
+  color: var(--text-1) !important;
+  font-size: 0.88rem !important;
+}
+tr:hover td {
+  background: rgba(232,184,75,0.03) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCROLLBAR — TCG gold tint
+   ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-thumb {
+  background: rgba(232,184,75,0.2);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(232,184,75,0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODAL / DIALOG surfaces
+   ───────────────────────────────────────────────────────────── */
+dialog,
+.modal,
+.modal-content {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-xl) !important;
+  color: var(--text-1) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   STICKER ALBUM SCENE PAGES
+   ───────────────────────────────────────────────────────────── */
+.scene-slot,
+.scene-pokemon {
+  transition: transform 0.22s ease, filter 0.22s ease !important;
+}
+.scene-slot:hover { transform: translateY(-6px) scale(1.06) !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   POKEMON ALBUM (pokemon_album.html)
+   ───────────────────────────────────────────────────────────── */
+.slot-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-md) !important;
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s !important;
+}
+.slot-card.owned {
+  border-color: var(--rc, var(--border-hi)) !important;
+}
+.slot-card.owned:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+}
+.slot-card.missing {
+  opacity: 0.25 !important;
+  filter: grayscale(90%) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PROGRESS BARS — Global override for all old-style bars
+   ───────────────────────────────────────────────────────────── */
+.dex-bar-bg,
+.pa-bar-bg,
+.type-bar-bg {
+  background: rgba(232,184,75,0.06) !important;
+}
+.dex-bar-fill,
+.pa-bar-fill {
+  background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold), var(--gold-light)) !important;
+}
+.pa-bar-fill.complete {
+  background: linear-gradient(90deg, #4ade80, #22d3ee) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LINK DEFAULT COLOR OVERRIDE
+   (old theme used red for links, TCG uses gold)
+   ───────────────────────────────────────────────────────────── */
+a:not(.btn):not(.nav-tab):not(.nav-link):not(.poke-card):not(.pdex-card):not(.mobile-link) {
+  color: var(--accent-gold);
+  transition: color 0.15s;
+}
+a:not(.btn):not(.nav-tab):not(.nav-link):not(.poke-card):not(.pdex-card):not(.mobile-link):hover {
+  color: var(--gold-light);
+  text-decoration: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   COMBO ATLAS / TYPE CHART — Table-heavy pages
+   ───────────────────────────────────────────────────────────── */
+.combo-atlas-card,
+.type-chart-cell {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-md) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DAILY CLAIM / TUTORIAL PAGES
+   ───────────────────────────────────────────────────────────── */
+.daily-card,
+.tutorial-card,
+.reward-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SPECTATE LIST PAGE
+   ───────────────────────────────────────────────────────────── */
+.spectate-card,
+.battle-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-lg) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+.spectate-card:hover,
+.battle-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--border-hi) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   REGIONAL ALBUM INDEX / DETAIL
+   ───────────────────────────────────────────────────────────── */
+.region-card,
+.album-region-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt)) !important;
+  border: 1px solid var(--border-md) !important;
+  border-radius: var(--radius-xl) !important;
+  overflow: hidden !important;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease !important;
+}
+.region-card:hover,
+.album-region-card:hover {
+  transform: translateY(-5px) !important;
+  border-color: var(--border-hi) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.55) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TEAM SELECT PAGE
+   ───────────────────────────────────────────────────────────── */
+/* Sticky footer in team select */
+[style*="background:#1a1a2e;position:sticky"],
+[style*="background: #1a1a2e; position: sticky"] {
+  background: rgba(8,8,16,0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top: 1px solid var(--border-md) !important;
+}
+
+/* Selected card glow — keep red for selection, TCG gold for default */
+[style*="border:2px solid #e94560"],
+[style*="border: 2px solid #e94560"] {
+  border-color: var(--accent-red) !important;
+  box-shadow: 0 0 16px rgba(233,69,96,0.3) !important;
+}
+[style*="border:1px solid #0f3460"],
+[style*="border: 1px solid #0f3460"] {
+  border-color: var(--border-md) !important;
+}

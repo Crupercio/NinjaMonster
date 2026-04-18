@@ -68,6 +68,15 @@ class QuestTemplate(models.Model):
         default="",
         help_text="In-world dialogue or lore text shown alongside this quest.",
     )
+    condition_meta = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text=(
+            "Optional extra constraints for the condition. "
+            "For achieve_combo: {'min_type_count': 3, 'type_names': ['Fire']} "
+            "or {'mono_type': true} or {'all_chakra_elements': true}."
+        ),
+    )
 
     class Meta:
         ordering = ["quest_type", "order", "pk"]
