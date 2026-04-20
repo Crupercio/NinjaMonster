@@ -136,6 +136,8 @@ def start_training(owned: OwnedPokemon, duration_minutes: int = 30) -> None:
     Raises:
         ValueError: If duration_minutes is not a valid option.
     """
+    if owned.level >= MAX_LEVEL:
+        raise ValueError("Max-level Pokémon cannot train — they have nothing left to gain.")
     if duration_minutes not in VALID_DURATIONS:
         raise ValueError(
             f"Invalid duration {duration_minutes}. Choose from {VALID_DURATIONS}."

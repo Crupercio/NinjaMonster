@@ -1,6 +1,8 @@
 """Class-based views for the sticker collection app."""
 import logging
 
+from django.db.models import Count
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, ListView, TemplateView
@@ -467,11 +469,43 @@ class RegionalAlbumDetailView(LoginRequiredMixin, TemplateView):
         context.update(page_data)
         context["all_rarities"] = StickerRarity.choices
         context["region_labels"] = REGION_LABELS
+
         # Adjacent rarity navigation
         rarity_values = list(StickerRarity.values)
         idx = rarity_values.index(rarity)
         context["prev_rarity"] = rarity_values[idx - 1] if idx > 0 else None
         context["next_rarity"] = rarity_values[idx + 1] if idx < len(rarity_values) - 1 else None
+
+        # Pagination — group slots by pokemon, 15 per page (last page absorbs orphan of 1)
+        PAGE_SIZE = 15
+        from itertools import groupby
+        all_slots = page_data["slots"]
+        # Group into per-pokemon slot lists preserving order
+        pokemon_slot_groups: list[list] = []
+        for _, grp in groupby(all_slots, key=lambda s: s["pokemon"].pk):
+            pokemon_slot_groups.append(list(grp))
+
+        total_pokemon = len(pokemon_slot_groups)
+        total_pages = max(1, (total_pokemon + PAGE_SIZE - 1) // PAGE_SIZE)
+
+        try:
+            current_page = int(self.request.GET.get("page", 1))
+        except (ValueError, TypeError):
+            current_page = 1
+        current_page = max(1, min(current_page, total_pages))
+
+        start = (current_page - 1) * PAGE_SIZE
+        end = start + PAGE_SIZE
+        # Absorb orphan: if only 1 pokemon would remain on the next page, include it here
+        if end < total_pokemon and total_pokemon - end == 1:
+            end += 1
+
+        page_groups = pokemon_slot_groups[start:end]
+        context["pokemon_slot_groups"] = page_groups
+        context["current_page"] = current_page
+        context["total_pages"] = total_pages
+        context["has_prev_page"] = current_page > 1
+        context["has_next_page"] = current_page < total_pages
         return context
 
 
@@ -619,4 +653,51 @@ class AlbumScenePageView(LoginRequiredMixin, TemplateView):
         context.update(scene_data)
         context["region"] = self.kwargs["region"]
         context["region_label"] = REGION_LABELS.get(self.kwargs["region"], self.kwargs["region"].title())
+        return context
+
+
+class StickerDetailView(LoginRequiredMixin, TemplateView):
+    """
+    Full-size sticker viewer: displays a single (pokemon, rarity, variant) card
+    with its frame, owned status, and copy count.
+
+    GET /stickers/sticker/<int:pokemon_pk>/<str:rarity>/<str:variant>/
+    """
+
+    template_name = "stickers/sticker_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pokemon = get_object_or_404(Pokemon, pk=self.kwargs["pokemon_pk"])
+        rarity = self.kwargs["rarity"]
+        current_variant = self.kwargs["variant"]
+
+        # Owned counts per variant at this rarity
+        owned_counts: dict[str, int] = {
+            row["variant"]: row["cnt"]
+            for row in Sticker.objects.filter(
+                owner=self.request.user, pokemon=pokemon, rarity=rarity
+            ).values("variant").annotate(cnt=Count("id"))
+        }
+
+        slides = [
+            {
+                "variant": sv.value,
+                "variant_label": sv.label,
+                "owned": True,
+                "copies": owned_counts[sv.value],
+            }
+            for sv in StickerVariant
+            if sv.value in owned_counts
+        ]
+
+        current_index = next((i for i, s in enumerate(slides) if s["variant"] == current_variant), 0)
+
+        import json
+        context["pokemon"] = pokemon
+        context["rarity"] = rarity
+        context["rarity_label"] = StickerRarity(rarity).label if rarity in StickerRarity.values else rarity.replace("_", " ").title()
+        context["slides"] = slides
+        context["current_index"] = current_index
+        context["slides_json"] = json.dumps(slides)
         return context

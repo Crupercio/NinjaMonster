@@ -132,10 +132,20 @@
   .moves-table tr:last-child td { border-bottom: none; }
   .moves-table tr:hover td { background: rgba(232,184,75,0.03); }
   .move-name { font-weight: 600; }
+  .moves-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   .badge-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
-  .badge-applies { background: rgba(127,29,29,0.6); color: #fca5a5; }
-  .badge-trigger { background: rgba(120,53,15,0.6); color: #fcd34d; }
+  .badge-applies    { background: rgba(127,29,29,0.6); color: #fca5a5; }
+  .badge-trigger    { background: rgba(120,53,15,0.6); color: #fcd34d; }
+  .badge-trigger-on { background: rgba(120,53,15,0.6); color: #fcd34d; }
   .dash { color: var(--text-3); }
+  .slot-desc { font-size: 0.72rem; color: var(--text-3); margin-bottom: 0.5rem; font-style: italic; }
+  /* Combo chain panel */
+  .chain-group-header { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); padding: 0.4rem 0 0.25rem; margin-top: 0.5rem; border-top: 1px solid var(--border-lo); }
+  .chain-group-header:first-child { border-top: none; margin-top: 0; }
+  .chain-move-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border-lo); flex-wrap: wrap; font-size: 0.82rem; }
+  .chain-move-row:last-child { border-bottom: none; }
+  .chain-move-name { font-weight: 700; color: var(--text-1); min-width: 110px; }
+  .chain-arrow { color: var(--text-3); }
 </style>
 {% endblock %}
 
@@ -227,20 +237,46 @@
     <div class="panel">
       <div class="panel-title">&#9889; Combo Chain</div>
       {% if combo_moves %}
+        {# Starters — standard/mystery moves that apply a status #}
+        {% with starters=combo_moves|dictsort:"slot_type" %}
+        {% for move in combo_moves %}{% if move.applies_status and not move.trigger_status %}
+          {% if forloop.first or not forloop.parentloop %}{# header once #}{% endif %}
+        {% endif %}{% endfor %}
+        {% endwith %}
+
+        {# Group: STARTS CHAIN (applies_status, no trigger_status) #}
         {% for move in combo_moves %}
-          {% if move.applies_status %}
-            <div class="combo-row">
-              <span class="combo-label">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %} applies</span>
-              <span class="combo-val">{{ move.applies_status.get_name_display }}</span>
-            </div>
-          {% endif %}
-          {% if move.trigger_status %}
-            <div class="combo-row">
-              <span class="combo-label">Triggers when ally inflicts</span>
-              <span class="combo-val" style="color:#e94560;">{{ move.trigger_status.get_name_display }}</span>
+          {% if move.applies_status and not move.trigger_status %}
+            {% if forloop.first %}
+              <div class="chain-group-header">&#128293; Starts Chain</div>
+            {% endif %}
+            <div class="chain-move-row">
+              <span class="chain-move-name">{{ move.name }}</span>
+              <span class="chain-arrow">&#8594;</span>
+              <span class="badge-status badge-applies">Applies: {{ move.applies_status.get_name_display }}</span>
             </div>
           {% endif %}
         {% endfor %}
+
+        {# Group: JOINS CHAIN (has trigger_status) #}
+        {% for move in combo_moves %}
+          {% if move.trigger_status %}
+            {% if forloop.first %}
+              <div class="chain-group-header">&#9889; Joins Chain</div>
+            {% endif %}
+            <div class="chain-move-row">
+              <span class="chain-move-name">{{ move.name }}</span>
+              <span class="badge-status badge-trigger-on">Fires on: {{ move.trigger_status.get_name_display }}</span>
+              {% if move.applies_status %}
+                <span class="chain-arrow">&#8594;</span>
+                <span class="badge-status badge-applies">Applies: {{ move.applies_status.get_name_display }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {# Moves that only apply_status AND are chase (both trigger + apply) already caught above #}
+
       {% else %}
         <p class="no-combo">No combo moves in this pool.</p>
       {% endif %}
@@ -302,13 +338,42 @@
   <div class="panel">
     <div class="panel-title">Battle Move Pool</div>
     {% if move_pool_by_slot %}
-      {% for slot_label, slot_moves in move_pool_by_slot %}
+      {% for slot_label, slot_desc, slot_moves in move_pool_by_slot %}
         {% if slot_moves %}
-        <div style="margin-bottom:1.5rem;">
-          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.5rem;">
+        <div style="margin-bottom:1.75rem;">
+          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.2rem;">
             {{ slot_label }}
           </div>
+          <div class="slot-desc">{{ slot_desc }}</div>
           <div style="overflow-x:auto;">
+
+            {% if slot_label == "Ninja Trait" or slot_label == "Hidden Trait" %}
+            {# Passive slots — no Power/Acc columns; show description instead #}
+            <table class="moves-table">
+              <thead>
+                <tr>
+                  <th>Move</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for move in slot_moves %}
+                <tr>
+                  <td class="move-name">{{ move.name }}</td>
+                  <td>
+                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
+                      {{ move.move_type.name }}
+                    </span>
+                  </td>
+                  <td style="font-size:0.78rem;color:var(--text-2);">{{ move.description|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            {% elif slot_label == "Chase Technique" %}
+            {# Chase slots — show both trigger + applies badges #}
             <table class="moves-table">
               <thead>
                 <tr>
@@ -316,14 +381,13 @@
                   <th>Type</th>
                   <th>Power</th>
                   <th>Acc</th>
-
-                  <th>Status</th>
+                  <th>Chain Status</th>
                 </tr>
               </thead>
               <tbody>
                 {% for move in slot_moves %}
                 <tr>
-                  <td class="move-name">{% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}</td>
+                  <td class="move-name">{{ move.name }}</td>
                   <td>
                     <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
                       {{ move.move_type.name }}
@@ -331,12 +395,16 @@
                   </td>
                   <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
                   <td>{{ move.accuracy }}%</td>
-
                   <td>
-                    {% if move.applies_status %}
-                      <span class="badge-status badge-applies">{{ move.applies_status.get_name_display }}</span>
-                    {% elif move.trigger_status %}
-                      <span class="badge-status badge-trigger">&#9889; {{ move.trigger_status.get_name_display }}</span>
+                    {% if move.trigger_status or move.applies_status %}
+                    <div style="display:flex;flex-direction:column;gap:3px;">
+                      {% if move.trigger_status %}
+                        <span class="badge-status badge-trigger-on">&#9889; Fires when: {{ move.trigger_status.get_name_display }}</span>
+                      {% endif %}
+                      {% if move.applies_status %}
+                        <span class="badge-status badge-applies">&#8594; Applies: {{ move.applies_status.get_name_display }}</span>
+                      {% endif %}
+                    </div>
                     {% else %}
                       <span class="dash">—</span>
                     {% endif %}
@@ -345,13 +413,51 @@
                 {% endfor %}
               </tbody>
             </table>
+
+            {% else %}
+            {# Standard / Mystery slots #}
+            <table class="moves-table">
+              <thead>
+                <tr>
+                  <th>Move</th>
+                  <th>Type</th>
+                  <th>Power</th>
+                  <th>Acc</th>
+                  <th>Applies</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for move in slot_moves %}
+                <tr>
+                  <td class="move-name">{{ move.name }}</td>
+                  <td>
+                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
+                      {{ move.move_type.name }}
+                    </span>
+                  </td>
+                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
+                  <td>{{ move.accuracy }}%</td>
+                  <td>
+                    {% if move.applies_status %}
+                      <span class="badge-status badge-applies">{{ move.applies_status.get_name_display }}</span>
+                    {% else %}
+                      <span class="dash">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% endif %}
+
           </div>
         </div>
         {% else %}
         <div style="margin-bottom:1rem;">
-          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.25rem;">
+          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.2rem;">
             {{ slot_label }}
           </div>
+          <div class="slot-desc">{{ slot_desc }}</div>
           <p style="color:#4b5563;font-size:0.85rem;margin:0;">No moves assigned for this slot.</p>
         </div>
         {% endif %}

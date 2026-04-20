@@ -143,6 +143,11 @@ class BattleTeam(models.Model):
         db_index=True,
     )
 
+    chakra_pool = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Shared team chakra (0–100). Regenerates each round; spent on mystery moves.",
+    )
+
     class Meta:
         unique_together = [("battle", "owner")]
         verbose_name = "battle team"

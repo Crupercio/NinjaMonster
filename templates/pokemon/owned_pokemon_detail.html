@@ -110,56 +110,60 @@
     gap: 0.75rem;
   }
   .move-card {
-    background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
-    border: 1px solid var(--border-md);
+    background: rgba(8, 12, 28, 0.85);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: var(--radius-md);
     padding: 0.9rem 1rem;
-    transition: border-color 0.15s, transform 0.15s;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   }
-  .move-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+  .move-card:hover {
+    border-color: rgba(255,255,255,0.28);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  }
   .move-slot-label {
     font-family: 'Chakra Petch', sans-serif;
     font-size: 0.6rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent-gold);
-    font-weight: 700;
-    margin-bottom: 4px;
-    opacity: 0.75;
+    letter-spacing: 0.12em;
+    color: #e8b84b;
+    font-weight: 800;
+    margin-bottom: 6px;
   }
   .move-display-name {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: var(--text-1);
-    margin-bottom: 2px;
-  }
-  .move-canonical {
-    font-size: 0.72rem;
-    color: var(--text-3);
-    margin-bottom: 6px;
+    color: #ffffff;
+    margin-bottom: 4px;
+    letter-spacing: 0.01em;
   }
   .move-stats {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
     font-size: 0.72rem;
-    color: var(--text-2);
+    color: #e2e8f0;
     margin-bottom: 6px;
   }
   .move-stat-chip {
-    background: var(--bg-raised);
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 4px;
-    padding: 1px 6px;
+    padding: 1px 7px;
+    color: #f1f5f9;
+    font-weight: 600;
   }
   .move-desc {
     font-size: 0.75rem;
-    color: var(--text-3);
-    line-height: 1.4;
-    margin-top: 4px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 6px;
   }
   .move-empty {
     font-size: 0.8rem;
-    color: var(--text-3);
+    color: rgba(255,255,255,0.3);
     font-style: italic;
   }
 
@@ -212,10 +216,10 @@
   }
 
   /* ── passive / chase card variants ── */
-  .move-card-passive { border-color: rgba(124,58,237,0.27); }
-  .move-card-passive:hover { border-color: #7c3aed; }
-  .move-card-chase { border-color: rgba(180,83,9,0.5); }
-  .move-card-chase:hover { border-color: #f59e0b; }
+  .move-card-passive { border-color: rgba(139,92,246,0.45); background: rgba(10,6,28,0.9); }
+  .move-card-passive:hover { border-color: #8b5cf6; box-shadow: 0 6px 24px rgba(124,58,237,0.25); }
+  .move-card-chase { border-color: rgba(251,146,60,0.45); background: rgba(20,10,4,0.9); }
+  .move-card-chase:hover { border-color: #fb923c; box-shadow: 0 6px 24px rgba(180,83,9,0.3); }
 
   .slot-auto-tag {
     font-size: 0.55rem;
@@ -232,8 +236,8 @@
     font-size: 0.55rem;
     font-weight: 800;
     letter-spacing: 0.08em;
-    background: #b45309;
-    color: #fde68a;
+    background: #c2410c;
+    color: #fed7aa;
     border-radius: 3px;
     padding: 1px 5px;
     vertical-align: middle;
@@ -241,32 +245,35 @@
   }
 
   .passive-trigger-hint {
-    font-size: 0.72rem;
-    color: #a78bfa;
-    margin: 4px 0 6px;
+    font-size: 0.73rem;
+    color: #c4b5fd;
+    margin: 5px 0 6px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    font-weight: 500;
   }
-  .passive-icon { font-size: 0.7rem; color: #7c3aed; }
+  .passive-icon { font-size: 0.7rem; color: #a78bfa; }
 
   .chase-trigger-hint {
-    font-size: 0.72rem;
-    color: #fbbf24;
-    margin: 4px 0 6px;
+    font-size: 0.73rem;
+    color: #fde68a;
+    margin: 5px 0 4px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    font-weight: 600;
   }
-  .chain-icon { font-size: 0.75rem; color: #f59e0b; }
+  .chain-icon { font-size: 0.75rem; color: #fbbf24; }
 
   .combo-prime-hint {
-    font-size: 0.72rem;
+    font-size: 0.73rem;
     color: #86efac;
-    margin: 4px 0 0;
+    margin: 4px 0 4px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    font-weight: 600;
   }
   .prime-icon { font-size: 0.7rem; color: #4ade80; }
 
@@ -398,12 +405,7 @@
           {% if slot_key == 'chase' %}<span class="slot-chase-tag">CHAIN</span>{% endif %}
         </div>
         {% if move %}
-          <div class="move-display-name">
-            {% if move.themed_name %}{{ move.themed_name }}{% else %}{{ move.name }}{% endif %}
-          </div>
-          {% if move.themed_name %}
-            <div class="move-canonical">{{ move.name }}</div>
-          {% endif %}
+          <div class="move-display-name">{{ move.name }}</div>
           <div style="margin-bottom:4px;">
             <span class="type-pill type-{{ move.move_type }}" style="font-size:0.65rem;">{{ move.move_type }}</span>
           </div>
@@ -439,7 +441,13 @@
             {% if move.trigger_status %}
               <div class="chase-trigger-hint">
                 <span class="chain-icon">&#9889;</span>
-                Chains when enemy is <strong>{{ move.trigger_status.get_name_display }}</strong>
+                Fires when: <strong>{{ move.trigger_status.get_name_display }}</strong>
+              </div>
+            {% endif %}
+            {% if move.applies_status %}
+              <div class="combo-prime-hint">
+                <span class="prime-icon">&#8594;</span>
+                Applies: <strong>{{ move.applies_status.get_name_display }}</strong>
               </div>
             {% endif %}
             <div class="move-stats">

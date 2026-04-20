@@ -56,7 +56,7 @@ _COMMON_POOL_WEIGHTS = {
 _GUARANTEED_RARE_WEIGHTS = {
     StickerRarity.RARE: 60,
     StickerRarity.EPIC: 25,
-    StickerRarity.HOLOGRAPHIC: 10,
+    StickerRarity.PRISMATIC: 10,
     StickerRarity.FULL_ART: 4,
     StickerRarity.SECRET_RARE: 1,
 }
@@ -66,7 +66,7 @@ _ANY_RARITY_WEIGHTS = {
     StickerRarity.UNCOMMON: 25,
     StickerRarity.RARE: 15,
     StickerRarity.EPIC: 6,
-    StickerRarity.HOLOGRAPHIC: 3,
+    StickerRarity.PRISMATIC: 3,
     StickerRarity.FULL_ART: 0.7,
     StickerRarity.SECRET_RARE: 0.3,
 }
@@ -76,9 +76,16 @@ _VARIANT_WEIGHTS = {
     StickerVariant.BASE: 50,
     StickerVariant.SHINY: 25,
     StickerVariant.BATTLE_SCENE: 12,
-    StickerVariant.CHIBI: 8,
-    StickerVariant.MANGA_PANEL: 4,
-    StickerVariant.FULL_ILLUSTRATION: 1,
+    StickerVariant.WATERCOLOR: 8,
+    StickerVariant.SKETCH: 4,
+    StickerVariant.TV_90S: 6,
+    StickerVariant.CARTOON: 6,
+    StickerVariant.COLOR_SWAP: 5,
+    StickerVariant.BURN_SCROLL: 4,
+    StickerVariant.NEON_GLOW: 3,
+    StickerVariant.GLITTER: 2,
+    StickerVariant.HOLOGRAPHIC: 2,
+    StickerVariant.CHROME: 2,
 }
 
 # Level milestones that upgrade sticker rarity
@@ -86,7 +93,7 @@ _LEVEL_RARITY_UPGRADES: dict[int, str] = {
     25: StickerRarity.UNCOMMON,
     50: StickerRarity.RARE,
     75: StickerRarity.EPIC,
-    100: StickerRarity.HOLOGRAPHIC,
+    100: StickerRarity.PRISMATIC,
 }
 
 # Secret rare drop chance when catching at 1 HP
@@ -108,20 +115,27 @@ PACK_PRICE_RYO: int = 500  # cost of one sticker pack
 # ────────────────────────────────────────────────────────────────────────────
 
 # ── Album completion (GDD §20.13) ────────────────────────────────────────────
-# 7 rarities × 6 non-ANIME variants = 42 valid (rarity, variant) slots per Pokemon.
+# 7 rarities × 13 non-ANIME variants = 91 valid (rarity, variant) slots per Pokemon.
 # ANIME variant is excluded — it is only available on SECRET_RARE and is a
 # cosmetic bonus that does not count toward completion.
 _COMPLETION_VARIANTS: list[str] = [
     StickerVariant.BASE,
     StickerVariant.SHINY,
     StickerVariant.BATTLE_SCENE,
-    StickerVariant.CHIBI,
-    StickerVariant.MANGA_PANEL,
-    StickerVariant.FULL_ILLUSTRATION,
+    StickerVariant.WATERCOLOR,
+    StickerVariant.SKETCH,
+    StickerVariant.NEON_GLOW,
+    StickerVariant.BURN_SCROLL,
+    StickerVariant.TV_90S,
+    StickerVariant.HOLOGRAPHIC,
+    StickerVariant.COLOR_SWAP,
+    StickerVariant.GLITTER,
+    StickerVariant.CHROME,
+    StickerVariant.CARTOON,
 ]
 _COMPLETION_RARITIES: list[str] = list(StickerRarity.values)  # all 7
 
-POKEMON_COMPLETION_SLOTS: int = len(_COMPLETION_RARITIES) * len(_COMPLETION_VARIANTS)  # 42
+POKEMON_COMPLETION_SLOTS: int = len(_COMPLETION_RARITIES) * len(_COMPLETION_VARIANTS)  # 91
 
 # Rewards for completing all 42 slots of a single Pokemon
 POKEMON_COMPLETE_DUST: int = 500
@@ -294,7 +308,7 @@ class StickerService:
     _BUNDLE_GUARANTEED_RARE_WEIGHTS = [
         (StickerRarity.RARE, 55),
         (StickerRarity.EPIC, 25),
-        (StickerRarity.HOLOGRAPHIC, 15),
+        (StickerRarity.PRISMATIC, 15),
         (StickerRarity.FULL_ART, 4),
         (StickerRarity.SECRET_RARE, 1),
     ]
@@ -303,7 +317,7 @@ class StickerService:
         (StickerRarity.UNCOMMON, 30),
         (StickerRarity.RARE, 20),
         (StickerRarity.EPIC, 10),
-        (StickerRarity.HOLOGRAPHIC, 4),
+        (StickerRarity.PRISMATIC, 4),
         (StickerRarity.FULL_ART, 1),
     ]
 
@@ -357,7 +371,7 @@ class StickerService:
         elif player.pity_full_art >= _PITY_FULL_ART:
             pity_override = StickerRarity.FULL_ART
         elif player.pity_holographic >= _PITY_HOLOGRAPHIC:
-            pity_override = StickerRarity.HOLOGRAPHIC
+            pity_override = StickerRarity.PRISMATIC
 
         stickers: list[Sticker] = []
         common_weights = self._BUNDLE_COMMON_POOL_WEIGHTS if is_bundle else _COMMON_POOL_WEIGHTS
@@ -393,7 +407,7 @@ class StickerService:
         rarities_obtained = {s.rarity for s in stickers}
         got_secret_rare = StickerRarity.SECRET_RARE in rarities_obtained
         got_full_art = got_secret_rare or StickerRarity.FULL_ART in rarities_obtained
-        got_holographic = got_full_art or StickerRarity.HOLOGRAPHIC in rarities_obtained
+        got_holographic = got_full_art or StickerRarity.PRISMATIC in rarities_obtained
 
         player.pity_holographic = 0 if got_holographic else player.pity_holographic + 1
         player.pity_full_art = 0 if got_full_art else player.pity_full_art + 1

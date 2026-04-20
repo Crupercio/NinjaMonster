@@ -716,6 +716,22 @@
   <!-- Player side -->
   <div class="team-side">
     <div class="team-side-label">Your Team ({{ battle.player_one }})</div>
+    <!-- Player chakra pool -->
+    <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+      <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:2px;color:#7c3aed;font-family:'Chakra Petch',sans-serif;white-space:nowrap;">Chakra</span>
+      <div class="chakra-bar-wrap" style="flex:1;">
+        <div class="chakra-bar {% if player_chakra == 100 %}chakra-full{% endif %}"
+             id="team-chakra-bar-player"
+             style="width:{{ player_chakra|default:0 }}%"></div>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:#a78bfa;white-space:nowrap;"
+            id="team-chakra-text-player">{{ player_chakra|default:0 }}/100</span>
+    </div>
+    {% if player_chakra == 100 %}
+    <div style="font-size:0.6rem;font-weight:700;color:#c4b5fd;letter-spacing:1px;text-align:center;text-transform:uppercase;animation:chakra-pulse 1.2s ease-in-out infinite;margin-bottom:0.2rem;">
+      CHAKRA OVERLOAD
+    </div>
+    {% endif %}
     <div class="grid-col-labels">
       <div class="grid-col-label">Back</div>
       <div class="grid-col-label is-front">Front</div>
@@ -789,6 +805,22 @@
   <!-- Opponent side -->
   <div class="team-side">
     <div class="team-side-label">Opponent ({% if battle.player_two %}{{ battle.player_two }}{% else %}AI{% endif %})</div>
+    <!-- Opponent chakra pool -->
+    <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+      <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:2px;color:#7c3aed;font-family:'Chakra Petch',sans-serif;white-space:nowrap;">Chakra</span>
+      <div class="chakra-bar-wrap" style="flex:1;">
+        <div class="chakra-bar {% if opponent_chakra == 100 %}chakra-full{% endif %}"
+             id="team-chakra-bar-opponent"
+             style="width:{{ opponent_chakra|default:0 }}%"></div>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:#a78bfa;white-space:nowrap;"
+            id="team-chakra-text-opponent">{{ opponent_chakra|default:0 }}/100</span>
+    </div>
+    {% if opponent_chakra == 100 %}
+    <div style="font-size:0.6rem;font-weight:700;color:#c4b5fd;letter-spacing:1px;text-align:center;text-transform:uppercase;animation:chakra-pulse 1.2s ease-in-out infinite;margin-bottom:0.2rem;">
+      CHAKRA OVERLOAD
+    </div>
+    {% endif %}
     <div class="grid-col-labels">
       <div class="grid-col-label is-front">Front</div>
       <div class="grid-col-label">Back</div>
@@ -955,6 +987,23 @@
                       </button>
                       {% endwith %}
                     {% else %}
+                      {% with cost=move.chakra_cost|default:0 %}
+                      {% if cost > player_chakra %}
+                      {# Not enough chakra — show as locked #}
+                      <button type="button" class="mystery-toggle on-cooldown" disabled
+                              id="mystery-btn-{{ slot.pk }}">
+                        <span class="mystery-toggle-icon" style="font-size:1rem;">🔒</span>
+                        <div style="flex:1;min-width:0;">
+                          <span class="mystery-toggle-label">{{ move.themed_name|default:move.name }}</span>
+                          <span class="mystery-toggle-meta" style="color:#f87171;">
+                            Need {{ cost }} chakra (have {{ player_chakra }})
+                          </span>
+                          <div class="chakra-bar-wrap">
+                            <div class="chakra-bar" style="width:{% widthratio player_chakra cost 100 %}%"></div>
+                          </div>
+                        </div>
+                      </button>
+                      {% else %}
                       <button type="button"
                               class="mystery-toggle chakra-ready"
                               id="mystery-btn-{{ slot.pk }}"
@@ -970,12 +1019,15 @@
                           <span class="mystery-toggle-meta">
                             {% if move.power %}{{ move.power }} pwr{% endif %}
                             {% if move.applies_status %} · →{{ move.applies_status.get_name_display }}{% endif %}
+                            <span style="color:#c4b5fd;"> · {{ cost }} chakra</span>
                           </span>
                           <div class="chakra-bar-wrap">
                             <div class="chakra-bar chakra-full" style="width:100%"></div>
                           </div>
                         </div>
                       </button>
+                      {% endif %}
+                      {% endwith %}
                     {% endif %}
                   {% endwith %}
                 {% endwith %}

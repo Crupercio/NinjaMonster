@@ -77,6 +77,16 @@ CHAKRA_BEATS: dict[str, str] = {
     "water": "fire",
 }
 
+# ── Team Chakra Pool constants ────────────────────────────────────────────────
+CHAKRA_MAX: int = 100
+CHAKRA_REGEN_BASE: int = 20          # flat per round, per team
+CHAKRA_REGEN_STANDARD_HIT: int = 3  # per standard move that deals damage
+CHAKRA_REGEN_COMBO_LINK: int = 5    # per combo chain link (chain_position > 0)
+CHAKRA_REGEN_HIT_RECEIVED: int = 2  # per hit that deals damage to the team
+CHAKRA_STEAL_AMOUNT: int = 15       # Ghost/Dark moves drain this from enemy team
+CHAKRA_SURGE_ON_FAINT: int = 30     # bonus when one of your Pokemon faints
+_CHAKRA_STEAL_TYPES: frozenset[str] = frozenset({"Ghost", "Dark"})
+
 # Phase 3 — penetration by primary_role (fraction of defense ignored)
 _ROLE_PENETRATION: dict[str, float] = {
     "combo": 0.10,
@@ -540,7 +550,7 @@ class ComboChainEngine:
         )
 
         # Build the per-action combat log line visible in the battle log panel.
-        move_display = move.themed_name or move.name
+        move_display = move.name
         if is_combo:
             msg_parts = [f"↳ [COMBO] {attacker_slot.pokemon.name} → {move_display} → {target_slot.pokemon.name}"]
         else:
@@ -782,7 +792,7 @@ class ComboChainEngine:
         self, battle: Battle, actions: list[BattleAction], round_number: int
     ) -> None:
         """Create BattleLog entries summarising the full combo chain for UI display."""
-        move_names = " → ".join(a.move.themed_name or a.move.name for a in actions)
+        move_names = " → ".join(a.move.name for a in actions)
         chain_len = len(actions)
         message = f"Chain x{chain_len} — {move_names}!"
 
@@ -806,7 +816,7 @@ class ComboChainEngine:
                     message=(
                         f"{'[COMBO] ' if action.is_combo_triggered else ''}"
                         f"{action.attacker_slot.pokemon.name} uses "
-                        f"{action.move.themed_name or action.move.name}{dmg_str}{status_str}"
+                        f"{action.move.name}{dmg_str}{status_str}"
                     ),
                     log_type=LogType.COMBO if action.is_combo_triggered else LogType.ACTION,
                     chain_position=i,
@@ -897,13 +907,14 @@ class BattleService:
 
     @transaction.atomic
     def set_team(
-        self, battle: Battle, user: User, pokemon_ids: list[int]
+        self, battle: Battle, user: User, pokemon_ids: list[int], level: int = 50
     ) -> BattleTeam:
         """
         Assign a team of exactly 6 Pokemon to a battle participant.
 
         pokemon_ids: list of Pokemon PKs in slot order (index 0 = slot 1).
         Positions 1–4 are active; positions 5–6 are bench.
+        level: BattleSlot level for all slots (default 50; pass a lower value for tutorials).
         """
         if len(pokemon_ids) != 6:
             raise ValueError(f"A team must have exactly 6 Pokemon, got {len(pokemon_ids)}")
@@ -926,7 +937,7 @@ class BattleService:
             if pokemon is None:
                 raise ValueError(f"Pokemon with id {poke_id} does not exist")
 
-            level = 50
+
             max_hp = pokemon.calculate_max_hp(level)
             grid_pos = POSITION_TO_GRID[position]
             is_active = grid_pos in ACTIVE_GRID_POSITIONS
@@ -1044,6 +1055,10 @@ class BattleService:
 
         battle.status = BattleStatus.ACTIVE
         battle.save(update_fields=["status"])
+
+        # Initialize chakra pools to base regen so round 1 is playable
+        battle.teams.all().update(chakra_pool=CHAKRA_REGEN_BASE)
+
         BattleLog.objects.create(
             battle=battle,
             round_number=0,
@@ -1085,6 +1100,29 @@ class BattleService:
             for slot in team.slots.all():
                 if not slot.is_fainted and slot.is_active:
                     _resolve_held_effect("passive", slot, round_obj)
+
+        # ── Chakra regen phase (base regen at round start) ────────────────────
+        teams_by_pk: dict[int, BattleTeam] = {}
+        for team in battle.teams.all():
+            team.chakra_pool = min(CHAKRA_MAX, team.chakra_pool + CHAKRA_REGEN_BASE)
+            team.save(update_fields=["chakra_pool"])
+            teams_by_pk[team.pk] = team
+            if team.chakra_pool == CHAKRA_MAX:
+                BattleLog.objects.create(
+                    battle=battle,
+                    round_number=battle.current_round,
+                    message=f"{team.owner}'s chakra is at MAXIMUM — unleash everything!",
+                    log_type=LogType.INFO,
+                )
+
+        # Build slot→team lookup for fast chakra attribution during action loop
+        slot_team_map: dict[int, BattleTeam] = {}
+        for team in teams_by_pk.values():
+            for slot in team.slots.all():
+                slot_team_map[slot.pk] = team
+
+        # ── Per-action chakra deltas (accumulated, written once per action) ───
+        chakra_deltas: dict[int, int] = {pk: 0 for pk in teams_by_pk}
 
         all_actions = player_one_actions + player_two_actions
         sorted_actions = self._sort_actions(all_actions)
@@ -1159,13 +1197,52 @@ class BattleService:
                     )
                     continue
 
-            self._combo_engine.resolve_combo_chain(
+            chain_actions = self._combo_engine.resolve_combo_chain(
                 battle=battle,
                 attacker_slot=attacker_slot,
                 move=move,
                 target_slot=target_slot,
                 round_number=battle.current_round,
             )
+
+            # ── Chakra attribution from this action's chain ───────────────────
+            for chain_action in (chain_actions or []):
+                dealt = chain_action.damage_dealt or 0
+                chain_move = chain_action.move
+                chain_move_type = getattr(getattr(chain_move, "move_type", None), "name", None)
+                action_atk_team = slot_team_map.get(chain_action.attacker_slot_id)
+                action_def_team = slot_team_map.get(chain_action.target_slot_id)
+
+                if dealt > 0:
+                    # Standard hits generate chakra for attacker team
+                    if chain_move.slot_type == MoveSlotType.STANDARD and action_atk_team:
+                        chakra_deltas[action_atk_team.pk] += CHAKRA_REGEN_STANDARD_HIT
+                    # Defender gains desperation chakra from taking hits
+                    if action_def_team:
+                        chakra_deltas[action_def_team.pk] += CHAKRA_REGEN_HIT_RECEIVED
+                    # Ghost/Dark moves steal chakra from the defending team
+                    if chain_move_type in _CHAKRA_STEAL_TYPES and action_atk_team and action_def_team:
+                        chakra_deltas[action_atk_team.pk] += CHAKRA_STEAL_AMOUNT
+                        chakra_deltas[action_def_team.pk] -= CHAKRA_STEAL_AMOUNT
+
+                # Combo chain links generate bonus chakra per link for attacker
+                if chain_action.is_combo_triggered and action_atk_team:
+                    chakra_deltas[action_atk_team.pk] += CHAKRA_REGEN_COMBO_LINK
+
+                # Chakra Surge: target fainted from this hit → target's team gets a burst
+                if dealt > 0 and action_def_team:
+                    def_slot = BattleSlot.objects.filter(pk=chain_action.target_slot_id).values_list("is_fainted", flat=True).first()
+                    if def_slot:
+                        chakra_deltas[action_def_team.pk] += CHAKRA_SURGE_ON_FAINT
+
+            # Apply accumulated chakra deltas for this action
+            for team_pk, delta in chakra_deltas.items():
+                if delta == 0:
+                    continue
+                team = teams_by_pk[team_pk]
+                team.chakra_pool = max(0, min(CHAKRA_MAX, team.chakra_pool + delta))
+                team.save(update_fields=["chakra_pool"])
+            chakra_deltas = {pk: 0 for pk in teams_by_pk}
 
             # Apply cooldown for this move
             self._apply_move_cooldown(attacker_slot, move)
@@ -1341,6 +1418,7 @@ class BattleService:
             "combo_logs": combo_logs,
             "current_round": battle.current_round,
             "status": battle.status,
+            "chakra_by_team": {team.pk: team.chakra_pool for team in teams},
         }
 
     def check_winner(self, battle: Battle) -> User | None:
@@ -1362,6 +1440,7 @@ class BattleService:
 
         return None
 
+    @transaction.atomic
     def prepare_player_actions(
         self,
         battle: Battle,
@@ -1426,6 +1505,10 @@ class BattleService:
             .prefetch_related("pokemon__moves")
         )
 
+        # Lock the team row to safely read-and-deduct chakra (prevents double-spend)
+        locked_team = BattleTeam.objects.select_for_update().get(pk=player_team.pk)
+        chakra_remaining: int = locked_team.chakra_pool
+
         actions: list[dict] = []
         for slot in active_slots:
             sub = submitted.get(slot.pk, {})
@@ -1442,7 +1525,15 @@ class BattleService:
                 if not mystery_blocked:
                     mystery = self._get_mystery_move(slot)
                     if mystery and (slot.pk, mystery.pk) not in cooldown_set:
-                        move = mystery
+                        cost = mystery.chakra_cost or 0
+                        if cost <= chakra_remaining:
+                            move = mystery
+                            chakra_remaining -= cost
+                        else:
+                            logger.debug(
+                                "Slot %d (%s): mystery blocked — needs %d chakra, only %d available.",
+                                slot.pk, slot.pokemon.name, cost, chakra_remaining,
+                            )
 
             if move is None:
                 move = self._get_standard_move(slot)
@@ -1460,6 +1551,10 @@ class BattleService:
                 "move_id": move.pk,
                 "target_id": auto_target.pk,
             })
+
+        # Persist spent chakra
+        locked_team.chakra_pool = chakra_remaining
+        locked_team.save(update_fields=["chakra_pool"])
 
         return actions
 
@@ -1634,7 +1729,7 @@ class BattleService:
                 battle=battle,
                 round_number=round_obj.round_number,
                 message=(
-                    f"✦ {slot.pokemon.name} used {support_move.themed_name or support_move.name} "
+                    f"✦ {slot.pokemon.name} used {support_move.name} "
                     f"[Support]!"
                 ),
                 log_type=LogType.STATUS,

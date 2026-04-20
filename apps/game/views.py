@@ -198,11 +198,14 @@ class BattleView(LoginRequiredMixin, DetailView):
         state = _battle_service.get_battle_state(battle)
         context.update(state)
 
+        chakra_by_team = state.get("chakra_by_team", {})
         for team in state["teams"]:
             if team.owner == self.request.user:
                 context["player_team"] = team
+                context["player_chakra"] = chakra_by_team.get(team.pk, 0)
             else:
                 context["opponent_team"] = team
+                context["opponent_chakra"] = chakra_by_team.get(team.pk, 0)
 
         context["is_ai_battle"] = battle.is_ai_battle
         context["ai_difficulty"] = battle.ai_difficulty
@@ -395,7 +398,7 @@ class BattleActionView(LoginRequiredMixin, FormView):
                     "attacker_name": act.attacker_slot.pokemon.name,
                     "target_slot_pk": act.target_slot_id,
                     "target_name": act.target_slot.pokemon.name if act.target_slot else "",
-                    "move_name": act.move.themed_name or act.move.name,
+                    "move_name": act.move.name,
                     "damage": act.damage_dealt,
                     "is_combo": act.is_combo_triggered,
                     "chain_position": act.order_in_chain,

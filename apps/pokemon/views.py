@@ -50,10 +50,18 @@ class PokemonDetailView(DetailView):
     _SLOT_LABELS: tuple[tuple[str, str], ...] = (
         ("standard", "Basic Technique"),
         ("chase", "Chase Technique"),
-        ("special", "Secret Technique"),
-        ("support", "Support Technique"),
-        ("passive", "Ninja Trait"),
+        ("mystery", "Secret Technique"),
+        ("passive_1", "Ninja Trait"),
+        ("passive_2", "Hidden Trait"),
     )
+
+    _SLOT_DESCRIPTIONS: dict[str, str] = {
+        "standard": "Primary attack — applies a status to start combo chains.",
+        "chase":    "Auto-fires when an ally inflicts the trigger status. Continues the chain.",
+        "mystery":  "High-power finisher. Use after the chain is established.",
+        "passive_1": "Passive team synergy — activates based on team composition.",
+        "passive_2": "Item passive — activates on a specific trigger condition.",
+    }
 
     def get_queryset(self):
         return Pokemon.objects.select_related(
@@ -77,7 +85,8 @@ class PokemonDetailView(DetailView):
                 combo_moves.append(entry.move)
 
         context["move_pool_by_slot"] = [
-            (label, by_slot[slot]) for slot, label in self._SLOT_LABELS
+            (label, self._SLOT_DESCRIPTIONS.get(slot, ""), by_slot[slot])
+            for slot, label in self._SLOT_LABELS
         ]
         context["combo_moves"] = combo_moves
         context["is_battle_ready"] = self.object.is_battle_ready
@@ -448,9 +457,9 @@ class OwnedPokemonDetailView(LoginRequiredMixin, DetailView):
         context["move_slots"] = [
             ("Basic Technique", "standard", op.move_standard),
             ("Chase Technique", "chase", op.move_chase),
-            ("Mystery", "mystery", op.move_special),
-            ("Passive 1", "passive_1", op.move_support),
-            ("Passive 2", "passive_2", op.move_passive),
+            ("Secret Technique", "mystery", op.move_special),
+            ("Ninja Trait", "passive_1", op.move_support),
+            ("Hidden Trait", "passive_2", op.move_passive),
         ]
 
         # Combo synergy hints based on this pokemon's equipped moves
@@ -623,7 +632,7 @@ class ComboAtlasView(TemplateView):
             bucket = status_map.setdefault(sname, {"key": skey, "primers": [], "chasers": []})
             bucket["primers"].append({
                 "species": entry.species,
-                "move_name": entry.move.themed_name or entry.move.name,
+                "move_name": entry.move.name,
                 "move_type": entry.move.move_type,
                 "power": entry.move.power,
                 "slot": entry.slot_type,
@@ -635,7 +644,7 @@ class ComboAtlasView(TemplateView):
             bucket = status_map.setdefault(sname, {"key": skey, "primers": [], "chasers": []})
             bucket["chasers"].append({
                 "species": entry.species,
-                "move_name": entry.move.themed_name or entry.move.name,
+                "move_name": entry.move.name,
                 "move_type": entry.move.move_type,
                 "power": entry.move.power,
                 "condition": entry.move.chase_condition or "",
@@ -668,13 +677,64 @@ class ComboSimulatorView(TemplateView):
     template_name = "pokemon/combo_simulator.html"
 
     def get_context_data(self, **kwargs: object) -> dict:
+        from .models import SpeciesMovePool
+        from collections import defaultdict
+
         context = super().get_context_data(**kwargs)
         context["all_species"] = (
             Pokemon.objects
             .filter(pokedex_number__isnull=False)
+            .select_related("primary_type")
             .order_by("pokedex_number")
-            .values("id", "name", "pokedex_number")
+            .values("id", "name", "pokedex_number", "primary_type__name")
         )
+
+        # Pre-compute per-species effect data for the client-side filter.
+        # applies: all statuses any move inflicts (including chase moves that also apply).
+        # chains: [trigger, applies] pairs from chase moves (trigger_status + applies_status).
+        pool_qs = (
+            SpeciesMovePool.objects
+            .filter(species__pokedex_number__isnull=False)
+            .select_related("move__applies_status", "move__trigger_status")
+            .values(
+                "species_id",
+                "move__applies_status__name",
+                "move__trigger_status__name",
+            )
+        )
+
+        applies_map: dict[int, set] = defaultdict(set)
+        chains_map: dict[int, set] = defaultdict(set)
+
+        for row in pool_qs:
+            sid = row["species_id"]
+            app = row["move__applies_status__name"]
+            trig = row["move__trigger_status__name"]
+            if app:
+                applies_map[sid].add(app)
+            if trig:
+                # chase pair: (chases, applies) — applies may be None for pure chase moves
+                chains_map[sid].add((trig, app or ""))
+
+        # Serialize as dicts keyed by species id for JSON embedding
+        effect_map = {}
+        for sid in set(list(applies_map.keys()) + list(chains_map.keys())):
+            effect_map[sid] = {
+                "applies": sorted(applies_map[sid]),
+                "chains": [list(p) for p in sorted(chains_map[sid])],
+            }
+
+        context["effect_map_json"] = json.dumps(effect_map)
+
+        # All statuses that appear in applies or chase triggers, for building filter pills
+        all_applies = sorted({s for sset in applies_map.values() for s in sset})
+        all_triggers = sorted({p[0] for pset in chains_map.values() for p in pset})
+        all_chase_applies = sorted({p[1] for pset in chains_map.values() for p in pset if p[1]})
+
+        context["all_applies_statuses"] = json.dumps(all_applies)
+        context["all_trigger_statuses"] = json.dumps(all_triggers)
+        context["all_chase_applies_statuses"] = json.dumps(all_chase_applies)
+
         return context
 
 
@@ -697,7 +757,7 @@ class ComboSimulatorMovesAPI(View):
             slot = entry.slot_type
             slots.setdefault(slot, []).append({
                 "id": entry.move.id,
-                "name": entry.move.themed_name or entry.move.name,
+                "name": entry.move.name,
                 "type": entry.move.move_type.name if entry.move.move_type else None,
                 "power": entry.move.power,
                 "applies_status": entry.move.applies_status.name if entry.move.applies_status_id else None,
@@ -749,7 +809,7 @@ class ComboSimulatorChainsAPI(View):
 
             for move in moves:
                 slot = slot_by_move.get(move.id, "")
-                move_label = move.themed_name or move.name
+                move_label = move.name
                 type_name = move.move_type.name if move.move_type else None
 
                 if move.applies_status_id and slot != "chase":
@@ -768,26 +828,133 @@ class ComboSimulatorChainsAPI(View):
                     skey = move.trigger_status.name
                     slabel = move.trigger_status.get_name_display()
                     bucket = status_map.setdefault(skey, {"label": slabel, "primers": [], "chasers": []})
+                    # Improvement 1: flag bridge moves (chase that also applies a status → depth-2 chain)
+                    is_bridge = bool(move.applies_status_id)
                     bucket["chasers"].append({
                         "species": species_name,
                         "move": move_label,
                         "type": type_name,
                         "power": move.power,
                         "condition": move.chase_condition or "",
+                        "is_bridge": is_bridge,
+                        "bridge_applies_key": move.applies_status.name if is_bridge else None,
+                        "bridge_applies_label": move.applies_status.get_name_display() if is_bridge else None,
                     })
 
-        chains = [
-            {
+        # ── Improvement 5: pairs sorted by combined power; Improvement 1: depth-2 bridge detection ──
+        chains = []
+        for skey, data in sorted(status_map.items(), key=lambda x: x[1]["label"]):
+            if not (data["primers"] and data["chasers"]):
+                continue
+            pairs = []
+            for primer in data["primers"]:
+                for chaser in data["chasers"]:
+                    pairs.append({
+                        "primer": primer,
+                        "chaser": chaser,
+                        "total_power": (primer["power"] or 0) + (chaser["power"] or 0),
+                    })
+            pairs.sort(key=lambda p: p["total_power"], reverse=True)
+            chains.append({
                 "status": data["label"],
                 "status_key": skey,
                 "primers": data["primers"],
                 "chasers": data["chasers"],
-            }
-            for skey, data in sorted(status_map.items(), key=lambda x: x[1]["label"])
-            if data["primers"] and data["chasers"]
-        ]
+                "pairs": pairs,
+            })
+
+        # ── Improvement 1: detect depth-2 chains (bridge moves) ──
+        # A bridge move is a chase slot move that also applies a status (triggering a further chase).
+        # We scan status_map for chasers that are also primers in another bucket (via is_bridge flag).
+        deep_chains = []
+        for chain_a in chains:
+            for pair_a in chain_a["pairs"]:
+                bridge = pair_a["chaser"]
+                if not bridge.get("is_bridge"):
+                    continue
+                bridge_applies = bridge.get("bridge_applies_key")
+                if not bridge_applies:
+                    continue
+                # Find the second-level chain triggered by the bridge's applied status
+                for chain_b in chains:
+                    if chain_b["status_key"] != bridge_applies:
+                        continue
+                    for chaser_b in chain_b["chasers"]:
+                        if chaser_b["species"] == bridge["species"]:
+                            continue  # skip self-chain
+                        deep_chains.append({
+                            "depth": 2,
+                            "status_a": chain_a["status"],
+                            "status_a_key": chain_a["status_key"],
+                            "status_b": chain_b["status"],
+                            "status_b_key": chain_b["status_key"],
+                            "primer": pair_a["primer"],
+                            "bridge": bridge,
+                            "chaser": chaser_b,
+                            "total_power": (pair_a["primer"]["power"] or 0) + (bridge.get("power") or 0) + (chaser_b["power"] or 0),
+                        })
+        deep_chains.sort(key=lambda d: d["total_power"], reverse=True)
+
+        # ── Improvements 4 + 6: suggestions with passive_1, merged roles ──
+        from .models import SpeciesMovePool
+        from apps.game.services import COMBO_AMP
+        team_names = {m.get("species_name") for m in team}
+        active_statuses = set(status_map.keys())
+        suggestions: dict[str, dict] = {}
+
+        def _get_or_init(sname: str, dex: int) -> dict:
+            if sname not in suggestions:
+                suggestions[sname] = {"name": sname, "dex": dex, "roles": [], "reasons": []}
+            return suggestions[sname]
+
+        if active_statuses:
+            chasers_qs = (
+                SpeciesMovePool.objects
+                .filter(slot_type="chase", move__trigger_status__name__in=active_statuses)
+                .exclude(species__name__in=team_names)
+                .select_related("species", "move__trigger_status")
+                .order_by("species__pokedex_number")
+            )
+            for entry in chasers_qs[:20]:
+                sname = entry.species.name
+                node = _get_or_init(sname, entry.species.pokedex_number)
+                if "chaser" not in node["roles"]:
+                    node["roles"].append("chaser")
+                label = entry.move.trigger_status.get_name_display()
+                node["reasons"].append(f"Chains on {label} via {entry.move.name}")
+
+            team_trigger_statuses = {skey for skey, data in status_map.items() if data["chasers"]}
+            if team_trigger_statuses:
+                # Improvement 4: include passive_1 moves as primers
+                primers_qs = (
+                    SpeciesMovePool.objects
+                    .filter(
+                        slot_type__in=("standard", "mystery", "passive_1"),
+                        move__applies_status__name__in=team_trigger_statuses,
+                    )
+                    .exclude(species__name__in=team_names)
+                    .select_related("species", "move__applies_status")
+                    .order_by("species__pokedex_number")
+                )
+                for entry in primers_qs[:20]:
+                    sname = entry.species.name
+                    node = _get_or_init(sname, entry.species.pokedex_number)
+                    if "primer" not in node["roles"]:
+                        node["roles"].append("primer")
+                    label = entry.move.applies_status.get_name_display()
+                    slot_tag = " (passive)" if entry.slot_type == "passive_1" else ""
+                    node["reasons"].append(f"Applies {label} via {entry.move.name}{slot_tag}")
+
+        # Improvement 6: sort by most synergistic (most reasons) first
+        suggestion_list = sorted(
+            suggestions.values(),
+            key=lambda x: (-len(x["reasons"]), x["dex"]),
+        )[:10]
 
         return JsonResponse({
             "chains": chains,
-            "total_links": sum(len(c["primers"]) * len(c["chasers"]) for c in chains),
+            "deep_chains": deep_chains,
+            "total_links": sum(len(c["pairs"]) for c in chains),
+            "suggestions": suggestion_list,
+            "combo_amp": list(COMBO_AMP),
         })

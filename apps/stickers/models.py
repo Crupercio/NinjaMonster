@@ -2,7 +2,7 @@
 Sticker collectible system models.
 
 Inspired by Pokemon TCG Pocket, Marvel Snap, Disney Lorcana, and One Piece TCG.
-7 rarity tiers × 6 art variants per Pokemon.
+7 rarity tiers × 13 art variants per Pokemon.
 """
 import logging
 
@@ -18,7 +18,7 @@ class StickerRarity(models.TextChoices):
     UNCOMMON = "uncommon", "Uncommon"
     RARE = "rare", "Rare"
     EPIC = "epic", "Epic"
-    HOLOGRAPHIC = "holographic", "Holographic"
+    PRISMATIC = "prismatic", "Prismatic"
     FULL_ART = "full_art", "Full Art"
     SECRET_RARE = "secret_rare", "Secret Rare"
 
@@ -27,9 +27,16 @@ class StickerVariant(models.TextChoices):
     BASE = "base", "Base"
     SHINY = "shiny", "Shiny"
     BATTLE_SCENE = "battle_scene", "Battle Scene"
-    CHIBI = "chibi", "Chibi"
-    MANGA_PANEL = "manga_panel", "Manga Panel"
-    FULL_ILLUSTRATION = "full_illustration", "Full Illustration"
+    WATERCOLOR = "watercolor", "Watercolor"
+    SKETCH = "sketch", "Sketch"
+    NEON_GLOW = "neon_glow", "Neon Glow"
+    BURN_SCROLL = "burn_scroll", "Burn Scroll"
+    TV_90S = "tv_90s", "90s TV"
+    HOLOGRAPHIC = "holographic", "Holographic"
+    COLOR_SWAP = "color_swap", "Color Swap"
+    GLITTER = "glitter", "Glitter"
+    CHROME = "chrome", "Chrome"
+    CARTOON = "cartoon", "Cartoon"
     ANIME = "anime", "Anime"
 
 
@@ -39,7 +46,7 @@ CRAFT_COSTS: dict[str, int] = {
     StickerRarity.UNCOMMON: 25,
     StickerRarity.RARE: 75,
     StickerRarity.EPIC: 150,
-    StickerRarity.HOLOGRAPHIC: 300,
+    StickerRarity.PRISMATIC: 300,
     StickerRarity.FULL_ART: 500,
     StickerRarity.SECRET_RARE: 1000,
 }
@@ -50,7 +57,7 @@ DUST_VALUES: dict[str, int] = {
     StickerRarity.UNCOMMON: 10,
     StickerRarity.RARE: 25,
     StickerRarity.EPIC: 50,
-    StickerRarity.HOLOGRAPHIC: 100,
+    StickerRarity.PRISMATIC: 100,
     StickerRarity.FULL_ART: 200,
     StickerRarity.SECRET_RARE: 400,
 }
@@ -61,7 +68,7 @@ DISMANTLE_VALUES: dict[str, int] = {
     StickerRarity.UNCOMMON: 10,
     StickerRarity.RARE: 25,
     StickerRarity.EPIC: 60,
-    StickerRarity.HOLOGRAPHIC: 120,
+    StickerRarity.PRISMATIC: 120,
     StickerRarity.FULL_ART: 200,
     StickerRarity.SECRET_RARE: 300,
 }
@@ -482,7 +489,7 @@ PAGE_REWARDS: dict[str, dict[str, int]] = {
     StickerRarity.UNCOMMON:    {"dust": 400,  "ryo": 0,     "packs": 0},
     StickerRarity.RARE:        {"dust": 150,  "ryo": 0,     "packs": 1},
     StickerRarity.EPIC:        {"dust": 300,  "ryo": 0,     "packs": 2},
-    StickerRarity.HOLOGRAPHIC: {"dust": 600,  "ryo": 1000,  "packs": 3},
+    StickerRarity.PRISMATIC: {"dust": 600,  "ryo": 1000,  "packs": 3},
     StickerRarity.FULL_ART:    {"dust": 1000, "ryo": 2500,  "packs": 5},
     StickerRarity.SECRET_RARE: {"dust": 2000, "ryo": 5000,  "packs": 10},
 }
@@ -533,7 +540,7 @@ BADGE_CRAFT_REQUIREMENTS: dict[str, dict[str, int | str]] = {
     BadgeTier.BRONZE:      {"rarity": StickerRarity.COMMON,      "copies": 3, "dust": 50},
     BadgeTier.SILVER:      {"rarity": StickerRarity.RARE,        "copies": 2, "dust": 150},
     BadgeTier.GOLD:        {"rarity": StickerRarity.EPIC,        "copies": 2, "dust": 300},
-    BadgeTier.HOLOGRAPHIC: {"rarity": StickerRarity.HOLOGRAPHIC, "copies": 1, "dust": 600},
+    BadgeTier.HOLOGRAPHIC: {"rarity": StickerRarity.PRISMATIC, "copies": 1, "dust": 600},
     BadgeTier.PRISMATIC:   {"rarity": StickerRarity.SECRET_RARE, "copies": 1, "dust": 1000},
 }
 

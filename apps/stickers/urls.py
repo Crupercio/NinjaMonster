@@ -17,6 +17,7 @@ from .views import (
     RegionalAlbumDetailView,
     RegionalAlbumIndexView,
     RemoveStickerView,
+    StickerDetailView,
     StickerGeneratorView,
     TradeCreateView,
     TradeDetailView,
@@ -29,6 +30,7 @@ urlpatterns = [
     # Classic album
     path("album/", AlbumView.as_view(), name="album"),
     path("album/<int:pokemon_pk>/", PokemonAlbumDetailView.as_view(), name="pokemon_album"),
+    path("sticker/<int:pokemon_pk>/<str:rarity>/<str:variant>/", StickerDetailView.as_view(), name="sticker_detail"),
     # Regional album (backend intact, no longer in main nav)
     path("album/regional/", RegionalAlbumIndexView.as_view(), name="regional_album_index"),
     path("album/regional/<str:region>/<str:rarity>/", RegionalAlbumDetailView.as_view(), name="regional_album_detail"),

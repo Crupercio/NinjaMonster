@@ -155,13 +155,8 @@
              style="width:{% widthratio op.experience op.exp_to_next_level 100 %}%;"></div>
       </div>
 
-      {# Training / idle state #}
-      {% if op.level >= 100 %}
-        <span class="max-level-badge">★ Max Level</span>
-        <div style="font-size:.72rem;color:var(--text-3);text-align:center;">
-          Visit <a href="{% url 'pokemon:mi_casa' %}" style="color:var(--accent-red);">Mi Casa</a> to manage this Pokémon.
-        </div>
-      {% elif op.is_training %}
+      {# Training / idle state — check training FIRST so max-level pokemon in training can still claim/cancel #}
+      {% if op.is_training %}
         {% if op.training_complete %}
           <span class="training-badge complete">✅ Training Complete!</span>
           <form method="post">
@@ -186,6 +181,11 @@
             </button>
           </form>
         {% endif %}
+      {% elif op.level >= 100 %}
+        <span class="max-level-badge">★ Max Level</span>
+        <div style="font-size:.72rem;color:var(--text-3);text-align:center;">
+          Visit <a href="{% url 'pokemon:mi_casa' %}" style="color:var(--accent-red);">Mi Casa</a> to manage this Pokémon.
+        </div>
       {% else %}
         {# Idle — show duration picker #}
         <form method="post">

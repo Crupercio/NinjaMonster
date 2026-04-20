@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load sticker_tags %}
+{% block title %}{{ pokemon.name }} — {{ rarity_label }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.sd-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem 1rem 4rem;
+  gap: 1.5rem;
+}
+
+.sd-back {
+  align-self: flex-start;
+  color: var(--text-3);
+  font-size: 0.8rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.sd-back:hover { color: var(--text-1); }
+
+/* ── Carousel ─────────────────────────────────────────────────── */
+.sd-carousel {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.sd-arrow {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 52px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-2, #cbd5e1);
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.sd-arrow:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.sd-arrow:disabled { opacity: 0.2; pointer-events: none; }
+
+/* ── Card ─────────────────────────────────────────────────────── */
+.sd-card {
+  position: relative;
+  width: 700px;
+  height: 950px;
+  flex-shrink: 0;
+}
+
+.sd-sprite {
+  position: absolute;
+  width: 475px;
+  height: 475px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -54%);
+  object-fit: contain;
+  image-rendering: auto;
+  z-index: 1;
+  transition: opacity 0.2s;
+}
+.sd-sprite.missing-sprite {
+  filter: brightness(0);
+  opacity: 0.2;
+}
+
+.sd-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.2s;
+}
+
+/* ── Info ─────────────────────────────────────────────────────── */
+.sd-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sd-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-1);
+  font-family: 'Chakra Petch', sans-serif;
+}
+.sd-labels {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sd-copies {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-gold, #e8b84b);
+}
+.sd-missing-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* ── Dots ─────────────────────────────────────────────────────── */
+.sd-dots {
+  display: flex;
+  gap: 0.45rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 300px;
+}
+.sd-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.15s, transform 0.15s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sd-dot.is-owned { background: rgba(255,255,255,0.35); }
+.sd-dot.is-active { background: var(--accent-gold, #e8b84b); transform: scale(1.35); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Build a JS-safe map from variant -> sprite URL server-side #}
+{% with sprite_map_open="{" %}
+<script>
+const SPRITE_URLS = {
+  {% for slide in slides %}"{{ slide.variant }}": "{{ pokemon.pokedex_number|sticker_sprite:slide.variant }}"{% if not forloop.last %},{% endif %}
+  {% endfor %}
+};
+const FRAME_URL = "/static/img/frames/{{ rarity }}.png";
+</script>
+{% endwith %}
+
+<div class="sd-page"
+     x-data="{
+       idx: {{ current_index }},
+       slides: {{ slides_json }},
+       get slide() { return this.slides[this.idx]; },
+       spriteUrl(v) { return SPRITE_URLS[v] || ''; },
+       prev() { if (this.idx > 0) this.idx--; },
+       next() { if (this.idx < this.slides.length - 1) this.idx++; }
+     }">
+
+  <a class="sd-back" href="javascript:history.back()">← Back</a>
+
+  <div class="sd-carousel">
+    <button class="sd-arrow" @click="prev" :disabled="idx === 0">‹</button>
+
+    <div class="sd-card">
+      <img class="sd-sprite"
+           :src="spriteUrl(slide.variant)"
+           :alt="'{{ pokemon.name }} ' + slide.variant_label">
+      <img class="sd-frame"
+           src="/static/img/frames/{{ rarity }}.png"
+           alt="">
+    </div>
+
+    <button class="sd-arrow" @click="next" :disabled="idx === slides.length - 1">›</button>
+  </div>
+
+  <div class="sd-info">
+    <div class="sd-name">{{ pokemon.name }}</div>
+    <div class="sd-labels" x-text="slide.variant_label + ' · {{ rarity_label }}'"></div>
+    <div class="sd-copies" x-text="slide.copies + '× owned'"></div>
+  </div>
+
+  <div class="sd-dots">
+    <template x-for="(s, i) in slides" :key="i">
+      <div class="sd-dot"
+           :class="{ 'is-owned': s.owned, 'is-active': i === idx }"
+           @click="idx = i"
+           :title="s.variant_label + (s.owned ? '' : ' (missing)')">
+      </div>
+    </template>
+  </div>
+
+</div>
+{% endblock %}

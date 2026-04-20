@@ -11,6 +11,7 @@ import random
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from apps.effects.models import ActiveStatusEffect
 from apps.pokemon.models import Move, MoveSlotType, Pokemon
@@ -148,6 +149,18 @@ class BattleAIService:
             raise ValueError("Not enough Pokemon in the database to build an AI team (need ≥6)")
         return random.sample(all_ids, 6)
 
+    def build_tutorial_ai_team_pokemon_ids(self) -> list[int]:
+        """Select 6 random Gen 1 Pokemon PKs for the tutorial AI opponent."""
+        gen1_ids = list(
+            Pokemon.objects.filter(pokedex_number__lte=151).values_list("pk", flat=True)
+        )
+        if len(gen1_ids) < 6:
+            gen1_ids = list(Pokemon.objects.values_list("pk", flat=True))
+        if len(gen1_ids) < 6:
+            raise ValueError("Not enough Pokemon in the database to build a tutorial AI team (need >=6)")
+        return random.sample(gen1_ids, 6)
+
+    @transaction.atomic
     def get_ai_actions(self, battle: "Battle") -> list[dict]:
         """
         Generate one action per non-fainted active AI slot.
@@ -200,19 +213,51 @@ class BattleAIService:
             ).values_list("slot_id", "move_id")
         )
 
-        actions: list[dict] = []
-        for slot in ai_team.slots.all():
-            if slot.is_fainted or not slot.is_active:
-                continue
+        # Chakra budget — lock row so we safely read-and-deduct
+        from apps.game.services import CHAKRA_MAX  # avoid circular at module level
+        locked_ai_team = BattleTeam.objects.select_for_update().get(pk=ai_team.pk)
+        chakra_remaining: int = locked_ai_team.chakra_pool
 
+        active_slots = [s for s in ai_team.slots.all() if not s.is_fainted and s.is_active]
+
+        # Greedy mystery selection: score every slot's mystery move, spend highest-value first
+        mystery_candidates: list[tuple[float, BattleSlot, Move]] = []
+        for slot in active_slots:
+            mystery_move = self._get_mystery_move(slot, cooldown_set)
+            if mystery_move is None:
+                continue
+            cost = mystery_move.chakra_cost or 0
+            if cost <= chakra_remaining:
+                score = mystery_move.power or 0
+                mystery_candidates.append((score, slot, mystery_move))
+
+        mystery_candidates.sort(key=lambda x: x[0], reverse=True)
+        slot_mystery_map: dict[int, Move] = {}
+        for score, slot, mystery_move in mystery_candidates:
+            cost = mystery_move.chakra_cost or 0
+            if cost <= chakra_remaining:
+                slot_mystery_map[slot.pk] = mystery_move
+                chakra_remaining -= cost
+
+        locked_ai_team.chakra_pool = chakra_remaining
+        locked_ai_team.save(update_fields=["chakra_pool"])
+
+        actions: list[dict] = []
+        for slot in active_slots:
             moves = self._get_available_moves(slot, cooldown_set)
             if not moves:
                 continue
 
             target = self._pick_target(alive_player_slots, difficulty)
-            move = self._pick_move(
-                slot, moves, target, difficulty, ai_team, player_combo_trigger_statuses
-            )
+
+            # Use greedy-selected mystery if this slot got one, else normal pick
+            if slot.pk in slot_mystery_map:
+                move = slot_mystery_map[slot.pk]
+            else:
+                non_mystery = [m for m in moves if m.slot_type != MoveSlotType.MYSTERY]
+                move = self._pick_move(
+                    slot, non_mystery or moves, target, difficulty, ai_team, player_combo_trigger_statuses
+                )
 
             actions.append({
                 "slot_id": slot.pk,
@@ -241,6 +286,18 @@ class BattleAIService:
         # If all non-passive moves are on cooldown, try standard as emergency fallback
         standard = [m for m in slot.pokemon.moves.all() if m.slot_type == MoveSlotType.STANDARD]
         return standard
+
+    @staticmethod
+    def _get_mystery_move(slot: BattleSlot, cooldown_set: set[tuple[int, int]]) -> "Move | None":
+        """Return the slot's mystery move if it exists and is not on cooldown."""
+        if slot.owned_pokemon_id is not None and slot.owned_pokemon and slot.owned_pokemon.move_special:
+            m = slot.owned_pokemon.move_special
+            if (slot.pk, m.pk) not in cooldown_set:
+                return m
+        for m in slot.pokemon.moves.all():
+            if m.slot_type == MoveSlotType.MYSTERY and (slot.pk, m.pk) not in cooldown_set:
+                return m
+        return None
 
     def _pick_target(self, alive_slots: list[BattleSlot], difficulty: str) -> BattleSlot:
         if difficulty == AIDifficulty.EASY:

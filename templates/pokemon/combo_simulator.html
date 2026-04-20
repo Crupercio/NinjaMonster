@@ -213,6 +213,67 @@
 .pair-amp { font-size: 0.6rem; color: #fbbf24; font-weight: 700; }
 .pair-condition { font-size: 0.6rem; color: #6b7280; font-style: italic; }
 
+/* ── Move status hints ────────────────────────────────────────── */
+.move-hint-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 2px 0 0 62px; /* indent past label */
+}
+.hint-applies {
+  font-size: 0.6rem; font-weight: 600;
+  color: #86efac; background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.25);
+  border-radius: 3px; padding: 1px 5px;
+}
+.hint-trigger {
+  font-size: 0.6rem; font-weight: 600;
+  color: #fde68a; background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 3px; padding: 1px 5px;
+}
+
+/* ── Suggested additions ──────────────────────────────────────── */
+.suggestions-section {
+  margin-top: 1.25rem;
+  background: #16213e;
+  border: 1px solid #1e3a6e;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.suggestions-header {
+  padding: 0.55rem 0.9rem;
+  background: #1a2744;
+  border-bottom: 1px solid #1e3a6e;
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #a78bfa;
+}
+.suggestions-grid {
+  padding: 0.65rem 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+.suggestion-card {
+  background: #0f1a2e;
+  border: 1px solid #1e3a6e;
+  border-radius: 7px;
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.suggestion-card:hover { border-color: #7c3aed; background: #1a1a2e; }
+.suggestion-card.role-chaser { border-color: rgba(251,146,60,0.3); }
+.suggestion-card.role-chaser:hover { border-color: #fb923c; }
+.suggestion-name { font-size: 0.8rem; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+.suggestion-dex { font-size: 0.6rem; color: #4b5563; }
+.suggestion-reason { font-size: 0.65rem; color: #9ca3af; margin-top: 3px; line-height: 1.4; }
+.suggestion-role-tag {
+  font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 1px 4px; border-radius: 3px;
+  display: inline-block; margin-bottom: 3px;
+}
+.tag-chaser { background: #c2410c; color: #fed7aa; }
+.tag-primer { background: #1d4ed8; color: #bfdbfe; }
+
 /* ── Type pips ────────────────────────────────────────────────── */
 .type-pip {
   display: inline-block; font-size: 0.56rem; font-weight: 700;
@@ -286,9 +347,117 @@
 .modal-species-item.already-added { opacity: 0.35; pointer-events: none; }
 .modal-dex { font-size: 0.65rem; color: #4b5563; width: 32px; flex-shrink: 0; }
 
+/* ── Type filter bar (#3) ─────────────────────────────────────── */
+.modal-type-filters {
+  padding: 0 0.75rem 0.5rem;
+  display: flex; flex-wrap: wrap; gap: 4px;
+  border-bottom: 1px solid #1e3a6e;
+  padding-bottom: 0.6rem; margin-bottom: 0;
+}
+.type-filter-btn {
+  font-size: 0.58rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 3px; border: none; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  opacity: 0.75; transition: opacity 0.1s, outline 0.1s;
+}
+.type-filter-btn:hover { opacity: 1; }
+.type-filter-btn.active { opacity: 1; outline: 2px solid rgba(255,255,255,0.7); }
+
+/* ── Chain strength score (#5) ────────────────────────────────── */
+.pair-power {
+  font-size: 0.62rem; font-weight: 700; color: #fbbf24;
+  white-space: nowrap; margin-left: auto; align-self: center;
+}
+
+/* ── Depth-2 chains (#1) ──────────────────────────────────────── */
+.depth-chain { border-color: #7c3aed !important; }
+.depth-chain .chain-result-header { background: #1e1040; }
+.depth-badge {
+  font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
+  background: #4c1d95; color: #c4b5fd;
+  border-radius: 3px; padding: 2px 6px;
+}
+.depth-link { border-left: 3px solid #7c3aed; margin-left: 12px; padding-left: 4px; margin-top: 4px; }
+
+/* ── Merged suggestion roles (#6) ────────────────────────────── */
+.role-chaser.role-primer { border-color: rgba(167,139,250,0.45); }
+.role-chaser.role-primer:hover { border-color: #a78bfa; box-shadow: 0 4px 16px rgba(124,58,237,0.25); }
+
 /* ── Loading spinner ──────────────────────────────────────────── */
 .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #1e3a6e; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Effect filter panel ──────────────────────────────────────── */
+.modal-box { max-height: 90vh; display: flex; flex-direction: column; }
+.modal-effect-filters {
+  border-bottom: 1px solid #1e3a6e;
+  padding: 0.5rem 0.75rem 0.45rem;
+  display: flex; flex-direction: column; gap: 0.4rem;
+  background: #0f1a2e;
+  flex-shrink: 0;
+}
+.effect-filter-row {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+.effect-filter-label {
+  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.07em; width: 46px; flex-shrink: 0;
+}
+.applies-label { color: #4ade80; }
+.chase-label  { color: #fbbf24; }
+
+/* Effect pills (for applies row) */
+.effect-pills { display: flex; flex-wrap: wrap; gap: 3px; }
+.effect-pill {
+  font-size: 0.58rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 3px; border: 1px solid #1e3a6e;
+  background: #16213e; color: #94a3b8;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.effect-pill:hover { background: #1a2744; color: #e2e8f0; }
+.effect-pill.active { background: #14532d; color: #4ade80; border-color: #4ade80; }
+
+/* Chase row selectors */
+.chase-row { gap: 0.4rem; }
+.chase-selectors { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.chase-selector-hint {
+  font-size: 0.6rem; color: #6b7280; font-style: italic;
+}
+.chase-select {
+  background: #16213e; border: 1px solid #1e3a6e; border-radius: 4px;
+  color: #e2e8f0; font-size: 0.68rem; padding: 2px 5px; cursor: pointer;
+}
+.chase-select:focus { outline: none; border-color: #fbbf24; }
+.chase-select.active { border-color: #fbbf24; color: #fbbf24; background: #1c1a00; }
+.chase-arrow { color: #fbbf24; font-size: 0.75rem; }
+.chase-clear-btn {
+  font-size: 0.6rem; color: #4b5563; background: none; border: none;
+  cursor: pointer; padding: 2px 5px; border-radius: 3px; display: none;
+}
+.chase-clear-btn.visible { display: inline-block; color: #ef4444; }
+.chase-clear-btn:hover { background: #1e3a6e; }
+
+/* Match tags on species items */
+.effect-match-tags { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
+.match-tag {
+  font-size: 0.52rem; font-weight: 700; padding: 1px 5px; border-radius: 2px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.match-tag.applies { background: #14532d; color: #4ade80; }
+.match-tag.chases  { background: #451a03; color: #fbbf24; }
+
+/* Result count line */
+.modal-result-count {
+  font-size: 0.62rem; color: #6b7280; padding: 0.25rem 0.75rem 0;
+  flex-shrink: 0;
+}
+.modal-result-count span { color: #fbbf24; font-weight: 700; }
+
+/* Make modal-list flex-grow so it scrolls */
+.modal-list { overflow-y: auto; flex: 1; padding: 0 0.75rem 0.75rem; }
+.modal-species-item { flex-direction: column; align-items: flex-start; }
+.modal-species-item-top { display: flex; align-items: center; gap: 0.5rem; width: 100%; }
 </style>
 {% endblock %}
 
@@ -346,36 +515,87 @@
       <span class="modal-title">Choose a Pokémon</span>
       <span class="modal-close" onclick="closeModal()">&#10005;</span>
     </div>
+
+    {# ── Effect filters ── #}
+    <div class="modal-effect-filters" id="modal-effect-filters">
+
+      {# Row 1: Applies filter #}
+      <div class="effect-filter-row">
+        <span class="effect-filter-label applies-label">Applies</span>
+        <div class="effect-pills" id="applies-pills"></div>
+      </div>
+
+      {# Row 2: Chase filter — two linked selectors describing ONE move #}
+      <div class="effect-filter-row chase-row">
+        <span class="effect-filter-label chase-label">Chase</span>
+        <div class="chase-selectors">
+          <span class="chase-selector-hint">Chases</span>
+          <select class="chase-select" id="chase-trigger-select" onchange="onChaseFilterChange()">
+            <option value="">Any</option>
+          </select>
+          <span class="chase-arrow">&#8594;</span>
+          <span class="chase-selector-hint">Applies</span>
+          <select class="chase-select" id="chase-applies-select" onchange="onChaseFilterChange()">
+            <option value="">Any</option>
+          </select>
+        </div>
+        <button class="chase-clear-btn" id="chase-clear-btn" onclick="clearChaseFilter()" title="Clear chase filter">&#10005;</button>
+      </div>
+
+    </div>
+
+    {# Type filter row #}
+    <div class="modal-type-filters" id="modal-type-filters"></div>
+
     <input class="modal-search" id="modal-search" type="text" placeholder="Search by name or #..." oninput="filterModal(this.value)">
+    <div id="modal-result-count" class="modal-result-count"></div>
     <div class="modal-list" id="modal-list"></div>
   </div>
 </div>
 
 <script>
-// ── All species from Django context ───────────────────────────
+// ── All species from Django context (#3: includes type) ────────
 const ALL_SPECIES = [
   {% for s in all_species %}
-  { id: {{ s.id }}, name: "{{ s.name|escapejs }}", dex: {{ s.pokedex_number }} },
+  { id: {{ s.id }}, name: "{{ s.name|escapejs }}", dex: {{ s.pokedex_number }}, type: "{{ s.primary_type__name|default:''|escapejs }}" },
   {% endfor %}
 ];
 
+// ── Effect map: species_id → { applies: [...], chains: [[trig, app], ...] }
+const EFFECT_MAP = {{ effect_map_json|safe }};
+
+// ── Status lists for filter pills / selects ────────────────────
+const ALL_APPLIES_STATUSES = {{ all_applies_statuses|safe }};
+const ALL_TRIGGER_STATUSES = {{ all_trigger_statuses|safe }};
+const ALL_CHASE_APPLIES_STATUSES = {{ all_chase_applies_statuses|safe }};
+
+// ── Derived type list for filter (#3) ─────────────────────────
+const ALL_TYPES = [...new Set(ALL_SPECIES.map(s => s.type).filter(Boolean))].sort();
+
 // ── State ─────────────────────────────────────────────────────
-// team: { slotNum: { species_id, species_name, dex, slots: { slot_type: [moves] }, chosen: { slot_type: move_id } } }
 const team = {};
 let openingSlot = null;
+let activeTypeFilter = null;       // #3
+let activeAppliesFilter = null;    // status name string or null
+let activeChaseFilter = { trigger: '', applies: '' };  // both empty = inactive
 
 const SLOT_LABELS = {
-  standard: 'Standard',
-  chase:    'Chase',
-  mystery:  'Mystery',
+  standard:  'Standard',
+  chase:     'Chase',
+  mystery:   'Mystery',
   passive_1: 'Passive 1',
   passive_2: 'Passive 2',
 };
 
-// ── Modal ─────────────────────────────────────────────────────
+// ── Modal open/close ──────────────────────────────────────────
 function openModal(slotNum) {
   openingSlot = slotNum;
+  activeTypeFilter = null;
+  activeAppliesFilter = null;
+  activeChaseFilter = { trigger: '', applies: '' };
   document.getElementById('modal-search').value = '';
+  renderEffectFilters();
+  renderTypeFilters();
   renderModalList('');
   document.getElementById('species-modal').classList.add('open');
   setTimeout(() => document.getElementById('modal-search').focus(), 50);
@@ -388,27 +608,158 @@ document.getElementById('species-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
 
-function filterModal(q) {
-  renderModalList(q.trim().toLowerCase());
+function filterModal(q) { renderModalList(q.trim().toLowerCase()); }
+
+// ── Effect filter render ───────────────────────────────────────
+function renderEffectFilters() {
+  // Applies pills
+  const pillsEl = document.getElementById('applies-pills');
+  pillsEl.innerHTML = ALL_APPLIES_STATUSES.map(s => {
+    const label = s.replace(/_/g, ' ');
+    const active = activeAppliesFilter === s ? 'active' : '';
+    return `<button class="effect-pill ${active}" onclick="setAppliesFilter('${s}')">${label}</button>`;
+  }).join('');
+
+  // Chase trigger select
+  const trigSel = document.getElementById('chase-trigger-select');
+  trigSel.innerHTML = '<option value="">Any</option>' +
+    ALL_TRIGGER_STATUSES.map(s => `<option value="${s}" ${activeChaseFilter.trigger===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('');
+
+  // Chase applies select
+  const appSel = document.getElementById('chase-applies-select');
+  appSel.innerHTML = '<option value="">Any</option>' +
+    ALL_CHASE_APPLIES_STATUSES.map(s => `<option value="${s}" ${activeChaseFilter.applies===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('');
+
+  // Style selects if active
+  trigSel.className = 'chase-select' + (activeChaseFilter.trigger ? ' active' : '');
+  appSel.className  = 'chase-select' + (activeChaseFilter.applies ? ' active' : '');
+
+  // Show clear button if any chase filter active
+  const clearBtn = document.getElementById('chase-clear-btn');
+  const chaseActive = activeChaseFilter.trigger || activeChaseFilter.applies;
+  clearBtn.className = 'chase-clear-btn' + (chaseActive ? ' visible' : '');
 }
 
-function renderModalList(q) {
-  const addedIds = new Set(Object.values(team).map(m => m.species_id));
-  const list = document.getElementById('modal-list');
-  const filtered = q
-    ? ALL_SPECIES.filter(s => s.name.toLowerCase().includes(q) || String(s.dex).includes(q))
-    : ALL_SPECIES;
+function setAppliesFilter(s) {
+  activeAppliesFilter = activeAppliesFilter === s ? null : s;
+  renderEffectFilters();
+  renderModalList(document.getElementById('modal-search').value.trim().toLowerCase());
+}
 
-  list.innerHTML = filtered.slice(0, 80).map(s => `
-    <div class="modal-species-item ${addedIds.has(s.id) ? 'already-added' : ''}"
-         onclick="selectSpecies(${s.id}, '${s.name.replace(/'/g,"\\'")}', ${s.dex})">
-      <span class="modal-dex">#${String(s.dex).padStart(3,'0')}</span>
-      <span>${s.name}</span>
-    </div>
+function onChaseFilterChange() {
+  activeChaseFilter.trigger = document.getElementById('chase-trigger-select').value;
+  activeChaseFilter.applies = document.getElementById('chase-applies-select').value;
+  renderEffectFilters();
+  renderModalList(document.getElementById('modal-search').value.trim().toLowerCase());
+}
+
+function clearChaseFilter() {
+  activeChaseFilter = { trigger: '', applies: '' };
+  renderEffectFilters();
+  renderModalList(document.getElementById('modal-search').value.trim().toLowerCase());
+}
+
+// ── Type filter ────────────────────────────────────────────────
+function renderTypeFilters() {
+  const bar = document.getElementById('modal-type-filters');
+  bar.innerHTML = ALL_TYPES.map(t => `
+    <button class="type-filter-btn type-${t.toLowerCase()} ${activeTypeFilter===t?'active':''}"
+            onclick="setTypeFilter('${t}')">${t}</button>
   `).join('');
 }
 
-// ── Select species: fetch move pool ───────────────────────────
+function setTypeFilter(t) {
+  activeTypeFilter = activeTypeFilter === t ? null : t;
+  renderTypeFilters();
+  renderModalList(document.getElementById('modal-search').value.trim().toLowerCase());
+}
+
+// ── Helpers: effect matching ───────────────────────────────────
+function speciesApplies(sid, status) {
+  const data = EFFECT_MAP[sid];
+  return data && data.applies.includes(status);
+}
+
+function speciesMatchesChase(sid, trigger, applies) {
+  const data = EFFECT_MAP[sid];
+  if (!data) return false;
+  // Must have a single chase move satisfying both constraints
+  return data.chains.some(([t, a]) => {
+    const triggerOk = !trigger || t === trigger;
+    const appliesOk = !applies || a === applies;
+    return triggerOk && appliesOk;
+  });
+}
+
+// Returns match tags to display on the card (for active filters)
+function getMatchTags(sid) {
+  const tags = [];
+  const data = EFFECT_MAP[sid];
+  if (!data) return tags;
+
+  if (activeAppliesFilter) {
+    tags.push({ label: `→ ${activeAppliesFilter.replace(/_/g,' ')}`, cls: 'applies' });
+  }
+  const { trigger, applies } = activeChaseFilter;
+  if (trigger || applies) {
+    const parts = [];
+    if (trigger) parts.push(`chases ${trigger.replace(/_/g,' ')}`);
+    if (applies) parts.push(`→ ${applies.replace(/_/g,' ')}`);
+    tags.push({ label: parts.join(' '), cls: 'chases' });
+  }
+  return tags;
+}
+
+// ── Main list render ───────────────────────────────────────────
+function renderModalList(q) {
+  const addedIds = new Set(Object.values(team).map(m => m.species_id));
+  const list = document.getElementById('modal-list');
+
+  let filtered = ALL_SPECIES;
+
+  // Type filter
+  if (activeTypeFilter) filtered = filtered.filter(s => s.type === activeTypeFilter);
+
+  // Text search
+  if (q) filtered = filtered.filter(s => s.name.toLowerCase().includes(q) || String(s.dex).includes(q));
+
+  // Applies filter — any move (chase or not) that applies this status
+  if (activeAppliesFilter) {
+    filtered = filtered.filter(s => speciesApplies(s.id, activeAppliesFilter));
+  }
+
+  // Chase filter — must have a single chase move matching both trigger + applies constraints
+  const { trigger, applies } = activeChaseFilter;
+  if (trigger || applies) {
+    filtered = filtered.filter(s => speciesMatchesChase(s.id, trigger, applies));
+  }
+
+  // Update result count
+  const countEl = document.getElementById('modal-result-count');
+  const hasFilter = activeTypeFilter || q || activeAppliesFilter || trigger || applies;
+  countEl.innerHTML = hasFilter
+    ? `Showing <span>${filtered.length}</span> Pokémon`
+    : '';
+
+  list.innerHTML = filtered.slice(0, 120).map(s => {
+    const tags = getMatchTags(s.id);
+    const tagsHtml = tags.length
+      ? `<div class="effect-match-tags">${tags.map(t => `<span class="match-tag ${t.cls}">${t.label}</span>`).join('')}</div>`
+      : '';
+    return `
+    <div class="modal-species-item ${addedIds.has(s.id) ? 'already-added' : ''}"
+         onclick="selectSpecies(${s.id}, '${s.name.replace(/'/g,"\\'")}', ${s.dex})">
+      <div class="modal-species-item-top">
+        <span class="modal-dex">#${String(s.dex).padStart(3,'0')}</span>
+        <span>${s.name}</span>
+        ${s.type ? `<span class="type-pip type-${s.type.toLowerCase()}" style="margin-left:auto;">${s.type}</span>` : ''}
+      </div>
+      ${tagsHtml}
+    </div>`;
+  }).join('');
+}
+
+// ── Select species ─────────────────────────────────────────────
 async function selectSpecies(id, name, dex) {
   const slotNum = openingSlot;
   closeModal();
@@ -419,21 +770,10 @@ async function selectSpecies(id, name, dex) {
   const resp = await fetch(`{% url 'pokemon:combo_simulator_moves' 0 %}`.replace('/0/', `/${id}/`));
   const data = await resp.json();
 
-  team[slotNum] = {
-    species_id: id,
-    species_name: name,
-    dex,
-    slots: data.slots,
-    chosen: {},
-  };
-
-  // Auto-select when only one option per slot
+  team[slotNum] = { species_id: id, species_name: name, dex, slots: data.slots, chosen: {} };
   for (const [slotType, moves] of Object.entries(data.slots)) {
-    if (moves.length === 1) {
-      team[slotNum].chosen[slotType] = moves[0].id;
-    }
+    if (moves.length === 1) team[slotNum].chosen[slotType] = moves[0].id;
   }
-
   renderSlot(slotNum);
   updateSimBtn();
 }
@@ -442,36 +782,35 @@ async function selectSpecies(id, name, dex) {
 function renderSlot(slotNum) {
   const m = team[slotNum];
   const card = document.getElementById(`slot-${slotNum}`);
-
   let movesHtml = '';
+
   for (const [slotType, moves] of Object.entries(m.slots)) {
     const labelClass = slotType === 'mystery' ? 'mystery'
                      : slotType === 'chase'   ? 'chase'
                      : slotType.startsWith('passive') ? 'passive' : 'standard';
     const label = SLOT_LABELS[slotType] || slotType;
+    let inputHtml, hintHtml = '';
 
-    let inputHtml;
     if (moves.length === 1) {
       const mv = moves[0];
       const isCombo = mv.applies_status || mv.trigger_status;
-      inputHtml = `<div class="move-fixed ${isCombo ? 'combo-move' : ''}">${mv.name}${mv.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${mv.power}</span>` : ''}</div>`;
+      inputHtml = `<div class="move-fixed ${isCombo?'combo-move':''}">${mv.name}${mv.power?` <span style="color:#6b7280;font-size:0.6rem;">PWR ${mv.power}</span>`:''}</div>`;
+      hintHtml = buildHintHtml(mv);
     } else {
       const opts = moves.map(mv => {
-        const isCombo = mv.applies_status || mv.trigger_status;
-        const flag = isCombo ? ' ⚡' : '';
-        return `<option value="${mv.id}" ${m.chosen[slotType] == mv.id ? 'selected' : ''}>${mv.name}${flag}${mv.power ? ` (${mv.power})` : ''}</option>`;
+        const flag = (mv.applies_status || mv.trigger_status) ? ' ⚡' : '';
+        return `<option value="${mv.id}" ${m.chosen[slotType]==mv.id?'selected':''}>${mv.name}${flag}${mv.power?` (${mv.power})`:''}</option>`;
       }).join('');
-      inputHtml = `<select class="move-select ${moves.some(mv => (mv.applies_status||mv.trigger_status) && m.chosen[slotType]==mv.id) ? 'combo-move':''}"
+      const chosenMv = moves.find(mv => mv.id == m.chosen[slotType]);
+      inputHtml = `<select class="move-select ${moves.some(mv=>(mv.applies_status||mv.trigger_status)&&m.chosen[slotType]==mv.id)?'combo-move':''}"
         onchange="pickMove(${slotNum},'${slotType}',+this.value,this)">
-        <option value="">— pick a move —</option>${opts}
-      </select>`;
+        <option value="">— pick a move —</option>${opts}</select>`;
+      if (chosenMv) hintHtml = buildHintHtml(chosenMv);
     }
 
     movesHtml += `
-      <div class="move-row">
-        <span class="move-slot-label ${labelClass}">${label}</span>
-        ${inputHtml}
-      </div>`;
+      <div class="move-row"><span class="move-slot-label ${labelClass}">${label}</span>${inputHtml}</div>
+      <div class="move-hint-row" id="hint-${slotNum}-${slotType}">${hintHtml}</div>`;
   }
 
   card.innerHTML = `
@@ -482,20 +821,24 @@ function renderSlot(slotNum) {
       <span class="slot-remove" onclick="removeSlot(${slotNum})" title="Remove">&#10005;</span>
     </div>
     <div class="slot-moves">${movesHtml}</div>`;
-
   updateTeamCount();
+}
+
+// ── Move status hints (#4 move hints) ─────────────────────────
+function buildHintHtml(mv) {
+  const parts = [];
+  if (mv.trigger_status_label) parts.push(`<span class="hint-trigger">⚡ Fires on: ${mv.trigger_status_label}</span>`);
+  if (mv.applies_status_label) parts.push(`<span class="hint-applies">→ Applies: ${mv.applies_status_label}</span>`);
+  return parts.join('');
 }
 
 function pickMove(slotNum, slotType, moveId, selectEl) {
   team[slotNum].chosen[slotType] = moveId || null;
-  // Update green highlight if combo move selected
   const moves = team[slotNum].slots[slotType];
   const picked = moves.find(m => m.id === moveId);
-  if (picked && (picked.applies_status || picked.trigger_status)) {
-    selectEl.classList.add('combo-move');
-  } else {
-    selectEl.classList.remove('combo-move');
-  }
+  selectEl.classList.toggle('combo-move', !!(picked && (picked.applies_status || picked.trigger_status)));
+  const hintDiv = document.getElementById(`hint-${slotNum}-${slotType}`);
+  if (hintDiv) hintDiv.innerHTML = picked ? buildHintHtml(picked) : '';
 }
 
 function removeSlot(slotNum) {
@@ -503,9 +846,7 @@ function removeSlot(slotNum) {
   const card = document.getElementById(`slot-${slotNum}`);
   card.className = 'slot-card';
   card.innerHTML = `<div class="slot-empty" onclick="openModal(${slotNum})">
-    <span class="slot-num">${slotNum}</span>
-    <span>Click to add a Pokémon</span>
-  </div>`;
+    <span class="slot-num">${slotNum}</span><span>Click to add a Pokémon</span></div>`;
   updateTeamCount();
   updateSimBtn();
 }
@@ -523,74 +864,154 @@ async function simulate() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Simulating…';
 
-  const payload = Object.values(team).map(m => ({
-    species_name: m.species_name,
-    moves: m.chosen,   // { slot_type: move_id }
-  }));
-
+  const payload = Object.values(team).map(m => ({ species_name: m.species_name, moves: m.chosen }));
   const resp = await fetch('{% url "pokemon:combo_simulator_chains" %}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
     body: JSON.stringify({ team: payload }),
   });
   const data = await resp.json();
-
   renderResults(data);
   btn.disabled = false;
   btn.textContent = 'Simulate Combos';
 }
 
-// ── Render results ─────────────────────────────────────────────
+// ── Render results (#2 real amp, #5 power score, #1 depth-2, #6 merged suggestions) ──
 function renderResults(data) {
   const panel = document.getElementById('results-panel');
+
+  // #2: real multipliers from backend
+  const amp = data.combo_amp || [1.0, 1.10, 1.20, 1.35];
+  const amp1 = `×${amp[1].toFixed(2)}`;  // link-2 multiplier
+  const amp2 = `×${amp[2].toFixed(2)}`;  // link-3 multiplier (depth-2 chain)
+
   if (!data.chains || data.chains.length === 0) {
-    panel.innerHTML = `
-      <div class="results-empty">
-        <div class="icon">&#128528;</div>
-        <div>No combo chains found in this team.<br>
-        <span style="font-size:0.8rem;color:#6b7280;">Try adding Pokémon with status-applying moves, or pick chase moves that trigger on those statuses.</span></div>
-      </div>`;
+    panel.innerHTML = `<div class="results-empty"><div class="icon">😐</div>
+      <div>No combo chains found.<br>
+      <span style="font-size:0.8rem;color:#6b7280;">Add Pokémon with status-applying moves and matching chase moves.</span></div></div>`;
     return;
   }
 
+  // #5: pairs already sorted by total_power from backend
   const chainCards = data.chains.map(chain => {
-    const pairs = [];
-    for (const primer of chain.primers) {
-      for (const chaser of chain.chasers) {
-        pairs.push(`
-          <div class="chain-pair">
-            <div class="pair-primer">
-              <div class="pair-species">${primer.species}</div>
-              <div class="pair-move">${primer.move}${primer.type ? ` <span class="type-pip type-${primer.type.toLowerCase()}">${primer.type}</span>` : ''}${primer.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${primer.power}</span>` : ''}</div>
-            </div>
-            <div class="pair-arrow">
-              &#8594;
-              <span class="pair-amp">×1.10</span>
-            </div>
-            <div class="pair-chaser">
-              <div class="pair-species">${chaser.species}</div>
-              <div class="pair-move">${chaser.move}${chaser.type ? ` <span class="type-pip type-${chaser.type.toLowerCase()}">${chaser.type}</span>` : ''}${chaser.power ? ` <span style="color:#6b7280;font-size:0.6rem;">PWR ${chaser.power}</span>` : ''}${chaser.condition ? ` <span class="pair-condition">req: ${chaser.condition}</span>` : ''}</div>
-            </div>
-          </div>`);
-      }
-    }
+    const pairsHtml = chain.pairs.map(p => {
+      const primer = p.primer, chaser = p.chaser;
+      const bridgeTag = chaser.is_bridge
+        ? `<span style="font-size:0.58rem;background:#4c1d95;color:#c4b5fd;border-radius:3px;padding:1px 4px;margin-left:4px;">BRIDGE→${chaser.bridge_applies_label}</span>`
+        : '';
+      return `
+        <div class="chain-pair">
+          <div class="pair-primer">
+            <div class="pair-species">${primer.species}</div>
+            <div class="pair-move">${primer.move}${primer.type?` <span class="type-pip type-${primer.type.toLowerCase()}">${primer.type}</span>`:''}${primer.power?` <span style="color:#6b7280;font-size:0.6rem;">PWR ${primer.power}</span>`:''}</div>
+          </div>
+          <div class="pair-arrow">&#8594;<span class="pair-amp">${amp1}</span></div>
+          <div class="pair-chaser">
+            <div class="pair-species">${chaser.species}${bridgeTag}</div>
+            <div class="pair-move">${chaser.move}${chaser.type?` <span class="type-pip type-${chaser.type.toLowerCase()}">${chaser.type}</span>`:''}${chaser.power?` <span style="color:#6b7280;font-size:0.6rem;">PWR ${chaser.power}</span>`:''}${chaser.condition?` <span class="pair-condition">req: ${chaser.condition}</span>`:''}</div>
+          </div>
+          ${p.total_power > 0 ? `<div class="pair-power" title="Combined base power">⚔ ${p.total_power}</div>` : ''}
+        </div>`;
+    }).join('');
     return `
       <div class="chain-result">
         <div class="chain-result-header">
           <span class="status-badge status-${chain.status_key}">${chain.status}</span>
           <span style="font-size:0.75rem;color:#6b7280;">${chain.primers.length} causer${chain.primers.length!=1?'s':''} → ${chain.chasers.length} chaser${chain.chasers.length!=1?'s':''}</span>
         </div>
-        <div class="chain-pairs">${pairs.join('')}</div>
+        <div class="chain-pairs">${pairsHtml}</div>
       </div>`;
   }).join('');
+
+  // #1: depth-2 chain section
+  let deepHtml = '';
+  if (data.deep_chains && data.deep_chains.length > 0) {
+    const deepCards = data.deep_chains.map(d => `
+      <div class="chain-result depth-chain">
+        <div class="chain-result-header">
+          <span class="depth-badge">DEPTH-2</span>
+          <span class="status-badge status-${d.status_a_key}" style="margin-left:6px;">${d.status_a}</span>
+          <span style="color:#6b7280;font-size:0.8rem;margin:0 4px;">→</span>
+          <span class="status-badge status-${d.status_b_key}">${d.status_b}</span>
+          ${d.total_power > 0 ? `<span class="pair-power" style="margin-left:auto;">⚔ ${d.total_power}</span>` : ''}
+        </div>
+        <div class="chain-pairs">
+          <div class="chain-pair">
+            <div class="pair-primer">
+              <div class="pair-species">${d.primer.species}</div>
+              <div class="pair-move">${d.primer.move}${d.primer.type?` <span class="type-pip type-${d.primer.type.toLowerCase()}">${d.primer.type}</span>`:''}${d.primer.power?` <span style="color:#6b7280;font-size:0.6rem;">PWR ${d.primer.power}</span>`:''}</div>
+            </div>
+            <div class="pair-arrow">&#8595;<span class="pair-amp">${amp1}</span></div>
+            <div class="pair-chaser" style="border-left:3px solid #7c3aed;padding-left:8px;">
+              <div class="pair-species" style="color:#c4b5fd;">${d.bridge.species} <span style="font-size:0.58rem;background:#4c1d95;color:#c4b5fd;border-radius:3px;padding:1px 4px;">BRIDGE</span></div>
+              <div class="pair-move">${d.bridge.move}${d.bridge.type?` <span class="type-pip type-${d.bridge.type.toLowerCase()}">${d.bridge.type}</span>`:''}</div>
+            </div>
+          </div>
+          <div class="depth-link">
+            <div class="chain-pair">
+              <div class="pair-primer" style="opacity:0.5;font-size:0.7rem;">↳ bridge fires on <strong>${d.status_a}</strong>, applies <strong>${d.status_b}</strong></div>
+              <div class="pair-arrow">&#8595;<span class="pair-amp">${amp2}</span></div>
+              <div class="pair-chaser">
+                <div class="pair-species">${d.chaser.species}</div>
+                <div class="pair-move">${d.chaser.move}${d.chaser.type?` <span class="type-pip type-${d.chaser.type.toLowerCase()}">${d.chaser.type}</span>`:''}${d.chaser.power?` <span style="color:#6b7280;font-size:0.6rem;">PWR ${d.chaser.power}</span>`:''}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+    deepHtml = `
+      <div style="margin:1rem 0 0.5rem;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#a78bfa;">
+        ⛓ Depth-2 Chains — <span style="font-weight:400;color:#6b7280;">cascade through a bridge move</span>
+      </div>
+      ${deepCards}`;
+  }
+
+  // #6: deduplicated suggestions with merged roles
+  let suggestionsHtml = '';
+  if (data.suggestions && data.suggestions.length > 0) {
+    const cards = data.suggestions.map(s => {
+      const roleClass = s.roles.includes('chaser') && s.roles.includes('primer')
+        ? 'role-chaser role-primer' : `role-${s.roles[0]}`;
+      const roleTags = s.roles.map(r =>
+        `<span class="suggestion-role-tag tag-${r}">${r==='chaser'?'⚡ Chaser':'▶ Primer'}</span>`
+      ).join(' ');
+      const reasons = s.reasons.map(r => `<div class="suggestion-reason">· ${r}</div>`).join('');
+      return `<div class="suggestion-card ${roleClass}" onclick="addSuggestion(${s.dex}, '${s.name.replace(/'/g,"\\'")}')">
+        ${roleTags}
+        <div class="suggestion-name">${s.name}</div>
+        <div class="suggestion-dex">#${String(s.dex).padStart(3,'0')}</div>
+        ${reasons}
+      </div>`;
+    }).join('');
+    suggestionsHtml = `
+      <div class="suggestions-section">
+        <div class="suggestions-header">✦ Recommended Additions — click to add to team</div>
+        <div class="suggestions-grid">${cards}</div>
+      </div>`;
+  }
 
   panel.innerHTML = `
     <div class="results-header">
       <span class="results-title">Combo Chains Found</span>
       <span class="results-stat green">${data.chains.length} status${data.chains.length!=1?'es':''}</span>
-      <span class="results-stat">${data.total_links} possible link${data.total_links!=1?'s':''}</span>
+      <span class="results-stat">${data.total_links} link${data.total_links!=1?'s':''}</span>
+      ${data.deep_chains&&data.deep_chains.length>0?`<span class="results-stat" style="color:#a78bfa;">${data.deep_chains.length} depth-2</span>`:''}
+      <span style="font-size:0.65rem;color:#4b5563;margin-left:auto;">Base amp: ${amp1} → ${amp2} per link</span>
     </div>
-    ${chainCards}`;
+    ${chainCards}
+    ${deepHtml}
+    ${suggestionsHtml}`;
+}
+
+// ── Add suggestion to team ─────────────────────────────────────
+function addSuggestion(dex, name) {
+  const emptySlot = [1,2,3,4,5,6].find(n => !team[n]);
+  if (!emptySlot) { alert('Team is full (6/6)'); return; }
+  const species = ALL_SPECIES.find(s => s.dex === dex && s.name === name);
+  if (!species) return;
+  // Re-use openingSlot mechanism
+  openingSlot = emptySlot;
+  selectSpecies(species.id, species.name, species.dex);
 }
 
 // ── CSRF helper ────────────────────────────────────────────────

@@ -30,6 +30,14 @@ SLOT_FIELD_MAP: dict[str, str] = {
     "passive_2": "move_passive",
 }
 
+ROLE_HELD_EFFECT: dict[str, str] = {
+    "burst":   "Life Orb",
+    "combo":   "Scope Lens",
+    "tank":    "Rocky Helmet",
+    "support": "Shell Bell",
+    "control": "Susanoo Shard",
+}
+
 
 class Command(BaseCommand):
     help = (
@@ -118,6 +126,17 @@ class Command(BaseCommand):
                     setattr(owned, field_name, chosen)
                 fields_to_save.append(field_name)
                 slot_fill_counts[slot_type] += 1
+
+            # Assign held_effect from role-based lookup if not already set
+            if not dry_run and not getattr(owned, "held_effect_id", None):
+                role = owned.species.primary_role
+                item_name = ROLE_HELD_EFFECT.get(role)
+                if item_name:
+                    from apps.pokemon.models import HeldEffect
+                    he = HeldEffect.objects.filter(name=item_name).first()
+                    if he:
+                        owned.held_effect = he
+                        owned.save(update_fields=["held_effect"])
 
             if fields_to_save:
                 if not dry_run:

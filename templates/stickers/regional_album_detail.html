@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load sticker_tags %}
 {% block title %}{{ region_label }} — {{ rarity_label }} Album{% endblock %}
 
 {% block extra_css %}
@@ -8,21 +9,9 @@
 .r-uncommon    { --rc:#4ade80; }
 .r-rare        { --rc:#60a5fa; }
 .r-epic        { --rc:#a78bfa; }
-.r-holographic { --rc:#fbbf24; }
+.r-prismatic   { --rc:#e879f9; }
 .r-full_art    { --rc:#f97316; }
 .r-secret_rare { --rc:#f43f5e; }
-
-/* ── Rarity CSS filters for placed sticker images ───────────── */
-.rarity-img-common      { filter: grayscale(0.6) brightness(0.85); }
-.rarity-img-uncommon    { filter: sepia(0.6) hue-rotate(80deg) saturate(1.4); }
-.rarity-img-rare        { filter: sepia(0.5) hue-rotate(200deg) saturate(1.8); }
-.rarity-img-epic        { filter: hue-rotate(270deg) saturate(2) brightness(1.05); }
-.rarity-img-holographic { filter: saturate(3) contrast(1.2) brightness(1.1); }
-.rarity-img-full_art    { filter: saturate(2) brightness(1.15) contrast(1.1); }
-.rarity-img-secret_rare { filter: sepia(0.3) hue-rotate(40deg) saturate(4) brightness(1.3); }
-
-/* ── Silhouette for unplaced slots ───────────────────────────── */
-.silhouette { filter: brightness(0); opacity: 0.25; }
 
 /* ── Page header ─────────────────────────────────────────────── */
 .rad-header {
@@ -53,167 +42,165 @@
 .page-bar-fill { height: 100%; border-radius: 6px; background: var(--rc, #3b82f6); transition: width 0.4s; }
 .page-count { font-size: 0.85rem; font-weight: 700; color: var(--rc, #e2e8f0); white-space: nowrap; }
 
-/* ── Reward claim banner ─────────────────────────────────────── */
+/* ── Reward banners ───────────────────────────────────────────── */
 .reward-banner {
-  background: #0f2a1a;
-  border: 1px solid #16533a;
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  background: #0f2a1a; border: 1px solid #16533a; border-radius: 10px;
+  padding: 0.75rem 1rem; margin-bottom: 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.6rem; flex-wrap: wrap;
 }
 .reward-banner-text { font-size: 0.8rem; color: #4ade80; font-weight: 600; }
 .reward-claimed-text { font-size: 0.75rem; color: #64748b; }
-
-/* ── Last reward toast ───────────────────────────────────────── */
 .reward-toast {
-  background: #1a2f1a;
-  border: 1px solid #4ade80;
-  border-radius: 10px;
-  padding: 0.65rem 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.8rem;
-  color: #4ade80;
+  background: #1a2f1a; border: 1px solid #4ade80; border-radius: 10px;
+  padding: 0.65rem 1rem; margin-bottom: 1rem; font-size: 0.8rem; color: #4ade80;
 }
-
-/* ── Sticker grid ─────────────────────────────────────────────── */
-.sticker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 0.6rem;
-}
-
-/* ── Sticker slot ─────────────────────────────────────────────── */
-.sticker-slot {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 10px;
-  padding: 0.5rem;
-  text-align: center;
-  position: relative;
-  transition: border-color 0.15s, transform 0.15s;
-  cursor: default;
-}
-.sticker-slot.placed {
-  border-color: var(--rc, #3b82f6);
-  box-shadow: 0 0 8px rgba(var(--rc-rgb, 59,130,246), 0.25);
-}
-.sticker-slot.available { cursor: pointer; }
-.sticker-slot.available:hover { border-color: #3b82f6; transform: translateY(-2px); }
-
-.sticker-img-wrap {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 0.3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.sticker-img-wrap img {
-  max-width: 64px;
-  max-height: 64px;
-  object-fit: contain;
-  display: block;
-}
-.sticker-name {
-  font-size: 0.62rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sticker-dex {
-  font-size: 0.58rem;
-  color: #4b5563;
-  margin-bottom: 0.2rem;
-}
-
-/* Placed indicator */
-.placed-indicator {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 0.55rem;
-  background: #16533a;
-  color: #4ade80;
-  border-radius: 4px;
-  padding: 1px 4px;
-}
-
-/* Secret rare glow */
-.r-secret_rare .sticker-slot.placed {
-  box-shadow: 0 0 14px rgba(244,63,94,0.4);
-}
-/* Holographic shimmer */
-@keyframes holo-shimmer {
-  0%   { filter: saturate(3) contrast(1.2) brightness(1.1) hue-rotate(0deg); }
-  50%  { filter: saturate(3) contrast(1.2) brightness(1.2) hue-rotate(30deg); }
-  100% { filter: saturate(3) contrast(1.2) brightness(1.1) hue-rotate(0deg); }
-}
-.rarity-img-holographic { animation: holo-shimmer 3s ease-in-out infinite; }
-
-/* ── Modal (Alpine) — place picker ───────────────────────────── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-.modal-box {
-  background: #0f172a;
-  border: 1px solid #1e3a6e;
-  border-radius: 14px;
-  padding: 1.2rem;
-  max-width: 380px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-.modal-box h4 { margin: 0 0 0.8rem; font-size: 0.95rem; font-weight: 700; }
-.modal-sticker-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 7px;
-  background: #16213e;
-  margin-bottom: 0.4rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.modal-sticker-row:hover { background: #1e293b; }
-.modal-sticker-row img { width: 36px; height: 36px; object-fit: contain; }
-.modal-sticker-info { flex: 1; font-size: 0.72rem; color: #e2e8f0; }
-.modal-sticker-variant { font-size: 0.62rem; color: #64748b; }
 
 /* ── Rarity tab nav ───────────────────────────────────────────── */
-.rarity-tabs {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-}
+.rarity-tabs { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .rarity-tab {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid #1e3a6e;
-  background: #16213e;
-  color: #94a3b8;
-  text-decoration: none;
-  transition: background 0.15s;
+  padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+  border: 1px solid #1e3a6e; background: #16213e; color: #94a3b8;
+  text-decoration: none; transition: background 0.15s;
 }
 .rarity-tab:hover { background: #1e293b; }
 .rarity-tab.active { border-color: var(--rc); color: var(--rc); background: #0f172a; }
+
+/* ── Pokemon card ─────────────────────────────────────────────── */
+.poke-album-card {
+  background: #111827;
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 1.2rem;
+}
+.poke-album-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.poke-album-card-header .dex-num { font-size: 0.65rem; color: #4b5563; }
+.poke-album-card-header .poke-name { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; }
+.poke-album-card-header .placed-count { font-size: 0.65rem; color: var(--rc); margin-left: auto; }
+
+/* ── Variant row (5 per row) ──────────────────────────────────── */
+.variant-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.variant-row:last-child { margin-bottom: 0; }
+
+/* ── Variant cell ─────────────────────────────────────────────── */
+.variant-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: default;
+}
+.variant-cell.available { cursor: pointer; }
+.variant-cell.available:hover .sticker-frame-wrap { transform: translateY(-3px); }
+
+.variant-label-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* ── Sticker frame wrap ───────────────────────────────────────── */
+.sticker-frame-wrap {
+  position: relative;
+  width: 360px;
+  height: 400px;
+  transition: transform 0.15s;
+}
+.sticker-frame-wrap .sticker-sprite {
+  position: absolute;
+  inset: 48px 44px;
+  width: calc(100% - 88px);
+  height: calc(100% - 96px);
+  object-fit: contain;
+}
+.sticker-frame-wrap .sticker-frame-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+.sticker-sprite.silhouette { filter: brightness(0); opacity: 0.2; }
+
+/* placed indicator dot */
+.placed-dot {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 12px; height: 12px;
+  background: #4ade80;
+  border-radius: 50%;
+  border: 2px solid #111827;
+  z-index: 10;
+}
+/* available count badge */
+.avail-badge {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  font-size: 0.5rem;
+  background: #1e3a6e;
+  color: #60a5fa;
+  border-radius: 4px;
+  padding: 1px 4px;
+  z-index: 10;
+}
+
+
+/* ── Pagination ───────────────────────────────────────────────── */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+.pagination-bar a, .pagination-bar span {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.pagination-bar a { background: #16213e; border: 1px solid #1e3a6e; color: #94a3b8; }
+.pagination-bar a:hover { background: #1e293b; }
+.pagination-bar .pg-current { background: #0f172a; border: 1px solid var(--rc); color: var(--rc); }
+.pagination-bar .pg-disabled { background: #0d1117; border: 1px solid #1e3a6e; color: #374151; cursor: default; }
+
+/* ── Modal ────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-box {
+  background: #0f172a; border: 1px solid #1e3a6e; border-radius: 14px;
+  padding: 1.2rem; max-width: 380px; width: 100%; max-height: 80vh; overflow-y: auto;
+}
+.modal-box h4 { margin: 0 0 0.8rem; font-size: 0.95rem; font-weight: 700; }
+.modal-sticker-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.6rem; border-radius: 7px; background: #16213e;
+  margin-bottom: 0.4rem; cursor: pointer; transition: background 0.15s;
+}
+.modal-sticker-row:hover { background: #1e293b; }
+.modal-sticker-row img { width: 40px; height: 40px; object-fit: contain; }
+.modal-sticker-info { flex: 1; font-size: 0.72rem; color: #e2e8f0; }
+.modal-sticker-variant { font-size: 0.62rem; color: #64748b; }
 </style>
 {% endblock %}
 
@@ -225,13 +212,11 @@
   <h2>{{ region_label }} — {{ rarity_label }}</h2>
   <div class="rad-nav">
     {% if prev_rarity %}
-    <a href="{% url 'stickers:regional_album_detail' region=region rarity=prev_rarity %}"
-       class="btn btn-sm btn-secondary">‹ {{ prev_rarity|title }}</a>
+    <a href="{% url 'stickers:regional_album_detail' region=region rarity=prev_rarity %}" class="btn btn-sm btn-secondary">‹ {{ prev_rarity|title }}</a>
     {% endif %}
     <a href="{% url 'stickers:regional_album_index' %}" class="btn btn-sm btn-secondary">All Regions</a>
     {% if next_rarity %}
-    <a href="{% url 'stickers:regional_album_detail' region=region rarity=next_rarity %}"
-       class="btn btn-sm btn-secondary">{{ next_rarity|title }} ›</a>
+    <a href="{% url 'stickers:regional_album_detail' region=region rarity=next_rarity %}" class="btn btn-sm btn-secondary">{{ next_rarity|title }} ›</a>
     {% endif %}
   </div>
 </div>
@@ -240,13 +225,11 @@
 <div class="rarity-tabs">
   {% for value, label in all_rarities %}
   <a href="{% url 'stickers:regional_album_detail' region=region rarity=value %}"
-     class="rarity-tab r-{{ value }} {% if value == rarity %}active{% endif %}">
-    {{ label }}
-  </a>
+     class="rarity-tab r-{{ value }} {% if value == rarity %}active{% endif %}">{{ label }}</a>
   {% endfor %}
 </div>
 
-{# ── Last reward toast ── #}
+{# ── Toast ── #}
 {% if request.session.last_page_reward %}
 <div class="reward-toast">
   🎉 Reward claimed! +{{ request.session.last_page_reward.dust }} dust
@@ -259,13 +242,12 @@
 <div class="page-progress">
   <span class="page-progress-label">{{ region_label }} · {{ rarity_label }}</span>
   <div class="page-bar-wrap">
-    <div class="page-bar-fill"
-         style="width:{% if total_count %}{% widthratio placed_count total_count 100 %}{% else %}0{% endif %}%"></div>
+    <div class="page-bar-fill" style="width:{% if total_count %}{% widthratio placed_count total_count 100 %}{% else %}0{% endif %}%"></div>
   </div>
   <span class="page-count">{{ placed_count }} / {{ total_count }}</span>
 </div>
 
-{# ── Reward claim / claimed banner ── #}
+{# ── Reward banner ── #}
 {% if page_complete and not reward_claimed %}
 <div class="reward-banner">
   <span class="reward-banner-text">⭐ Page complete — claim your reward!</span>
@@ -273,9 +255,7 @@
     {% csrf_token %}
     <input type="hidden" name="region" value="{{ region }}">
     <input type="hidden" name="rarity" value="{{ rarity }}">
-    <button type="submit" class="btn btn-sm" style="background:#16533a;color:#4ade80;border:none;">
-      Claim Reward
-    </button>
+    <button type="submit" class="btn btn-sm" style="background:#16533a;color:#4ade80;border:none;">Claim Reward</button>
   </form>
 </div>
 {% elif reward_claimed %}
@@ -284,112 +264,251 @@
 </div>
 {% endif %}
 
-{# ── Error message ── #}
+{# ── Error ── #}
 {% if error %}
-<div style="background:#2a1a1a;border:1px solid #f43f5e;border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;font-size:0.8rem;color:#f43f5e;">
-  {{ error }}
+<div style="background:#2a1a1a;border:1px solid #f43f5e;border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;font-size:0.8rem;color:#f43f5e;">{{ error }}</div>
+{% endif %}
+
+{# ── Pagination top ── #}
+{% if total_pages > 1 %}
+<div class="pagination-bar">
+  {% if has_prev_page %}
+  <a href="?page={{ current_page|add:'-1' }}">‹ Prev</a>
+  {% else %}
+  <span class="pg-disabled">‹ Prev</span>
+  {% endif %}
+  <span class="pg-current">Page {{ current_page }} / {{ total_pages }}</span>
+  {% if has_next_page %}
+  <a href="?page={{ current_page|add:'1' }}">Next ›</a>
+  {% else %}
+  <span class="pg-disabled">Next ›</span>
+  {% endif %}
 </div>
 {% endif %}
 
-{# ── Sticker grid grouped by Pokémon, each Pokémon shows one slot per variant ── #}
-{# Slots: one per (pokemon, variant). Columns = variant labels header, rows = pokemon. #}
-
-{# Build unique pokemon list preserving order #}
-{% regroup slots by pokemon.pk as pokemon_groups %}
-
-{# Variant header row #}
-<div style="display:grid;grid-template-columns:80px repeat(6,1fr);gap:4px;margin-bottom:6px;font-size:0.6rem;color:#64748b;text-align:center;">
-  <div></div>
-  {% for slot in slots|slice:":6" %}
-  <div>{{ slot.variant_label }}</div>
-  {% endfor %}
-</div>
-
+{# ── Pokemon cards ── #}
 <div x-data="{ openSlotKey: null }">
-  {% for group in pokemon_groups %}
-  {% with first_slot=group.list.0 %}
-  {# One row per Pokémon: name column + 6 variant cells #}
-  <div style="display:grid;grid-template-columns:80px repeat(6,1fr);gap:4px;margin-bottom:4px;align-items:center;">
+{% for poke_slots in pokemon_slot_groups %}
+{% with first=poke_slots.0 %}
+<div class="poke-album-card">
 
-    {# Pokémon name column #}
-    <div style="font-size:0.62rem;color:#94a3b8;text-align:right;padding-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-      <div style="font-size:0.58rem;color:#4b5563;">#{{ first_slot.pokemon.pokedex_number }}</div>
-      {% if first_slot.placed_sticker or group.list|length > 0 %}{{ first_slot.pokemon.name }}{% else %}???{% endif %}
-    </div>
+  {# Card header #}
+  <div class="poke-album-card-header">
+    <span class="dex-num">#{{ first.pokemon.pokedex_number }}</span>
+    <span class="poke-name">{{ first.pokemon.name }}</span>
+    <span class="placed-count">
+      {% with placed_n=0 %}
+      {% for s in poke_slots %}{% if s.placed_sticker %}{% with placed_n=placed_n|add:1 %}{% endwith %}{% endif %}{% endfor %}
+      {% endwith %}
+      {{ poke_slots|length }} slots
+    </span>
+  </div>
 
-    {# One cell per variant #}
-    {% for slot in group.list %}
-    <div class="sticker-slot r-{{ rarity }}
-                {% if slot.placed_sticker %}placed{% elif slot.available_stickers %}available{% endif %}"
-         style="padding:0.35rem;min-height:70px;"
+  {# Row 1: slots 0–2 #}
+  <div class="variant-row">
+    {% for slot in poke_slots|slice:":3" %}
+    <div class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
          {% if not slot.placed_sticker and slot.available_stickers %}
          @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
          {% endif %}>
-
-      {% if slot.placed_sticker %}<span class="placed-indicator">✓</span>{% endif %}
-
-      <div class="sticker-img-wrap" style="width:48px;height:48px;margin:0 auto 0.2rem;">
-        {% if slot.pokemon.sprite_url %}
-        <img src="{{ slot.pokemon.sprite_url }}"
-             alt="{{ slot.pokemon.name }}"
-             style="max-width:48px;max-height:48px;"
-             class="{% if slot.placed_sticker %}rarity-img-{{ rarity }}{% else %}silhouette{% endif %}">
-        {% else %}
-        <div style="width:48px;height:48px;border-radius:50%;background:{% if slot.placed_sticker %}var(--rc){% else %}#1e293b{% endif %};opacity:{% if slot.placed_sticker %}0.7{% else %}0.2{% endif %};"></div>
-        {% endif %}
-      </div>
-
-      {% if not slot.placed_sticker and slot.available_stickers %}
-      <div style="font-size:0.55rem;color:#3b82f6;text-align:center;">{{ slot.available_stickers|length }}×</div>
+      {% if slot.placed_sticker %}
+      <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop>
       {% endif %}
-
-    </div>{# /sticker-slot #}
-
-    {# Modal for this exact (pokemon, variant) slot #}
-    {% if slot.available_stickers and not slot.placed_sticker %}
-    <template x-teleport="body">
-      <div class="modal-backdrop"
-           x-show="openSlotKey === '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
-           x-cloak
-           @click.self="openSlotKey = null">
-        <div class="modal-box">
-          <h4>Place {{ rarity_label }} {{ slot.pokemon.name }} — {{ slot.variant_label }}</h4>
-          <p style="font-size:0.72rem;color:#94a3b8;margin:0 0 0.8rem;">
-            This slot accepts: <strong style="color:var(--rc);">{{ rarity_label }} · {{ slot.variant_label }}</strong><br>
-            <strong style="color:#fbbf24;">⚠ Soul-bound once placed</strong> — cannot be traded or used for badge crafting.
-          </p>
-          {% for sticker in slot.available_stickers %}
-          <form method="post" action="{% url 'stickers:place_sticker' %}">
-            {% csrf_token %}
-            <input type="hidden" name="sticker_id" value="{{ sticker.pk }}">
-            <input type="hidden" name="region" value="{{ region }}">
-            <input type="hidden" name="rarity" value="{{ rarity }}">
-            <button type="submit" class="modal-sticker-row" style="width:100%;border:none;text-align:left;">
-              {% if slot.pokemon.sprite_url %}
-              <img src="{{ slot.pokemon.sprite_url }}" alt="{{ slot.pokemon.name }}" class="rarity-img-{{ rarity }}" style="width:36px;height:36px;object-fit:contain;">
-              {% endif %}
-              <div class="modal-sticker-info">
-                {{ slot.pokemon.name }} — {{ slot.variant_label }}
-                <div class="modal-sticker-variant">Sticker #{{ sticker.pk }}</div>
-              </div>
-              <span style="font-size:0.65rem;color:#4ade80;">Place →</span>
-            </button>
-          </form>
-          {% endfor %}
-          <button @click="openSlotKey = null"
-                  style="margin-top:0.6rem;width:100%;padding:0.4rem;background:#1e293b;border:none;border-radius:7px;color:#94a3b8;cursor:pointer;font-size:0.75rem;">
-            Cancel
-          </button>
-        </div>
+      <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
+        {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}×</div>{% endif %}
+        <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+             src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+             alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+             loading="lazy">
+        {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
       </div>
-    </template>
-    {% endif %}
+      {% if slot.placed_sticker %}
+      </a>
+      {% endif %}
+      <span class="variant-label-text">{{ slot.variant_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
 
-    {% endfor %}{# /group.list #}
-  </div>{# /row #}
-  {% endwith %}
-  {% endfor %}{# /pokemon_groups #}
+  {# Row 2: slots 3–5 #}
+  {% if poke_slots|length > 3 %}
+  <div class="variant-row">
+    {% for slot in poke_slots|slice:"3:6" %}
+    <div class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
+         {% if not slot.placed_sticker and slot.available_stickers %}
+         @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
+         {% endif %}>
+      {% if slot.placed_sticker %}
+      <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop>
+      {% endif %}
+      <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
+        {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}×</div>{% endif %}
+        <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+             src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+             alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+             loading="lazy">
+        {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
+      </div>
+      {% if slot.placed_sticker %}
+      </a>
+      {% endif %}
+      <span class="variant-label-text">{{ slot.variant_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Row 3: slots 6–8 #}
+  {% if poke_slots|length > 6 %}
+  <div class="variant-row">
+    {% for slot in poke_slots|slice:"6:9" %}
+    <div class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
+         {% if not slot.placed_sticker and slot.available_stickers %}
+         @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
+         {% endif %}>
+      {% if slot.placed_sticker %}
+      <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop>
+      {% endif %}
+      <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
+        {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}×</div>{% endif %}
+        <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+             src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+             alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+             loading="lazy">
+        {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
+      </div>
+      {% if slot.placed_sticker %}
+      </a>
+      {% endif %}
+      <span class="variant-label-text">{{ slot.variant_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Row 4: slots 9–11 #}
+  {% if poke_slots|length > 9 %}
+  <div class="variant-row">
+    {% for slot in poke_slots|slice:"9:12" %}
+    <div class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
+         {% if not slot.placed_sticker and slot.available_stickers %}
+         @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
+         {% endif %}>
+      {% if slot.placed_sticker %}
+      <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop>
+      {% endif %}
+      <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
+        {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}×</div>{% endif %}
+        <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+             src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+             alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+             loading="lazy">
+        {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
+      </div>
+      {% if slot.placed_sticker %}
+      </a>
+      {% endif %}
+      <span class="variant-label-text">{{ slot.variant_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Row 5: slot 12 #}
+  {% if poke_slots|length > 12 %}
+  <div class="variant-row">
+    {% for slot in poke_slots|slice:"12:" %}
+    <div class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
+         {% if not slot.placed_sticker and slot.available_stickers %}
+         @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
+         {% endif %}>
+      {% if slot.placed_sticker %}
+      <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop>
+      {% endif %}
+      <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
+        {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}×</div>{% endif %}
+        <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+             src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+             alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+             loading="lazy">
+        {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
+      </div>
+      {% if slot.placed_sticker %}
+      </a>
+      {% endif %}
+      <span class="variant-label-text">{{ slot.variant_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>{# /poke-album-card #}
+{% endwith %}
+
+{# Modals for this pokemon's available slots #}
+{% for slot in poke_slots %}
+{% if slot.available_stickers and not slot.placed_sticker %}
+<template x-teleport="body">
+  <div class="modal-backdrop"
+       x-show="openSlotKey === '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
+       x-cloak
+       @click.self="openSlotKey = null">
+    <div class="modal-box">
+      <h4>Place {{ rarity_label }} {{ slot.pokemon.name }} — {{ slot.variant_label }}</h4>
+      <p style="font-size:0.72rem;color:#94a3b8;margin:0 0 0.8rem;">
+        Slot: <strong style="color:var(--rc);">{{ rarity_label }} · {{ slot.variant_label }}</strong><br>
+        <strong style="color:#fbbf24;">⚠ Soul-bound once placed</strong>
+      </p>
+      {% for sticker in slot.available_stickers %}
+      <form method="post" action="{% url 'stickers:place_sticker' %}">
+        {% csrf_token %}
+        <input type="hidden" name="sticker_id" value="{{ sticker.pk }}">
+        <input type="hidden" name="region" value="{{ region }}">
+        <input type="hidden" name="rarity" value="{{ rarity }}">
+        <button type="submit" class="modal-sticker-row" style="width:100%;border:none;text-align:left;">
+          <img src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}" alt="{{ slot.pokemon.name }}" style="width:40px;height:40px;object-fit:contain;">
+          <div class="modal-sticker-info">
+            {{ slot.pokemon.name }} — {{ slot.variant_label }}
+            <div class="modal-sticker-variant">Sticker #{{ sticker.pk }}</div>
+          </div>
+          <span style="font-size:0.65rem;color:#4ade80;">Place →</span>
+        </button>
+      </form>
+      {% endfor %}
+      <button @click="openSlotKey = null"
+              style="margin-top:0.6rem;width:100%;padding:0.4rem;background:#1e293b;border:none;border-radius:7px;color:#94a3b8;cursor:pointer;font-size:0.75rem;">
+        Cancel
+      </button>
+    </div>
+  </div>
+</template>
+{% endif %}
+{% endfor %}
+
+{% endfor %}{# /pokemon_slot_groups #}
 </div>{# /x-data #}
+
+{# ── Pagination bottom ── #}
+{% if total_pages > 1 %}
+<div class="pagination-bar">
+  {% if has_prev_page %}
+  <a href="?page={{ current_page|add:'-1' }}">‹ Prev</a>
+  {% else %}
+  <span class="pg-disabled">‹ Prev</span>
+  {% endif %}
+  <span class="pg-current">Page {{ current_page }} / {{ total_pages }}</span>
+  {% if has_next_page %}
+  <a href="?page={{ current_page|add:'1' }}">Next ›</a>
+  {% else %}
+  <span class="pg-disabled">Next ›</span>
+  {% endif %}
+</div>
+{% endif %}
 
 </div>{# /.r-rarity wrapper #}
 {% endblock %}

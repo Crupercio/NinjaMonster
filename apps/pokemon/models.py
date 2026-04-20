@@ -152,8 +152,9 @@ class TacticalRole(models.TextChoices):
     CONTROL = "control", "Control"
 
 
-# All slot types that must be covered for a species to be battle-ready.
-_REQUIRED_SLOT_TYPES: frozenset[str] = frozenset(MoveSlotType.values)
+# The 4 core slots required for a species to be battle-ready.
+# passive_2 is optional bonus depth, not required for battle readiness.
+_REQUIRED_SLOT_TYPES: frozenset[str] = frozenset({"standard", "chase", "mystery", "passive_1"})
 
 
 class Move(models.Model):
@@ -253,6 +254,15 @@ class Move(models.Model):
         default=False,
         help_text="Marks this move as having a support effect (heal, shield, buff, etc.).",
     )
+    # --- Chakra cost (mystery slot only) ---
+    chakra_cost = models.PositiveSmallIntegerField(
+        default=0,
+        help_text=(
+            "Chakra required to activate this mystery move (0 = free). "
+            "Tiers: 20 light / 35 standard / 50 heavy / 80 forbidden. "
+            "Chase and support moves always stay at 0."
+        ),
+    )
     # --- Generation tag ---
     generation = models.ForeignKey(
         Generation,
@@ -270,7 +280,7 @@ class Move(models.Model):
         verbose_name_plural = "moves"
 
     def __str__(self) -> str:
-        return self.themed_name or self.name
+        return self.name
 
     @property
     def is_combo_trigger(self) -> bool:
