@@ -241,6 +241,32 @@ class TestTraining(BaseTest):
         with pytest.raises(ValueError, match="Invalid duration"):
             start_training(op, duration_minutes=45)
 
+    @allure.story("Training level-up Ryo is reduced to 25% of normal")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_training_level_up_ryo_uses_quarter_payout(self):
+        owner = UserFactory(ryo=0)
+        op = OwnedPokemonFactory(owner=owner, level=1, experience=37, is_training=True)
+
+        award_training_exp(op)
+
+        owner.refresh_from_db()
+        op.refresh_from_db()
+        assert op.level == 2
+        assert owner.ryo == 25
+
+    @allure.story("Battle level-up Ryo stays at full payout")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_battle_level_up_ryo_stays_full(self):
+        owner = UserFactory(ryo=0)
+        op = OwnedPokemonFactory(owner=owner, level=1, experience=37, is_training=False)
+
+        award_battle_exp(op, won=True)
+
+        owner.refresh_from_db()
+        op.refresh_from_db()
+        assert op.level == 2
+        assert owner.ryo == 100
+
 
 # ===========================================================================
 # Signal — auto-assign 6 Pokemon on registration

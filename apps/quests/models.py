@@ -51,6 +51,15 @@ class QuestTemplate(models.Model):
         default=0,
         help_text="Secondary Sticker Dust reward (additive, may be 0).",
     )
+    reward_candy_type = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional candy reward type (trail_mix, sweet_berry, golden_apple).",
+    )
+    reward_candy_qty = models.PositiveIntegerField(
+        default=0,
+        help_text="Optional candy reward quantity.",
+    )
     is_active = models.BooleanField(default=True, db_index=True)
     order = models.PositiveSmallIntegerField(
         default=0,
@@ -88,6 +97,11 @@ class QuestTemplate(models.Model):
 
     @property
     def reward_summary(self) -> str:
+        candy_labels = {
+            "trail_mix": "Trail Mix",
+            "sweet_berry": "Sweet Berry",
+            "golden_apple": "Golden Apple",
+        }
         parts = []
         if self.reward_type == RewardType.RYO:
             parts.append(f"{self.reward_value} Ryo")
@@ -97,6 +111,10 @@ class QuestTemplate(models.Model):
             parts.append("1 Sticker Pack")
         if self.reward_dust:
             parts.append(f"{self.reward_dust} Dust")
+        if self.reward_candy_qty and self.reward_candy_type:
+            label = candy_labels.get(self.reward_candy_type, "Candy")
+            qty = self.reward_candy_qty
+            parts.append(f"{qty} {label}" if qty == 1 else f"{qty} {label}s")
         return " + ".join(parts) if parts else "—"
 
 
@@ -124,6 +142,7 @@ class UserQuest(models.Model):
     )
     period_key = models.CharField(max_length=30, db_index=True)
     progress = models.PositiveIntegerField(default=0)
+    progress_meta = models.JSONField(blank=True, default=dict)
     completed = models.BooleanField(default=False, db_index=True)
     rewarded = models.BooleanField(default=False)
     assigned_at = models.DateTimeField(default=timezone.now)

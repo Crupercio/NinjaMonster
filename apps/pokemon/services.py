@@ -13,7 +13,8 @@ EXP rules (as designed):
   - Duration bonuses:    30 min = ×1.0 | 60 min = ×1.10 | 240 min = ×1.50
   - Level-up threshold:  three-phase exponential curve (see OwnedPokemon.exp_to_next_level)
   - Training Pokemon:    cannot receive battle EXP; must stop/cancel training first
-  - Level-up Ryo:        min(level × 50, 5000) Ryo awarded per level-up
+  - Battle level-up Ryo: min(level × 50, 5000) Ryo awarded per level-up
+  - Training level-up Ryo: 25% of the normal level-up payout
 
 Level-up total time estimates (240-min sessions):
   Lv 1–20:   ~0.8 sessions  (3.4h) — hooks the player fast
@@ -108,7 +109,7 @@ def award_training_exp(owned: OwnedPokemon) -> int:
 
     earned = owned.battle_exp_gain * 3        # 3× the bracket amount
 
-    _apply_exp(owned, earned)
+    _apply_exp(owned, earned, level_up_ryo_multiplier=0.25)
 
     logger.info(
         "%s earned %d EXP from a training tick. Now Lv.%d, %d/%d EXP.",
@@ -145,6 +146,17 @@ def start_training(owned: OwnedPokemon, duration_minutes: int = 30) -> None:
 
     if owned.is_training:
         return  # already training — nothing to do
+
+    active_training = OwnedPokemon.objects.filter(
+        owner=owned.owner,
+        is_training=True,
+    ).count()
+    max_slots = owned.owner.max_training_slots
+    if active_training >= max_slots:
+        raise ValueError(
+            f"Training slots full ({active_training}/{max_slots}). "
+            "Upgrade your training grounds or free a slot first."
+        )
 
     now = timezone.now()
     owned.is_training = True
@@ -232,7 +244,7 @@ def claim_training(owned: OwnedPokemon) -> int:
     total_xp = int(ticks * xp_per_tick * bonus)
 
     # Award XP (may trigger level-ups)
-    _apply_exp(owned, total_xp)
+    _apply_exp(owned, total_xp, level_up_ryo_multiplier=0.25)
 
     # Clear training lock
     owned.is_training = False
@@ -376,11 +388,16 @@ def assign_random_moveset(owned: OwnedPokemon) -> None:
 # Internal helper
 # ---------------------------------------------------------------------------
 
-def _apply_exp(owned: OwnedPokemon, earned: int) -> int:
+def _apply_exp(
+    owned: OwnedPokemon,
+    earned: int,
+    *,
+    level_up_ryo_multiplier: float = 1.0,
+) -> int:
     """
     Add `earned` EXP to the Pokemon, triggering level-ups as needed.
 
-    On each level-up, awards Ryo to the owner (min(level × 50, 5000)).
+    On each level-up, awards Ryo to the owner using the provided multiplier.
     Saves only changed fields to avoid overwriting concurrent updates.
 
     Returns:
@@ -394,7 +411,7 @@ def _apply_exp(owned: OwnedPokemon, earned: int) -> int:
     while owned.level < MAX_LEVEL and owned.experience >= owned.exp_to_next_level:
         owned.experience -= owned.exp_to_next_level
         owned.level += 1
-        ryo = owned.level_up_ryo
+        ryo = int(owned.level_up_ryo * level_up_ryo_multiplier)
         total_ryo += ryo
         logger.info(
             "%s leveled up to Lv.%d! (+%d Ryo)",

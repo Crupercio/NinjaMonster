@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+{% load sticker_tags %}
+
+{% block title %}Placement Mode{% endblock %}
+
+{% block extra_css %}
+<style>
+.r-common      { --rc:#9ca3af; }
+.r-uncommon    { --rc:#4ade80; }
+.r-rare        { --rc:#60a5fa; }
+.r-epic        { --rc:#a78bfa; }
+.r-prismatic   { --rc:#e879f9; }
+.r-full_art    { --rc:#f97316; }
+.r-secret_rare { --rc:#f43f5e; }
+
+.pm-shell {
+  width: 100%;
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.pm-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid var(--border-md);
+  position: relative;
+}
+
+.pm-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 68px;
+  height: 1px;
+  background: var(--accent-gold);
+}
+
+.pm-kicker,
+.pm-stat-label,
+.pm-meta-label,
+.pm-badge {
+  font-family: 'Chakra Petch', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pm-kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.pm-title {
+  margin: 0.18rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pm-subtitle {
+  margin: 0.28rem 0 0;
+  max-width: 560px;
+  color: var(--text-2);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.pm-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pm-banner {
+  margin-bottom: 0.95rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-md);
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  color: var(--text-1);
+  font-size: 0.84rem;
+}
+
+.pm-banner strong { color: var(--accent-gold); }
+.pm-banner.success {
+  border-color: rgba(74,222,128,0.28);
+}
+.pm-banner.success strong {
+  color: #4ade80;
+}
+
+.pm-top {
+  display: grid;
+  grid-template-columns: 1.45fr 0.95fr;
+  gap: 0.9rem;
+  margin-bottom: 0.95rem;
+}
+
+.pm-card,
+.pm-panel,
+.pm-toolbar,
+.pm-results {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.pm-card::before,
+.pm-panel::before,
+.pm-toolbar::before,
+.pm-results::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,184,75,0.28), transparent);
+}
+
+.pm-card,
+.pm-panel {
+  padding: 1rem;
+}
+
+.pm-card-title,
+.pm-panel-title,
+.pm-results-title {
+  margin: 0;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.pm-card-copy,
+.pm-panel-copy {
+  margin: 0.24rem 0 0;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.pm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.pm-stat {
+  padding: 0.8rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(5, 11, 26, 0.26);
+}
+
+.pm-stat-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 0.34rem;
+}
+
+.pm-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.pm-stat-value.gold { color: var(--accent-gold); }
+.pm-stat-value.green { color: #4ade80; }
+.pm-stat-value.rc { color: var(--rc); }
+
+.pm-auto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+
+.pm-toggle {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.78rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(5, 11, 26, 0.26);
+}
+
+.pm-toggle input {
+  margin-top: 0.18rem;
+  accent-color: #e8b84b;
+}
+
+.pm-toggle-title {
+  color: var(--text-1);
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.pm-toggle-copy {
+  display: block;
+  margin-top: 0.14rem;
+  color: var(--text-3);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.pm-toolbar {
+  padding: 0.95rem 1rem;
+  margin-bottom: 0.95rem;
+}
+
+.pm-toolbar-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.pm-filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.pm-field label {
+  display: block;
+  margin-bottom: 0.34rem;
+  color: var(--text-3);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pm-field select {
+  width: 100%;
+  padding: 0.7rem 0.82rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-md);
+  background: var(--bg-felt);
+  color: var(--text-1);
+  font-size: 0.84rem;
+}
+
+.pm-toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pm-toolbar-actions form {
+  margin: 0;
+}
+
+.pm-results {
+  padding: 0.95rem 1rem 1rem;
+}
+
+.pm-results-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 0.95rem;
+}
+
+.pm-results-copy {
+  margin: 0.2rem 0 0;
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.pm-results-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(5, 11, 26, 0.28);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pm-chip strong {
+  color: var(--text-1);
+}
+
+.pm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 0.7rem;
+}
+
+.pm-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 206px;
+  padding: 0.82rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(180deg, rgba(8, 15, 34, 0.94), rgba(11, 20, 39, 0.98));
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.pm-slot:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hi);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.34);
+}
+
+.pm-slot.placeable {
+  border-color: rgba(232,184,75,0.22);
+}
+
+.pm-slot.placed {
+  border-color: rgba(74,222,128,0.2);
+}
+
+.pm-slot-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pm-dex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.66rem;
+  color: var(--text-3);
+}
+
+.pm-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0.2rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.pm-badge.ready {
+  background: rgba(232,184,75,0.14);
+  color: var(--accent-gold);
+}
+
+.pm-badge.placed {
+  background: rgba(74,222,128,0.14);
+  color: #4ade80;
+}
+
+.pm-badge.missing {
+  background: rgba(148,163,184,0.11);
+  color: var(--text-3);
+}
+
+.pm-slot-body {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.pm-art {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.pm-art img {
+  width: 54px;
+  height: 54px;
+  max-width: 54px;
+  max-height: 54px;
+  object-fit: contain;
+  display: block;
+}
+
+.pm-art img.silhouette {
+  filter: brightness(0) saturate(0) invert(0.36);
+  opacity: 0.55;
+}
+
+.pm-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.15;
+}
+
+.pm-variant {
+  margin-top: 0.12rem;
+  color: var(--rc);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pm-meta {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.pm-meta-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.pm-meta-label {
+  flex: 0 0 auto;
+  font-size: 0.54rem;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.pm-meta-value {
+  min-width: 0;
+  color: var(--text-2);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.pm-slot-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.pm-slot-actions form,
+.pm-slot-actions a {
+  flex: 1 1 0;
+}
+
+.pm-slot-actions .btn {
+  width: 100%;
+}
+
+.pm-empty {
+  padding: 2.4rem 1rem;
+  text-align: center;
+  color: var(--text-3);
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,0.08);
+  background: rgba(8, 15, 34, 0.42);
+}
+
+.pagination-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.pagination-bar a,
+.pagination-bar span {
+  min-width: 36px;
+  text-align: center;
+  padding: 0.42rem 0.68rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.pagination-bar a {
+  color: var(--text-1);
+  text-decoration: none;
+  background: rgba(18, 27, 53, 0.9);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.pagination-bar .active {
+  background: linear-gradient(180deg, #f5c84b, #d89d0b);
+  color: #111827;
+  font-weight: 700;
+}
+
+@media (max-width: 1080px) {
+  .pm-top,
+  .pm-toolbar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pm-toolbar-actions,
+  .pm-results-meta,
+  .pm-nav {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .pm-stat-grid,
+  .pm-filter-row,
+  .pm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-slot-body {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .pm-art {
+    width: 56px;
+    height: 56px;
+  }
+
+  .pm-art img {
+    width: 46px;
+    height: 46px;
+    max-width: 46px;
+    max-height: 46px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="r-{{ selected_rarity }}">
+  <div class="pm-shell">
+    <div class="pm-header">
+      <div>
+        <div class="pm-kicker">Collector Workflow</div>
+        <h2 class="pm-title">Placement Mode</h2>
+        <p class="pm-subtitle">Fast-fill missing album slots with a compact collector view. Filter by region and rarity, then sweep through only the stickers that need action.</p>
+      </div>
+      <div class="pm-nav">
+        <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Album</a>
+        <a href="{% url 'stickers:regional_album_detail' region=selected_region rarity=selected_rarity %}" class="btn btn-secondary btn-sm">Regional View</a>
+        <a href="{% url 'stickers:album_scene_index' region=selected_region %}" class="btn btn-secondary btn-sm">Pages</a>
+      </div>
+    </div>
+
+    {% if settings_saved %}
+    <div class="pm-banner success">
+      <strong>Auto-place updated.</strong> New stickers will {% if request.user.auto_place_new_stickers %}file themselves into open slots when there is a clean match{% else %}stay loose until you place them manually{% endif %}.
+    </div>
+    {% endif %}
+
+    {% if error_notice %}
+    <div class="pm-banner">
+      <strong>Placement blocked.</strong> {{ error_notice }}
+    </div>
+    {% endif %}
+
+    {% if placed_count_notice %}
+    <div class="pm-banner success">
+      <strong>{{ placed_count_notice }}</strong> sticker{{ placed_count_notice|pluralize }} placed from the {% if bulk_scope == "filtered" %}full filtered set{% else %}current page{% endif %}.
+    </div>
+    {% endif %}
+
+    <div class="pm-top">
+      <div class="pm-card">
+        <h3 class="pm-card-title">{{ region_label }} · {{ rarity_label }}</h3>
+        <p class="pm-card-copy">Use this screen when you want speed, not browsing. It is tuned to show as many actionable slots as possible in one pass.</p>
+
+        <div class="pm-stat-grid">
+          <div class="pm-stat">
+            <div class="pm-stat-label">Ready</div>
+            <div class="pm-stat-value gold">{{ slot_totals.placeable }}</div>
+          </div>
+          <div class="pm-stat">
+            <div class="pm-stat-label">Filled</div>
+            <div class="pm-stat-value green">{{ slot_totals.placed }}</div>
+          </div>
+          <div class="pm-stat">
+            <div class="pm-stat-label">Missing</div>
+            <div class="pm-stat-value rc">{{ slot_totals.missing }}</div>
+          </div>
+          <div class="pm-stat">
+            <div class="pm-stat-label">Total Slots</div>
+            <div class="pm-stat-value">{{ slot_totals.total }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-panel">
+        <h3 class="pm-panel-title">Auto-place First Copy</h3>
+        <p class="pm-panel-copy">When enabled, newly earned stickers go straight into the album if the exact Pokemon, rarity, and variant slot is still empty. Since placed stickers are soul-bound, this stays an explicit preference.</p>
+
+        <form method="post" class="pm-auto-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="toggle_auto_place">
+          <input type="hidden" name="region" value="{{ selected_region }}">
+          <input type="hidden" name="rarity" value="{{ selected_rarity }}">
+          <input type="hidden" name="view" value="{{ selected_view }}">
+          <input type="hidden" name="page" value="{{ page_obj.number }}">
+
+          <label class="pm-toggle">
+            <input type="checkbox" name="auto_place_new_stickers" {% if request.user.auto_place_new_stickers %}checked{% endif %}>
+            <span>
+              <span class="pm-toggle-title">Enable automatic filing for clean matches</span>
+              <span class="pm-toggle-copy">Best for pack openings and rapid collection sessions.</span>
+            </span>
+          </label>
+
+          <div>
+            <button type="submit" class="btn btn-primary btn-sm">Save Preference</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="pm-toolbar">
+      <div class="pm-toolbar-grid">
+        <form method="get">
+          <div class="pm-filter-row">
+            <div class="pm-field">
+              <label for="region">Region</label>
+              <select id="region" name="region">
+                {% for region_choice in region_choices %}
+                <option value="{{ region_choice.value }}"{% if region_choice.value == selected_region %} selected{% endif %}>{{ region_choice.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pm-field">
+              <label for="rarity">Rarity</label>
+              <select id="rarity" name="rarity">
+                {% for rarity_value, rarity_label_choice in rarity_choices %}
+                <option value="{{ rarity_value }}"{% if rarity_value == selected_rarity %} selected{% endif %}>{{ rarity_label_choice }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pm-field">
+              <label for="view">View</label>
+              <select id="view" name="view">
+                {% for value, label in view_choices %}
+                <option value="{{ value }}"{% if value == selected_view %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pm-field">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-secondary btn-sm" style="width:100%;">Apply Filters</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="pm-toolbar-actions">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="bulk_visible">
+            <input type="hidden" name="region" value="{{ selected_region }}">
+            <input type="hidden" name="rarity" value="{{ selected_rarity }}">
+            <input type="hidden" name="view" value="{{ selected_view }}">
+            <input type="hidden" name="page" value="{{ page_obj.number }}">
+            <button type="submit" class="btn btn-secondary btn-sm"{% if visible_placeable_count == 0 %} disabled{% endif %}>Place Visible</button>
+          </form>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="bulk_filtered">
+            <input type="hidden" name="region" value="{{ selected_region }}">
+            <input type="hidden" name="rarity" value="{{ selected_rarity }}">
+            <input type="hidden" name="view" value="{{ selected_view }}">
+            <input type="hidden" name="page" value="{{ page_obj.number }}">
+            <button type="submit" class="btn btn-primary btn-sm"{% if slot_totals.placeable == 0 %} disabled{% endif %}>Place All Matching</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="pm-results">
+      <div class="pm-results-head">
+        <div>
+          <h3 class="pm-results-title">Placement Queue</h3>
+          <p class="pm-results-copy">Showing {{ placement_slots_page|length }} of {{ filtered_slot_count }} slot{{ filtered_slot_count|pluralize }} for {{ region_label }} {{ rarity_label }}.</p>
+        </div>
+        <div class="pm-results-meta">
+          <span class="pm-chip"><strong>{{ visible_placeable_count }}</strong> ready on this page</span>
+          <span class="pm-chip"><strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</span>
+        </div>
+      </div>
+
+      {% if placement_slots_page %}
+      <div class="pm-grid">
+        {% for slot in placement_slots_page %}
+        <div id="{{ slot.anchor_id }}" class="pm-slot {% if slot.is_placeable %}placeable{% elif slot.is_placed %}placed{% endif %}">
+          <div class="pm-slot-top">
+            <span class="pm-dex">#{{ slot.pokemon.pokedex_number }}</span>
+            {% if slot.is_placed %}
+            <span class="pm-badge placed">Placed</span>
+            {% elif slot.is_placeable %}
+            <span class="pm-badge ready">{{ slot.available_count }}x Ready</span>
+            {% else %}
+            <span class="pm-badge missing">Missing</span>
+            {% endif %}
+          </div>
+
+          <div class="pm-slot-body">
+            <div class="pm-art">
+              <img src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+                   alt="{{ slot.pokemon.name }}"
+                   class="{% if not slot.is_placed and not slot.is_placeable %}silhouette{% endif %}"
+                   loading="lazy">
+            </div>
+
+            <div class="pm-meta">
+              <div>
+                <div class="pm-name">{{ slot.pokemon.name }}</div>
+                <div class="pm-variant">{{ slot.variant_label }}</div>
+              </div>
+
+              <div class="pm-meta-row">
+                <span class="pm-meta-label">Page</span>
+                <span class="pm-meta-value">{% if slot.album_page_number %}{{ slot.album_page_number }}{% if slot.album_page_location %} · {{ slot.album_page_location }}{% endif %}{% else %}Not mapped{% endif %}</span>
+              </div>
+
+              <div class="pm-meta-row">
+                <span class="pm-meta-label">Status</span>
+                <span class="pm-meta-value">
+                  {% if slot.is_placed %}
+                  Filed in album
+                  {% elif slot.is_placeable %}
+                  {{ slot.available_count }} copy{{ slot.available_count|pluralize }} ready to place
+                  {% else %}
+                  No owned copy for this slot
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pm-slot-actions">
+            {% if slot.is_placeable %}
+            <form method="post" action="{% url 'stickers:place_sticker' %}">
+              {% csrf_token %}
+              <input type="hidden" name="sticker_id" value="{{ slot.first_available_sticker_id }}">
+              <input type="hidden" name="region" value="{{ selected_region }}">
+              <input type="hidden" name="rarity" value="{{ selected_rarity }}">
+              <input type="hidden" name="redirect_to" value="placement">
+              <input type="hidden" name="view" value="{{ selected_view }}">
+              <input type="hidden" name="page" value="{{ page_obj.number }}">
+              <input type="hidden" name="anchor" value="{{ slot.anchor_id }}">
+              <button type="submit" class="btn btn-primary btn-sm">Place</button>
+            </form>
+            {% else %}
+            <a href="{% url 'stickers:regional_album_detail' region=selected_region rarity=selected_rarity %}?page={{ slot.regional_page_number }}#{{ slot.anchor_id }}" class="btn btn-secondary btn-sm">View Slot</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="pm-empty">
+        No slots match these filters right now. Try another rarity or switch the queue view.
+      </div>
+      {% endif %}
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="pagination-bar">
+        {% if page_obj.has_previous %}
+        <a href="?region={{ selected_region }}&rarity={{ selected_rarity }}&view={{ selected_view }}&page={{ page_obj.previous_page_number }}">Prev</a>
+        {% endif %}
+        {% for number in page_range %}
+          {% if number == page_obj.paginator.ELLIPSIS %}
+          <span>…</span>
+          {% elif number == page_obj.number %}
+          <span class="active">{{ number }}</span>
+          {% else %}
+          <a href="?region={{ selected_region }}&rarity={{ selected_rarity }}&view={{ selected_view }}&page={{ number }}">{{ number }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <a href="?region={{ selected_region }}&rarity={{ selected_rarity }}&view={{ selected_view }}&page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

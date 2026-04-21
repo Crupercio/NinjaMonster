@@ -12,16 +12,33 @@ User = get_user_model()
 
 # ── Reward constants — tune these in one place ──────────────────────────────
 DAILY_REWARD_RYO: int = 1000
-BATTLE_WIN_RYO: int = 200
-BATTLE_LOSS_RYO: int = 50
-SELL_RYO_PER_LEVEL: int = 50   # sell value = max(100, level * SELL_RYO_PER_LEVEL)
-SELL_RYO_MINIMUM: int = 100
+BATTLE_WIN_RYO: int = 1000
+BATTLE_LOSS_RYO: int = 350
+BOND_BONUS_UNLOCK_LEVEL: int = 10
+BOND_BONUS_LOCKED_MULTIPLIER: float = 0.25
+SELL_VALUE_TIERS: tuple[tuple[int, int], ...] = (
+    (50, 1500),
+    (90, 2500),
+    (99, 3000),
+    (100, 5000),
+)
 # ────────────────────────────────────────────────────────────────────────────
 
 
+def base_sell_value_for_level(level: int) -> int:
+    """Return the full sell value for a Pokemon once its Bond Bonus is unlocked."""
+    for max_level, value in SELL_VALUE_TIERS:
+        if level <= max_level:
+            return value
+    return SELL_VALUE_TIERS[-1][1]
+
+
 def sell_value_for_level(level: int) -> int:
-    """Return the Ryo sell value for a Pokemon of the given level."""
-    return max(SELL_RYO_MINIMUM, level * SELL_RYO_PER_LEVEL)
+    """Return the current Ryo sell value, including Bond Bonus protection before Lv10."""
+    full_value = base_sell_value_for_level(level)
+    if level >= BOND_BONUS_UNLOCK_LEVEL:
+        return full_value
+    return max(1, int(full_value * BOND_BONUS_LOCKED_MULTIPLIER))
 
 
 @transaction.atomic
@@ -173,6 +190,36 @@ def buy_candy(user: "User", candy_type: str) -> None:  # type: ignore[name-defin
     User.objects.filter(pk=user.pk).update(**{field: F(field) + 1})
     user.refresh_from_db(fields=[field])
     logger.info("%s bought 1x %s for %d Ryo.", user, candy_type, cost)
+
+
+@transaction.atomic
+def purchase_training_slot_upgrade(user: "User") -> dict[str, int]:  # type: ignore[name-defined]
+    """Buy the next training slot upgrade when the trainer level gate is met."""
+    user.refresh_from_db(fields=["ryo", "trainer_level", "training_slot_upgrade_level"])
+    next_upgrade = user.next_training_slot_upgrade
+    if next_upgrade is None:
+        raise ValueError("All training slot upgrades have already been purchased.")
+
+    min_level = int(next_upgrade["min_level"])
+    if user.trainer_level < min_level:
+        raise ValueError(
+            f"Reach Trainer Level {min_level} to unlock the next training slot upgrade."
+        )
+
+    cost = int(next_upgrade["cost"])
+    deduct_ryo(user, cost)
+    user.training_slot_upgrade_level += 1
+    user.save(update_fields=["training_slot_upgrade_level"])
+    user.refresh_from_db(fields=["training_slot_upgrade_level", "ryo", "trainer_level"])
+
+    logger.info(
+        "%s purchased training slot upgrade #%d for %d Ryo (max slots: %d).",
+        user,
+        user.training_slot_upgrade_level,
+        cost,
+        user.max_training_slots,
+    )
+    return {"cost": cost, "max_training_slots": user.max_training_slots}
 
 
 @transaction.atomic

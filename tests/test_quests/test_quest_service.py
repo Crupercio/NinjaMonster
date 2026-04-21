@@ -22,6 +22,7 @@ import pytest
 
 from apps.quests.models import QuestCondition, QuestType, RewardType, UserQuest
 from apps.quests.services import QuestService, _daily_period_key, _weekly_period_key
+from tests.framework.factories.pokemon_factory import PokemonFactory, PokemonTypeFactory
 
 from tests.framework.base.base_test import BaseTest
 from tests.framework.factories.quest_factory import QuestTemplateFactory, UserQuestFactory
@@ -284,6 +285,53 @@ class TestOnPackOpened(BaseTest):
 
 
 @allure.epic("Quests")
+@allure.feature("Progress Tracking")
+@pytest.mark.django_db
+class TestExpeditionQuestHooks(BaseTest):
+
+    @allure.story("Increments COMPLETE_EXPEDITIONS quests")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_increments_complete_expeditions(self):
+        user = UserFactory()
+        tmpl = QuestTemplateFactory(
+            quest_type=QuestType.DAILY,
+            condition=QuestCondition.COMPLETE_EXPEDITIONS,
+            condition_value=2,
+        )
+        uq = UserQuestFactory(user=user, template=tmpl, period_key=_daily_period_key(), progress=0)
+
+        QuestService().on_expedition_completed(user)
+
+        uq.refresh_from_db()
+        assert uq.progress == 1
+        assert uq.completed is False
+
+    @allure.story("Tracks unique bonded types for expedition quests")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_tracks_unique_bonded_types(self):
+        user = UserFactory()
+        fire = PokemonTypeFactory(name="Fire")
+        water = PokemonTypeFactory(name="Water")
+        grass = PokemonTypeFactory(name="Grass")
+        quest = QuestTemplateFactory(
+            quest_type=QuestType.WEEKLY,
+            condition=QuestCondition.BOND_POKEMON,
+            condition_value=3,
+            condition_meta={"unique_type_count": 3},
+        )
+        uq = UserQuestFactory(user=user, template=quest, period_key=_weekly_period_key())
+
+        QuestService().on_pokemon_bonded(user, PokemonFactory(primary_type=fire))
+        QuestService().on_pokemon_bonded(user, PokemonFactory(primary_type=water))
+        QuestService().on_pokemon_bonded(user, PokemonFactory(primary_type=grass))
+
+        uq.refresh_from_db()
+        assert uq.progress == 3
+        assert uq.completed is True
+        assert uq.progress_meta["bonded_types"] == ["fire", "grass", "water"]
+
+
+@allure.epic("Quests")
 @allure.feature("Reward Claiming")
 @pytest.mark.django_db
 class TestClaimReward(BaseTest):
@@ -312,6 +360,32 @@ class TestClaimReward(BaseTest):
         assert user.ryo == 250
         uq.refresh_from_db()
         assert uq.rewarded is True
+
+    @allure.story("Awards candy alongside other quest rewards")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_claims_candy_reward(self):
+        user = UserFactory()
+        tmpl = QuestTemplateFactory(
+            reward_type=RewardType.RYO,
+            reward_value=400,
+            reward_candy_type="trail_mix",
+            reward_candy_qty=1,
+        )
+        uq = UserQuestFactory(
+            user=user,
+            template=tmpl,
+            completed=True,
+            rewarded=False,
+            period_key=_daily_period_key(),
+        )
+
+        summary = QuestService().claim_reward(user, uq)
+
+        user.refresh_from_db()
+        assert summary["ryo"] == 400
+        assert summary["candy_qty"] == 1
+        assert summary["candy_label"] == "Trail Mix"
+        assert user.candy_trail_mix == 1
 
     @allure.story("Raises ValueError when quest is not completed")
     @allure.severity(allure.severity_level.NORMAL)

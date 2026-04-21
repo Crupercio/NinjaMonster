@@ -1,10 +1,13 @@
 """Class-based views for the sticker collection app."""
 import logging
+from urllib.parse import urlencode
 
 from django.db.models import Count
-
+from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
@@ -13,6 +16,7 @@ from .models import GEN_PACK_GEN_NUMBER, PackType, Sticker, StickerPack, Sticker
 from .models import REGION_LABELS, REGION_RANGES, StickerRarity
 from .services import (
     PACK_PRICE_RYO,
+    GEN_PACK_PRICE_RYO,
     POKEMON_COMPLETION_SLOTS,
     AlbumService,
     SceneAlbumService,
@@ -20,6 +24,7 @@ from .services import (
     TradeService,
     _COMPLETION_RARITIES,
     _COMPLETION_VARIANTS,
+    pack_price_for_type,
 )
 
 _album_service = AlbumService()
@@ -28,7 +33,51 @@ _scene_service = SceneAlbumService()
 logger = logging.getLogger(__name__)
 
 _sticker_service = StickerService()
+
+PLACEMENT_VIEW_CHOICES: tuple[tuple[str, str], ...] = (
+    ("placeable", "Ready to Place"),
+    ("missing", "Missing Slots"),
+    ("all", "All Slots"),
+)
+
+REGION_BUNDLE_IMAGE_PATHS = {
+    PackType.GEN1: "images/kanto_bundle_pack.png",
+    PackType.GEN2: "images/johto_bundle_pack.png",
+    PackType.GEN3: "images/hoenn_bundle_pack.png",
+    PackType.GEN4: "images/sinnoh_bundle_pack.png",
+    PackType.GEN5: "images/unova_bundle_pack.png",
+    PackType.GEN6: "images/kalos_bundle_pack.png",
+    PackType.GEN7: "images/alola_bundle_pack.png",
+    PackType.GEN8: "images/galar_bundle_pack.png",
+}
 _trade_service = TradeService()
+
+
+def _build_redirect_url(
+    view_name: str,
+    *,
+    kwargs: dict | None = None,
+    params: dict | None = None,
+    anchor: str | None = None,
+) -> str:
+    url = reverse(view_name, kwargs=kwargs or {})
+    clean_params = {
+        key: value for key, value in (params or {}).items()
+        if value not in (None, "", [])
+    }
+    if clean_params:
+        url = f"{url}?{urlencode(clean_params)}"
+    if anchor:
+        url = f"{url}#{anchor}"
+    return url
+
+
+def _filter_placement_slots(slots: list[dict], view_mode: str) -> list[dict]:
+    if view_mode == "all":
+        return slots
+    if view_mode == "missing":
+        return [slot for slot in slots if not slot["is_placed"]]
+    return [slot for slot in slots if slot["is_placeable"]]
 
 
 class AlbumView(LoginRequiredMixin, TemplateView):
@@ -163,6 +212,7 @@ class PackOpenView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data(**kwargs)
         context["pack"] = pack
         context["revealed_stickers"] = stickers
+        context["auto_placed_count"] = sum(1 for sticker in stickers if sticker.is_album_placed)
         return self.render_to_response(context)
 
 
@@ -278,13 +328,36 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["pack_price"] = PACK_PRICE_RYO
+        context["gen_pack_price"] = GEN_PACK_PRICE_RYO
         context["pack_price_10"] = PACK_PRICE_RYO * 10
         context["can_afford"] = self.request.user.ryo >= PACK_PRICE_RYO
         context["can_afford_10"] = self.request.user.ryo >= PACK_PRICE_RYO * 10
         context["pack_types"] = [
-            {"value": pt.value, "label": pt.label}
+            {
+                "value": pt.value,
+                "label": pt.label,
+                "price": pack_price_for_type(pt.value),
+                "can_afford": self.request.user.ryo >= pack_price_for_type(pt.value),
+                "image_path": StickerPack(pack_type=pt.value).image_path,
+                "sticker_count": StickerPack(pack_type=pt.value).sticker_count,
+            }
             for pt in PackType
             if pt not in (PackType.BUNDLE,)  # bundle is granted, not bought
+        ]
+        context["region_products"] = [
+            {
+                **pt,
+                "bundle_price": pt["price"] * 10,
+                "bundle_can_afford": self.request.user.ryo >= pt["price"] * 10,
+                "bundle_image_path": REGION_BUNDLE_IMAGE_PATHS.get(
+                    pt["value"],
+                    StickerPack(pack_type=PackType.BUNDLE).image_path,
+                ),
+                "bundle_sticker_count": pt["sticker_count"] * 10,
+                "bundle_name": f"{pt['label']} Bundle",
+            }
+            for pt in context["pack_types"]
+            if pt["value"] != PackType.STANDARD
         ]
         context["gen_pack_numbers"] = GEN_PACK_GEN_NUMBER
         return context
@@ -307,13 +380,18 @@ class BuyMultiPackView(LoginRequiredMixin, TemplateView):
     template_name = "stickers/multi_pack_open.html"
 
     def post(self, request, *args, **kwargs):
-        total_cost = PACK_PRICE_RYO * 10
+        pack_type = request.POST.get("pack_type", PackType.STANDARD)
+        if pack_type not in PackType.values or pack_type == PackType.BUNDLE:
+            pack_type = PackType.STANDARD
+        unit_price = pack_price_for_type(pack_type)
+        total_cost = unit_price * 10
         if request.user.ryo < total_cost:
             return redirect("stickers:buy_pack")
         try:
             all_stickers = []
+            preview_pack = StickerPack(pack_type=pack_type)
             for _ in range(10):
-                pack = _sticker_service.buy_pack(request.user)
+                pack = _sticker_service.buy_pack(request.user, pack_type=pack_type)
                 stickers = _sticker_service.open_pack(request.user, pack)
                 all_stickers.extend(stickers)
         except ValueError as exc:
@@ -321,6 +399,10 @@ class BuyMultiPackView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data(**kwargs)
         context["all_stickers"] = all_stickers
         context["pack_count"] = 10
+        context["cards_per_pack"] = preview_pack.sticker_count
+        context["bundle_title"] = f"{preview_pack.display_name} Bundle"
+        context["bundle_total_price"] = total_cost
+        context["auto_placed_count"] = sum(1 for sticker in all_stickers if sticker.is_album_placed)
         return self.render_to_response(context)
 
 
@@ -509,6 +591,129 @@ class RegionalAlbumDetailView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class PlacementModeView(LoginRequiredMixin, TemplateView):
+    """
+    Compact album management page optimized for fast sticker placement.
+
+    GET  /stickers/album/placement/
+    POST /stickers/album/placement/   (bulk place / toggle auto-place)
+    """
+
+    template_name = "stickers/placement_mode.html"
+    page_size = 72
+
+    def _selected_region(self) -> str:
+        region = self.request.GET.get("region", "kanto")
+        return region if region in REGION_RANGES else "kanto"
+
+    def _selected_rarity(self) -> str:
+        rarity = self.request.GET.get("rarity", StickerRarity.COMMON)
+        return rarity if rarity in StickerRarity.values else StickerRarity.COMMON
+
+    def _selected_view(self) -> str:
+        view_mode = self.request.GET.get("view", "placeable")
+        valid_values = {value for value, _ in PLACEMENT_VIEW_CHOICES}
+        return view_mode if view_mode in valid_values else "placeable"
+
+    def _build_context(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        region = self._selected_region()
+        rarity = self._selected_rarity()
+        view_mode = self._selected_view()
+
+        placement_data = _album_service.get_placement_slots(self.request.user, region, rarity)
+        filtered_slots = _filter_placement_slots(placement_data["placement_slots"], view_mode)
+
+        paginator = Paginator(filtered_slots, self.page_size)
+        page_number = self.request.GET.get("page") or 1
+        page_obj = paginator.get_page(page_number)
+
+        context.update(placement_data)
+        context["selected_region"] = region
+        context["selected_rarity"] = rarity
+        context["selected_view"] = view_mode
+        context["view_choices"] = PLACEMENT_VIEW_CHOICES
+        context["region_choices"] = [
+            {"value": region_name, "label": label}
+            for region_name, label in REGION_LABELS.items()
+        ]
+        context["rarity_choices"] = StickerRarity.choices
+        context["page_obj"] = page_obj
+        context["placement_slots_page"] = list(page_obj.object_list)
+        context["page_range"] = paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+        context["visible_placeable_count"] = sum(
+            1 for slot in page_obj.object_list if slot["is_placeable"]
+        )
+        context["filtered_slot_count"] = len(filtered_slots)
+        context["current_query"] = {
+            "region": region,
+            "rarity": rarity,
+            "view": view_mode,
+            "page": page_obj.number,
+        }
+        context["placed_count_notice"] = self.request.GET.get("placed_count")
+        context["bulk_scope"] = self.request.GET.get("bulk_scope", "")
+        context["settings_saved"] = self.request.GET.get("settings_saved") == "1"
+        context["error_notice"] = self.request.GET.get("error", "")
+        return context
+
+    def get_context_data(self, **kwargs):
+        return self._build_context(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get("action")
+        region = request.POST.get("region", "kanto")
+        rarity = request.POST.get("rarity", StickerRarity.COMMON)
+        view_mode = request.POST.get("view", "placeable")
+        page_number = request.POST.get("page", 1)
+        base_params = {
+            "region": region,
+            "rarity": rarity,
+            "view": view_mode,
+            "page": page_number,
+        }
+
+        if action == "toggle_auto_place":
+            request.user.auto_place_new_stickers = request.POST.get("auto_place_new_stickers") == "on"
+            request.user.save(update_fields=["auto_place_new_stickers"])
+            return HttpResponseRedirect(
+                _build_redirect_url(
+                    "stickers:placement_mode",
+                    params={**base_params, "settings_saved": 1},
+                )
+            )
+
+        if action in {"bulk_visible", "bulk_filtered"}:
+            placement_data = _album_service.get_placement_slots(request.user, region, rarity)
+            filtered_slots = _filter_placement_slots(placement_data["placement_slots"], view_mode)
+            if action == "bulk_visible":
+                paginator = Paginator(filtered_slots, self.page_size)
+                slots_to_place = list(paginator.get_page(page_number).object_list)
+            else:
+                slots_to_place = filtered_slots
+
+            sticker_ids = [
+                slot["first_available_sticker_id"]
+                for slot in slots_to_place
+                if slot["is_placeable"] and slot["first_available_sticker_id"]
+            ]
+            placed_count = _album_service.place_many(request.user, sticker_ids)
+            return HttpResponseRedirect(
+                _build_redirect_url(
+                    "stickers:placement_mode",
+                    params={
+                        **base_params,
+                        "placed_count": placed_count,
+                        "bulk_scope": "visible" if action == "bulk_visible" else "filtered",
+                    },
+                )
+            )
+
+        return HttpResponseRedirect(
+            _build_redirect_url("stickers:placement_mode", params=base_params)
+        )
+
+
 class PlaceStickerView(LoginRequiredMixin, TemplateView):
     """
     POST /stickers/album/regional/place/
@@ -523,6 +728,9 @@ class PlaceStickerView(LoginRequiredMixin, TemplateView):
         rarity = request.POST.get("rarity")
         redirect_to = request.POST.get("redirect_to", "regional")
         page_number = request.POST.get("page_number")
+        page = request.POST.get("page")
+        view_mode = request.POST.get("view")
+        anchor = request.POST.get("anchor")
 
         if not sticker_id:
             return redirect("stickers:regional_album_index")
@@ -530,6 +738,20 @@ class PlaceStickerView(LoginRequiredMixin, TemplateView):
         try:
             _album_service.place_sticker(request.user, int(sticker_id))
         except ValueError as exc:
+            if redirect_to == "placement":
+                return HttpResponseRedirect(
+                    _build_redirect_url(
+                        "stickers:placement_mode",
+                        params={
+                            "region": region,
+                            "rarity": rarity,
+                            "view": view_mode,
+                            "page": page,
+                            "error": str(exc),
+                        },
+                        anchor=anchor,
+                    )
+                )
             # Re-render the detail page with the error
             page_data = _album_service.get_page_detail(request.user, region, rarity)
             return self.response_class(
@@ -540,9 +762,29 @@ class PlaceStickerView(LoginRequiredMixin, TemplateView):
             )
 
         if redirect_to == "scene" and page_number:
-            return redirect("stickers:album_scene_page", region=region,
-                            page_number=int(page_number), rarity=rarity)
-        return redirect("stickers:regional_album_detail", region=region, rarity=rarity)
+            return HttpResponseRedirect(
+                _build_redirect_url(
+                    "stickers:album_scene_page",
+                    kwargs={"region": region, "page_number": int(page_number), "rarity": rarity},
+                    anchor=anchor,
+                )
+            )
+        if redirect_to == "placement":
+            return HttpResponseRedirect(
+                _build_redirect_url(
+                    "stickers:placement_mode",
+                    params={"region": region, "rarity": rarity, "view": view_mode, "page": page},
+                    anchor=anchor,
+                )
+            )
+        return HttpResponseRedirect(
+            _build_redirect_url(
+                "stickers:regional_album_detail",
+                kwargs={"region": region, "rarity": rarity},
+                params={"page": page},
+                anchor=anchor,
+            )
+        )
 
 
 class RemoveStickerView(LoginRequiredMixin, TemplateView):

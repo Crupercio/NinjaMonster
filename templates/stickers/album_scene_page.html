@@ -348,7 +348,7 @@ body {
 
         {# 6 variant cells #}
         {% for vslot in card.variant_slots %}
-        <td class="vt-cell">
+        <td class="vt-cell" id="slot-{{ card.pokemon.pk }}-{{ vslot.variant }}">
           {% if vslot.placed_sticker %}
             <div class="vt-slot placed">
               <span class="vt-tick">✓</span>
@@ -412,6 +412,7 @@ body {
           <input type="hidden" name="rarity" value="{{ rarity }}">
           <input type="hidden" name="redirect_to" value="scene">
           <input type="hidden" name="page_number" value="{{ album_page.page_number }}">
+          <input type="hidden" name="anchor" value="slot-{{ card.pokemon.pk }}-{{ vslot.variant }}">
           <button type="submit" class="modal-sticker-row">
             {% if card.pokemon.pokedex_number %}
             <img src="{{ card.pokemon.pokedex_number|sticker_sprite:vslot.variant }}"

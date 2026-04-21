@@ -159,7 +159,7 @@ def resolve_encounter(
     if session.is_finished:
         raise ValueError("This expedition is already finished.")
 
-    species = Pokemon.objects.get(pk=species_pk)
+    species = Pokemon.objects.select_related("primary_type", "secondary_type").get(pk=species_pk)
 
     # Apply candy if provided
     candy_boost = 0
@@ -177,7 +177,7 @@ def resolve_encounter(
         owned_pokemon = create_owned_pokemon(owner=session.user, species=species, level=1)
         award_trainer_xp(session.user, 30, source="bond_pokemon")
         from apps.quests.services import QuestService
-        QuestService().on_pokemon_bonded(session.user)
+        QuestService().on_pokemon_bonded(session.user, species=species)
 
     EncounterLog.objects.create(
         session=session,

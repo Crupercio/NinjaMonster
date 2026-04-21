@@ -22,10 +22,13 @@ class QuestTemplateFactory(factory.django.DjangoModelFactory):
     reward_type = RewardType.RYO
     reward_value = 250
     reward_dust = 0
+    reward_candy_type = ""
+    reward_candy_qty = 0
     is_active = True
     order = 0
     chapter = ""
     narrative_text = ""
+    condition_meta = factory.LazyFunction(dict)
 
     class Params:
         daily = factory.Trait(quest_type=QuestType.DAILY)
@@ -44,5 +47,6 @@ class UserQuestFactory(factory.django.DjangoModelFactory):
     template = factory.SubFactory(QuestTemplateFactory)
     period_key = "daily:2026-04-07"
     progress = 0
+    progress_meta = factory.LazyFunction(dict)
     completed = False
     rewarded = False

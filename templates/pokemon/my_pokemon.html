@@ -7,6 +7,82 @@
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: .75rem; margin-bottom: .4rem;
 }
+.training-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, .9fr);
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+}
+.training-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+.training-panel h3 {
+  margin: 0 0 .25rem;
+  font-size: 1rem;
+}
+.training-panel p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: .8rem;
+}
+.training-stats {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: .9rem;
+}
+.training-stat {
+  min-width: 110px;
+  padding: .75rem .85rem;
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, .55);
+  border: 1px solid rgba(59, 130, 246, .18);
+}
+.training-stat-label {
+  display: block;
+  color: var(--text-3);
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .2rem;
+}
+.training-stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-1);
+}
+.training-upgrade-box {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+.training-upgrade-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+  font-size: .78rem;
+  color: var(--text-2);
+}
+.training-upgrade-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, .35);
+  background: rgba(120, 53, 15, .28);
+  color: #fcd34d;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.training-upgrade-note {
+  font-size: .74rem;
+  color: var(--text-3);
+}
 .mypoke-search {
   flex: 1; min-width: 180px; max-width: 320px;
   background: var(--border-lo); border: 1px solid #2d4a7a;
@@ -88,6 +164,11 @@
 .empty-state {
   grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-3);
 }
+@media (max-width: 860px) {
+  .training-overview {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 {% endblock %}
 
@@ -114,10 +195,74 @@
       Sold {{ request.GET.sold }} for {{ request.GET.ryo }} Ryo!
     </div>
   {% endif %}
+  {% if request.GET.upgrade %}
+    <div class="msg-success" style="margin-bottom:1rem;">
+      Training capacity expanded to {{ request.GET.slots }} slots for {{ request.GET.cost }} Ryo.
+    </div>
+  {% endif %}
   {% if request.GET.error %}
     <div class="msg-error">{{ request.GET.error }}</div>
   {% endif %}
   {% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+
+  <div class="training-overview">
+    <section class="training-panel">
+      <h3>Training Network</h3>
+      <p>Training level-ups now pay 25% of normal Ryo, so battle wins stay your main cash flow and training stays a long-term support system.</p>
+      <div class="training-stats">
+        <div class="training-stat">
+          <span class="training-stat-label">Active Slots</span>
+          <span class="training-stat-value">{{ active_training_count }} / {{ max_training_slots }}</span>
+        </div>
+        <div class="training-stat">
+          <span class="training-stat-label">Trainer Level</span>
+          <span class="training-stat-value">Lv.{{ request.user.trainer_level }}</span>
+        </div>
+        <div class="training-stat">
+          <span class="training-stat-label">Unlock Cap</span>
+          <span class="training-stat-value">{{ training_slot_unlock_cap }} slots</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="training-panel training-upgrade-box">
+      <div>
+        <h3>Slot Upgrades</h3>
+        {% if next_training_slot_upgrade %}
+          <p>Buy more simultaneous training slots as your trainer profile grows.</p>
+        {% else %}
+          <p>All training slot upgrades are unlocked. Your roster can scale all the way to 40 slots.</p>
+        {% endif %}
+      </div>
+
+      {% if next_training_slot_upgrade %}
+        <div class="training-upgrade-meta">
+          <span>Next unlock: <strong>{{ next_training_slot_upgrade.slots }} slots</strong></span>
+          <span>Cost: <strong>{{ next_training_slot_upgrade.cost }} Ryo</strong></span>
+        </div>
+        {% if next_training_slot_upgrade.available %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="buy_upgrade">
+            <button type="submit" class="btn btn-primary">Buy Slot Upgrade</button>
+          </form>
+          <div class="training-upgrade-note">
+            Current limit is {{ max_training_slots }}. Buying this upgrade expands your cap to {{ next_training_slot_upgrade.slots }} slots.
+          </div>
+        {% else %}
+          <div class="training-upgrade-chip">Reach Trainer Lv.{{ next_training_slot_upgrade.min_level }}</div>
+          <div class="training-upgrade-note">
+            Your trainer level currently allows up to {{ training_slot_unlock_cap }} slots. The next purchasable expansion unlocks once you reach Trainer Level {{ next_training_slot_upgrade.min_level }}.
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="training-upgrade-chip">Maxed at 40 slots</div>
+        <div class="training-upgrade-note">
+          You own every training slot upgrade and have reached the final long-term training cap.
+        </div>
+      {% endif %}
+    </section>
+  </div>
 
   <div class="poke-grid">
     {% for op in owned_pokemon %}

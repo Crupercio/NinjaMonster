@@ -282,7 +282,7 @@ class QuestService:
                 uq.completed_at = timezone.now()
             uq.save(update_fields=["progress", "completed", "completed_at"])
 
-    def on_pokemon_bonded(self, user: User) -> None:
+    def on_pokemon_bonded(self, user: User, species=None) -> None:
         """Called when an expedition encounter results in a successful bond."""
         period_keys = [_daily_period_key(), _weekly_period_key(), "story"]
         active_quests = list(
@@ -294,11 +294,20 @@ class QuestService:
             ).select_related("template")
         )
         for uq in active_quests:
-            uq.progress = min(uq.progress + 1, uq.template.condition_value)
+            unique_type_target = uq.template.condition_meta.get("unique_type_count", 0)
+            if unique_type_target and species is not None:
+                bonded_types = set(uq.progress_meta.get("bonded_types", []))
+                for pokemon_type in (species.primary_type, species.secondary_type):
+                    if pokemon_type:
+                        bonded_types.add(pokemon_type.name.lower())
+                uq.progress_meta["bonded_types"] = sorted(bonded_types)
+                uq.progress = min(len(bonded_types), uq.template.condition_value)
+            else:
+                uq.progress = min(uq.progress + 1, uq.template.condition_value)
             if uq.progress >= uq.template.condition_value:
                 uq.completed = True
                 uq.completed_at = timezone.now()
-            uq.save(update_fields=["progress", "completed", "completed_at"])
+            uq.save(update_fields=["progress", "progress_meta", "completed", "completed_at"])
 
     def on_pack_opened(self, user: User) -> None:
         """
@@ -334,7 +343,7 @@ class QuestService:
     # ------------------------------------------------------------------
 
     @transaction.atomic
-    def claim_reward(self, user: User, user_quest: UserQuest) -> dict[str, int]:
+    def claim_reward(self, user: User, user_quest: UserQuest) -> dict[str, object]:
         """
         Award the quest reward to the user and mark the quest as rewarded.
 
@@ -350,7 +359,7 @@ class QuestService:
             raise ValueError("Reward has already been claimed.")
 
         tmpl = user_quest.template
-        summary: dict[str, int] = {}
+        summary: dict[str, object] = {}
 
         fields_to_save: list[str] = []
 
@@ -372,6 +381,13 @@ class QuestService:
             if "sticker_dust" not in fields_to_save:
                 fields_to_save.append("sticker_dust")
             summary["sticker_dust"] = summary.get("sticker_dust", 0) + tmpl.reward_dust
+
+        if tmpl.reward_candy_qty > 0 and tmpl.reward_candy_type:
+            from apps.users.services import award_candy
+
+            award_candy(user, tmpl.reward_candy_type, tmpl.reward_candy_qty)
+            summary["candy_qty"] = tmpl.reward_candy_qty
+            summary["candy_label"] = tmpl.reward_candy_type.replace("_", " ").title()
 
         if fields_to_save:
             user.save(update_fields=fields_to_save)

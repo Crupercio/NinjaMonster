@@ -185,6 +185,19 @@ GEN_PACK_GEN_NUMBER: dict[str, int] = {
     "gen5": 5, "gen6": 6, "gen7": 7, "gen8": 8,
 }
 
+PACK_IMAGE_PATHS: dict[str, str] = {
+    PackType.STANDARD: "images/pack.png",
+    PackType.BUNDLE: "images/bundle_pack.png",
+    PackType.GEN1: "images/kanto_pack.png",
+    PackType.GEN2: "images/johto_pack.png",
+    PackType.GEN3: "images/hoenn_pack.png",
+    PackType.GEN4: "images/sinnoh_pack.png",
+    PackType.GEN5: "images/unova_pack.png",
+    PackType.GEN6: "images/kalos_pack.png",
+    PackType.GEN7: "images/alola_pack.png",
+    PackType.GEN8: "images/galar_pack.png",
+}
+
 
 class StickerPack(models.Model):
     """
@@ -232,6 +245,20 @@ class StickerPack(models.Model):
     @property
     def is_gen_pack(self) -> bool:
         return self.pack_type in GEN_PACK_GEN_NUMBER
+
+    @property
+    def image_path(self) -> str:
+        return PACK_IMAGE_PATHS.get(self.pack_type, PACK_IMAGE_PATHS[PackType.STANDARD])
+
+    @property
+    def display_name(self) -> str:
+        return PackType(self.pack_type).label if self.pack_type in PackType.values else "Sticker Pack"
+
+    @property
+    def sticker_count(self) -> int:
+        if self.is_bundle or self.is_gen_pack:
+            return 10
+        return 5
 
 
 class TradeOffer(models.Model):

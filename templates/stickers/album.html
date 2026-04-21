@@ -364,6 +364,7 @@
   <h2>My Collection</h2>
   <div class="album-actions">
     <a href="{% url 'stickers:buy_pack' %}" class="btn btn-primary btn-sm">Buy Pack</a>
+    <a href="{% url 'stickers:placement_mode' %}" class="btn btn-secondary btn-sm">Placement Mode</a>
     <a href="{% url 'stickers:regional_album_index' %}" class="btn btn-secondary btn-sm">&#127218; Regional Albums</a>
     <a href="{% url 'stickers:trade_list' %}" class="btn btn-secondary btn-sm">Trade</a>
     <a href="{% url 'stickers:workshop' %}" class="btn btn-secondary btn-sm">&#9878; Workshop <span style="color:#a78bfa;font-weight:800;">{{ request.user.sticker_dust }}&#10022;</span></a>

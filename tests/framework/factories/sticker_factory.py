@@ -30,7 +30,7 @@ class StickerFactory(factory.django.DjangoModelFactory):
     class Params:
         rare = factory.Trait(rarity=StickerRarity.RARE)
         epic = factory.Trait(rarity=StickerRarity.EPIC)
-        holographic = factory.Trait(rarity=StickerRarity.HOLOGRAPHIC)
+        holographic = factory.Trait(rarity=StickerRarity.PRISMATIC)
         full_art = factory.Trait(rarity=StickerRarity.FULL_ART)
         secret_rare = factory.Trait(rarity=StickerRarity.SECRET_RARE)
         shiny = factory.Trait(variant=StickerVariant.SHINY)

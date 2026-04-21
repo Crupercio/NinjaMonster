@@ -112,6 +112,7 @@ _PITY_SECRET_RARE = 200
 
 # ── Shop pricing — change here to affect the whole feature ──────────────────
 PACK_PRICE_RYO: int = 500  # cost of one sticker pack
+GEN_PACK_PRICE_RYO: int = 1_000  # cost of one targeted generation pack
 # ────────────────────────────────────────────────────────────────────────────
 
 # ── Album completion (GDD §20.13) ────────────────────────────────────────────
@@ -148,11 +149,22 @@ FULL_DEX_PACKS: int = 3
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _weighted_choice(weights: dict[str, float]) -> str:
-    """Return a random key from a dict of {value: weight} using weighted sampling."""
-    population = list(weights.keys())
-    wt = list(weights.values())
+def _weighted_choice(weights: dict[str, float] | list[tuple[str, float]]) -> str:
+    """Return a random value from either a weight dict or a list of (value, weight) pairs."""
+    if isinstance(weights, dict):
+        population = list(weights.keys())
+        wt = list(weights.values())
+    else:
+        population = [value for value, _ in weights]
+        wt = [weight for _, weight in weights]
     return random.choices(population, weights=wt, k=1)[0]
+
+
+def pack_price_for_type(pack_type: str) -> int:
+    """Return the shop price for a pack type."""
+    if pack_type in GEN_PACK_GEN_NUMBER:
+        return GEN_PACK_PRICE_RYO
+    return PACK_PRICE_RYO
 
 
 def _random_variant() -> str:
@@ -199,6 +211,7 @@ class StickerService:
             variant=variant,
             awarded_from="catch",
         )
+        self._maybe_auto_place_sticker(player, sticker)
         logger.info("Awarded %s sticker to %s for catching %s", rarity, player, pokemon.name)
         return sticker
 
@@ -224,6 +237,7 @@ class StickerService:
             variant=variant,
             awarded_from="level_up",
         )
+        self._maybe_auto_place_sticker(player, sticker)
         logger.info(
             "Awarded %s sticker to %s (%s reached level %d)",
             rarity,
@@ -258,6 +272,7 @@ class StickerService:
             variant=variant,
             awarded_from="combo_win",
         )
+        self._maybe_auto_place_sticker(player, sticker)
         logger.info(
             "Awarded full_art sticker to %s for combo chain of %d",
             player,
@@ -277,13 +292,14 @@ class StickerService:
         """
         if pack_type not in PackType.values:
             raise ValueError(f"Invalid pack type: {pack_type}")
-        deduct_ryo(player, PACK_PRICE_RYO)
+        price = pack_price_for_type(pack_type)
+        deduct_ryo(player, price)
         pack = StickerPack.objects.create(owner=player, pack_type=pack_type)
         logger.info(
             "Player %s bought a %s for %d Ryo",
             player,
             pack_type,
-            PACK_PRICE_RYO,
+            price,
         )
         return pack
 
@@ -336,7 +352,12 @@ class StickerService:
           Slots 6-9: guaranteed rare or above (boosted weights, each slot independent)
           Slot 10: any rarity (boosted table)
 
-        Pity system applies to both types (slot 4 for standard, slot 6 for bundle).
+        Generation Pack (10 stickers):
+          Slots 1-6: common or uncommon (standard weights)
+          Slots 7-8: guaranteed rare or above (standard weights)
+          Slots 9-10: any rarity (standard weights)
+
+        Pity system applies to all types on the first guaranteed-rare slot.
 
         Returns the list of Sticker instances.
         """
@@ -346,6 +367,7 @@ class StickerService:
             raise ValueError("This pack has already been opened")
 
         is_bundle = pack.pack_type == PackType.BUNDLE
+        is_gen_pack = pack.pack_type in GEN_PACK_GEN_NUMBER
 
         # Lock player row so pity counters update atomically across concurrent opens
         player = User.objects.select_for_update().get(pk=player.pk)
@@ -377,8 +399,18 @@ class StickerService:
         common_weights = self._BUNDLE_COMMON_POOL_WEIGHTS if is_bundle else _COMMON_POOL_WEIGHTS
         rare_weights = self._BUNDLE_GUARANTEED_RARE_WEIGHTS if is_bundle else _GUARANTEED_RARE_WEIGHTS
         any_weights = self._BUNDLE_ANY_RARITY_WEIGHTS if is_bundle else _ANY_RARITY_WEIGHTS
-        common_slots = 5 if is_bundle else 3
-        rare_slots = 4 if is_bundle else 1  # slots 6-9 for bundle, slot 4 for standard
+        if is_bundle:
+            common_slots = 5
+            rare_slots = 4
+            any_slots = 1
+        elif is_gen_pack:
+            common_slots = 6
+            rare_slots = 2
+            any_slots = 2
+        else:
+            common_slots = 3
+            rare_slots = 1
+            any_slots = 1
 
         # Common/uncommon slots
         for _ in range(common_slots):
@@ -394,9 +426,10 @@ class StickerService:
             rarity = _weighted_choice(rare_weights)
             stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
-        # Final any-rarity slot
-        rarity = _weighted_choice(any_weights)
-        stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
+        # Final any-rarity slot(s)
+        for _ in range(any_slots):
+            rarity = _weighted_choice(any_weights)
+            stickers.append(self._create_random_sticker(player, all_pokemon, rarity, "pack"))
 
         pack.stickers.add(*stickers)
         pack.opened = True
@@ -544,6 +577,7 @@ class StickerService:
             variant=variant,
             awarded_from="craft",
         )
+        self._maybe_auto_place_sticker(player, sticker)
         logger.info(
             "Player %s crafted %s [%s] %s for %d dust",
             player,
@@ -777,13 +811,21 @@ class StickerService:
         """Create a sticker for a random Pokemon from the pool."""
         pokemon = random.choice(pokemon_pool)
         variant = _random_variant()
-        return Sticker.objects.create(
+        sticker = Sticker.objects.create(
             pokemon=pokemon,
             owner=player,
             rarity=rarity,
             variant=variant,
             awarded_from=source,
         )
+        self._maybe_auto_place_sticker(player, sticker)
+        return sticker
+
+    def _maybe_auto_place_sticker(self, player: User, sticker: Sticker) -> None:
+        """Auto-file a newly earned sticker into the album when the player opts in."""
+        if not getattr(player, "auto_place_new_stickers", False):
+            return
+        AlbumService().auto_place_new_sticker(player, sticker)
 
 
 class TradeService:
@@ -1170,6 +1212,91 @@ class AlbumService:
             "reward_claimed": reward_claimed,
         }
 
+    def get_placement_slots(self, user: User, region: str, rarity: str) -> dict:
+        """
+        Return compact slot data for the dedicated placement workflow.
+
+        Adds placement-focused metadata on top of the regional page data so
+        the UI can paginate small tiles instead of rendering the full album.
+        """
+        from .models import AlbumPage
+
+        page_data = self.get_page_detail(user, region, rarity)
+        album_pages = list(
+            AlbumPage.objects.filter(region=region)
+            .only("page_number", "dex_start", "dex_end", "location_name")
+            .order_by("page_number")
+        )
+        pokemon_order: list[int] = []
+        for slot in page_data["slots"]:
+            pokemon_id = slot["pokemon"].pk
+            if pokemon_id not in pokemon_order:
+                pokemon_order.append(pokemon_id)
+
+        regional_page_lookup: dict[int, int] = {}
+        page_size = 15
+        total_pokemon = len(pokemon_order)
+        start = 0
+        regional_page_number = 1
+        while start < total_pokemon:
+            end = min(start + page_size, total_pokemon)
+            if end < total_pokemon and total_pokemon - end == 1:
+                end += 1
+            for pokemon_id in pokemon_order[start:end]:
+                regional_page_lookup[pokemon_id] = regional_page_number
+            regional_page_number += 1
+            start = end
+
+        def _lookup_album_page(dex_number: int | None) -> AlbumPage | None:
+            if dex_number is None:
+                return None
+            for album_page in album_pages:
+                if album_page.dex_start <= dex_number <= album_page.dex_end:
+                    return album_page
+            return None
+
+        placement_slots: list[dict] = []
+        placed_total = 0
+        placeable_total = 0
+
+        for slot in page_data["slots"]:
+            placed_sticker = slot["placed_sticker"]
+            available_stickers = slot["available_stickers"]
+            available_count = len(available_stickers)
+            is_placed = placed_sticker is not None
+            is_placeable = not is_placed and available_count > 0
+            album_page = _lookup_album_page(slot["pokemon"].pokedex_number)
+            if is_placed:
+                placed_total += 1
+            if is_placeable:
+                placeable_total += 1
+
+            placement_slots.append(
+                {
+                    **slot,
+                    "available_count": available_count,
+                    "is_placed": is_placed,
+                    "is_placeable": is_placeable,
+                    "first_available_sticker_id": available_stickers[0].pk if available_stickers else None,
+                    "slot_key": f"{slot['pokemon'].pk}_{slot['variant']}",
+                    "anchor_id": f"slot-{slot['pokemon'].pk}-{slot['variant']}",
+                    "regional_page_number": regional_page_lookup.get(slot["pokemon"].pk, 1),
+                    "album_page_number": album_page.page_number if album_page else None,
+                    "album_page_location": album_page.location_name if album_page else "",
+                }
+            )
+
+        return {
+            **page_data,
+            "placement_slots": placement_slots,
+            "slot_totals": {
+                "total": len(placement_slots),
+                "placed": placed_total,
+                "missing": len(placement_slots) - placed_total,
+                "placeable": placeable_total,
+            },
+        }
+
     # ------------------------------------------------------------------
     # Mutating methods
     # ------------------------------------------------------------------
@@ -1234,6 +1361,30 @@ class AlbumService:
 
         self._check_and_mark_page_complete(user, pokemon.region, sticker.rarity)
         return sticker
+
+    def auto_place_new_sticker(self, user: User, sticker: Sticker) -> bool:
+        """
+        Place a newly earned sticker automatically if the user opted in and
+        the exact album slot is still empty.
+        """
+        if not getattr(user, "auto_place_new_stickers", False):
+            return False
+        try:
+            self.place_sticker(user, sticker.pk)
+        except ValueError:
+            return False
+        return True
+
+    def place_many(self, user: User, sticker_ids: list[int]) -> int:
+        """Place multiple stickers, ignoring slots that become invalid mid-run."""
+        placed = 0
+        for sticker_id in sticker_ids:
+            try:
+                self.place_sticker(user, sticker_id)
+            except ValueError:
+                continue
+            placed += 1
+        return placed
 
     @transaction.atomic
     def remove_sticker(self, user: User, sticker_id: int) -> Sticker:

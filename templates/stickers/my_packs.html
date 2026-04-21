@@ -60,14 +60,11 @@
     {% for pack in packs %}
     <div class="pack-row">
       <div class="pack-icon">
-        {% if pack.is_bundle %}
-          <img src="{% static 'images/bundle_pack.png' %}" alt="Bundle Pack" style="width:240px;height:240px;object-fit:contain;">
-        {% else %}
-          <img src="{% static 'images/pack.png' %}" alt="Sticker Pack" style="width:240px;height:240px;object-fit:contain;">
-        {% endif %}
+        <img src="{% static pack.image_path %}" alt="{{ pack.display_name }}" style="width:240px;height:240px;object-fit:contain;">
       </div>
       <div class="pack-info">
-        <div class="pack-name">{% if pack.is_bundle %}Bundle Pack{% else %}Sticker Pack{% endif %} #{{ pack.pk }}</div>
+        <div class="pack-name">{{ pack.display_name }} #{{ pack.pk }}</div>
+        <div class="pack-date">{{ pack.sticker_count }} stickers inside</div>
         <div class="pack-date">Received {{ pack.created_at|date:"M d, Y" }}</div>
       </div>
       <form method="post" action="{% url 'stickers:pack_open' pk=pack.pk %}">

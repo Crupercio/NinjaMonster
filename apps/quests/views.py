@@ -45,6 +45,8 @@ class QuestClaimView(LoginRequiredMixin, View):
             parts.append(f"+{summary['sticker_dust']} Dust")
         if "sticker_pack" in summary:
             parts.append("+1 Sticker Pack")
+        if "candy_qty" in summary and "candy_label" in summary:
+            parts.append(f"+{summary['candy_qty']} {summary['candy_label']}")
 
         reward_text = ", ".join(parts) or "reward granted"
         messages.success(request, f"Reward claimed: {reward_text}!")

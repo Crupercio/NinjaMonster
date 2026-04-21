@@ -203,7 +203,7 @@
 
 {% block content %}
 <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border-md);">
-  <h2 style="margin:0;font-family:'Chakra Petch',sans-serif;font-size:1.3rem;letter-spacing:0.04em;">Sticker Pack</h2>
+  <h2 style="margin:0;font-family:'Chakra Petch',sans-serif;font-size:1.3rem;letter-spacing:0.04em;">{{ pack.display_name }}</h2>
   <span style="font-family:'Chakra Petch',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent-gold);opacity:0.6;">◆ Collector's Edition</span>
 </div>
 
@@ -211,9 +211,9 @@
   {# ── Pre-open state ─────────────────────────────────────────────────── #}
   <div style="text-align:center;padding:3rem 2rem;background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-xl);position:relative;overflow:hidden;max-width:420px;margin:0 auto;">
     <div style="position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(232,184,75,0.4),transparent);"></div>
-    <img src="{% static 'images/pack.png' %}" alt="Sticker Pack" style="width:180px;height:240px;object-fit:contain;margin-bottom:1rem;filter:drop-shadow(0 0 30px rgba(56,189,248,0.5));animation:pack-float 3s ease-in-out infinite;">
+    <img src="{% static pack.image_path %}" alt="{{ pack.display_name }}" style="width:180px;height:240px;object-fit:contain;margin-bottom:1rem;filter:drop-shadow(0 0 30px rgba(56,189,248,0.5));animation:pack-float 3s ease-in-out infinite;">
     <style>@keyframes pack-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}</style>
-    <p style="color:var(--text-2);margin-bottom:1.75rem;font-size:0.9rem;">An unopened pack awaits. Ready to discover what&#39;s inside?</p>
+    <p style="color:var(--text-2);margin-bottom:1.75rem;font-size:0.9rem;">This {{ pack.display_name|lower }} holds {{ pack.sticker_count }} stickers. Ready to discover what&#39;s inside?</p>
     <form method="post">
       {% csrf_token %}
       <button type="submit" class="btn btn-primary">◆ Open Pack</button>
@@ -261,6 +261,11 @@
         }"
         x-cloak
       >
+        {% if auto_placed_count %}
+        <div style="margin:0 auto 1rem;max-width:520px;padding:0.75rem 0.95rem;border-radius:14px;border:1px solid rgba(74,222,128,0.22);background:rgba(14,28,32,0.72);color:var(--text-1);font-size:0.82rem;">
+          <strong style="color:#4ade80;">{{ auto_placed_count }}</strong> new sticker{{ auto_placed_count|pluralize }} was auto-filed into your album.
+        </div>
+        {% endif %}
         <p style="color:var(--text-2);margin-bottom:0.25rem;font-size:0.85rem;">
           Tap each card to reveal — or
           <button @click="flipAll()" class="btn btn-primary btn-sm">◆ Reveal All</button>

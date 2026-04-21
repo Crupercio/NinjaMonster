@@ -8,6 +8,13 @@ from .managers import UserManager
 
 logger = logging.getLogger(__name__)
 
+TRAINING_SLOT_UPGRADES: tuple[dict[str, int], ...] = (
+    {"slots": 15, "cost": 10_000, "min_level": 10},
+    {"slots": 20, "cost": 20_000, "min_level": 10},
+    {"slots": 30, "cost": 40_000, "min_level": 25},
+    {"slots": 40, "cost": 80_000, "min_level": 40},
+)
+
 
 class User(AbstractUser):
     """
@@ -54,6 +61,11 @@ class User(AbstractUser):
     trainer_xp = models.PositiveIntegerField(default=0)
     trainer_xp_today = models.PositiveIntegerField(default=0)
     trainer_xp_date = models.DateField(null=True, blank=True)
+    training_slot_upgrade_level = models.PositiveSmallIntegerField(default=0)
+    auto_place_new_stickers = models.BooleanField(
+        default=False,
+        help_text="Automatically place newly earned stickers into empty album slots when possible.",
+    )
 
     # ── Achievement badge tracking (GDD §14.4) ────────────────────────────────
     perfect_victories = models.PositiveIntegerField(default=0)
@@ -97,6 +109,38 @@ class User(AbstractUser):
         if nxt == 0:
             return 100
         return min(100, int(self.trainer_xp / nxt * 100))
+
+    @property
+    def training_slot_unlock_cap(self) -> int:
+        """Highest training slot total the trainer level currently allows."""
+        if self.trainer_level >= 40:
+            return 40
+        if self.trainer_level >= 25:
+            return 30
+        if self.trainer_level >= 10:
+            return 20
+        return 10
+
+    @property
+    def max_training_slots(self) -> int:
+        """Purchased and trainer-level-gated training slot total."""
+        slots = 10
+        for idx, upgrade in enumerate(TRAINING_SLOT_UPGRADES, start=1):
+            if self.training_slot_upgrade_level >= idx:
+                slots = upgrade["slots"]
+        return min(slots, self.training_slot_unlock_cap)
+
+    @property
+    def next_training_slot_upgrade(self) -> dict[str, int | bool] | None:
+        """Metadata for the next purchasable training slot upgrade, if any."""
+        if self.training_slot_upgrade_level >= len(TRAINING_SLOT_UPGRADES):
+            return None
+
+        upgrade = TRAINING_SLOT_UPGRADES[self.training_slot_upgrade_level]
+        return {
+            **upgrade,
+            "available": self.trainer_level >= upgrade["min_level"],
+        }
 
     @property
     def max_daily_expeditions(self) -> int:

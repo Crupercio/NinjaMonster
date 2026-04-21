@@ -12,6 +12,7 @@ from .views import (
     DustWorkshopView,
     MyPacksView,
     PackOpenView,
+    PlacementModeView,
     PlaceStickerView,
     PokemonAlbumDetailView,
     RegionalAlbumDetailView,
@@ -34,6 +35,7 @@ urlpatterns = [
     # Regional album (backend intact, no longer in main nav)
     path("album/regional/", RegionalAlbumIndexView.as_view(), name="regional_album_index"),
     path("album/regional/<str:region>/<str:rarity>/", RegionalAlbumDetailView.as_view(), name="regional_album_detail"),
+    path("album/placement/", PlacementModeView.as_view(), name="placement_mode"),
     path("album/regional/place/", PlaceStickerView.as_view(), name="place_sticker"),
     path("album/regional/remove/", RemoveStickerView.as_view(), name="remove_sticker"),
     path("album/regional/claim/", ClaimPageRewardView.as_view(), name="claim_page_reward"),

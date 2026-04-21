@@ -4,7 +4,7 @@ Tests for AlbumService: placement, removal, completion detection, and reward cla
 import pytest
 
 from apps.stickers.models import RegionalAlbumPage, StickerRarity
-from apps.stickers.services import AlbumService
+from apps.stickers.services import AlbumService, _COMPLETION_VARIANTS
 
 from tests.framework.factories.pokemon_factory import PokemonFactory, PokemonTypeFactory
 from tests.framework.factories.sticker_factory import StickerFactory
@@ -161,6 +161,48 @@ class TestAlbumServicePageDetail:
         data = self.svc.get_page_detail(self.player, "kanto", StickerRarity.EPIC)
         assert data["page_complete"] is False
 
+    def test_placement_slots_expose_compact_metadata(self):
+        StickerFactory(
+            pokemon=self.squirtle,
+            owner=self.player,
+            rarity=StickerRarity.RARE,
+            variant="base",
+            is_album_placed=False,
+        )
+
+        data = self.svc.get_placement_slots(self.player, "kanto", StickerRarity.RARE)
+
+        slot = next(
+            entry for entry in data["placement_slots"]
+            if entry["pokemon"].pk == self.squirtle.pk and entry["variant"] == "base"
+        )
+        assert slot["is_placeable"] is True
+        assert slot["first_available_sticker_id"] is not None
+        assert slot["regional_page_number"] == 1
+        assert data["slot_totals"]["placeable"] >= 1
+
+    def test_place_many_places_each_valid_sticker_once(self):
+        base = StickerFactory(
+            pokemon=self.squirtle,
+            owner=self.player,
+            rarity=StickerRarity.RARE,
+            variant="base",
+        )
+        shiny = StickerFactory(
+            pokemon=self.squirtle,
+            owner=self.player,
+            rarity=StickerRarity.RARE,
+            variant="shiny",
+        )
+
+        placed_count = self.svc.place_many(self.player, [base.pk, shiny.pk, 999999])
+
+        assert placed_count == 2
+        base.refresh_from_db()
+        shiny.refresh_from_db()
+        assert base.is_album_placed is True
+        assert shiny.is_album_placed is True
+
 
 class TestAlbumServiceCompletion:
     """Tests for page completion detection and reward claiming."""
@@ -175,7 +217,7 @@ class TestAlbumServiceCompletion:
         self.player.save(update_fields=["sticker_dust", "ryo"])
 
     # Completion variants (mirrors _COMPLETION_VARIANTS in services)
-    _VARIANTS = ["base", "shiny", "battle_scene", "chibi", "manga_panel", "full_illustration"]
+    _VARIANTS = list(_COMPLETION_VARIANTS)
 
     def _place_all_variants(self, poke, rarity: str) -> None:
         """Place one sticker of each variant for the given pokemon+rarity."""

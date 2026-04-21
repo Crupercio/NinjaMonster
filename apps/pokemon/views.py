@@ -9,7 +9,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.users.services import award_ryo, sell_value_for_level
+from apps.users.services import (
+    BOND_BONUS_UNLOCK_LEVEL,
+    award_ryo,
+    purchase_training_slot_upgrade,
+)
 
 from .models import ChakraElement, Generation, OwnedPokemon, Pokemon, PokemonType, Team, TeamSlot
 from .services import claim_training, create_owned_pokemon, start_training, stop_training
@@ -161,17 +165,36 @@ class MyPokemonView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["owned_pokemon"] = (
+        owned_pokemon = (
             OwnedPokemon.objects.filter(owner=self.request.user)
             .select_related("species__primary_type", "species__secondary_type")
             .order_by("species__pokedex_number", "species__name")
         )
+        user = self.request.user
+        context["owned_pokemon"] = owned_pokemon
+        context["active_training_count"] = owned_pokemon.filter(is_training=True).count()
+        context["max_training_slots"] = user.max_training_slots
+        context["training_slot_unlock_cap"] = user.training_slot_unlock_cap
+        context["next_training_slot_upgrade"] = user.next_training_slot_upgrade
         return context
 
     def post(self, request, *args, **kwargs):
         """Handle training form submissions: start, cancel, or claim."""
-        owned_id = request.POST.get("owned_id")
         action = request.POST.get("action")  # "start" | "cancel" | "claim"
+        if action == "buy_upgrade":
+            try:
+                result = purchase_training_slot_upgrade(request.user)
+            except ValueError as exc:
+                return self.render_to_response(self.get_context_data(error=str(exc)))
+            return redirect(
+                f"{request.path}?upgrade=1&slots={result['max_training_slots']}&cost={result['cost']}"
+            )
+
+        owned_id = request.POST.get("owned_id")
+        if not owned_id:
+            return self.render_to_response(
+                self.get_context_data(error="Pokemon not found.")
+            )
 
         try:
             owned = OwnedPokemon.objects.select_related("species").get(
@@ -370,7 +393,7 @@ class SellPokemonView(LoginRequiredMixin, View):
                 f"/pokemon/casa/?error=Remove+{owned.species.name}+from+your+team+first."
             )
 
-        value = sell_value_for_level(owned.level)
+        value = owned.sell_value
         name = owned.species.name
         owned.delete()
         award_ryo(request.user, value)
@@ -399,6 +422,7 @@ class MiCasaView(LoginRequiredMixin, TemplateView):
         context["all_types"] = PokemonType.objects.order_by("name")
         context["all_chakras"] = ChakraElement.objects.order_by("name")
         context["all_generations"] = Generation.objects.order_by("number")
+        context["bond_bonus_unlock_level"] = BOND_BONUS_UNLOCK_LEVEL
         return context
 
 

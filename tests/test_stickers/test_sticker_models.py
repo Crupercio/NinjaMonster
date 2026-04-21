@@ -6,6 +6,7 @@ from unittest.mock import patch
 from apps.stickers.models import (
     CRAFT_COSTS,
     DUST_VALUES,
+    PackType,
     Sticker,
     StickerAlbum,
     StickerPack,
@@ -65,6 +66,37 @@ class TestStickerAwardOnCatch(BaseTest):
 
         assert StickerAlbum.objects.filter(owner=player).exists()
 
+    @allure.story("Auto-place files a new sticker into an empty slot when enabled")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_catch_auto_places_when_enabled(self, sticker_svc, player, bulbasaur):
+        player.auto_place_new_stickers = True
+        player.save(update_fields=["auto_place_new_stickers"])
+
+        with patch("apps.stickers.services._random_variant", return_value=StickerVariant.BASE):
+            sticker = sticker_svc.award_on_catch(player, bulbasaur, hp_remaining=100)
+
+        sticker.refresh_from_db()
+        assert sticker.is_album_placed is True
+
+    @allure.story("Auto-place leaves duplicates loose when the slot is already filled")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_catch_auto_place_skips_filled_slot(self, sticker_svc, player, bulbasaur):
+        player.auto_place_new_stickers = True
+        player.save(update_fields=["auto_place_new_stickers"])
+        StickerFactory(
+            owner=player,
+            pokemon=bulbasaur,
+            rarity=StickerRarity.COMMON,
+            variant=StickerVariant.BASE,
+            is_album_placed=True,
+        )
+
+        with patch("apps.stickers.services._random_variant", return_value=StickerVariant.BASE):
+            sticker = sticker_svc.award_on_catch(player, bulbasaur, hp_remaining=100)
+
+        sticker.refresh_from_db()
+        assert sticker.is_album_placed is False
+
 
 # ===========================================================================
 # StickerService — award_on_level_up
@@ -103,12 +135,12 @@ class TestStickerAwardOnLevelUp(BaseTest):
         assert sticker is not None
         assert sticker.rarity == StickerRarity.EPIC
 
-    @allure.story("Level 100 awards holographic sticker")
+    @allure.story("Level 100 awards prismatic sticker")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_level_100_holographic(self, sticker_svc, player, bulbasaur):
+    def test_level_100_prismatic(self, sticker_svc, player, bulbasaur):
         sticker = sticker_svc.award_on_level_up(player, bulbasaur, new_level=100)
         assert sticker is not None
-        assert sticker.rarity == StickerRarity.HOLOGRAPHIC
+        assert sticker.rarity == StickerRarity.PRISMATIC
 
 
 # ===========================================================================
@@ -244,7 +276,7 @@ class TestStickerCraft(BaseTest):
 
         with pytest.raises(ValueError, match="Insufficient dust"):
             sticker_svc.craft_sticker(
-                player, bulbasaur, StickerVariant.BASE, StickerRarity.HOLOGRAPHIC
+                player, bulbasaur, StickerVariant.BASE, StickerRarity.PRISMATIC
             )
 
     @allure.story("Crafting with invalid rarity raises ValueError")
@@ -320,6 +352,18 @@ class TestStickerPacks(BaseTest):
         stickers = sticker_svc.open_pack(player, pack)
 
         assert len(stickers) == 5
+        pack.refresh_from_db()
+        assert pack.opened is True
+        assert pack.opened_at is not None
+
+    @allure.story("Opening a bundle pack creates 10 stickers")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_open_bundle_pack_gives_10_stickers(self, sticker_svc, player, bulbasaur):
+        pack = StickerPackFactory(owner=player, pack_type=PackType.BUNDLE)
+
+        stickers = sticker_svc.open_pack(player, pack)
+
+        assert len(stickers) == 10
         pack.refresh_from_db()
         assert pack.opened is True
         assert pack.opened_at is not None

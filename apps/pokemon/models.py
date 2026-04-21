@@ -509,8 +509,29 @@ class OwnedPokemon(models.Model):
 
     @property
     def sell_value(self) -> int:
-        """Ryo earned by selling this Pokemon. Minimum 100, scales with level."""
-        return max(100, self.level * 50)
+        """Ryo earned by releasing this Pokemon, including the Lv10 Bond Bonus rule."""
+        from apps.users.services import sell_value_for_level
+
+        return sell_value_for_level(self.level)
+
+    @property
+    def sell_value_full(self) -> int:
+        """Full sell value once the Bond Bonus is unlocked."""
+        from apps.users.services import base_sell_value_for_level
+
+        return base_sell_value_for_level(self.level)
+
+    @property
+    def bond_bonus_value(self) -> int:
+        """Extra Ryo unlocked once this Pokemon reaches the Bond Bonus threshold."""
+        return max(0, self.sell_value_full - self.sell_value)
+
+    @property
+    def bond_bonus_unlocked(self) -> bool:
+        """True once this Pokemon has reached the Bond Bonus unlock level."""
+        from apps.users.services import BOND_BONUS_UNLOCK_LEVEL
+
+        return self.level >= BOND_BONUS_UNLOCK_LEVEL
 
     @property
     def level_up_ryo(self) -> int:

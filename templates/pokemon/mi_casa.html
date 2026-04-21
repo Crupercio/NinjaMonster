@@ -157,6 +157,9 @@ const CASA_POKEMON = [
     gens: [{% if op.species.generation %}{{ op.species.generation.number }}{% endif %}],
     level: {{ op.level }},
     sell_value: {{ op.sell_value }},
+    sell_value_full: {{ op.sell_value_full }},
+    bond_bonus_value: {{ op.bond_bonus_value }},
+    bond_bonus_unlocked: {{ op.bond_bonus_unlocked|yesno:"true,false" }},
     is_training: {{ op.is_training|yesno:"true,false" }},
     pokedex_number: {{ op.species.pokedex_number|default:"null" }},
     sprite_url: "{{ op.species.sprite_url|default:''|escapejs }}",
@@ -171,6 +174,7 @@ const CASA_POKEMON = [
 
   <div class="casa-header">
     <h2>Mi Casa</h2>
+    <p style="margin-top:.45rem;color:#fcd34d;">Bond Bonus unlocks at Lv.{{ bond_bonus_unlock_level }} for stronger release value on each PokÃ©mon.</p>
     <p>Your full Pokémon collection. Use filters to find them — and release bonds to earn Ryo.</p>
   </div>
 
@@ -284,7 +288,7 @@ const CASA_POKEMON = [
 
         {# Release Bond button #}
         <form :action="op.sell_url" method="post" style="margin-top:auto;"
-              @submit.prevent="if(confirm('Release bond with ' + op.name + ' for ' + op.sell_value + ' Ryo?')) $el.submit()">
+              @submit.prevent="if(confirm(releaseMessage(op))) $el.submit()">
           {% csrf_token %}
           <template x-if="op.is_training">
             <div>
@@ -293,6 +297,12 @@ const CASA_POKEMON = [
             </div>
           </template>
           <template x-if="!op.is_training">
+            <div class="team-note" x-show="!op.bond_bonus_unlocked">
+              Bond Bonus unlocks at Lv.{{ bond_bonus_unlock_level }}: +<span x-text="op.bond_bonus_value"></span> Ryo
+            </div>
+            <div class="team-note" x-show="op.bond_bonus_unlocked" style="color:#4ade80;">
+              Bond Bonus unlocked - full value <span x-text="op.sell_value_full"></span> Ryo
+            </div>
             <button type="submit" class="release-btn">
               Release Bond · <span x-text="op.sell_value"></span> Ryo
             </button>
@@ -368,6 +378,16 @@ function casaApp() {
     isDirty() {
       return this.search || this.types.length || this.chakras.length ||
              this.gens.length || this.minLevel > 1 || this.maxLevel < 100;
+    },
+
+    releaseMessage(op) {
+      if (op.bond_bonus_unlocked) {
+        return 'Release bond with ' + op.name + ' for ' + op.sell_value + ' Ryo?';
+      }
+      return (
+        'Release bond with ' + op.name + ' for ' + op.sell_value + ' Ryo now? ' +
+        'Its Bond Bonus unlocks at Lv.{{ bond_bonus_unlock_level }} for +' + op.bond_bonus_value + ' more Ryo.'
+      );
     },
   };
 }
