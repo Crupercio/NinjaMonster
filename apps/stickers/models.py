@@ -4,6 +4,7 @@ Sticker collectible system models.
 Inspired by Pokemon TCG Pocket, Marvel Snap, Disney Lorcana, and One Piece TCG.
 7 rarity tiers × 13 art variants per Pokemon.
 """
+import math
 import logging
 
 from django.conf import settings
@@ -50,6 +51,59 @@ CRAFT_COSTS: dict[str, int] = {
     StickerRarity.FULL_ART: 500,
     StickerRarity.SECRET_RARE: 1000,
 }
+
+CRAFT_VARIANT_MULTIPLIERS: dict[str, int] = {
+    StickerVariant.BASE: 100,
+    StickerVariant.SHINY: 120,
+    StickerVariant.BATTLE_SCENE: 135,
+    StickerVariant.WATERCOLOR: 145,
+    StickerVariant.TV_90S: 145,
+    StickerVariant.CARTOON: 145,
+    StickerVariant.COLOR_SWAP: 150,
+    StickerVariant.SKETCH: 160,
+    StickerVariant.BURN_SCROLL: 160,
+    StickerVariant.NEON_GLOW: 185,
+    StickerVariant.GLITTER: 210,
+    StickerVariant.HOLOGRAPHIC: 210,
+    StickerVariant.CHROME: 210,
+    StickerVariant.ANIME: 300,
+}
+
+CRAFT_VARIANT_GROUPS: list[tuple[str, list[str]]] = [
+    ("Core", [
+        StickerVariant.BASE,
+        StickerVariant.SHINY,
+        StickerVariant.BATTLE_SCENE,
+        StickerVariant.WATERCOLOR,
+    ]),
+    ("Stylized", [
+        StickerVariant.TV_90S,
+        StickerVariant.CARTOON,
+        StickerVariant.COLOR_SWAP,
+        StickerVariant.SKETCH,
+        StickerVariant.BURN_SCROLL,
+    ]),
+    ("Premium", [
+        StickerVariant.NEON_GLOW,
+        StickerVariant.GLITTER,
+        StickerVariant.HOLOGRAPHIC,
+        StickerVariant.CHROME,
+    ]),
+    ("Prestige", [
+        StickerVariant.ANIME,
+    ]),
+]
+
+
+def craft_cost_for(rarity: str, variant: str) -> int:
+    """Return the final craft cost using rarity base cost and variant multiplier."""
+    base_cost = CRAFT_COSTS.get(rarity)
+    if base_cost is None:
+        raise ValueError(f"Unknown rarity: {rarity}")
+    multiplier = CRAFT_VARIANT_MULTIPLIERS.get(variant)
+    if multiplier is None:
+        raise ValueError(f"Unknown variant: {variant}")
+    return max(5, math.ceil((base_cost * multiplier) / 100 / 5) * 5)
 
 # Dust gained when converting a duplicate
 DUST_VALUES: dict[str, int] = {

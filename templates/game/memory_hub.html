@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sticker Memory{% endblock %}
+
+{% block extra_css %}
+<style>
+.memory-hub-shell { max-width: 1260px; margin: 0 auto; padding: 1rem 0 2.25rem; }
+.memory-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.memory-top { display:grid; grid-template-columns: 1.2fr .9fr; gap:1rem; margin-bottom:1.15rem; }
+.memory-hero, .wallet-panel, .board-card, .hub-note {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  border-radius: 26px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.memory-hero { padding:1.2rem 1.25rem; }
+.hero-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
+.hero-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.7rem); line-height:1; }
+.hero-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.8rem; }
+.hero-copy { color:var(--text-2); line-height:1.65; max-width:760px; margin-bottom:1rem; }
+.hero-actions { display:flex; gap:.7rem; flex-wrap:wrap; }
+.wallet-panel { padding:1rem 1.05rem; }
+.wallet-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-3); margin-bottom:.8rem; font-weight:700; }
+.wallet-grid { display:grid; gap:.65rem; }
+.wallet-card { border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52); padding:.8rem .9rem; }
+.wallet-card strong { display:block; color:var(--text-1); font-size:.9rem; margin-bottom:.15rem; }
+.wallet-card span { color:var(--text-3); font-size:.75rem; }
+.wallet-card em { display:block; margin-top:.35rem; font-style:normal; color:#c4b5fd; font-size:1.08rem; font-weight:800; }
+.section-head { margin-bottom:.75rem; }
+.section-title { margin:0 0 .15rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.2rem; }
+.section-copy { color:var(--text-2); font-size:.88rem; }
+.board-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.85rem; }
+.board-card { padding:.95rem; display:flex; flex-direction:column; }
+.board-card.current { border-color: rgba(232,184,75,.42); box-shadow:0 0 0 1px rgba(232,184,75,.18), 0 20px 40px rgba(0,0,0,.28); }
+.board-status { display:inline-flex; align-items:center; border-radius:999px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; background:rgba(18,26,53,.9); border:1px solid rgba(91,129,255,.22); color:var(--text-2); }
+.board-status.live { color:#86efac; border-color:rgba(74,222,128,.3); }
+.board-status.current { color:var(--accent-gold); border-color:rgba(232,184,75,.34); }
+.board-art {
+  min-height: 186px; margin-bottom:.85rem; border-radius:20px; border:1px solid rgba(232,184,75,.14);
+  background:
+    radial-gradient(circle at top, rgba(91,129,255,.18), rgba(10,15,29,.92) 70%),
+    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+.board-art img { max-width:100%; max-height:150px; object-fit:contain; filter:drop-shadow(0 12px 24px rgba(0,0,0,.38)); }
+.board-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.08rem; }
+.board-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.55rem; }
+.board-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.board-copy { color:var(--text-2); font-size:.84rem; line-height:1.5; min-height:104px; }
+.board-meta { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.55rem; margin:auto 0 .85rem; }
+.board-box { border-radius:14px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.6rem .65rem; }
+.board-box span { display:block; color:var(--text-3); font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
+.board-box strong { color:var(--text-1); font-size:.84rem; }
+.board-actions { display:flex; gap:.55rem; flex-wrap:wrap; }
+.hub-note { margin-top:.85rem; padding:.9rem 1rem; }
+.hub-note strong { display:block; color:var(--text-1); font-size:.92rem; margin-bottom:.2rem; }
+.hub-note span { color:var(--text-2); font-size:.84rem; line-height:1.5; }
+@media (max-width: 1180px) { .memory-top, .board-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .board-meta { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="memory-hub-shell">
+  <a href="{% url 'game:home' %}" class="memory-back">&larr; Back to Fun Hub</a>
+
+  <div class="memory-top">
+    <section class="memory-hero">
+      <div class="hero-kicker">Collector Arcade</div>
+      <h1 class="hero-title">Sticker Memory</h1>
+      <div class="hero-subtitle">Pick a board and clear every pair</div>
+      <p class="hero-copy">
+        Memory is the calm cabinet in the Fun lane: consistent Ryo, small Dust support, and quick nostalgic clears
+        without the push-your-luck pressure from Silhouette Tower.
+      </p>
+      <div class="hero-actions">
+        {% if active_memory_board %}
+        <a href="{% url 'game:memory_board' active_memory_board.key %}" class="btn btn-primary">Continue {{ active_memory_board.title }}</a>
+        {% endif %}
+        <a href="{% url 'game:home' %}" class="btn btn-secondary">Back to Arcade</a>
+      </div>
+    </section>
+
+    <aside class="wallet-panel">
+      <div class="wallet-title">Candy Wallet</div>
+      <div class="wallet-grid">
+        {% for key, candy in candy_inventory.items %}
+        <div class="wallet-card">
+          <strong>{{ candy.label }}</strong>
+          <span>{{ candy.description }}</span>
+          <em>x{{ candy.count }}</em>
+        </div>
+        {% endfor %}
+      </div>
+    </aside>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2 class="section-title">Choose Your Board</h2>
+      <div class="section-copy">Each board keeps the same classic pair-matching rules, but scales the table size, candy cost, and reward pace.</div>
+    </div>
+
+    <div class="board-grid">
+      {% for board_card in board_cards %}
+      <article class="board-card{% if board_card.is_current %} current{% endif %}">
+        <div class="board-status {% if board_card.config.enabled %}live{% endif %}{% if board_card.is_current %} current{% endif %}">
+          {% if board_card.is_current %}Current Board{% elif board_card.config.enabled %}Open Now{% else %}Coming Soon{% endif %}
+        </div>
+
+        <div class="board-art">
+          <img src="{% static 'images/games/'|add:board_card.config.image_name %}" alt="{{ board_card.config.title }}">
+        </div>
+
+        <h3 class="board-title">{{ board_card.config.title }}</h3>
+        <div class="board-tags">
+          <span class="board-tag">{{ board_card.config.rows }} x {{ board_card.config.cols }}</span>
+          <span class="board-tag">{{ board_card.config.pair_count }} pairs</span>
+        </div>
+        <div class="board-copy">{{ board_card.config.description }}</div>
+
+        <div class="board-meta">
+          <div class="board-box">
+            <span>Entry</span>
+            <strong>{{ board_card.config.entry_qty }} {{ board_card.config.entry_label }}</strong>
+          </div>
+          <div class="board-box">
+            <span>Base Reward</span>
+            <strong>{{ board_card.config.base_ryo }} Ryo</strong>
+          </div>
+        </div>
+
+        <div class="board-actions">
+          {% if board_card.config.enabled %}
+            {% if board_card.can_enter or board_card.is_current %}
+            <a href="{% url 'game:memory_board' board_card.config.key %}" class="btn {% if board_card.is_current %}btn-primary{% else %}btn-secondary{% endif %}">
+              {% if board_card.is_current %}Continue Board{% else %}Open Board{% endif %}
+            </a>
+            {% else %}
+            <span class="btn btn-secondary" style="pointer-events:none; opacity:.55;">Need More Candy</span>
+            {% endif %}
+          {% else %}
+          <span class="btn btn-secondary" style="pointer-events:none; opacity:.55;">Locked</span>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="hub-note">
+      <strong>Memory is built as the reliable cabinet.</strong>
+      <span>Clear the board, finish with fewer turns, and keep your pace clean for better rewards. The active play page stays focused on the card grid, your stats, and your finish grade.</span>
+    </div>
+  </section>
+</div>
+{% endblock %}

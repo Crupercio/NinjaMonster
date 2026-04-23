@@ -31,17 +31,17 @@
 
     {# ⚔️ Battle #}
     <div class="nav-tab-wrap" role="none">
-      <a class="nav-tab{% if '/battles' in path or '/quests' in path or '/events' in path or '/spectate' in path %} active{% endif %}"
-         role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'battle' ? 'true' : 'false'"
-         @mouseenter="tab = 'battle'"
-         @click.prevent="tab = tab === 'battle' ? null : 'battle'">
+      <a class="nav-tab{% if '/battle/' in path or '/quests' in path or '/events' in path %} active{% endif %}"
+         role="menuitem" aria-haspopup="true" :aria-expanded="tab === 'fun' ? 'true' : 'false'"
+         @mouseenter="tab = 'fun'"
+         @click.prevent="tab = tab === 'fun' ? null : 'fun'">
         <img src="{% static 'images/battle_icon.png' %}" alt="" aria-hidden="true" class="nav-tab-icon-img">
-        Battle
-        <span class="nav-tab-caret" :class="tab === 'battle' ? 'open' : ''" aria-hidden="true">▾</span>
+        Fun
+        <span class="nav-tab-caret" :class="tab === 'fun' ? 'open' : ''" aria-hidden="true">▾</span>
       </a>
       <div class="nav-dropdown"
-           role="menu" aria-label="Battle"
-           x-show="tab === 'battle'"
+           role="menu" aria-label="Fun"
+           x-show="tab === 'fun'"
            x-transition:enter="dd-enter"
            x-transition:enter-start="dd-from"
            x-transition:enter-end="dd-to"
@@ -49,12 +49,14 @@
            x-transition:leave-start="dd-to"
            x-transition:leave-end="dd-from"
            style="display:none"
-           @mouseenter="tab = 'battle'">
-        <a href="{% url 'game:battle_list' %}"  role="menuitem" class="{% if '/battles' in path and '/spectate' not in path %}active{% endif %}">Battles</a>
+           @mouseenter="tab = 'fun'">
+        <a href="{% url 'game:home' %}" role="menuitem" class="{% if path == '/battle/' %}active{% endif %}">Fun Hub</a>
+        <a href="{% url 'game:silhouette_hub' %}" role="menuitem" class="{% if '/battle/fun/silhouette' in path %}active{% endif %}">Silhouette Tower</a>
+        <a href="{% url 'game:memory_game' %}" role="menuitem" class="{% if '/battle/fun/memory' in path %}active{% endif %}">Sticker Memory</a>
+        <a href="{% url 'game:loteria_game' %}" role="menuitem" class="{% if '/battle/fun/loteria' in path %}active{% endif %}">Pokemon Loteria</a>
         {% if user.is_authenticated %}
         <a href="{% url 'quests:quest_list' %}"  role="menuitem" class="{% if '/quests'   in path %}active{% endif %}">Quests</a>
         <a href="{% url 'events:event_list' %}"  role="menuitem" class="{% if '/events'   in path %}active{% endif %}">Events</a>
-        <a href="{% url 'game:spectate_list' %}" role="menuitem" class="{% if '/spectate' in path %}active{% endif %}">Watch Live</a>
         {% endif %}
       </div>
     </div>
@@ -197,11 +199,13 @@
     {% if user.is_authenticated %}
 
     <div class="mobile-group">
-      <div class="mobile-group-label">⚔️ Battle</div>
-      <a href="{% url 'game:battle_list' %}"   class="mobile-link{% if '/battles' in path %} active{% endif %}" @click="mob=false">Battles</a>
+      <div class="mobile-group-label">⚔️ Fun</div>
+      <a href="{% url 'game:home' %}" class="mobile-link{% if path == '/battle/' %} active{% endif %}" @click="mob=false">Fun Hub</a>
+      <a href="{% url 'game:silhouette_hub' %}" class="mobile-link{% if '/battle/fun/silhouette' in path %} active{% endif %}" @click="mob=false">Silhouette Tower</a>
+      <a href="{% url 'game:memory_game' %}" class="mobile-link{% if '/battle/fun/memory' in path %} active{% endif %}" @click="mob=false">Sticker Memory</a>
+      <a href="{% url 'game:loteria_game' %}" class="mobile-link{% if '/battle/fun/loteria' in path %} active{% endif %}" @click="mob=false">Pokemon Loteria</a>
       <a href="{% url 'quests:quest_list' %}"  class="mobile-link{% if '/quests'   in path %} active{% endif %}" @click="mob=false">Quests</a>
       <a href="{% url 'events:event_list' %}"  class="mobile-link{% if '/events'   in path %} active{% endif %}" @click="mob=false">Events</a>
-      <a href="{% url 'game:spectate_list' %}" class="mobile-link{% if '/spectate' in path %} active{% endif %}" @click="mob=false">Watch Live</a>
     </div>
 
     <div class="mobile-group">

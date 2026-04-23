@@ -1,19 +1,17 @@
 {% extends "base.html" %}
-{% load battle_tags %}
+{% load battle_tags sticker_tags %}
 {% block title %}Dust Workshop{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ── Rarity color tokens ──────────────────────────────────────── */
-.r-common      { --rc:#9ca3af; }
-.r-uncommon    { --rc:#4ade80; }
-.r-rare        { --rc:#60a5fa; }
-.r-epic        { --rc:#a78bfa; }
-.r-prismatic   { --rc:#e879f9; }
-.r-full_art    { --rc:#f97316; }
+.r-common { --rc:#9ca3af; }
+.r-uncommon { --rc:#4ade80; }
+.r-rare { --rc:#60a5fa; }
+.r-epic { --rc:#a78bfa; }
+.r-prismatic { --rc:#e879f9; }
+.r-full_art { --rc:#f97316; }
 .r-secret_rare { --rc:#f43f5e; }
 
-/* ── Page header ──────────────────────────────────────────────── */
 .ws-header {
   display: flex;
   align-items: center;
@@ -22,28 +20,48 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
-.ws-title { font-size: 1.4rem; font-weight: 800; margin: 0; }
+
+.ws-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0;
+}
+
 .ws-dust-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   background: #16213e;
   border: 1px solid #a78bfa44;
-  border-radius: 20px;
-  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
   font-size: 0.9rem;
   font-weight: 700;
   color: #a78bfa;
 }
-.ws-dust-badge span { font-size: 1rem; }
 
-/* ── Tabs ─────────────────────────────────────────────────────── */
+.ws-links {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.back-link {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.back-link:hover { color: #f8fafc; }
+
 .ws-tabs {
   display: flex;
   gap: 0;
   border-bottom: 2px solid #1e3a6e;
-  margin-bottom: 2rem;
+  margin: 1.25rem 0 2rem;
 }
+
 .ws-tab {
   padding: 0.6rem 1.25rem;
   font-size: 0.85rem;
@@ -56,71 +74,549 @@
   margin-bottom: -2px;
   transition: color 0.15s, border-color 0.15s;
 }
+
 .ws-tab:hover { color: #9ca3af; }
 .ws-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
-.ws-tab.phase3 { color: #374151; cursor: default; }
-.ws-tab.phase3:hover { color: #374151; }
+.ws-tab.phase3,
+.ws-tab.phase3:hover { color: #374151; cursor: default; }
 
-/* ── Tab panels ───────────────────────────────────────────────── */
 .ws-panel { display: none; }
 .ws-panel.active { display: block; }
 
-/* ── Duplicate rows ───────────────────────────────────────────── */
-.dup-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.85rem;
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 8px;
-  margin-bottom: 0.4rem;
-}
-.dup-name { font-weight: 600; font-size: 0.9rem; }
-.dup-meta { font-size: 0.75rem; color: #6b7280; margin-left: 0.25rem; }
-.dup-count {
-  margin-left: auto;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  white-space: nowrap;
-  padding-right: 0.5rem;
-}
-.dust-gain {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #a78bfa;
-  white-space: nowrap;
-  padding-right: 0.5rem;
+.dup-helper-copy {
+  color: #7f8aa8;
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+  line-height: 1.6;
 }
 
-/* ── Craft form ───────────────────────────────────────────────── */
-.craft-form { max-width: 480px; }
-.form-group { margin-bottom: 1.1rem; }
-.form-group label { display: block; font-size: 0.78rem; color: #9ca3af; margin-bottom: 0.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.form-group select {
+.dup-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dup-summary-card {
+  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.dup-summary-label {
+  font-size: 0.68rem;
+  color: #7f8aa8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dup-summary-value {
+  margin-top: 0.2rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #e5e7eb;
+}
+
+.dup-summary-value.accent { color: #a78bfa; }
+
+.dup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dup-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.8rem 0.9rem;
+  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
+  border: 1px solid #1e3a6e;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dup-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,184,75,0.2), transparent);
+}
+
+.dup-art {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 1px solid rgba(126, 150, 196, 0.18);
+  background: linear-gradient(180deg, rgba(20, 31, 57, 0.96), rgba(9, 18, 36, 0.98));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.dup-art img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.dup-main { min-width: 0; }
+
+.dup-topline {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.3rem;
+}
+
+.dup-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.dup-meta {
+  font-size: 0.78rem;
+  color: #8ea0c5;
+}
+
+.dup-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.dup-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(126, 150, 196, 0.14);
+  background: rgba(10, 18, 36, 0.52);
+  color: #9fb0d2;
+}
+
+.dup-pill.accent {
+  border-color: rgba(167, 139, 250, 0.26);
+  color: #c4b5fd;
+}
+
+.dup-pill.safe {
+  border-color: rgba(74, 222, 128, 0.22);
+  color: #86efac;
+}
+
+.dup-protection-note {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: #6d7b99;
+}
+
+.dup-row-value {
+  min-width: 88px;
+  text-align: right;
+}
+
+.dust-gain {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #a78bfa;
+}
+
+.dust-subcopy {
+  font-size: 0.68rem;
+  color: #7f8aa8;
+  margin-top: 0.16rem;
+}
+
+.dup-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.dup-action-form { margin: 0; }
+
+.craft-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.craft-form {
+  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.craft-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.craft-label {
+  display: block;
+  font-size: 0.74rem;
+  color: #9ca3af;
+  margin-bottom: 0.45rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.craft-search-wrap {
+  position: relative;
+}
+
+.craft-search-input {
   width: 100%;
   background: #16213e;
   border: 1px solid #1e3a6e;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #f1f5f9;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.95rem;
 }
-.craft-cost-bar {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
+
+.craft-search-input:focus {
+  outline: none;
+  border-color: rgba(232,184,75,0.5);
+  box-shadow: 0 0 0 1px rgba(232,184,75,0.2);
+}
+
+.craft-search-panel {
+  margin-top: 0.55rem;
+  background: linear-gradient(160deg, rgba(14, 24, 46, 0.98), rgba(10, 18, 36, 0.98));
+  border: 1px solid rgba(30, 58, 110, 0.9);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.craft-search-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid rgba(30, 58, 110, 0.7);
 }
-.craft-cost-label { font-size: 0.8rem; color: #6b7280; }
-.craft-cost-value { font-size: 1.1rem; font-weight: 800; color: #a78bfa; }
-.craft-cost-value.cannot-afford { color: #f43f5e; }
 
-/* ── Badge forge (Phase 3 teaser) ─────────────────────────────── */
+.craft-search-meta {
+  font-size: 0.74rem;
+  color: #7f8aa8;
+}
+
+.craft-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  color: #9ca3af;
+}
+
+.craft-toggle input {
+  accent-color: #a78bfa;
+}
+
+.craft-result-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 290px;
+  overflow-y: auto;
+}
+
+.craft-result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.craft-result:hover,
+.craft-result.active {
+  background: rgba(30, 58, 110, 0.28);
+}
+
+.craft-result-art {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(126, 150, 196, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.craft-result-art img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.craft-result-name {
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.craft-result-dex {
+  color: #7f8aa8;
+  font-size: 0.72rem;
+}
+
+.craft-result-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7f8aa8;
+}
+
+.craft-result-status.owned { color: #86efac; }
+.craft-result-status.placed { color: #fbbf24; }
+.craft-result-status.missing { color: #9fb0d2; }
+.craft-result-status.selected { color: #e9d5ff; }
+
+.craft-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.craft-pill,
+.variant-pill {
+  border: 1px solid rgba(126, 150, 196, 0.16);
+  border-radius: 999px;
+  background: rgba(10, 18, 36, 0.52);
+  color: #9fb0d2;
+  padding: 0.48rem 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.craft-pill:hover,
+.variant-pill:hover {
+  border-color: rgba(232,184,75,0.35);
+  color: #f8fafc;
+}
+
+.craft-pill.active,
+.variant-pill.active {
+  border-color: rgba(167, 139, 250, 0.45);
+  background: rgba(124, 58, 237, 0.14);
+  color: #e9d5ff;
+}
+
+.variant-pill[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.variant-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.variant-group-title {
+  font-size: 0.72rem;
+  color: #7f8aa8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+
+.variant-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.variant-pill small {
+  color: inherit;
+  opacity: 0.8;
+  font-size: 0.68rem;
+}
+
+.craft-preview {
+  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
+  border: 1px solid #1e3a6e;
+  border-radius: 14px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.craft-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.craft-preview-art {
+  width: 112px;
+  height: 112px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20, 31, 57, 0.96), rgba(9, 18, 36, 0.98));
+  border: 1px solid rgba(126, 150, 196, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.craft-preview-art img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+
+.craft-preview-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.craft-preview-subline {
+  margin-top: 0.18rem;
+  color: #9fb0d2;
+  font-size: 0.8rem;
+}
+
+.craft-preview-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  margin-top: 0.4rem;
+  padding: 0.32rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.craft-preview-status.missing {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+.craft-preview-status.owned {
+  background: rgba(74, 222, 128, 0.12);
+  color: #86efac;
+}
+
+.craft-preview-status.placed {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+}
+
+.craft-cost-panel {
+  display: grid;
+  gap: 0.6rem;
+  background: rgba(10, 18, 36, 0.44);
+  border: 1px solid rgba(126, 150, 196, 0.12);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+}
+
+.craft-cost-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+}
+
+.craft-cost-row strong {
+  color: #f8fafc;
+}
+
+.craft-cost-muted {
+  color: #7f8aa8;
+}
+
+.craft-cost-total {
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(126, 150, 196, 0.12);
+}
+
+.craft-cost-total .craft-cost-row {
+  font-size: 0.94rem;
+}
+
+.craft-cost-total strong {
+  color: #a78bfa;
+  font-size: 1.08rem;
+}
+
+.craft-preview-copy {
+  color: #7f8aa8;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.craft-search-empty {
+  padding: 1rem 0.9rem;
+  color: #7f8aa8;
+  font-size: 0.78rem;
+}
+
+.craft-preview-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.craft-preview-note {
+  font-size: 0.74rem;
+  color: #7f8aa8;
+  line-height: 1.6;
+}
+
+@media (max-width: 1080px) {
+  .craft-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .craft-preview {
+    position: static;
+  }
+}
+
 .phase3-banner {
   background: linear-gradient(135deg, #0f172a, #1e1b4b);
   border: 1px solid #3730a3;
@@ -129,10 +625,28 @@
   margin-bottom: 1.5rem;
   text-align: center;
 }
-.phase3-banner h3 { font-size: 1rem; font-weight: 800; color: #818cf8; margin: 0 0 0.4rem; }
-.phase3-banner p  { font-size: 0.82rem; color: #4b5563; margin: 0; line-height: 1.6; }
 
-.badge-tier-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 1.25rem; }
+.phase3-banner h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #818cf8;
+  margin: 0 0 0.4rem;
+}
+
+.phase3-banner p {
+  font-size: 0.82rem;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.badge-tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 1.25rem;
+}
+
 .badge-tier-table th {
   text-align: left;
   padding: 0.4rem 0.75rem;
@@ -142,12 +656,15 @@
   letter-spacing: 1px;
   border-bottom: 1px solid #1e3a6e;
 }
+
 .badge-tier-table td {
   padding: 0.6rem 0.75rem;
   border-bottom: 1px solid #111827;
   color: #374151;
 }
+
 .badge-tier-table tr:last-child td { border-bottom: none; }
+
 .tier-pill {
   display: inline-block;
   padding: 2px 10px;
@@ -157,11 +674,12 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.tier-bronze      { background: #292524; color: #78350f; border: 1px solid #44403c; }
-.tier-silver      { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
-.tier-gold        { background: #1c1400; color: #ca8a04; border: 1px solid #854d0e; }
+
+.tier-bronze { background: #292524; color: #78350f; border: 1px solid #44403c; }
+.tier-silver { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
+.tier-gold { background: #1c1400; color: #ca8a04; border: 1px solid #854d0e; }
 .tier-holographic { background: #0c0a1e; color: #7c3aed; border: 1px solid #4c1d95; }
-.tier-prismatic   { background: #1a0010; color: #db2777; border: 1px solid #9d174d; }
+.tier-prismatic { background: #1a0010; color: #db2777; border: 1px solid #9d174d; }
 
 .coming-soon-overlay {
   display: inline-block;
@@ -176,12 +694,29 @@
   text-transform: uppercase;
 }
 
-/* ── Empty state ──────────────────────────────────────────────── */
-.empty-state { color: #4b5563; font-size: 0.88rem; padding: 1.5rem 0; text-align: center; }
+.empty-state {
+  color: #7f8aa8;
+  font-size: 0.88rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
 
-/* ── Back link ────────────────────────────────────────────────── */
-.back-link { font-size: 0.82rem; color: #374151; text-decoration: none; }
-.back-link:hover { color: #9ca3af; }
+@media (max-width: 940px) {
+  .dup-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dup-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dup-row-value,
+  .dup-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
 </style>
 {% endblock %}
 
@@ -193,9 +728,9 @@
   </div>
 </div>
 
-<div style="display:flex;gap:0.75rem;align-items:center;">
+<div class="ws-links">
   <a href="{% url 'stickers:album' %}" class="back-link">&larr; Back to My Collection</a>
-  <span style="color:#1e3a6e;">·</span>
+  <span style="color:#1e3a6e;">&middot;</span>
   <a href="{% url 'stickers:generator' %}" class="back-link">&#9733; AI Sticker Generator</a>
 </div>
 
@@ -203,14 +738,11 @@
   <div class="msg-error" style="margin-top:1rem;">{{ error }}</div>
 {% endif %}
 
-<!-- ── TABS ───────────────────────────────────────────────────── -->
-<div class="ws-tabs" id="ws-tabs" style="margin-top:1.25rem;">
-  <button class="ws-tab {% if active_tab == 'convert' %}active{% endif %}"
-          onclick="switchTab('convert')">
-    &#8645; Convert Dupes
+<div class="ws-tabs" id="ws-tabs">
+  <button class="ws-tab {% if active_tab == 'convert' %}active{% endif %}" onclick="switchTab('convert')">
+    &#8645; Dust Extras
   </button>
-  <button class="ws-tab {% if active_tab == 'craft' %}active{% endif %}"
-          onclick="switchTab('craft')">
+  <button class="ws-tab {% if active_tab == 'craft' %}active{% endif %}" onclick="switchTab('craft')">
     &#9999; Craft Sticker
   </button>
   <button class="ws-tab phase3" title="Coming in Phase 3">
@@ -218,90 +750,233 @@
   </button>
 </div>
 
-<!-- ── PANEL: CONVERT DUPLICATES ─────────────────────────────── -->
 <div class="ws-panel {% if active_tab == 'convert' %}active{% endif %}" id="panel-convert">
-  <p style="color:#6b7280;font-size:0.82rem;margin-bottom:1rem;">
-    Convert extra copies of the same sticker into dust. Your first copy is always kept safe.
+  <p class="dup-helper-copy">
+    Convert only your safe extras into dust. Album-placed, trading, and favourited copies stay protected automatically, and your kept-safe copy is never listed here.
   </p>
 
-  {% if duplicates %}
-    {% for dup in duplicates %}
+  <div class="dup-summary-grid">
+    <div class="dup-summary-card">
+      <div class="dup-summary-label">Convertible Groups</div>
+      <div class="dup-summary-value">{{ convertible_group_count }}</div>
+    </div>
+    <div class="dup-summary-card">
+      <div class="dup-summary-label">Safe Extras Ready</div>
+      <div class="dup-summary-value">{{ convertible_copy_count }}</div>
+    </div>
+    <div class="dup-summary-card">
+      <div class="dup-summary-label">Potential Dust</div>
+      <div class="dup-summary-value accent">+{{ convertible_dust_total }}</div>
+    </div>
+  </div>
+
+  {% if duplicate_groups %}
+    <div class="dup-list">
+      {% for dup in duplicate_groups %}
       <div class="dup-row r-{{ dup.rarity }}">
-        <div style="flex:1;">
-          <span class="dup-name">{{ dup.pokemon__name }}</span>
-          <span class="dup-meta">[{{ dup.rarity|title }}] {{ dup.variant|title }}</span>
+        <div class="dup-art">
+          <img src="{{ dup.pokedex_number|sticker_sprite:dup.variant }}"
+               alt="{{ dup.pokemon_name }} {{ dup.variant_label }}"
+               loading="lazy">
         </div>
-        <span class="dup-count">×{{ dup.count }}</span>
-        <form method="post" style="display:inline;">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="convert">
-          <input type="hidden" name="sticker_id" value="{{ dup.id }}">
-          <button type="submit" class="btn btn-secondary btn-sm">
-            Convert &nbsp;<span style="color:var(--rc,#a78bfa);font-weight:800;">+dust</span>
-          </button>
-        </form>
+
+        <div class="dup-main">
+          <div class="dup-topline">
+            <span class="dup-name">{{ dup.pokemon_name }}</span>
+            <span class="dup-meta">[{{ dup.rarity_label }}] {{ dup.variant_label }}</span>
+          </div>
+
+          <div class="dup-stats">
+            <span class="dup-pill">{{ dup.owned_count }} owned</span>
+            <span class="dup-pill safe">{{ dup.safe_count }} safe</span>
+            <span class="dup-pill accent">{{ dup.convertible_count }} extra</span>
+          </div>
+
+          {% if dup.placed_count or dup.trading_count or dup.favorite_count %}
+          <div class="dup-protection-note">
+            Protected:
+            {% if dup.placed_count %}{{ dup.placed_count }} album{% endif %}
+            {% if dup.trading_count %}{% if dup.placed_count %} &middot; {% endif %}{{ dup.trading_count }} trading{% endif %}
+            {% if dup.favorite_count %}{% if dup.placed_count or dup.trading_count %} &middot; {% endif %}{{ dup.favorite_count }} favourite{% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="dup-row-value">
+          <div class="dust-gain">+{{ dup.dust_value }} dust</div>
+          <div class="dust-subcopy">each &middot; +{{ dup.total_dust_value }} total</div>
+        </div>
+
+        <div class="dup-actions">
+          <form method="post" class="dup-action-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="convert">
+            <input type="hidden" name="sticker_id" value="{{ dup.convert_one_id }}">
+            <button type="submit" class="btn btn-secondary btn-sm">Convert 1</button>
+          </form>
+          {% if dup.can_convert_all %}
+          <form method="post" class="dup-action-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="convert_all">
+            <input type="hidden" name="pokemon_id" value="{{ dup.pokemon_id }}">
+            <input type="hidden" name="rarity" value="{{ dup.rarity }}">
+            <input type="hidden" name="variant" value="{{ dup.variant }}">
+            <button type="submit" class="btn btn-primary btn-sm">Convert All</button>
+          </form>
+          {% endif %}
+        </div>
       </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
   {% else %}
     <div class="empty-state">
-      &#10003; No duplicates — every sticker you own is unique!
+      &#10003; No safe extras available. Your protected and kept-safe copies are already being preserved.
     </div>
   {% endif %}
 </div>
 
-<!-- ── PANEL: CRAFT STICKER ──────────────────────────────────── -->
 <div class="ws-panel {% if active_tab == 'craft' %}active{% endif %}" id="panel-craft">
   <p style="color:#6b7280;font-size:0.82rem;margin-bottom:1.25rem;">
-    Spend dust to craft the exact sticker you need.
+    Search by name or dex number, then tune rarity and variant before you spend dust.
   </p>
 
-  <form method="post" class="craft-form" id="craft-form">
+  {{ pokemon_picker_data|json_script:"craft-pokemon-data" }}
+  {{ craft_owned_slot_keys|json_script:"craft-owned-slot-keys" }}
+  {{ craft_placed_slot_keys|json_script:"craft-placed-slot-keys" }}
+  {{ craft_costs|json_script:"craft-cost-map" }}
+  {{ craft_variant_multipliers|json_script:"craft-variant-map" }}
+
+  <form method="post" class="craft-shell" id="craft-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="craft">
+    <input type="hidden" name="pokemon_id" id="craft-pokemon-id" value="{% if craft_selected_pokemon %}{{ craft_selected_pokemon.pk }}{% endif %}">
+    <input type="hidden" name="rarity" id="craft-rarity-input" value="{{ craft_selected_rarity }}">
+    <input type="hidden" name="variant" id="craft-variant-input" value="{{ craft_selected_variant }}">
 
-    <div class="form-group">
-      <label>Pokémon</label>
-      <select name="pokemon_id">
-        {% for pokemon in pokemon_list %}
-          <option value="{{ pokemon.pk }}">{{ pokemon.name }}</option>
-        {% endfor %}
-      </select>
+    <div class="craft-form">
+      <div class="craft-form-grid">
+        <div>
+          <label class="craft-label" for="craft-search">Pokemon</label>
+          <div class="craft-search-wrap">
+            <input id="craft-search"
+                   type="text"
+                   class="craft-search-input"
+                   placeholder="Search Pokemon or #dex"
+                   autocomplete="off"
+                   value="{% if craft_selected_pokemon %}{{ craft_selected_pokemon.name }}{% endif %}">
+          </div>
+          <div class="craft-search-panel">
+            <div class="craft-search-toolbar">
+              <div class="craft-search-meta" id="craft-search-meta">Scan the roster and lock onto the exact sticker you need.</div>
+              <label class="craft-toggle">
+                <input type="checkbox" name="missing_only" id="craft-missing-only" value="1"{% if craft_missing_only %} checked{% endif %}>
+                Missing only
+              </label>
+            </div>
+            <div class="craft-result-list" id="craft-result-list"></div>
+          </div>
+        </div>
+
+        <div>
+          <span class="craft-label">Rarity</span>
+          <div class="craft-pill-grid" id="craft-rarity-grid">
+            {% for value, label in craft_rarity_choices %}
+            <button type="button"
+                    class="craft-pill{% if value == craft_selected_rarity %} active{% endif %}"
+                    data-rarity="{{ value }}"
+                    data-label="{{ label }}"
+                    data-cost="{{ craft_costs|get_item:value }}">
+              {{ label }} · {{ craft_costs|get_item:value }} dust
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <span class="craft-label">Variant</span>
+          <div class="variant-groups" id="craft-variant-groups">
+            {% for group in craft_variant_groups %}
+            <div>
+              <div class="variant-group-title">{{ group.label }}</div>
+              <div class="craft-pill-grid">
+                {% for variant in group.variants %}
+                <button type="button"
+                        class="variant-pill{% if variant.value == craft_selected_variant %} active{% endif %}"
+                        data-variant="{{ variant.value }}"
+                        data-label="{{ variant.label }}"
+                        data-multiplier="{{ variant.multiplier }}">
+                  {{ variant.label }}
+                  <small>x{{ variant.multiplier }}%</small>
+                </button>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Rarity</label>
-      <select name="rarity" id="craft-rarity" onchange="updateCraftCost()">
-        {% for rarity, cost in craft_costs.items %}
-          <option value="{{ rarity }}" data-cost="{{ cost }}">{{ rarity|title }} — {{ cost }} dust</option>
-        {% endfor %}
-      </select>
-    </div>
+    <aside class="craft-preview">
+      <div class="craft-preview-card">
+        <div class="craft-preview-art">
+          {% if craft_selected_pokemon %}
+          <img id="craft-preview-image"
+               src="{{ craft_selected_pokemon.pokedex_number|sticker_sprite:craft_selected_variant }}"
+               alt="{{ craft_selected_pokemon.name }}">
+          {% else %}
+          <img id="craft-preview-image" src="" alt="" style="display:none;">
+          {% endif %}
+        </div>
+        <div>
+          <div class="craft-preview-name" id="craft-preview-name">{% if craft_selected_pokemon %}{{ craft_selected_pokemon.name }}{% else %}Select a Pokemon{% endif %}</div>
+          <div class="craft-preview-subline" id="craft-preview-subline">
+            {% if craft_selected_pokemon %}#{{ craft_selected_pokemon.pokedex_number }} · {{ craft_selected_variant|title }} · {{ craft_selected_rarity|title }}{% else %}Choose a target to see the exact craft cost.{% endif %}
+          </div>
+          <div class="craft-preview-status {% if craft_selected_pokemon %}missing{% endif %}" id="craft-preview-status">
+            {% if craft_selected_pokemon %}Checking collection{% else %}Awaiting target{% endif %}
+          </div>
+        </div>
+      </div>
 
-    <div class="form-group">
-      <label>Variant</label>
-      <select name="variant">
-        {% for val, label in variants %}
-          <option value="{{ val }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="craft-cost-panel">
+        <div class="craft-cost-row">
+          <span class="craft-cost-muted">Rarity base</span>
+          <span id="craft-base-cost">{{ craft_costs|get_item:craft_selected_rarity }} dust</span>
+        </div>
+        <div class="craft-cost-row">
+          <span class="craft-cost-muted">Variant modifier</span>
+          <span id="craft-variant-modifier">{{ craft_variant_multipliers|get_item:craft_selected_variant }}%</span>
+        </div>
+        <div class="craft-cost-total">
+          <div class="craft-cost-row">
+            <span>Total cost</span>
+            <strong id="craft-total-cost">{{ craft_selected_cost }} dust</strong>
+          </div>
+        </div>
+      </div>
 
-    <div class="craft-cost-bar">
-      <span class="craft-cost-label">Cost</span>
-      <span class="craft-cost-value" id="craft-cost-display">— dust</span>
-    </div>
+      <div class="craft-preview-copy" id="craft-preview-copy">
+        Crafting is best for exact missing slots. Premium variants cost more dust than base art, and Anime remains a Secret Rare prestige craft only.
+      </div>
 
-    <button type="submit" class="btn btn-primary" id="craft-submit">Craft Sticker</button>
+      <div class="craft-preview-note">
+        Dust on hand: <strong>{{ sticker_dust }}</strong>. Missing-only view checks the exact Pokemon, rarity, and variant currently selected.
+      </div>
+
+      <div class="craft-preview-actions">
+        <button type="submit" class="btn btn-primary" id="craft-submit">Craft Sticker</button>
+      </div>
+    </aside>
   </form>
 </div>
 
-<!-- ── PANEL: BADGE FORGE (Phase 3 teaser) ───────────────────── -->
 <div class="ws-panel" id="panel-badge">
   <div class="phase3-banner">
-    <h3>&#9670; Badge Forging — Phase 3</h3>
+    <h3>&#9670; Badge Forging - Phase 3</h3>
     <p>
       Forge powerful battle badges from your sticker collection.<br>
-      Each badge passively enhances a specific Pokémon in battle.
+      Each badge passively enhances a specific Pokemon in battle.
     </p>
   </div>
 
@@ -320,13 +995,9 @@
         {% with req=badge_requirements|get_item:tier_val %}
         <tr>
           <td><span class="tier-pill tier-{{ tier_val }}">{{ tier_label }}</span></td>
-          <td style="color:#374151;">
-            {% if req %}{{ req.copies }}× {{ req.rarity|title }}{% endif %}
-          </td>
-          <td style="color:#374151;">
-            {% if req %}{{ req.dust }} dust{% endif %}
-          </td>
-          <td style="color:#374151;">
+          <td>{% if req %}{{ req.copies }}x {{ req.rarity|title }}{% endif %}</td>
+          <td>{% if req %}{{ req.dust }} dust{% endif %}</td>
+          <td>
             {% if tier_val == "bronze" %}+5%
             {% elif tier_val == "silver" %}+12%
             {% elif tier_val == "gold" %}+22%
@@ -350,21 +1021,233 @@
   const DUST = {{ sticker_dust }};
 
   function switchTab(name) {
-    document.querySelectorAll('.ws-tab:not(.phase3)').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.ws-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.ws-tab:not(.phase3)').forEach((tab) => tab.classList.remove('active'));
+    document.querySelectorAll('.ws-panel').forEach((panel) => panel.classList.remove('active'));
     document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
     document.getElementById('panel-' + name).classList.add('active');
   }
 
-  function updateCraftCost() {
-    const sel = document.getElementById('craft-rarity');
-    const cost = parseInt(sel.options[sel.selectedIndex].dataset.cost, 10);
-    const el = document.getElementById('craft-cost-display');
-    el.textContent = cost + ' dust';
-    el.className = 'craft-cost-value' + (DUST < cost ? ' cannot-afford' : '');
-    document.getElementById('craft-submit').disabled = DUST < cost;
-  }
+  (() => {
+    const form = document.getElementById('craft-form');
+    if (!form) return;
 
-  updateCraftCost();
+    const pokemonData = JSON.parse(document.getElementById('craft-pokemon-data').textContent);
+    const ownedKeys = new Set(JSON.parse(document.getElementById('craft-owned-slot-keys').textContent));
+    const placedKeys = new Set(JSON.parse(document.getElementById('craft-placed-slot-keys').textContent));
+    const craftCosts = JSON.parse(document.getElementById('craft-cost-map').textContent);
+    const variantMultipliers = JSON.parse(document.getElementById('craft-variant-map').textContent);
+
+    const searchInput = document.getElementById('craft-search');
+    const searchMeta = document.getElementById('craft-search-meta');
+    const missingOnlyInput = document.getElementById('craft-missing-only');
+    const resultList = document.getElementById('craft-result-list');
+    const pokemonIdInput = document.getElementById('craft-pokemon-id');
+    const rarityInput = document.getElementById('craft-rarity-input');
+    const variantInput = document.getElementById('craft-variant-input');
+    const previewImage = document.getElementById('craft-preview-image');
+    const previewName = document.getElementById('craft-preview-name');
+    const previewSubline = document.getElementById('craft-preview-subline');
+    const previewStatus = document.getElementById('craft-preview-status');
+    const previewCopy = document.getElementById('craft-preview-copy');
+    const baseCost = document.getElementById('craft-base-cost');
+    const variantModifier = document.getElementById('craft-variant-modifier');
+    const totalCost = document.getElementById('craft-total-cost');
+    const submitButton = document.getElementById('craft-submit');
+    const rarityButtons = Array.from(document.querySelectorAll('[data-rarity]'));
+    const variantButtons = Array.from(document.querySelectorAll('[data-variant]'));
+
+    const rarityLabels = Object.fromEntries(rarityButtons.map((button) => [
+      button.dataset.rarity,
+      button.dataset.label,
+    ]));
+    const variantLabels = Object.fromEntries(variantButtons.map((button) => [
+      button.dataset.variant,
+      button.dataset.label,
+    ]));
+
+    const spriteUrl = (dex, variant) => {
+      if (!dex) return '';
+      const ext = variant === 'battle_scene' ? 'gif' : 'png';
+      return `/static/sprites/${variant}/${dex}.${ext}`;
+    };
+
+    const slotKey = (pokemonId) => `${pokemonId}|${rarityInput.value}|${variantInput.value}`;
+
+    const getSelectedPokemon = () => {
+      const selectedId = parseInt(pokemonIdInput.value || '0', 10);
+      return pokemonData.find((pokemon) => pokemon.id === selectedId) || null;
+    };
+
+    const getStatusFor = (pokemonId) => {
+      const key = slotKey(pokemonId);
+      if (placedKeys.has(key)) return 'placed';
+      if (ownedKeys.has(key)) return 'owned';
+      return 'missing';
+    };
+
+    const renderResults = () => {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      const selectedId = parseInt(pokemonIdInput.value || '0', 10);
+      let matches = pokemonData.filter((pokemon) => {
+        if (!query) return true;
+        return pokemon.name.toLowerCase().includes(query) || String(pokemon.dex).includes(query.replace('#', ''));
+      });
+
+      if (missingOnlyInput.checked) {
+        matches = matches.filter((pokemon) => getStatusFor(pokemon.id) === 'missing');
+      }
+
+      const limitedMatches = matches.slice(0, 18);
+      searchMeta.textContent = matches.length
+        ? `${matches.length} match${matches.length === 1 ? '' : 'es'} · showing ${limitedMatches.length}`
+        : 'No Pokemon match these filters yet.';
+
+      if (!limitedMatches.length) {
+        resultList.innerHTML = '<div class="craft-search-empty">No Pokemon match the current search and filters. Try another name, dex number, or turn off missing-only.</div>';
+        return;
+      }
+
+      resultList.innerHTML = limitedMatches.map((pokemon) => {
+        const status = getStatusFor(pokemon.id);
+        const statusLabel = status === 'placed'
+          ? 'Placed'
+          : status === 'owned'
+            ? 'Owned'
+            : 'Missing';
+        return `
+          <button type="button" class="craft-result ${pokemon.id === selectedId ? 'active' : ''}" data-pokemon-id="${pokemon.id}">
+            <div class="craft-result-art">
+              <img src="${spriteUrl(pokemon.dex, 'base')}" alt="${pokemon.name}">
+            </div>
+            <div>
+              <div class="craft-result-name">${pokemon.name}</div>
+              <div class="craft-result-dex">#${pokemon.dex}</div>
+            </div>
+            <div class="craft-result-status ${pokemon.id === selectedId ? 'selected' : status}">${pokemon.id === selectedId ? 'Selected' : statusLabel}</div>
+          </button>
+        `;
+      }).join('');
+
+      resultList.querySelectorAll('[data-pokemon-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const pokemon = pokemonData.find((entry) => entry.id === Number(button.dataset.pokemonId));
+          if (!pokemon) return;
+          pokemonIdInput.value = String(pokemon.id);
+          searchInput.value = pokemon.name;
+          renderResults();
+          syncPreview();
+        });
+      });
+    };
+
+    const syncVariantAvailability = () => {
+      const secretRareSelected = rarityInput.value === 'secret_rare';
+      variantButtons.forEach((button) => {
+        const animeLocked = button.dataset.variant === 'anime' && !secretRareSelected;
+        button.disabled = animeLocked;
+        if (animeLocked) {
+          button.classList.remove('active');
+        }
+      });
+      if (variantInput.value === 'anime' && !secretRareSelected) {
+        variantInput.value = 'base';
+      }
+    };
+
+    const syncPills = () => {
+      rarityButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.rarity === rarityInput.value);
+      });
+      variantButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.variant === variantInput.value);
+      });
+    };
+
+    const syncPreview = () => {
+      const pokemon = getSelectedPokemon();
+      const rarity = rarityInput.value;
+      const variant = variantInput.value;
+      const rarityLabel = rarityLabels[rarity] || rarity;
+      const variantLabel = variantLabels[variant] || variant;
+      const multiplier = variantMultipliers[variant] || 100;
+      const base = craftCosts[rarity] || 0;
+      const finalCost = Math.max(5, Math.ceil(((base * multiplier) / 100) / 5) * 5);
+      const status = pokemon ? getStatusFor(pokemon.id) : 'missing';
+
+      baseCost.textContent = `${base} dust`;
+      variantModifier.textContent = `${multiplier}%`;
+      totalCost.textContent = `${finalCost} dust`;
+
+      if (!pokemon) {
+        previewName.textContent = 'Select a Pokemon';
+        previewSubline.textContent = 'Choose a target to see the exact craft cost.';
+        previewStatus.textContent = 'Awaiting target';
+        previewStatus.className = 'craft-preview-status missing';
+        previewCopy.textContent = 'Crafting is best for exact missing slots. Premium variants cost more dust than base art, and Anime remains a Secret Rare prestige craft only.';
+        previewImage.style.display = 'none';
+        submitButton.disabled = true;
+        return;
+      }
+
+      previewName.textContent = pokemon.name;
+      previewSubline.textContent = `#${pokemon.dex} · ${variantLabel} · ${rarityLabel}`;
+      previewImage.src = spriteUrl(pokemon.dex, variant);
+      previewImage.alt = `${pokemon.name} ${variantLabel}`;
+      previewImage.style.display = '';
+
+      if (status === 'placed') {
+        previewStatus.textContent = 'Already placed in album';
+        previewStatus.className = 'craft-preview-status placed';
+        previewCopy.textContent = 'You already have this exact slot filed in the album. Craft only if you want an extra loose copy for trading, dust loops, or future use.';
+      } else if (status === 'owned') {
+        previewStatus.textContent = 'Already in collection';
+        previewStatus.className = 'craft-preview-status owned';
+        previewCopy.textContent = 'You already own this exact sticker. Crafting another copy is optional, so dust is usually better spent on missing slots first.';
+      } else {
+        previewStatus.textContent = 'Missing from collection';
+        previewStatus.className = 'craft-preview-status missing';
+        previewCopy.textContent = 'This exact sticker is still missing, so crafting it will fill a real gap in your collection immediately.';
+      }
+
+      submitButton.disabled = finalCost > DUST;
+      submitButton.textContent = finalCost > DUST ? 'Not Enough Dust' : 'Craft Sticker';
+    };
+
+    rarityButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        rarityInput.value = button.dataset.rarity;
+        syncVariantAvailability();
+        syncPills();
+        renderResults();
+        syncPreview();
+      });
+    });
+
+    variantButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        if (button.disabled) return;
+        variantInput.value = button.dataset.variant;
+        syncPills();
+        renderResults();
+        syncPreview();
+      });
+    });
+
+    searchInput.addEventListener('input', renderResults);
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const firstResult = resultList.querySelector('[data-pokemon-id]');
+      if (firstResult) {
+        firstResult.click();
+      }
+    });
+    missingOnlyInput.addEventListener('change', renderResults);
+
+    syncVariantAvailability();
+    syncPills();
+    renderResults();
+    syncPreview();
+  })();
 </script>
 {% endblock %}

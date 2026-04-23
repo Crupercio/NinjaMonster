@@ -772,8 +772,10 @@
               <input type="hidden" name="anchor" value="{{ slot.anchor_id }}">
               <button type="submit" class="btn btn-primary btn-sm">Place</button>
             </form>
-            {% else %}
+            {% elif slot.is_placed %}
             <a href="{% url 'stickers:regional_album_detail' region=selected_region rarity=selected_rarity %}?page={{ slot.regional_page_number }}#{{ slot.anchor_id }}" class="btn btn-secondary btn-sm">View Slot</a>
+            {% else %}
+            <a href="{% url 'stickers:workshop' %}?tab=craft&pokemon={{ slot.pokemon.pk }}&rarity={{ selected_rarity }}&variant={{ slot.variant }}&missing_only=1" class="btn btn-secondary btn-sm">Craft Slot</a>
             {% endif %}
           </div>
         </div>

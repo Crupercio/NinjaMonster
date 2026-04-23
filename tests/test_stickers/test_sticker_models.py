@@ -12,6 +12,7 @@ from apps.stickers.models import (
     StickerPack,
     StickerRarity,
     StickerVariant,
+    craft_cost_for,
 )
 
 from tests.framework.base.base_test import BaseTest
@@ -261,12 +262,28 @@ class TestStickerCraft(BaseTest):
         )
 
         # Assert
-        cost = CRAFT_COSTS[StickerRarity.COMMON]
+        cost = craft_cost_for(StickerRarity.COMMON, StickerVariant.BASE)
         player.refresh_from_db()
         assert player.sticker_dust == 50 - cost
         assert sticker.rarity == StickerRarity.COMMON
         assert sticker.awarded_from == "craft"
         assert sticker.owner == player
+
+    @allure.story("Crafting a premium variant uses the variant multiplier")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_craft_variant_multiplier_changes_cost(self, sticker_svc, player, bulbasaur):
+        player.sticker_dust = 300
+        player.save(update_fields=["sticker_dust"])
+
+        sticker = sticker_svc.craft_sticker(
+            player, bulbasaur, StickerVariant.NEON_GLOW, StickerRarity.RARE
+        )
+
+        expected_cost = craft_cost_for(StickerRarity.RARE, StickerVariant.NEON_GLOW)
+        player.refresh_from_db()
+        assert player.sticker_dust == 300 - expected_cost
+        assert sticker.variant == StickerVariant.NEON_GLOW
+        assert expected_cost > CRAFT_COSTS[StickerRarity.RARE]
 
     @allure.story("Crafting with insufficient dust raises ValueError")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -299,6 +316,17 @@ class TestStickerCraft(BaseTest):
         with pytest.raises(ValueError, match="Unknown variant"):
             sticker_svc.craft_sticker(
                 player, bulbasaur, "gold_foil", StickerRarity.COMMON
+            )
+
+    @allure.story("Anime crafting is restricted to Secret Rare")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_craft_anime_requires_secret_rare(self, sticker_svc, player, bulbasaur):
+        player.sticker_dust = 9999
+        player.save(update_fields=["sticker_dust"])
+
+        with pytest.raises(ValueError, match="Secret Rare"):
+            sticker_svc.craft_sticker(
+                player, bulbasaur, StickerVariant.ANIME, StickerRarity.RARE
             )
 
 

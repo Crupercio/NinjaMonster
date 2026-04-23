@@ -12,7 +12,19 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.pokemon.models import Pokemon
 
-from .models import GEN_PACK_GEN_NUMBER, PackType, Sticker, StickerPack, StickerRarity, StickerVariant, TradeOffer
+from .models import (
+    CRAFT_COSTS,
+    CRAFT_VARIANT_GROUPS,
+    CRAFT_VARIANT_MULTIPLIERS,
+    GEN_PACK_GEN_NUMBER,
+    PackType,
+    Sticker,
+    StickerPack,
+    StickerRarity,
+    StickerVariant,
+    TradeOffer,
+    craft_cost_for,
+)
 from .models import REGION_LABELS, REGION_RANGES, StickerRarity
 from .services import (
     PACK_PRICE_RYO,
@@ -390,12 +402,23 @@ class BuyMultiPackView(LoginRequiredMixin, TemplateView):
         try:
             all_stickers = []
             preview_pack = StickerPack(pack_type=pack_type)
+            previously_owned_keys = set(
+                Sticker.objects.filter(owner=request.user)
+                .values_list("pokemon_id", "rarity", "variant")
+                .distinct()
+            )
             for _ in range(10):
                 pack = _sticker_service.buy_pack(request.user, pack_type=pack_type)
                 stickers = _sticker_service.open_pack(request.user, pack)
                 all_stickers.extend(stickers)
         except ValueError as exc:
             return redirect("stickers:buy_pack")
+        for sticker in all_stickers:
+            sticker.was_owned_before_bundle = (
+                sticker.pokemon_id,
+                sticker.rarity,
+                sticker.variant,
+            ) in previously_owned_keys
         context = self.get_context_data(**kwargs)
         context["all_stickers"] = all_stickers
         context["pack_count"] = 10
@@ -416,33 +439,102 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
 
     template_name = "stickers/workshop.html"
 
-    def get_context_data(self, **kwargs):
-        from django.db.models import Count, Min
+    def _selected_craft_pokemon_id(self) -> int | None:
+        raw_value = self.request.GET.get("pokemon")
+        if not raw_value:
+            return None
+        try:
+            return int(raw_value)
+        except (TypeError, ValueError):
+            return None
 
-        from .models import BADGE_CRAFT_REQUIREMENTS, CRAFT_COSTS, BadgeTier, StickerVariant
+    def _selected_craft_rarity(self) -> str:
+        rarity = self.request.GET.get("rarity", StickerRarity.COMMON)
+        return rarity if rarity in StickerRarity.values else StickerRarity.COMMON
+
+    def _selected_craft_variant(self) -> str:
+        variant = self.request.GET.get("variant", StickerVariant.BASE)
+        return variant if variant in StickerVariant.values else StickerVariant.BASE
+
+    def get_context_data(self, **kwargs):
+        from .models import BADGE_CRAFT_REQUIREMENTS, BadgeTier
 
         context = super().get_context_data(**kwargs)
         context["sticker_dust"] = self.request.user.sticker_dust
 
         # Convert tab
-        context["duplicates"] = (
-            Sticker.objects.filter(owner=self.request.user, is_trading=False)
-            .values("pokemon", "pokemon__name", "rarity", "variant")
-            .annotate(count=Count("id"), id=Min("id"))
-            .filter(count__gt=1)
-        )
+        context.update(_sticker_service.get_convertible_duplicate_groups(self.request.user))
 
         # Craft tab
-        context["pokemon_list"] = Pokemon.objects.select_related("primary_type").order_by("name")
+        pokemon_list = list(
+            Pokemon.objects.only("id", "name", "pokedex_number")
+            .order_by("pokedex_number", "name")
+        )
+        selected_pokemon_id = self._selected_craft_pokemon_id()
+        if selected_pokemon_id and any(pokemon.pk == selected_pokemon_id for pokemon in pokemon_list):
+            selected_pokemon = next(pokemon for pokemon in pokemon_list if pokemon.pk == selected_pokemon_id)
+        else:
+            selected_pokemon = pokemon_list[0] if pokemon_list else None
+
+        selected_rarity = self._selected_craft_rarity()
+        selected_variant = self._selected_craft_variant()
+        if selected_variant == StickerVariant.ANIME and selected_rarity != StickerRarity.SECRET_RARE:
+            selected_variant = StickerVariant.BASE
+
+        owned_slot_keys = set()
+        placed_slot_keys = set()
+        for row in Sticker.objects.filter(owner=self.request.user).values(
+            "pokemon_id", "rarity", "variant", "is_album_placed"
+        ):
+            key = f"{row['pokemon_id']}|{row['rarity']}|{row['variant']}"
+            owned_slot_keys.add(key)
+            if row["is_album_placed"]:
+                placed_slot_keys.add(key)
+
+        context["pokemon_list"] = pokemon_list
+        context["pokemon_picker_data"] = [
+            {
+                "id": pokemon.pk,
+                "name": pokemon.name,
+                "dex": pokemon.pokedex_number or 0,
+            }
+            for pokemon in pokemon_list
+        ]
+        context["craft_selected_pokemon"] = selected_pokemon
+        context["craft_selected_rarity"] = selected_rarity
+        context["craft_selected_variant"] = selected_variant
+        context["craft_selected_cost"] = craft_cost_for(selected_rarity, selected_variant)
+        context["craft_missing_only"] = self.request.GET.get("missing_only") == "1"
+        context["craft_owned_slot_keys"] = sorted(owned_slot_keys)
+        context["craft_placed_slot_keys"] = sorted(placed_slot_keys)
         context["craft_costs"] = CRAFT_COSTS
-        context["variants"] = StickerVariant.choices
+        context["craft_variant_multipliers"] = CRAFT_VARIANT_MULTIPLIERS
+        context["craft_rarity_choices"] = StickerRarity.choices
+        context["craft_variant_groups"] = [
+            {
+                "label": group_label,
+                "variants": [
+                    {
+                        "value": variant,
+                        "label": StickerVariant(variant).label,
+                        "multiplier": CRAFT_VARIANT_MULTIPLIERS[variant],
+                    }
+                    for variant in variants
+                ],
+            }
+            for group_label, variants in CRAFT_VARIANT_GROUPS
+        ]
 
         # Badge Forge tab (Phase 3 — display only)
         context["badge_requirements"] = BADGE_CRAFT_REQUIREMENTS
         context["badge_tiers"] = BadgeTier.choices
 
         # Active tab (passed as query param after redirect)
-        context["active_tab"] = self.request.GET.get("tab", "convert")
+        craft_prefilled = any(
+            self.request.GET.get(param)
+            for param in ("pokemon", "rarity", "variant")
+        )
+        context["active_tab"] = self.request.GET.get("tab", "craft" if craft_prefilled else "convert")
 
         return context
 
@@ -459,17 +551,50 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
                 return self.render_to_response(context)
             return redirect("/stickers/workshop/?tab=convert")
 
+        if action == "convert_all":
+            pokemon_id = request.POST.get("pokemon_id")
+            rarity = request.POST.get("rarity")
+            variant = request.POST.get("variant")
+            try:
+                _sticker_service.convert_all_duplicates(
+                    request.user,
+                    int(pokemon_id),
+                    rarity,
+                    variant,
+                )
+            except (TypeError, ValueError) as exc:
+                context = self.get_context_data(error=str(exc), **kwargs)
+                return self.render_to_response(context)
+            return redirect("/stickers/workshop/?tab=convert")
+
         if action == "craft":
             pokemon_id = request.POST.get("pokemon_id")
             variant = request.POST.get("variant")
             rarity = request.POST.get("rarity")
+            missing_only = request.POST.get("missing_only")
             pokemon = get_object_or_404(Pokemon, pk=pokemon_id)
             try:
                 _sticker_service.craft_sticker(request.user, pokemon, variant, rarity)
             except ValueError as exc:
                 context = self.get_context_data(error=str(exc), **kwargs)
+                context["active_tab"] = "craft"
+                context["craft_selected_pokemon"] = pokemon
+                context["craft_selected_rarity"] = rarity
+                context["craft_selected_variant"] = variant
+                context["craft_selected_cost"] = craft_cost_for(rarity, variant) if (
+                    rarity in StickerRarity.values and variant in StickerVariant.values
+                ) else None
+                context["craft_missing_only"] = missing_only == "1"
                 return self.render_to_response(context)
-            return redirect("/stickers/workshop/?tab=craft")
+            params = {
+                "tab": "craft",
+                "pokemon": pokemon_id,
+                "rarity": rarity,
+                "variant": variant,
+            }
+            if missing_only == "1":
+                params["missing_only"] = "1"
+            return redirect(f"/stickers/workshop/?{urlencode(params)}")
 
         return redirect("/stickers/workshop/")
 
@@ -922,15 +1047,21 @@ class StickerDetailView(LoginRequiredMixin, TemplateView):
             ).values("variant").annotate(cnt=Count("id"))
         }
 
+        owned_variants = [
+            variant for variant in _COMPLETION_VARIANTS
+            if owned_counts.get(variant, 0) > 0
+        ]
+        if not owned_variants:
+            owned_variants = [current_variant]
+
         slides = [
             {
-                "variant": sv.value,
-                "variant_label": sv.label,
-                "owned": True,
-                "copies": owned_counts[sv.value],
+                "variant": variant,
+                "variant_label": StickerVariant(variant).label,
+                "owned": owned_counts.get(variant, 0) > 0,
+                "copies": owned_counts.get(variant, 0),
             }
-            for sv in StickerVariant
-            if sv.value in owned_counts
+            for variant in owned_variants
         ]
 
         current_index = next((i for i, s in enumerate(slides) if s["variant"] == current_variant), 0)

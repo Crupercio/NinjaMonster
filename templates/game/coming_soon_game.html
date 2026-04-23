@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ game_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.soon-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 0 2.25rem;
+}
+
+.soon-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.soon-layout {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 1rem;
+}
+
+.soon-panel,
+.wallet-panel {
+  background: linear-gradient(180deg, rgba(25, 38, 78, 0.96), rgba(12, 18, 38, 0.96));
+  border: 1px solid rgba(91, 129, 255, 0.22);
+  border-radius: 26px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+}
+
+.soon-panel {
+  padding: 1.2rem 1.25rem;
+}
+
+.panel-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.panel-title {
+  margin: 0 0 0.35rem;
+  color: var(--text-1);
+  line-height: 1;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: clamp(2rem, 3vw, 2.7rem);
+}
+
+.panel-subtitle {
+  color: #a78bfa;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.75rem;
+}
+
+.panel-copy {
+  color: var(--text-2);
+  line-height: 1.65;
+  max-width: 720px;
+  margin-bottom: 1rem;
+}
+
+.logo-stage {
+  min-height: 230px;
+  border-radius: 22px;
+  border: 1px solid rgba(232, 184, 75, 0.14);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.48)),
+    url("{% static 'images/games/guess_background_2.png' %}") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.logo-stage img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.feature-card {
+  border-radius: 18px;
+  border: 1px solid rgba(232, 184, 75, 0.14);
+  background: rgba(10, 15, 29, 0.48);
+  padding: 0.85rem 0.9rem;
+}
+
+.feature-card span {
+  display: block;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.64rem;
+  margin-bottom: 0.18rem;
+}
+
+.feature-card strong {
+  color: var(--text-1);
+  font-size: 0.92rem;
+}
+
+.wallet-panel {
+  padding: 1rem 1.05rem;
+}
+
+.wallet-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-3);
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+}
+
+.wallet-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.wallet-card {
+  border-radius: 18px;
+  border: 1px solid rgba(232, 184, 75, 0.14);
+  background: rgba(10, 15, 29, 0.52);
+  padding: 0.8rem 0.9rem;
+}
+
+.wallet-card strong {
+  display: block;
+  color: var(--text-1);
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.wallet-card span {
+  color: var(--text-3);
+  font-size: 0.75rem;
+}
+
+.wallet-card em {
+  display: block;
+  margin-top: 0.35rem;
+  font-style: normal;
+  color: #c4b5fd;
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.soon-note {
+  margin-top: 1rem;
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(91, 129, 255, 0.18);
+  background: rgba(10, 15, 29, 0.48);
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.soon-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+@media (max-width: 980px) {
+  .soon-layout,
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="soon-shell">
+  <a href="{% url 'game:home' %}" class="soon-back">&larr; Back to Fun Hub</a>
+
+  <div class="soon-layout">
+    <section class="soon-panel">
+      <div class="panel-kicker">Collector Arcade</div>
+      <h1 class="panel-title">{{ game_title }}</h1>
+      <div class="panel-subtitle">{{ game_subtitle }}</div>
+      <p class="panel-copy">{{ game_copy }}</p>
+
+      <div class="logo-stage">
+        <img src="{% static 'images/games/'|add:game_logo %}" alt="{{ game_title }}">
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span>Status</span>
+          <strong>Cabinet staged</strong>
+        </div>
+        <div class="feature-card">
+          <span>Entry</span>
+          <strong>Candy-based play</strong>
+        </div>
+        <div class="feature-card">
+          <span>Focus</span>
+          <strong>Collector-first rewards</strong>
+        </div>
+      </div>
+
+      <div class="soon-note">
+        This page is live as part of the new Fun lane so the three-game arcade feels complete. The cabinet is ready for the final rules, reward tables, and interaction layer when you want to build it next.
+      </div>
+
+      <div class="soon-actions">
+        <a href="{% url 'game:home' %}" class="btn btn-primary">Return to Fun Hub</a>
+        <a href="{% url 'game:silhouette_hub' %}" class="btn btn-secondary">Open Silhouette Tower</a>
+      </div>
+    </section>
+
+    <aside class="wallet-panel">
+      <div class="wallet-title">Candy Wallet</div>
+      <div class="wallet-grid">
+        {% for key, candy in candy_inventory.items %}
+        <div class="wallet-card">
+          <strong>{{ candy.label }}</strong>
+          <span>{{ candy.description }}</span>
+          <em>x{{ candy.count }}</em>
+        </div>
+        {% endfor %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -163,7 +163,11 @@
   </div>
   <div class="pa-slots">
     {% for slot in rarity_group.list %}
-    {% if slot.owned %}<a class="slot-card r-{{ slot.rarity }} owned" style="text-decoration:none;" href="{% url 'stickers:sticker_detail' pokemon.pk slot.rarity slot.variant %}">{% else %}<div class="slot-card r-{{ slot.rarity }} missing">{% endif %}
+    {% if slot.owned %}
+    <a class="slot-card r-{{ slot.rarity }} owned" style="text-decoration:none;" href="{% url 'stickers:sticker_detail' pokemon.pk slot.rarity slot.variant %}">
+    {% else %}
+    <a class="slot-card r-{{ slot.rarity }} missing" style="text-decoration:none;" href="{% url 'stickers:workshop' %}?tab=craft&pokemon={{ pokemon.pk }}&rarity={{ slot.rarity }}&variant={{ slot.variant }}&missing_only=1">
+    {% endif %}
 
       <div class="slot-frame-wrap">
         {% if slot.copies > 1 %}
@@ -191,7 +195,7 @@
         <div class="slot-variant">{{ slot.variant_label }}</div>
         <div class="slot-rarity-label">{{ slot.rarity_label }}</div>
       </div>
-    {% if slot.owned %}</a>{% else %}</div>{% endif %}
+    </a>
     {% endfor %}
   </div>
 </div>

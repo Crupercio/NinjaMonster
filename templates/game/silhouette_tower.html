@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ tower.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.tower-shell { max-width: 1220px; margin: 0 auto; padding: 1rem 0 2.25rem; }
+.tower-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
+.tower-grid, .tower-panel, .option-btn, .empty-state, .result-banner {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+
+.tower-grid {
+  display:grid;
+  grid-template-columns: 1.08fr 1.36fr .92fr;
+  gap:1rem;
+  border-radius:28px;
+  padding:1rem;
+}
+
+.tower-panel { border-radius:24px; padding:1.1rem 1.15rem; }
+.panel-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
+.panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.9rem,2.8vw,2.5rem); line-height:1; }
+.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.4rem; }
+.panel-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.85rem; }
+.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.panel-copy { color:var(--text-2); line-height:1.6; font-size:.92rem; margin-bottom:.95rem; }
+
+.metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
+.metric, .bank-box, .candy-row {
+  border-radius:16px;
+  border:1px solid rgba(232,184,75,.14);
+  background:rgba(10,15,29,.52);
+}
+.metric { padding:.75rem .8rem; }
+.metric-label, .bank-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.2rem; }
+.metric-value { color:var(--text-1); font-size:1rem; font-weight:800; }
+
+.stage-panel {
+  position:relative; overflow:hidden; min-height:455px;
+  border-radius:26px; border:1px solid rgba(232,184,75,.16);
+  background:
+    linear-gradient(180deg, rgba(9,13,27,.18), rgba(9,13,27,.84)),
+    url("{% static guess_background %}") center/cover no-repeat;
+  padding:1rem;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.stage-top, .stage-foot { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap; }
+.stage-floor { color:var(--accent-gold); font-size:.78rem; text-transform:uppercase; letter-spacing:.16em; font-weight:700; }
+.stage-chip { border-radius:999px; border:1px solid rgba(91,129,255,.26); background:rgba(10,15,29,.72); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
+
+.silhouette-wrap {
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:.8rem 0;
+}
+.silhouette-wrap img {
+  width:min(330px,72%);
+  max-height:270px;
+  object-fit:contain;
+  filter:brightness(0) saturate(0) contrast(1.05) drop-shadow(0 18px 40px rgba(0,0,0,.48));
+  opacity:.95;
+  user-select:none;
+  pointer-events:none;
+  transition: filter .45s ease, transform .45s ease, opacity .45s ease;
+}
+.silhouette-wrap.revealed img {
+  filter:drop-shadow(0 18px 40px rgba(0,0,0,.38));
+  transform:scale(1.04);
+  opacity:1;
+  animation: revealPulse .9s ease;
+}
+@keyframes revealPulse {
+  0% { transform:scale(.9); opacity:.2; }
+  55% { transform:scale(1.08); opacity:1; }
+  100% { transform:scale(1.04); opacity:1; }
+}
+
+.stage-note { color:var(--text-2); font-size:.86rem; }
+.stage-note strong { color:var(--accent-gold); }
+
+.result-banner {
+  margin-top:1rem;
+  border-radius:22px;
+  padding:1rem 1.05rem;
+}
+.result-banner.correct { border-color: rgba(74,222,128,.34); }
+.result-banner.wrong { border-color: rgba(248,113,113,.34); }
+.result-banner.cleared { border-color: rgba(232,184,75,.34); }
+.result-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.15rem; }
+.result-copy { color:var(--text-2); line-height:1.55; }
+
+.bank-stack { display:grid; gap:.8rem; }
+.bank-box { padding:.9rem; }
+.bank-value { color:var(--text-1); font-size:1.65rem; font-weight:800; line-height:1; }
+.bank-value.gold { color:var(--accent-gold); }
+.bank-copy { color:var(--text-2); font-size:.83rem; line-height:1.45; margin-top:.3rem; }
+.candy-list { display:grid; gap:.55rem; }
+.candy-row { display:flex; justify-content:space-between; align-items:center; gap:.75rem; padding:.65rem .75rem; }
+.candy-row strong { color:var(--text-1); font-size:.88rem; display:block; }
+.candy-row span { color:var(--text-3); font-size:.72rem; }
+.candy-row em { color:#c4b5fd; font-style:normal; font-weight:800; }
+.tower-actions { display:flex; gap:.65rem; flex-wrap:wrap; margin-top:1rem; }
+
+.option-grid { margin-top:1rem; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; }
+.option-form { margin:0; }
+.option-btn {
+  width:100%; min-height:84px; text-align:left; border-radius:18px; padding:.9rem 1rem;
+  color:var(--text-1); cursor:pointer; transition:transform .18s, border-color .18s, box-shadow .18s;
+}
+.option-btn:hover { transform:translateY(-2px); border-color:rgba(232,184,75,.48); box-shadow:0 12px 24px rgba(0,0,0,.24); }
+.option-btn.correct { border-color: rgba(74,222,128,.42); box-shadow: 0 0 0 1px rgba(74,222,128,.12), 0 12px 24px rgba(0,0,0,.24); }
+.option-btn.wrong { border-color: rgba(248,113,113,.42); box-shadow: 0 0 0 1px rgba(248,113,113,.12), 0 12px 24px rgba(0,0,0,.24); }
+.option-btn.locked { cursor:default; pointer-events:none; }
+.option-kicker { display:block; color:var(--text-3); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; margin-bottom:.25rem; }
+.option-name { display:block; font-family:"Chakra Petch",sans-serif; font-size:1.05rem; font-weight:700; }
+.option-dex { display:block; margin-top:.22rem; color:#a78bfa; font-size:.78rem; }
+
+.empty-state { margin-top:1rem; border-radius:24px; padding:1.25rem; }
+.empty-state h2 { margin:0 0 .45rem; font-size:1.25rem; font-family:"Chakra Petch",sans-serif; color:var(--text-1); }
+.empty-state p { color:var(--text-2); margin-bottom:1rem; max-width:760px; }
+
+@media (max-width: 1120px) { .tower-grid { grid-template-columns:1fr; } }
+@media (max-width: 900px) { .metric-grid, .option-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tower-shell">
+  <a href="{% url 'game:silhouette_hub' %}" class="tower-back">&larr; Back to Silhouette Hub</a>
+
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="tower-grid">
+    <div class="tower-panel">
+      <div class="panel-kicker">Collector Arcade</div>
+      <h1 class="panel-title">{{ tower.title }}</h1>
+      <div class="panel-subtitle">{{ tower.subtitle }}</div>
+      <div class="panel-tags">
+        <span class="panel-tag">{{ tower.scope_label }}</span>
+        <span class="panel-tag">{{ tower.max_floors }} floors</span>
+      </div>
+      <p class="panel-copy">{{ tower.description }}</p>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Entry</div>
+          <div class="metric-value">{{ tower.entry_qty }} {{ tower.entry_label }}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Pool</div>
+          <div class="metric-value">{{ species_count }} species</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Full Clear</div>
+          <div class="metric-value">{{ tower.max_bank }} Ryo</div>
+        </div>
+      </div>
+
+      {% if not tower_run and not tower_reveal %}
+      <div class="tower-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="start_run">
+          <button type="submit" class="btn btn-primary">Start {{ tower.title }}</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="stage-panel">
+      <div class="stage-top">
+        <div class="stage-floor">
+          {% if tower_run or tower_reveal %}Floor {{ floor_display }} / {{ tower.max_floors }}{% else %}Ready to Climb{% endif %}
+        </div>
+        <div class="stage-chip">
+          {% if tower_reveal and tower_reveal.status == 'cleared' %}
+            {{ tower.max_floors }} cleared
+          {% else %}
+            {{ cleared_count }} cleared
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="silhouette-wrap{% if reveal_mode %} revealed{% endif %}">
+        {% if question_card %}
+        <img src="{{ question_card.image_url }}" alt="{% if reveal_mode %}{{ question_card.name }}{% else %}Mystery silhouette{% endif %}">
+        {% else %}
+        <img src="{% static 'images/games/guess_game_logo.png' %}" alt="" aria-hidden="true">
+        {% endif %}
+      </div>
+
+      <div class="stage-foot">
+        <div class="stage-note">
+          {% if reveal_mode %}
+            {% if tower_reveal.status == 'correct' %}
+              <strong>{{ question_card.name }}</strong> was correct. Revealing the answer before the next floor.
+            {% elif tower_reveal.status == 'cleared' %}
+              <strong>{{ question_card.name }}</strong> finished the tower run.
+            {% else %}
+              <strong>{{ question_card.name }}</strong> was the right answer.
+            {% endif %}
+          {% elif question_card %}
+            Answer this silhouette for <strong>+{{ question_card.reward }} Ryo</strong>, then choose to cash out or keep climbing.
+          {% else %}
+            Spend candy to enter, clear one silhouette at a time, and decide how long you want to stay in the cabinet.
+          {% endif %}
+        </div>
+        <div class="stage-chip">
+          {% if reveal_mode and auto_advance %}
+            Advancing...
+          {% else %}
+            6 choices • 50% safety on a miss
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="tower-panel">
+      <div class="bank-stack">
+        <div class="bank-box">
+          <div class="bank-label">Banked Reward</div>
+          <div class="bank-value gold">{{ banked_ryo_display }} Ryo</div>
+          <div class="bank-copy">
+            A wrong answer salvages half of your bank. Cashing out keeps the full amount.
+          </div>
+        </div>
+
+        <div class="bank-box">
+          <div class="bank-label">Candy Wallet</div>
+          <div class="candy-list">
+            {% for key, candy in candy_inventory.items %}
+            <div class="candy-row">
+              <div>
+                <strong>{{ candy.label }}</strong>
+                <span>{{ candy.description }}</span>
+              </div>
+              <em>x{{ candy.count }}</em>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if tower_run %}
+      <div class="tower-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="cash_out">
+          <button type="submit" class="btn btn-primary">Cash Out {{ tower_run.banked_ryo }} Ryo</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="abandon">
+          <button type="submit" class="btn btn-secondary">Abandon Run</button>
+        </form>
+      </div>
+      {% elif tower_reveal and tower_reveal.status != 'correct' %}
+      <div class="tower-actions">
+        <a href="{% url 'game:silhouette_hub' %}" class="btn btn-secondary">Back to Towers</a>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="start_run">
+          <button type="submit" class="btn btn-primary">Play Again</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if tower_reveal %}
+  <section class="result-banner {{ tower_reveal.status }}">
+    <h2 class="result-title">
+      {% if tower_reveal.status == 'correct' %}
+        Correct Reveal
+      {% elif tower_reveal.status == 'cleared' %}
+        Tower Cleared
+      {% else %}
+        Wrong Answer
+      {% endif %}
+    </h2>
+    <div class="result-copy">
+      {% if tower_reveal.status == 'correct' %}
+        {{ question_card.name }} earned +{{ tower_reveal.reward }} Ryo. Your bank is now {{ tower_reveal.banked_ryo }} Ryo, and the next floor is loading.
+      {% elif tower_reveal.status == 'cleared' %}
+        {{ question_card.name }} finished the run. You earned {{ tower_reveal.payout }} Ryo from {{ tower.title }}.
+      {% else %}
+        {{ question_card.name }} was the correct silhouette. You salvaged {{ tower_reveal.payout }} Ryo from the run.
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if tower_run or tower_reveal %}
+  <section class="option-grid">
+    {% for option in option_cards %}
+      {% if reveal_mode %}
+      <div class="option-form">
+        <div class="option-btn locked{% if option.is_correct %} correct{% elif option.is_selected %} wrong{% endif %}">
+          <span class="option-kicker">
+            {% if option.is_correct %}Correct{% elif option.is_selected %}Your Pick{% else %}Choice{% endif %}
+          </span>
+          <span class="option-name">{{ option.name }}</span>
+          <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
+        </div>
+      </div>
+      {% else %}
+      <form method="post" class="option-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="guess">
+        <input type="hidden" name="selected_dex" value="{{ option.dex }}">
+        <button type="submit" class="option-btn">
+          <span class="option-kicker">Pick {{ forloop.counter }}</span>
+          <span class="option-name">{{ option.name }}</span>
+          <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
+        </button>
+      </form>
+      {% endif %}
+    {% endfor %}
+  </section>
+  {% else %}
+  <section class="empty-state">
+    <h2>The cabinet is waiting.</h2>
+    <p>
+      Choose a tower from the Silhouette Hub, then start a run when you are ready. The live play page stays focused on the silhouette, the six choices, and your reward bank.
+    </p>
+    <a href="{% url 'game:silhouette_hub' %}" class="btn btn-primary">Open Silhouette Hub</a>
+  </section>
+  {% endif %}
+
+  {% if auto_advance %}
+  <form id="auto-advance-form" method="post" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="advance">
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if auto_advance %}
+<script>
+  window.setTimeout(function () {
+    const form = document.getElementById('auto-advance-form');
+    if (form) form.submit();
+  }, 1500);
+</script>
+{% endif %}
+{% endblock %}

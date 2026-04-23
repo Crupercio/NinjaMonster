@@ -17,7 +17,6 @@ from apps.users.services import deduct_ryo
 
 from .models import (
     BADGE_CRAFT_REQUIREMENTS,
-    CRAFT_COSTS,
     DISMANTLE_VALUES,
     DUST_VALUES,
     GEN_PACK_GEN_NUMBER,
@@ -39,6 +38,7 @@ from .models import (
     StickerVariant,
     TradeHistory,
     TradeOffer,
+    craft_cost_for,
 )
 
 User = get_user_model()
@@ -479,10 +479,11 @@ class StickerService:
             raise ValueError("This sticker does not belong to the player")
         if sticker.is_trading:
             raise ValueError("Cannot convert a sticker that is currently in a trade")
+        if sticker.is_favorite:
+            raise ValueError("Cannot convert a favourited sticker — unfavourite it first")
         if sticker.is_album_placed:
             raise ValueError("Cannot convert a sticker that is placed in your album")
 
-        # Count copies the player owns of this exact combination
         copy_count = Sticker.objects.filter(
             owner=player,
             pokemon=sticker.pokemon,
@@ -504,6 +505,142 @@ class StickerService:
 
         logger.info("Player %s converted a sticker for %d dust", player, dust)
         return dust
+
+    def _build_duplicate_conversion_state(self, stickers: list[Sticker]) -> dict:
+        protected_stickers = [
+            sticker for sticker in stickers
+            if sticker.is_album_placed or sticker.is_trading or sticker.is_favorite
+        ]
+        free_stickers = [
+            sticker for sticker in stickers
+            if not sticker.is_album_placed and not sticker.is_trading and not sticker.is_favorite
+        ]
+        safe_free_count = 0 if protected_stickers else (1 if free_stickers else 0)
+        safe_free_stickers = free_stickers[:safe_free_count]
+        convertible_stickers = free_stickers[safe_free_count:]
+
+        return {
+            "stickers": stickers,
+            "protected_stickers": protected_stickers,
+            "safe_free_stickers": safe_free_stickers,
+            "convertible_stickers": convertible_stickers,
+            "protected_count": len(protected_stickers),
+            "safe_count": len(protected_stickers) + len(safe_free_stickers),
+            "convertible_count": len(convertible_stickers),
+            "placed_count": sum(1 for sticker in stickers if sticker.is_album_placed),
+            "trading_count": sum(1 for sticker in stickers if sticker.is_trading),
+            "favorite_count": sum(1 for sticker in stickers if sticker.is_favorite),
+        }
+
+    def _get_duplicate_conversion_state(
+        self,
+        player: User,
+        pokemon_id: int,
+        rarity: str,
+        variant: str,
+        *,
+        for_update: bool = False,
+    ) -> dict:
+        stickers_qs = Sticker.objects.filter(
+            owner=player,
+            pokemon_id=pokemon_id,
+            rarity=rarity,
+            variant=variant,
+        ).select_related("pokemon").order_by("date_caught", "pk")
+        if for_update:
+            stickers_qs = stickers_qs.select_for_update()
+
+        return self._build_duplicate_conversion_state(list(stickers_qs))
+
+    def get_convertible_duplicate_groups(self, player: User) -> dict:
+        groups: dict[tuple[int, str, str], dict] = {}
+        stickers = (
+            Sticker.objects.filter(owner=player)
+            .select_related("pokemon")
+            .order_by("pokemon__pokedex_number", "pokemon__name", "rarity", "variant", "date_caught", "pk")
+        )
+
+        grouped_stickers: dict[tuple[int, str, str], list[Sticker]] = {}
+        for sticker in stickers:
+            key = (sticker.pokemon_id, sticker.rarity, sticker.variant)
+            grouped_stickers.setdefault(key, []).append(sticker)
+
+        for (pokemon_id, rarity, variant), sticker_group in grouped_stickers.items():
+            state = self._build_duplicate_conversion_state(sticker_group)
+            if state["convertible_count"] <= 0:
+                continue
+
+            sample = sticker_group[0]
+            dust_value = DUST_VALUES.get(rarity, 5)
+            groups[(pokemon_id, rarity, variant)] = {
+                "pokemon_id": pokemon_id,
+                "pokemon_name": sample.pokemon.name,
+                "pokedex_number": sample.pokemon.pokedex_number,
+                "rarity": rarity,
+                "rarity_label": StickerRarity(rarity).label,
+                "variant": variant,
+                "variant_label": StickerVariant(variant).label,
+                "owned_count": len(sticker_group),
+                "safe_count": state["safe_count"],
+                "convertible_count": state["convertible_count"],
+                "placed_count": state["placed_count"],
+                "trading_count": state["trading_count"],
+                "favorite_count": state["favorite_count"],
+                "dust_value": dust_value,
+                "total_dust_value": dust_value * state["convertible_count"],
+                "convert_one_id": state["convertible_stickers"][0].pk,
+                "can_convert_all": state["convertible_count"] > 1,
+            }
+
+        duplicate_groups = list(groups.values())
+        summary = {
+            "duplicate_groups": duplicate_groups,
+            "convertible_group_count": len(duplicate_groups),
+            "convertible_copy_count": sum(group["convertible_count"] for group in duplicate_groups),
+            "convertible_dust_total": sum(group["total_dust_value"] for group in duplicate_groups),
+        }
+        return summary
+
+    @transaction.atomic
+    def convert_all_duplicates(
+        self,
+        player: User,
+        pokemon_id: int,
+        rarity: str,
+        variant: str,
+    ) -> dict:
+        state = self._get_duplicate_conversion_state(
+            player,
+            pokemon_id,
+            rarity,
+            variant,
+            for_update=True,
+        )
+        convertible_stickers = state["convertible_stickers"]
+        if not convertible_stickers:
+            raise ValueError("No safe extra copies are available to convert")
+
+        dust_value = DUST_VALUES.get(rarity, 5)
+        converted_count = len(convertible_stickers)
+        total_dust = dust_value * converted_count
+
+        Sticker.objects.filter(pk__in=[sticker.pk for sticker in convertible_stickers]).delete()
+        player.sticker_dust += total_dust
+        player.save(update_fields=["sticker_dust"])
+
+        logger.info(
+            "Player %s converted %d duplicate stickers (%s/%s/%s) for %d dust",
+            player,
+            converted_count,
+            pokemon_id,
+            rarity,
+            variant,
+            total_dust,
+        )
+        return {
+            "converted_count": converted_count,
+            "dust_awarded": total_dust,
+        }
 
     @transaction.atomic
     def dismantle_sticker(self, player: User, sticker_id: int) -> int:
@@ -557,11 +694,14 @@ class StickerService:
 
         Raises ValueError if insufficient dust or invalid rarity/variant.
         """
-        cost = CRAFT_COSTS.get(rarity)
-        if cost is None:
-            raise ValueError(f"Unknown rarity: {rarity}")
         if variant not in StickerVariant.values:
             raise ValueError(f"Unknown variant: {variant}")
+        if rarity not in StickerRarity.values:
+            raise ValueError(f"Unknown rarity: {rarity}")
+        if variant == StickerVariant.ANIME and rarity != StickerRarity.SECRET_RARE:
+            raise ValueError("Anime variant can only be crafted as Secret Rare")
+
+        cost = craft_cost_for(rarity, variant)
         if player.sticker_dust < cost:
             raise ValueError(
                 f"Insufficient dust: need {cost}, have {player.sticker_dust}"

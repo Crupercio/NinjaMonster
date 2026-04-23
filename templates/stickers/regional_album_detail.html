@@ -244,44 +244,71 @@
   cursor: default;
 }
 
+.variant-cell.placed {
+  cursor: pointer;
+}
+
 .variant-cell.available {
   cursor: pointer;
 }
 
+.variant-cell.placed:hover .sticker-frame-wrap,
 .variant-cell.available:hover .sticker-frame-wrap,
 .variant-cell:hover .slot-status {
   transform: translateY(-2px);
   opacity: 1;
 }
 
+.variant-cell-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
 .sticker-frame-wrap {
   position: relative;
   width: 100%;
-  max-width: 82px;
-  aspect-ratio: 9 / 10;
+  max-width: 78px;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(18, 30, 58, 0.88), rgba(10, 18, 38, 0.96));
+  border: 1px solid rgba(126, 150, 196, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
   transition: transform 0.15s ease;
+  overflow: hidden;
+}
+
+.sticker-frame-wrap.collected {
+  border-color: rgba(232, 184, 75, 0.34);
+  background:
+    radial-gradient(circle at top, rgba(232,184,75,0.18), transparent 55%),
+    linear-gradient(180deg, rgba(19, 33, 63, 0.96), rgba(11, 21, 43, 0.98));
+}
+
+.sticker-frame-wrap.ready {
+  border-color: rgba(74, 222, 128, 0.2);
 }
 
 .sticker-sprite {
   position: absolute;
-  inset: 11px 10px 12px;
-  width: calc(100% - 20px);
-  height: calc(100% - 23px);
+  inset: 8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
   object-fit: contain;
+}
+
+.sticker-sprite.placed-art {
+  filter: none;
+  opacity: 1;
 }
 
 .sticker-sprite.silhouette {
   filter: brightness(0);
   opacity: 0.22;
-}
-
-.sticker-frame-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
 }
 
 .placed-dot {
@@ -505,37 +532,55 @@
 
       <div class="variant-strip">
         {% for slot in poke_slots %}
-        <div id="slot-{{ slot.pokemon.pk }}-{{ slot.variant }}"
-             class="variant-cell {% if not slot.placed_sticker and slot.available_stickers %}available{% endif %}"
-             title="{{ slot.variant_label }}"
-             {% if not slot.placed_sticker and slot.available_stickers %}
-             @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'"
-             {% endif %}>
-          {% if slot.placed_sticker %}
-          <a href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}" style="display:block;text-decoration:none;" @click.stop aria-label="View {{ slot.pokemon.name }} {{ slot.variant_label }}">
-          {% endif %}
-          <div class="sticker-frame-wrap rarity-img-{{ rarity }}">
+        {% if slot.placed_sticker %}
+        <a id="slot-{{ slot.pokemon.pk }}-{{ slot.variant }}"
+           href="{% url 'stickers:sticker_detail' slot.pokemon.pk rarity slot.variant %}"
+           class="variant-cell variant-cell-link placed"
+           title="{{ slot.variant_label }}"
+           aria-label="View {{ slot.pokemon.name }} {{ slot.variant_label }}">
+          <div class="sticker-frame-wrap collected">
             {% if slot.placed_sticker %}<div class="placed-dot"></div>{% endif %}
-            {% if slot.available_stickers and not slot.placed_sticker %}<div class="avail-badge">{{ slot.available_stickers|length }}x</div>{% endif %}
-            <img class="sticker-sprite {% if not slot.placed_sticker %}silhouette{% endif %}"
+            <img class="sticker-sprite placed-art"
+                 src="{{ slot.placed_sticker.pokemon.pokedex_number|sticker_sprite:slot.placed_sticker.variant }}"
+                 alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+                 loading="lazy">
+          </div>
+          <span class="slot-status">
+            {{ slot.variant_label }}
+          </span>
+        </a>
+        {% elif slot.available_stickers %}
+        <div id="slot-{{ slot.pokemon.pk }}-{{ slot.variant }}"
+             class="variant-cell available"
+             title="{{ slot.variant_label }}"
+             @click="openSlotKey = '{{ slot.pokemon.pk }}_{{ slot.variant }}'">
+          <div class="sticker-frame-wrap ready">
+            <div class="avail-badge">{{ slot.available_stickers|length }}x</div>
+            <img class="sticker-sprite silhouette"
                  src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
                  alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
                  loading="lazy">
-            {% if slot.placed_sticker %}<img class="sticker-frame-img" src="/static/img/frames/{{ rarity }}.png" alt="">{% endif %}
           </div>
-          {% if slot.placed_sticker %}
-          </a>
-          {% endif %}
           <span class="slot-status">
-            {% if slot.placed_sticker %}
-            {{ slot.variant_label }}
-            {% elif slot.available_stickers %}
             Ready
-            {% else %}
-            Empty
-            {% endif %}
           </span>
         </div>
+        {% else %}
+        <a id="slot-{{ slot.pokemon.pk }}-{{ slot.variant }}"
+           href="{% url 'stickers:workshop' %}?tab=craft&pokemon={{ slot.pokemon.pk }}&rarity={{ rarity }}&variant={{ slot.variant }}&missing_only=1"
+           class="variant-cell variant-cell-link"
+           title="Craft {{ slot.pokemon.name }} {{ slot.variant_label }}">
+          <div class="sticker-frame-wrap">
+            <img class="sticker-sprite silhouette"
+                 src="{{ slot.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+                 alt="{{ slot.pokemon.name }} {{ slot.variant_label }}"
+                 loading="lazy">
+          </div>
+          <span class="slot-status">
+            Craft
+          </span>
+        </a>
+        {% endif %}
         {% endfor %}
       </div>
     </div>

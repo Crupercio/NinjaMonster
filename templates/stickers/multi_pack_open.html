@@ -219,6 +219,7 @@
           ptype: '{{ s.pokemon.primary_type|escapejs }}',
           sprite: '{{ s.pokemon.pokedex_number|sticker_sprite:s.variant|escapejs }}',
           dexNum: '{% if s.pokemon.pokedex_number %}{{ s.pokemon.pokedex_number|stringformat:"03d" }}{% endif %}',
+          wasOwned: {% if s.was_owned_before_bundle %}true{% else %}false{% endif %},
           premium: {% if s.rarity == 'holographic' or s.rarity == 'full_art' or s.rarity == 'secret_rare' %}true{% else %}false{% endif %},
           flipped: false,
           shimmer: false
@@ -241,13 +242,18 @@
         }
       },
       flipAll() {
-        this.cards.forEach((c, i) => {
-          setTimeout(() => this.flip(i), i * 45);
+        const ownedIndices = this.cards
+          .map((card, index) => card.wasOwned ? index : null)
+          .filter((index) => index !== null);
+        ownedIndices.forEach((cardIndex, revealIndex) => {
+          setTimeout(() => this.flip(cardIndex), revealIndex * 45);
         });
       },
       flipPack(packIndex) {
-        this.indicesForPack(packIndex).forEach((cardIndex, j) => {
-          setTimeout(() => this.flip(cardIndex), j * 120);
+        this.indicesForPack(packIndex)
+          .filter((cardIndex) => this.cards[cardIndex] && this.cards[cardIndex].wasOwned)
+          .forEach((cardIndex, revealIndex) => {
+            setTimeout(() => this.flip(cardIndex), revealIndex * 120);
         });
       }
     }"
@@ -259,7 +265,7 @@
     </div>
     {% endif %}
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
-      <p style="color:var(--text-2);font-size:0.85rem;margin:0;">Tap each card to reveal it, or open the whole run at once.</p>
+      <p style="color:var(--text-2);font-size:0.85rem;margin:0;">Tap each card to reveal it. Reveal-all only flips stickers you already owned before this bundle, so brand-new pulls still get their own moment.</p>
       <button @click="flipAll()" class="btn btn-primary btn-sm">Reveal All {{ all_stickers|length }}</button>
     </div>
 

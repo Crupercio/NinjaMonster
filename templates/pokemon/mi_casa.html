@@ -290,13 +290,24 @@ const CASA_POKEMON = [
         <form :action="op.sell_url" method="post" style="margin-top:auto;"
               @submit.prevent="if(confirm(releaseMessage(op))) $el.submit()">
           {% csrf_token %}
-          <template x-if="op.is_training">
+          <div class="team-note" x-show="!op.is_training && !op.bond_bonus_unlocked">
+            Bond Bonus unlocks at Lv.{{ bond_bonus_unlock_level }}: +<span x-text="op.bond_bonus_value"></span> Ryo
+          </div>
+          <div class="team-note" x-show="!op.is_training && op.bond_bonus_unlocked" style="color:#4ade80;">
+            Bond Bonus unlocked - full value <span x-text="op.sell_value_full"></span> Ryo
+          </div>
+          <button type="submit" class="release-btn" :disabled="op.is_training">
+            Release Bond &middot; <span x-text="op.sell_value"></span> Ryo
+          </button>
+          <div class="training-note" x-show="op.is_training">&#9203; Currently training</div>
+          <div class="team-note" x-show="op.is_training">Claim or cancel training in Trainer Grounds before release.</div>
+          <template x-if="false && op.is_training">
             <div>
               <button type="button" class="release-btn" disabled>Release Bond</button>
               <div class="training-note">⏳ Currently training</div>
             </div>
           </template>
-          <template x-if="!op.is_training">
+          <template x-if="false && !op.is_training">
             <div class="team-note" x-show="!op.bond_bonus_unlocked">
               Bond Bonus unlocks at Lv.{{ bond_bonus_unlock_level }}: +<span x-text="op.bond_bonus_value"></span> Ryo
             </div>

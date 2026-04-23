@@ -437,3 +437,104 @@ class BattleLog(models.Model):
 
     def __str__(self) -> str:
         return f"[Round {self.round_number}] {self.message}"
+
+
+class LoteriaStatus(models.TextChoices):
+    """Lifecycle for a live Loteria room."""
+
+    WAITING = "waiting", "Waiting"
+    ACTIVE = "active", "Active"
+    FINISHED = "finished", "Finished"
+
+
+class LoteriaBoardTemplate(models.Model):
+    """A saved 4x4 player board for one Loteria generation deck."""
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="loteria_boards",
+        db_index=True,
+    )
+    deck_key = models.CharField(max_length=32, db_index=True)
+    board_slot = models.PositiveSmallIntegerField(help_text="Saved slot number within this deck (1-3).")
+    title = models.CharField(max_length=80, default="Collector Board")
+    species_ids = models.JSONField(default=list, help_text="Ordered list of 16 Pokemon ids for the 4x4 board.")
+    seeded_by_system = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["deck_key", "board_slot"]
+        unique_together = [("owner", "deck_key", "board_slot")]
+        verbose_name = "loteria board template"
+        verbose_name_plural = "loteria board templates"
+
+    def __str__(self) -> str:
+        return f"{self.owner} · {self.deck_key} · Board {self.board_slot}"
+
+
+class LoteriaRoom(models.Model):
+    """One live room that deals a shared sequence of Pokemon cards."""
+
+    deck_key = models.CharField(max_length=32, db_index=True)
+    title = models.CharField(max_length=80)
+    status = models.CharField(max_length=16, choices=LoteriaStatus.choices, default=LoteriaStatus.WAITING, db_index=True)
+    round_number = models.PositiveIntegerField(default=1)
+    prize_pool_ryo = models.PositiveIntegerField(default=0)
+    deck_order = models.JSONField(default=list, help_text="Ordered list of Pokemon ids to deal for this room.")
+    called_species_ids = models.JSONField(default=list, help_text="Pokemon ids already called this round.")
+    next_tick_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "loteria room"
+        verbose_name_plural = "loteria rooms"
+
+    def __str__(self) -> str:
+        return f"{self.title} · Round {self.round_number} ({self.status})"
+
+
+class LoteriaRoomEntry(models.Model):
+    """A player or NPC board entered into a specific Loteria room."""
+
+    room = models.ForeignKey(
+        LoteriaRoom,
+        on_delete=models.CASCADE,
+        related_name="entries",
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="loteria_entries",
+        db_index=True,
+    )
+    board_template = models.ForeignKey(
+        LoteriaBoardTemplate,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="room_entries",
+    )
+    display_name = models.CharField(max_length=80)
+    board_slot = models.PositiveSmallIntegerField(default=1)
+    species_ids = models.JSONField(default=list, help_text="Snapshot of board species ids when the room entry was created.")
+    is_npc = models.BooleanField(default=False, db_index=True)
+    is_winner = models.BooleanField(default=False, db_index=True)
+    reward_ryo = models.PositiveIntegerField(default=0)
+    entered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["entered_at", "pk"]
+        verbose_name = "loteria room entry"
+        verbose_name_plural = "loteria room entries"
+
+    def __str__(self) -> str:
+        return f"{self.display_name} · {self.room}"

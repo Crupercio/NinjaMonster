@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ board.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.memory-shell {
+  --memory-card-width: 120px;
+  --memory-card-height: 166px;
+  --memory-mascot-size: 148px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 1rem 0 2.25rem;
+}
+.memory-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
+.memory-layout, .panel, .board-stage, .stat-card, .wallet-card, .finish-panel, .empty-state {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.memory-layout { display:grid; grid-template-columns: 1fr minmax(0, 1.75fr) .86fr; gap:1rem; border-radius:28px; padding:1rem; align-items:stretch; }
+.panel, .board-stage, .finish-panel, .empty-state { border-radius:24px; padding:1.1rem 1.15rem; }
+.panel-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
+.panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.9rem,2.8vw,2.5rem); line-height:1; }
+.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.4rem; }
+.panel-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.85rem; }
+.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.panel-copy { color:var(--text-2); line-height:1.6; font-size:.92rem; margin-bottom:.95rem; }
+.metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
+.metric, .wallet-card, .stat-card {
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
+}
+.metric, .stat-card, .wallet-card { padding:.75rem .8rem; }
+.metric-label, .stat-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.2rem; }
+.metric-value, .stat-value { color:var(--text-1); font-size:1rem; font-weight:800; }
+
+.board-stage { display:flex; flex-direction:column; min-height: 360px; }
+.stage-head { display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:.95rem; }
+.stage-title { margin:0; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.2rem; }
+.stage-chip { border-radius:999px; border:1px solid rgba(91,129,255,.26); background:rgba(10,15,29,.72); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
+.stage-copy { color:var(--text-2); font-size:.88rem; margin-bottom:.9rem; }
+.memory-grid-shell, .memory-grid-panel {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.memory-grid-shell {
+  margin-top: 1rem;
+  border-radius: 28px;
+  padding: 1rem;
+}
+.memory-grid-panel {
+  position: relative;
+  border-radius: 24px;
+  padding: 7.7rem 1.15rem 1.15rem;
+}
+.memory-grid-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:.75rem;
+  flex-wrap:wrap;
+  min-height: 62px;
+  margin-bottom: 1rem;
+}
+.memory-grid-mascot {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--memory-mascot-size);
+  height: var(--memory-mascot-size);
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .32));
+}
+.memory-grid { display:grid; gap:.85rem; align-content:start; justify-content:center; }
+.memory-card {
+  position:relative; width:100%; height:100%; border:0; padding:0; background:transparent; cursor:pointer; perspective: 900px;
+}
+.memory-card[disabled] { cursor:default; }
+.memory-flip { position:relative; width:100%; height:100%; transition:transform .42s ease; transform-style:preserve-3d; }
+.memory-card.is-open .memory-flip,
+.memory-card.is-matched .memory-flip { transform:rotateY(180deg); }
+.memory-face {
+  position:absolute; inset:0; border-radius:18px; backface-visibility:hidden; overflow:hidden;
+  border:1px solid rgba(232,184,75,.16);
+}
+.memory-face.back {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(232,184,75,.07) 0%, transparent 65%),
+    linear-gradient(160deg, #0e1020 0%, #0b1628 50%, #080810 100%);
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.45rem;
+  box-shadow: inset 0 0 30px rgba(0,0,0,.4);
+}
+.memory-face.back::after {
+  content:"";
+  position:absolute;
+  inset:8px;
+  border:1px solid rgba(232,184,75,.15);
+  border-radius:6px;
+  pointer-events:none;
+}
+.memory-face.back::before {
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23e8b84b' stroke-width='3'/%3E%3Cpath d='M2 50 h96' stroke='%23e8b84b' stroke-width='3'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%230b1628' stroke='%23e8b84b' stroke-width='3'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23e8b84b'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity:.3;
+  transition:opacity .2s;
+}
+.memory-card:hover .memory-face.back {
+  border-color: rgba(232,184,75,.7);
+  box-shadow: 0 0 20px rgba(232,184,75,.18), inset 0 0 30px rgba(0,0,0,.4);
+}
+.memory-card:hover .memory-face.back::before { opacity:.6; }
+.memory-top-line {
+  position:absolute;
+  top:0;
+  left:15%;
+  right:15%;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(232,184,75,.5), transparent);
+}
+.tap-hint {
+  position:absolute;
+  bottom:12px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-size:.62rem;
+  font-family:'Chakra Petch', sans-serif;
+  font-weight:700;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:rgba(232,184,75,.4);
+  animation:pulse 1.6s ease-in-out infinite;
+}
+.memory-face.front {
+  transform:rotateY(180deg);
+  background:linear-gradient(180deg, rgba(10,15,29,.12), rgba(10,15,29,.2)), rgba(12,18,38,.98);
+  display:flex; align-items:center; justify-content:center; padding:.85rem;
+}
+.memory-face.front img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 10px 20px rgba(0,0,0,.28)); }
+.memory-card.is-matched .memory-face.front {
+  box-shadow: 0 0 0 1px rgba(74,222,128,.15), 0 0 24px rgba(74,222,128,.14);
+}
+.memory-card.is-locked { pointer-events:none; }
+@keyframes pulse {
+  0%, 100% { opacity:.32; }
+  50% { opacity:.7; }
+}
+
+.side-stack { display:grid; gap:.8rem; }
+.wallet-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-3); margin-bottom:.4rem; font-weight:700; }
+.wallet-row { display:flex; justify-content:space-between; align-items:center; gap:.75rem; }
+.wallet-row strong { color:var(--text-1); font-size:.88rem; display:block; }
+.wallet-row span { color:var(--text-3); font-size:.72rem; }
+.wallet-row em { color:#c4b5fd; font-style:normal; font-weight:800; }
+
+.finish-panel { margin-top:1rem; }
+.finish-title { margin:0 0 .3rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.18rem; }
+.finish-copy { color:var(--text-2); line-height:1.55; margin-bottom:.85rem; }
+.finish-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin-bottom:.9rem; }
+.finish-box { border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem; }
+.finish-box span { display:block; color:var(--text-3); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
+.finish-box strong { color:var(--text-1); font-size:1rem; }
+.finish-actions, .panel-actions { display:flex; gap:.65rem; flex-wrap:wrap; margin-top:1rem; }
+.empty-state h2 { margin:0 0 .45rem; font-size:1.25rem; font-family:"Chakra Petch",sans-serif; color:var(--text-1); }
+.empty-state p { color:var(--text-2); margin-bottom:1rem; max-width:760px; }
+
+@media (max-width: 1120px) { .memory-layout { grid-template-columns:1fr; } }
+@media (max-width: 900px) {
+  .memory-shell {
+    --memory-card-width: 98px;
+    --memory-card-height: 136px;
+    --memory-mascot-size: 112px;
+  }
+  .metric-grid, .finish-metrics { grid-template-columns:1fr; }
+  .memory-grid-panel { padding-top: 6rem; }
+  .memory-grid-head { min-height: 50px; }
+  .memory-grid-mascot { top: 10px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div
+  class="memory-shell"
+  {% if board_run %}
+  x-data="memoryBoard({
+    cardsId: 'memory-board-data',
+    pairCount: {{ board.pair_count }},
+    cols: {{ board.cols }}
+  })"
+  x-init="init()"
+  {% endif %}
+>
+  <a href="{% url 'game:memory_game' %}" class="memory-back">&larr; Back to Memory Hub</a>
+
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if board_run %}
+  {{ board_run.cards|json_script:"memory-board-data" }}
+  {% endif %}
+  <section class="memory-layout">
+    <div class="panel">
+      <div class="panel-kicker">Collector Arcade</div>
+      <h1 class="panel-title">{{ board.title }}</h1>
+      <div class="panel-subtitle">{{ board.subtitle }}</div>
+      <div class="panel-tags">
+        <span class="panel-tag">{{ board.rows }} x {{ board.cols }}</span>
+        <span class="panel-tag">{{ board.pair_count }} pairs</span>
+        <span class="panel-tag">{{ board.speed_target_seconds }}s speed target</span>
+      </div>
+      <p class="panel-copy">{{ board.description }}</p>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Entry</div>
+          <div class="metric-value">{{ board.entry_qty }} {{ board.entry_label }}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Base Reward</div>
+          <div class="metric-value">{{ board.base_ryo }} Ryo</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Base Dust</div>
+          <div class="metric-value">{{ board.base_dust }} Dust</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Perfect Par</div>
+          <div class="metric-value">{{ board.pair_count }} turns</div>
+        </div>
+      </div>
+
+      {% if not board_run and not board_result %}
+      <div class="panel-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="start_run">
+          <button type="submit" class="btn btn-primary">Start {{ board.title }}</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if board_run %}
+    <div class="board-stage">
+      <div class="stage-head">
+        <h2 class="stage-title">Clear Every Pair</h2>
+        <div class="stage-chip" x-text="matchedPairs + ' / {{ board.pair_count }} pairs'"></div>
+      </div>
+      <div class="stage-copy">
+        Flip two stickers at a time, keep your mismatches low, and finish clean for a stronger payout.
+      </div>
+
+      <form x-ref="completeForm" method="post" style="display:none;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="complete_run">
+        <input type="hidden" name="turns" x-ref="turnsField">
+        <input type="hidden" name="elapsed_seconds" x-ref="elapsedField">
+        <input type="hidden" name="best_streak" x-ref="streakField">
+      </form>
+    </div>
+    {% elif board_result %}
+    <section class="finish-panel">
+      <h2 class="finish-title">{{ board_result.grade }} Clear</h2>
+      <div class="finish-copy">
+        {{ board.title }} is complete. Your reward has already been added, and you can either replay this board or head back to the selector for a new table.
+      </div>
+      <div class="finish-metrics">
+        <div class="finish-box">
+          <span>Reward</span>
+          <strong>{{ board_result.reward_ryo }} Ryo</strong>
+        </div>
+        <div class="finish-box">
+          <span>Dust</span>
+          <strong>{{ board_result.reward_dust }} Dust</strong>
+        </div>
+        <div class="finish-box">
+          <span>Turns</span>
+          <strong>{{ board_result.turns }}</strong>
+        </div>
+        <div class="finish-box">
+          <span>Time</span>
+          <strong>{{ board_result.elapsed_seconds }}s</strong>
+        </div>
+        <div class="finish-box">
+          <span>Best Streak</span>
+          <strong>{{ board_result.best_streak }}</strong>
+        </div>
+        <div class="finish-box">
+          <span>Board</span>
+          <strong>{{ board.rows }} x {{ board.cols }}</strong>
+        </div>
+      </div>
+      <div class="finish-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="start_run">
+          <button type="submit" class="btn btn-primary">Play Again</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="dismiss_result">
+          <button type="submit" class="btn btn-secondary">Back to Boards</button>
+        </form>
+      </div>
+    </section>
+    {% else %}
+    <section class="empty-state">
+      <h2>This board is ready when you are.</h2>
+      <p>
+        Start a run from this page to generate a fresh table. Memory is the steady collector cabinet, so the focus stays on clean flips, strong recall, and a reliable reward finish.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="start_run">
+        <button type="submit" class="btn btn-primary">Start {{ board.title }}</button>
+      </form>
+    </section>
+    {% endif %}
+
+    <aside class="panel">
+      <div class="side-stack">
+        <div class="stat-card">
+          <div class="stat-label">Current Pace</div>
+          {% if board_run %}
+          <div class="stat-value" x-text="turns + ' turns'">0 turns</div>
+          {% elif board_result %}
+          <div class="stat-value">{{ board_result.grade }}</div>
+          {% else %}
+          <div class="stat-value">Ready</div>
+          {% endif %}
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Timer</div>
+          {% if board_run %}
+          <div class="stat-value" x-text="elapsedSeconds + 's'">0s</div>
+          {% elif board_result %}
+          <div class="stat-value">{{ board_result.elapsed_seconds }}s</div>
+          {% else %}
+          <div class="stat-value">{{ board.speed_target_seconds }}s target</div>
+          {% endif %}
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Best Streak</div>
+          {% if board_run %}
+          <div class="stat-value" x-text="bestStreak + ' pairs'">0 pairs</div>
+          {% elif board_result %}
+          <div class="stat-value">{{ board_result.best_streak }}</div>
+          {% else %}
+          <div class="stat-value">{{ board.pair_count }} max</div>
+          {% endif %}
+        </div>
+
+        <div class="wallet-card">
+          <div class="wallet-title">Candy Wallet</div>
+          {% for key, candy in candy_inventory.items %}
+          <div class="wallet-row">
+            <div>
+              <strong>{{ candy.label }}</strong>
+              <span>{{ candy.description }}</span>
+            </div>
+            <em>x{{ candy.count }}</em>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if board_run %}
+        <div class="panel-actions">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="abandon">
+            <button type="submit" class="btn btn-secondary">Abandon Board</button>
+          </form>
+        </div>
+        {% else %}
+        <div class="panel-actions">
+          <a href="{% url 'game:memory_game' %}" class="btn btn-secondary">Pick Another Board</a>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+  </section>
+
+  {% if board_run %}
+  <section class="memory-grid-shell">
+    <div class="memory-grid-panel">
+      {% if board_mascot %}
+      <img class="memory-grid-mascot" src="{% static board_mascot %}" alt="">
+      {% endif %}
+      <div class="memory-grid-head">
+        <h2 class="stage-title">Card Grid</h2>
+        <div class="stage-chip">{{ board.rows }} x {{ board.cols }} board</div>
+      </div>
+      <div
+        class="memory-grid"
+        :style="'grid-template-columns: repeat({{ board.cols }}, var(--memory-card-width)); grid-template-rows: repeat({{ board.rows }}, var(--memory-card-height));'"
+      >
+        <template x-for="(card, index) in cards" :key="card.card_id">
+          <button
+            type="button"
+            class="memory-card"
+            :class="{ 'is-open': card.revealed, 'is-matched': card.matched, 'is-locked': resolving || completed }"
+            :disabled="card.matched || card.revealed || resolving || completed"
+            @click="flip(index)"
+          >
+            <div class="memory-flip">
+              <div class="memory-face back">
+                <div class="memory-top-line"></div>
+                <span class="tap-hint">tap</span>
+              </div>
+              <div class="memory-face front">
+                <img :src="card.image_url" :alt="card.name">
+              </div>
+            </div>
+          </button>
+        </template>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if board_run %}
+<script>
+  function memoryBoard(config) {
+    return {
+      cards: [],
+      pairCount: config.pairCount,
+      turns: 0,
+      matchedPairs: 0,
+      streak: 0,
+      bestStreak: 0,
+      elapsedSeconds: 0,
+      firstIndex: null,
+      secondIndex: null,
+      resolving: false,
+      completed: false,
+      timerId: null,
+      started: false,
+      init() {
+        const script = document.getElementById(config.cardsId);
+        if (!script) return;
+        this.cards = JSON.parse(script.textContent).map(card => ({
+          ...card,
+          revealed: false,
+          matched: false,
+        }));
+      },
+      startTimer() {
+        if (this.started) return;
+        this.started = true;
+        this.timerId = window.setInterval(() => {
+          this.elapsedSeconds += 1;
+        }, 1000);
+      },
+      stopTimer() {
+        if (this.timerId) {
+          window.clearInterval(this.timerId);
+          this.timerId = null;
+        }
+      },
+      flip(index) {
+        const card = this.cards[index];
+        if (!card || card.revealed || card.matched || this.resolving || this.completed) return;
+        this.startTimer();
+        card.revealed = true;
+
+        if (this.firstIndex === null) {
+          this.firstIndex = index;
+          return;
+        }
+
+        this.secondIndex = index;
+        this.turns += 1;
+        this.resolving = true;
+
+        const first = this.cards[this.firstIndex];
+        const second = this.cards[this.secondIndex];
+        const matched = first.pair_id === second.pair_id;
+
+        window.setTimeout(() => {
+          if (matched) {
+            first.matched = true;
+            second.matched = true;
+            this.matchedPairs += 1;
+            this.streak += 1;
+            this.bestStreak = Math.max(this.bestStreak, this.streak);
+          } else {
+            first.revealed = false;
+            second.revealed = false;
+            this.streak = 0;
+          }
+
+          this.firstIndex = null;
+          this.secondIndex = null;
+          this.resolving = false;
+
+          if (this.matchedPairs === this.pairCount) {
+            this.finishBoard();
+          }
+        }, matched ? 520 : 760);
+      },
+      finishBoard() {
+        this.completed = true;
+        this.stopTimer();
+        this.$refs.turnsField.value = this.turns;
+        this.$refs.elapsedField.value = this.elapsedSeconds;
+        this.$refs.streakField.value = this.bestStreak;
+        window.setTimeout(() => {
+          this.$refs.completeForm.submit();
+        }, 950);
+      },
+    }
+  }
+</script>
+{% endif %}
+{% endblock %}

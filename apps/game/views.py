@@ -15,6 +15,12 @@ from django.views.generic import (
 )
 
 from .tutorial_service import STARTER_INFO, STARTER_NAMES, TutorialService
+from .fun import (
+    get_fun_hub_context,
+    get_silhouette_reveal_state,
+    get_silhouette_run_state,
+    get_silhouette_tower_config,
+)
 
 from apps.pokemon.models import OwnedPokemon
 
@@ -31,12 +37,32 @@ _ai_service = BattleAIService()
 class HomeView(LoginRequiredMixin, TemplateView):
     """Landing page — shows stats, active events, and battle start options."""
 
-    template_name = "game/home.html"
+    template_name = "game/fun_hub.html"
 
     def get_context_data(self, **kwargs):
         from apps.events.services import SeasonalEventService
+
         context = super().get_context_data(**kwargs)
         context["active_events"] = list(SeasonalEventService().get_active_events())
+        context.update(get_fun_hub_context(self.request.user))
+
+        run_state = get_silhouette_run_state(self.request.session)
+        reveal_state = get_silhouette_reveal_state(self.request.session)
+        active_tower_key = None
+        if reveal_state and reveal_state.get("tower_key"):
+            active_tower_key = reveal_state["tower_key"]
+        elif run_state and run_state.get("tower_key"):
+            active_tower_key = run_state["tower_key"]
+
+        if active_tower_key:
+            try:
+                context["active_silhouette_tower"] = get_silhouette_tower_config(active_tower_key)
+            except ValueError:
+                context["active_silhouette_tower"] = None
+                self.request.session.pop("fun_silhouette_run", None)
+                self.request.session.pop("fun_silhouette_reveal", None)
+                self.request.session.modified = True
+
         return context
 
 
