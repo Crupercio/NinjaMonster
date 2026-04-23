@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pokemon Loteria{% endblock %}
+
+{% block extra_css %}
+<style>
+.loteria-shell { max-width: 1320px; margin: 0 auto; padding: 1rem 0 2.4rem; }
+.loteria-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
+.hero-grid, .panel, .mode-card, .board-card, .result-card, .wallet-card {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.hero-grid { display:grid; grid-template-columns: 1.15fr .85fr; gap:1rem; margin-bottom:1.1rem; }
+.panel, .mode-card, .board-card, .result-card { border-radius:26px; padding:1.15rem 1.2rem; }
+.panel-kicker {
+  display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase;
+  letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem;
+}
+.panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.7rem); line-height:1; }
+.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.7rem; }
+.panel-copy { color:var(--text-2); line-height:1.65; margin-bottom:1rem; }
+.hero-actions, .mode-actions, .board-actions { display:flex; gap:.7rem; flex-wrap:wrap; }
+
+.status-chip, .mini-chip {
+  display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
+  background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.status-chip.live { color:#86efac; border-color:rgba(74,222,128,.28); }
+
+.wallet-panel { border-radius:26px; padding:1rem 1.05rem; }
+.wallet-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-3); margin-bottom:.75rem; font-weight:700; }
+.wallet-list { display:grid; gap:.65rem; }
+.wallet-card { border-radius:18px; padding:.8rem .9rem; }
+.wallet-card strong { display:block; color:var(--text-1); font-size:.9rem; margin-bottom:.15rem; }
+.wallet-card span { color:var(--text-3); font-size:.75rem; }
+.wallet-card em { display:block; margin-top:.35rem; font-style:normal; color:#c4b5fd; font-size:1.08rem; font-weight:800; }
+
+.section-grid { display:grid; grid-template-columns: 1fr; gap:1rem; margin-bottom:1rem; }
+.mode-grid, .board-grid, .result-grid { display:grid; gap:1rem; }
+.mode-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.board-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.result-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.mode-card.current-room { border-color:rgba(251,191,36,.34); box-shadow: inset 0 0 0 1px rgba(251,191,36,.14); }
+.mode-title, .board-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.25rem; }
+.mode-copy, .board-copy { color:var(--text-2); line-height:1.55; margin-bottom:.85rem; }
+.mode-metrics { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.65rem; margin-bottom:.9rem; }
+.metric {
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
+}
+.metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
+.metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
+
+.board-preview {
+  display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
+  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
+}
+.board-cell {
+  position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
+  background:rgba(9,14,27,.86); display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
+
+@media (max-width: 1120px) {
+  .hero-grid, .mode-grid, .board-grid, .result-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="loteria-shell">
+  <a href="{% url 'game:home' %}" class="loteria-back">&larr; Back to Fun Hub</a>
+
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="hero-grid">
+    <div class="panel">
+      <div class="panel-kicker">Collector Arcade</div>
+      <h1 class="panel-title">{{ deck.title }}</h1>
+      <div class="panel-subtitle">{{ deck.region_label }}</div>
+      <p class="panel-copy">
+        Build up to {{ deck.max_saved_boards }} custom Kanto boards, choose how many NPC collectors you want to face,
+        and launch the match only when your table is ready. Calls now land every {{ deck.draw_interval_seconds }} seconds,
+        and the room stops the moment a full board wins.
+      </p>
+      <div class="hero-actions">
+        <a href="{% url 'game:loteria_builder' 1 %}" class="btn btn-primary">Build Boards</a>
+        {% if open_room %}
+          {% if open_room.status == "active" %}
+          <a href="{% url 'game:loteria_room' open_room.pk %}" class="btn btn-secondary">Resume Match</a>
+          {% else %}
+          <a href="{% url 'game:loteria_lobby' open_room.pk %}" class="btn btn-secondary">Open Lobby</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="panel wallet-panel">
+      <div class="wallet-title">Candy Wallet</div>
+      <div class="wallet-list">
+        {% for key, candy in candy_inventory.items %}
+        <div class="wallet-card">
+          <strong>{{ candy.label }}</strong>
+          <span>{{ candy.description }}</span>
+          <em>x{{ candy.count }}</em>
+        </div>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+
+  <section class="section-grid">
+    <div class="panel">
+      <div class="panel-kicker">Quick Play</div>
+      <h2 class="board-title">Choose Your Table</h2>
+      <p class="board-copy">The more NPC boards you invite, the bigger the prize pool and the harder it is to claim the full board first.</p>
+      <div class="mode-grid">
+        {% for option in npc_options %}
+        <form method="post" class="mode-card{% if open_room and open_room.npc_count == option.npc_count %} current-room{% endif %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_room">
+          <input type="hidden" name="npc_count" value="{{ option.npc_count }}">
+          <div class="panel-kicker">Quick Play</div>
+          <h3 class="mode-title">{{ option.entry_label }}</h3>
+          <p class="mode-copy">
+            A self-contained table you can launch when ready. Bring up to {{ deck.max_saved_boards }} boards and let the room auto-mark every hit.
+          </p>
+          <div class="mode-metrics">
+            <div class="metric">
+              <div class="metric-label">Base Prize</div>
+              <div class="metric-value">{{ option.base_prize }} Ryo</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Call Speed</div>
+              <div class="metric-value">{{ deck.draw_interval_seconds }}s</div>
+            </div>
+          </div>
+          <div class="mode-actions">
+            <button type="submit" class="btn btn-primary" {% if open_room %}disabled{% endif %}>Create Room</button>
+          </div>
+        </form>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="boards-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:.9rem;">
+        <div>
+          <div class="panel-kicker">Saved Boards</div>
+          <h2 class="board-title">Your Kanto Boards</h2>
+        </div>
+        <div class="status-chip">{{ board_cards|length }} / {{ deck.max_saved_boards }} saved</div>
+      </div>
+      <div class="board-grid">
+        {% for board in board_cards %}
+        <article class="board-card">
+          <div class="board-preview">
+            {% for cell in board.cells %}
+            <div class="board-cell">
+              <img src="{{ cell.image_url }}" alt="{{ cell.name }}">
+            </div>
+            {% endfor %}
+          </div>
+          <h3 class="board-title">{{ board.title }}</h3>
+          <p class="board-copy">Board {{ board.board_slot }}. Ready to bring into your next Kanto table.</p>
+          <div class="board-actions">
+            <a href="{% url 'game:loteria_builder' board.board_slot %}" class="btn btn-secondary">Edit Board</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="result-grid">
+    <article class="result-card">
+      <div class="panel-kicker">Current Room</div>
+      {% if open_room %}
+      <h2 class="board-title">{{ open_room.title }}</h2>
+      <p class="board-copy">
+        {% if open_room.status == "active" %}
+        Your match is live. The table is already calling cards every {{ deck.draw_interval_seconds }} seconds.
+        {% else %}
+        Your room is waiting in the lobby. Pick your boards, review the NPC seats, and launch when ready.
+        {% endif %}
+      </p>
+      <div class="mode-actions">
+        {% if open_room.status == "active" %}
+        <a href="{% url 'game:loteria_room' open_room.pk %}" class="btn btn-primary">Resume Match</a>
+        {% else %}
+        <a href="{% url 'game:loteria_lobby' open_room.pk %}" class="btn btn-primary">Open Lobby</a>
+        {% endif %}
+      </div>
+      {% else %}
+      <h2 class="board-title">No Open Room</h2>
+      <p class="board-copy">Create a quick-play room above when you want to start a new loteria table.</p>
+      {% endif %}
+    </article>
+
+    <article class="result-card">
+      <div class="panel-kicker">Last Result</div>
+      {% if recent_finished_room %}
+      <h2 class="board-title">Round {{ recent_finished_room.round_number }}</h2>
+      <p class="board-copy">The last finished Kanto table closed with {{ recent_finished_room.prize_pool_ryo }} Ryo on the table.</p>
+      <ul style="margin:.6rem 0 0; padding-left:1rem; color:var(--text-2);">
+        {% for winner in recent_player_wins %}
+        <li>{{ winner.display_name }} · {{ winner.reward_ryo }} Ryo</li>
+        {% empty %}
+        <li>No player board from your account won the last table.</li>
+        {% endfor %}
+      </ul>
+      <div class="board-actions" style="margin-top:1rem;">
+        <a href="{% url 'game:loteria_results' recent_finished_room.pk %}" class="btn btn-secondary">View Results</a>
+      </div>
+      {% else %}
+      <h2 class="board-title">No Finished Match Yet</h2>
+      <p class="board-copy">Your first completed Kanto table will leave its winner recap here.</p>
+      {% endif %}
+    </article>
+  </section>
+</div>
+{% endblock %}

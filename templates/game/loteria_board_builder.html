@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Build Loteria Board{% endblock %}
+
+{% block extra_css %}
+<style>
+.builder-shell { max-width: 1320px; margin: 0 auto; padding: 1rem 0 2.25rem; }
+.builder-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
+.builder-layout, .panel, .slot-card, .picker-card {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.builder-layout { display:grid; grid-template-columns: .92fr 1.1fr; gap:1rem; border-radius:28px; padding:1rem; }
+.panel { border-radius:24px; padding:1.1rem 1.15rem; }
+.panel-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
+.panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.8rem,2.7vw,2.35rem); line-height:1; }
+.panel-copy { color:var(--text-2); line-height:1.6; margin-bottom:.9rem; }
+.builder-actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+.field-label { display:block; margin-bottom:.35rem; color:var(--text-3); text-transform:uppercase; letter-spacing:.12em; font-size:.72rem; font-weight:700; }
+.builder-input {
+  width:100%; border-radius:14px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.58);
+  color:var(--text-1); padding:.85rem .95rem; font-size:.95rem;
+}
+.slot-grid {
+  display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.65rem; margin-top:1rem;
+}
+.slot-card {
+  position:relative; border-radius:18px; padding:.7rem; min-height:148px; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; cursor:pointer; overflow:hidden;
+}
+.slot-card.empty { border-style:dashed; }
+.slot-card img { width:78px; height:78px; object-fit:contain; filter:drop-shadow(0 10px 18px rgba(0,0,0,.3)); }
+.slot-index {
+  position:absolute; top:10px; left:10px; color:var(--text-3); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+}
+.slot-name { margin-top:.55rem; color:var(--text-1); font-size:.82rem; font-weight:700; text-align:center; line-height:1.3; }
+.slot-hint { color:var(--text-3); font-size:.76rem; text-align:center; }
+.slot-remove {
+  position:absolute; right:10px; top:10px; width:24px; height:24px; border-radius:999px; border:0;
+  background:rgba(127,29,29,.88); color:#fff; font-weight:800; cursor:pointer;
+}
+
+.picker-toolbar { display:flex; gap:.75rem; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; margin-bottom:.9rem; }
+.picker-count { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.12em; }
+.picker-grid {
+  display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.7rem; max-height: 820px; overflow:auto; padding-right:.2rem;
+}
+.picker-card {
+  border-radius:18px; padding:.7rem .75rem; display:flex; gap:.65rem; align-items:center; cursor:pointer;
+}
+.picker-card img { width:56px; height:56px; object-fit:contain; flex:none; }
+.picker-card.is-selected { border-color: rgba(74,222,128,.36); box-shadow: inset 0 0 0 1px rgba(74,222,128,.16); }
+.picker-card.is-disabled { opacity:.42; cursor:not-allowed; }
+.picker-name { color:var(--text-1); font-weight:700; line-height:1.2; }
+.picker-dex { color:#a78bfa; font-size:.78rem; }
+
+@media (max-width: 1120px) {
+  .builder-layout, .picker-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div
+  class="builder-shell"
+  x-data="loteriaBuilder({
+    availableId: 'loteria-owned-species',
+    selectedId: 'loteria-selected-species',
+    boardSize: {{ deck.board_size }}
+  })"
+  x-init="init()"
+>
+  <a href="{% url 'game:loteria_game' %}" class="builder-back">&larr; Back to Loteria Hub</a>
+
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {{ owned_species|json_script:"loteria-owned-species" }}
+  {{ selected_species|json_script:"loteria-selected-species" }}
+
+  <form class="builder-layout" method="post">
+    {% csrf_token %}
+    <section class="panel">
+      <div class="panel-kicker">Loteria Builder</div>
+      <h1 class="panel-title">Board {{ board_slot }}</h1>
+      <p class="panel-copy">
+        Build a 4 x 4 Kanto board from Pokemon you currently own. The room will auto-mark matching calls, so this is all about shaping your favorite table before the event starts.
+      </p>
+
+      <label class="field-label" for="board-title">Board Name</label>
+      <input
+        id="board-title"
+        class="builder-input"
+        type="text"
+        name="title"
+        maxlength="80"
+        value="{{ existing_board.title|default:'' }}"
+        placeholder="Kanto Collector Board"
+      >
+
+      <div class="slot-grid">
+        <template x-for="(slot, index) in selectedSpecies" :key="slot.id">
+          <div class="slot-card">
+            <span class="slot-index" x-text="'slot ' + (index + 1)"></span>
+            <button type="button" class="slot-remove" @click="remove(index)">×</button>
+            <img :src="slot.image_url" :alt="slot.name">
+            <div class="slot-name" x-text="slot.name"></div>
+            <div class="slot-hint" x-text="'#' + slot.dex"></div>
+          </div>
+        </template>
+        <template x-for="index in emptySlots" :key="'empty-' + index">
+          <div class="slot-card empty">
+            <span class="slot-index" x-text="'slot ' + (selectedSpecies.length + index)"></span>
+            <div class="slot-hint">Pick a Pokemon</div>
+          </div>
+        </template>
+      </div>
+
+      <input type="hidden" name="species_ids" :value="selectedSpecies.map(mon => mon.id).join(',')">
+
+      <div class="builder-actions">
+        <button type="submit" class="btn btn-primary" :disabled="selectedSpecies.length !== boardSize">Save Board</button>
+        <button type="button" class="btn btn-secondary" @click="randomFill()" {% if not can_build_extra %}disabled{% endif %}>Auto-fill</button>
+        <a href="{% url 'game:loteria_game' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="picker-toolbar">
+        <div>
+          <div class="panel-kicker">Owned Kanto Pokemon</div>
+          <div class="picker-count" x-text="selectedSpecies.length + ' / ' + boardSize + ' slots filled'"></div>
+        </div>
+        <div style="width:min(100%, 320px);">
+          <label class="field-label" for="species-search">Search</label>
+          <input id="species-search" class="builder-input" type="text" x-model="query" placeholder="Search Pokemon or #dex">
+        </div>
+      </div>
+
+      {% if can_build_extra %}
+      <div class="picker-grid">
+        <template x-for="species in filteredSpecies" :key="species.id">
+          <button
+            type="button"
+            class="picker-card"
+            :class="{ 'is-selected': isSelected(species.id), 'is-disabled': !isSelected(species.id) && selectedSpecies.length >= boardSize }"
+            @click="toggle(species)"
+          >
+            <img :src="species.image_url" :alt="species.name">
+            <div>
+              <div class="picker-name" x-text="species.name"></div>
+              <div class="picker-dex" x-text="'#' + species.dex"></div>
+            </div>
+          </button>
+        </template>
+      </div>
+      {% else %}
+      <p class="panel-copy">You need at least {{ deck.board_size }} owned Kanto Pokemon to build extra custom boards. Your starter board is still ready to enter from the hub.</p>
+      {% endif %}
+    </aside>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loteriaBuilder(config) {
+  return {
+    availableSpecies: [],
+    selectedSpecies: [],
+    boardSize: config.boardSize,
+    query: "",
+    init() {
+      const available = document.getElementById(config.availableId);
+      const selected = document.getElementById(config.selectedId);
+      this.availableSpecies = available ? JSON.parse(available.textContent) : [];
+      this.selectedSpecies = selected ? JSON.parse(selected.textContent) : [];
+    },
+    get filteredSpecies() {
+      const query = this.query.trim().toLowerCase();
+      return this.availableSpecies.filter((species) => {
+        if (!query) return true;
+        return species.name.toLowerCase().includes(query) || String(species.dex).includes(query.replace("#", ""));
+      });
+    },
+    get emptySlots() {
+      return Math.max(this.boardSize - this.selectedSpecies.length, 0);
+    },
+    isSelected(id) {
+      return this.selectedSpecies.some((species) => species.id === id);
+    },
+    toggle(species) {
+      if (this.isSelected(species.id)) {
+        this.selectedSpecies = this.selectedSpecies.filter((entry) => entry.id !== species.id);
+        return;
+      }
+      if (this.selectedSpecies.length >= this.boardSize) return;
+      this.selectedSpecies.push(species);
+    },
+    remove(index) {
+      this.selectedSpecies.splice(index, 1);
+    },
+    randomFill() {
+      const shuffled = [...this.availableSpecies].sort(() => Math.random() - 0.5);
+      this.selectedSpecies = shuffled.slice(0, this.boardSize);
+    }
+  }
+}
+</script>
+{% endblock %}

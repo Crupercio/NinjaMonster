@@ -442,9 +442,17 @@ class BattleLog(models.Model):
 class LoteriaStatus(models.TextChoices):
     """Lifecycle for a live Loteria room."""
 
-    WAITING = "waiting", "Waiting"
+    DRAFT = "draft", "Draft"
+    LOBBY = "lobby", "Lobby"
     ACTIVE = "active", "Active"
     FINISHED = "finished", "Finished"
+
+
+class LoteriaMode(models.TextChoices):
+    """How a Loteria room was created."""
+
+    QUICK_NPC = "quick_npc", "Quick Play vs NPC"
+    PRIVATE = "private", "Private Room"
 
 
 class LoteriaBoardTemplate(models.Model):
@@ -477,9 +485,19 @@ class LoteriaBoardTemplate(models.Model):
 class LoteriaRoom(models.Model):
     """One live room that deals a shared sequence of Pokemon cards."""
 
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="created_loteria_rooms",
+        db_index=True,
+    )
     deck_key = models.CharField(max_length=32, db_index=True)
     title = models.CharField(max_length=80)
-    status = models.CharField(max_length=16, choices=LoteriaStatus.choices, default=LoteriaStatus.WAITING, db_index=True)
+    mode = models.CharField(max_length=16, choices=LoteriaMode.choices, default=LoteriaMode.QUICK_NPC, db_index=True)
+    status = models.CharField(max_length=16, choices=LoteriaStatus.choices, default=LoteriaStatus.DRAFT, db_index=True)
+    npc_count = models.PositiveSmallIntegerField(default=2)
     round_number = models.PositiveIntegerField(default=1)
     prize_pool_ryo = models.PositiveIntegerField(default=0)
     deck_order = models.JSONField(default=list, help_text="Ordered list of Pokemon ids to deal for this room.")

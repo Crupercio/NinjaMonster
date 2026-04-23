@@ -1,7 +1,17 @@
 """URL patterns for the game app."""
 from django.urls import path
 
-from .fun_views import LoteriaGameView, MemoryHubView, MemoryMatchView, SilhouetteHubView, SilhouetteTowerView
+from .fun_views import (
+    LoteriaBoardBuilderView,
+    LoteriaHubView,
+    LoteriaLobbyView,
+    LoteriaResultsView,
+    LoteriaRoomView,
+    MemoryHubView,
+    MemoryMatchView,
+    SilhouetteHubView,
+    SilhouetteTowerView,
+)
 from .views import (
     AIBattleCreateView,
     ActiveBattleListView,
@@ -27,7 +37,11 @@ urlpatterns = [
     path("fun/silhouette/<slug:tower_key>/", SilhouetteTowerView.as_view(), name="silhouette_tower"),
     path("fun/memory/", MemoryHubView.as_view(), name="memory_game"),
     path("fun/memory/<slug:board_key>/", MemoryMatchView.as_view(), name="memory_board"),
-    path("fun/loteria/", LoteriaGameView.as_view(), name="loteria_game"),
+    path("fun/loteria/", LoteriaHubView.as_view(), name="loteria_game"),
+    path("fun/loteria/boards/<int:board_slot>/", LoteriaBoardBuilderView.as_view(), name="loteria_builder"),
+    path("fun/loteria/room/<int:room_id>/lobby/", LoteriaLobbyView.as_view(), name="loteria_lobby"),
+    path("fun/loteria/room/<int:room_id>/play/", LoteriaRoomView.as_view(), name="loteria_room"),
+    path("fun/loteria/room/<int:room_id>/results/", LoteriaResultsView.as_view(), name="loteria_results"),
     path("list/", BattleListView.as_view(), name="battle_list"),
     path("create/", BattleCreateView.as_view(), name="battle_create"),
     path("vs-ai/", AIBattleCreateView.as_view(), name="ai_battle_create"),

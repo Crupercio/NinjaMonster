@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Loteria Lobby{% endblock %}
+
+{% block extra_css %}
+<style>
+.lobby-shell { max-width: 1320px; margin: 0 auto; padding: 1rem 0 2.4rem; }
+.lobby-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
+.layout, .panel, .board-card, .seat-card {
+  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
+  border: 1px solid rgba(91,129,255,.22);
+  box-shadow: 0 20px 40px rgba(0,0,0,.28);
+}
+.layout { display:grid; grid-template-columns: 1.08fr .92fr; gap:1rem; margin-bottom:1rem; }
+.panel, .board-card, .seat-card { border-radius:26px; padding:1.15rem 1.2rem; }
+.panel-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
+.panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.6rem); line-height:1; }
+.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.7rem; }
+.panel-copy { color:var(--text-2); line-height:1.65; margin-bottom:1rem; }
+.status-chip {
+  display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
+  background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.metric-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; }
+.metric {
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
+}
+.metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
+.metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
+
+.seat-list { display:grid; gap:.75rem; }
+.seat-card strong { display:block; color:var(--text-1); margin-bottom:.15rem; }
+.seat-card span { color:var(--text-3); font-size:.78rem; }
+
+.board-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:1rem; }
+.board-card.selected { border-color: rgba(251,191,36,.34); box-shadow: inset 0 0 0 1px rgba(251,191,36,.14); }
+.board-preview {
+  display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
+  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
+}
+.board-cell {
+  aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
+  background:rgba(9,14,27,.86); display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
+.board-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.15rem; }
+.board-copy { color:var(--text-2); font-size:.88rem; line-height:1.55; margin-bottom:.85rem; }
+.board-check { display:flex; align-items:center; gap:.5rem; color:var(--text-2); font-weight:700; }
+.actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+
+@media (max-width: 1120px) {
+  .layout, .board-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lobby-shell">
+  <a href="{% url 'game:loteria_game' %}" class="lobby-back">&larr; Back to Loteria Hub</a>
+
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="layout">
+    <div class="panel">
+      <div class="panel-kicker">Room Lobby</div>
+      <h1 class="panel-title">{{ room.title }}</h1>
+      <div class="panel-subtitle">{{ deck.region_label }} · {{ room.npc_count }} NPC table</div>
+      <p class="panel-copy">
+        Pick the boards you want to bring, review the NPC seats, and launch the room when everyone at your table is ready.
+        The first Kanto call lands {{ deck.draw_interval_seconds }} seconds after you press start.
+      </p>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Base Prize</div>
+          <div class="metric-value">{{ base_prize }} Ryo</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Board Bonus</div>
+          <div class="metric-value">+{{ per_board_bonus }} / board</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Call Speed</div>
+          <div class="metric-value">{{ deck.draw_interval_seconds }}s</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="panel-kicker">NPC Seats</div>
+      <div class="seat-list">
+        {% for npc_name in npc_labels %}
+        <div class="seat-card">
+          <strong>{{ npc_name }}</strong>
+          <span>Random {{ deck.region_label }} board · joins when you launch the table</span>
+        </div>
+        {% endfor %}
+      </div>
+    </aside>
+  </section>
+
+  <form method="post" class="panel">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="start_room">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+      <div>
+        <div class="panel-kicker">Choose Boards</div>
+        <h2 class="board-title">Your Live Table</h2>
+      </div>
+      <div class="status-chip">Up to {{ deck.max_saved_boards }} boards</div>
+    </div>
+
+    <div class="board-grid">
+      {% for board in board_cards %}
+      <article class="board-card{% if board.is_selected %} selected{% endif %}">
+        <div class="board-preview">
+          {% for cell in board.cells %}
+          <div class="board-cell">
+            <img src="{{ cell.image_url }}" alt="{{ cell.name }}">
+          </div>
+          {% endfor %}
+        </div>
+        <h3 class="board-title">{{ board.title }}</h3>
+        <p class="board-copy">Board {{ board.board_slot }}. Every entered board adds {{ per_board_bonus }} Ryo to the pot and costs {{ deck.entry_qty_per_board }} {{ deck.entry_label }}.</p>
+        <label class="board-check">
+          <input type="checkbox" name="board_ids" value="{{ board.id }}" {% if board.is_selected %}checked{% endif %}>
+          Bring this board to the table
+        </label>
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Start Match</button>
+    </div>
+  </form>
+
+  <form method="post" class="actions" style="margin-top:1rem;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="abandon_room">
+    <button type="submit" class="btn btn-secondary">Abandon Room</button>
+  </form>
+</div>
+{% endblock %}
