@@ -1,196 +1,27 @@
 {% extends "base.html" %}
-{% block title %}My Team{% endblock %}
-
-{% block extra_css %}
-<style>
-.team-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1rem; margin-bottom: 1.25rem;
-}
-@media (max-width: 640px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
-
-.row-label {
-  font-size: .7rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1.2px; padding: .25rem .65rem; border-radius: 20px;
-  margin-right: .5rem;
-}
-.row-label.front { background: #1e3a8a; color: #93c5fd; }
-.row-label.back  { background: #374151; color: #9ca3af; }
-
-.slot-card {
-  background: var(--bg-card); border: 2px solid var(--border-lo);
-  border-radius: var(--radius-md); padding: 1rem; min-height: 190px;
-  display: flex; flex-direction: column; gap: .4rem;
-}
-.slot-card.filled { border-color: var(--accent-red); }
-.slot-card.empty-slot { border-style: dashed; border-color: var(--border-md); }
-
-.slot-number { font-size: .68rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; }
-
-.slot-empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: .5rem; color: var(--text-3);
-}
-.slot-empty-icon { font-size: 1.75rem; }
-
-.sprite-wrap { display: flex; justify-content: center; margin: .2rem 0; }
-.sprite-wrap img { width: 88px; height: 88px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0,0,0,.5)); }
-
-.type-badge {
-  display: inline-block; padding: 1px 7px; border-radius: 10px;
-  font-size: .65rem; font-weight: 700; background: #1e3a5f; color: #93c5fd; margin-right: 3px;
-}
-.slot-actions { margin-top: auto; display: flex; gap: .4rem; }
-
-/* Combo chain */
-.combo-link-row {
-  background: #0f1a2e; border: 1px solid var(--border-md);
-  border-radius: var(--radius-sm); padding: .65rem .9rem;
-  display: flex; align-items: center; gap: .6rem;
-  flex-wrap: wrap; font-size: .82rem; font-family: 'JetBrains Mono', monospace;
-}
-</style>
-{% endblock %}
+{% block title %}Team - Deprecated{% endblock %}
 
 {% block content %}
-<div style="margin-bottom:1.5rem;">
-  <h2 style="margin-bottom:.25rem;">My Team</h2>
-  <p style="color:var(--text-2);font-size:.85rem;">
-    Your saved team is used automatically in battles.<br>
-    <span style="color:#93c5fd;">Front Row (1–3)</span> takes −20% damage.
-    <span style="color:var(--text-3);">Back Row (4–6)</span> deals −20% damage.
-  </p>
-</div>
-
-{# ── FRONT ROW ───────────────────────────────────────────────── #}
-<div style="display:flex;align-items:center;margin-bottom:.6rem;">
-  <span class="row-label front">⚔️ Front Row</span>
-  <span style="font-size:.72rem;color:var(--text-3);">Slots 1–3 · full damage</span>
-</div>
-<div class="team-grid">
-  {% for entry in slots %}{% if entry.position <= 3 %}
-  <div class="slot-card {% if entry.slot %}filled{% else %}empty-slot{% endif %}">
-    <div class="slot-number">Slot {{ entry.position }}</div>
-
-    {% if entry.slot %}
-      {% with op=entry.slot.pokemon %}
-        <div class="sprite-wrap">
-          {% if op.species.pokedex_number %}
-            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
-                 alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
-          {% elif op.species.sprite_url %}
-            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
-          {% else %}
-            <div style="width:88px;height:88px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:2.5rem;">?</div>
-          {% endif %}
-        </div>
-        <div class="pokemon-name">{{ op.species.name }}</div>
-        <div style="font-size:.8rem;color:var(--accent-red);font-weight:700;">Lv.{{ op.level }}</div>
-        <div>
-          <span class="type-badge">{{ op.species.primary_type }}</span>
-          {% if op.species.secondary_type %}<span class="type-badge">{{ op.species.secondary_type }}</span>{% endif %}
-        </div>
-        <div class="slot-actions">
-          <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-secondary btn-sm">Change</a>
-          <form method="post" action="{% url 'pokemon:team_slot' entry.position %}" style="display:inline;">
-            {% csrf_token %}<input type="hidden" name="action" value="remove">
-            <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;">Remove</button>
-          </form>
-        </div>
-      {% endwith %}
-    {% else %}
-      <div class="slot-empty">
-        <div class="slot-empty-icon">＋</div>
-        <div style="font-size:.78rem;">Empty</div>
-        <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-primary btn-sm">Assign</a>
-      </div>
-    {% endif %}
-  </div>
-  {% endif %}{% endfor %}
-</div>
-
-{# ── BACK ROW ────────────────────────────────────────────────── #}
-<div style="display:flex;align-items:center;margin-bottom:.6rem;">
-  <span class="row-label back">🛡 Back Row</span>
-  <span style="font-size:.72rem;color:var(--text-3);">Slots 4–6 · −20% damage dealt</span>
-</div>
-<div class="team-grid">
-  {% for entry in slots %}{% if entry.position >= 4 %}
-  <div class="slot-card {% if entry.slot %}filled{% else %}empty-slot{% endif %}">
-    <div class="slot-number">Slot {{ entry.position }}</div>
-
-    {% if entry.slot %}
-      {% with op=entry.slot.pokemon %}
-        <div class="sprite-wrap">
-          {% if op.species.pokedex_number %}
-            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
-                 alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
-          {% elif op.species.sprite_url %}
-            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
-          {% else %}
-            <div style="width:88px;height:88px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:2.5rem;">?</div>
-          {% endif %}
-        </div>
-        <div class="pokemon-name">{{ op.species.name }}</div>
-        <div style="font-size:.8rem;color:var(--accent-red);font-weight:700;">Lv.{{ op.level }}</div>
-        <div>
-          <span class="type-badge">{{ op.species.primary_type }}</span>
-          {% if op.species.secondary_type %}<span class="type-badge">{{ op.species.secondary_type }}</span>{% endif %}
-        </div>
-        <div class="slot-actions">
-          <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-secondary btn-sm">Change</a>
-          <form method="post" action="{% url 'pokemon:team_slot' entry.position %}" style="display:inline;">
-            {% csrf_token %}<input type="hidden" name="action" value="remove">
-            <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;">Remove</button>
-          </form>
-        </div>
-      {% endwith %}
-    {% else %}
-      <div class="slot-empty">
-        <div class="slot-empty-icon">＋</div>
-        <div style="font-size:.78rem;">Empty</div>
-        <a href="{% url 'pokemon:team_slot' entry.position %}" class="btn btn-primary btn-sm">Assign</a>
-      </div>
-    {% endif %}
-  </div>
-  {% endif %}{% endfor %}
-</div>
-
-{# ── Combo chain preview ─────────────────────────────────────── #}
-<div style="margin-bottom:2rem;">
-  <div class="section-label">Kizuna Combo Preview</div>
-
-  {% if combo_links %}
-  <p style="color:var(--text-2);font-size:.8rem;margin-bottom:.75rem;">
-    These chains fire automatically when the status is applied in battle.
-  </p>
-  <div style="display:flex;flex-direction:column;gap:.5rem;">
-    {% for link in combo_links %}
-    <div class="combo-link-row">
-      <span style="font-weight:700;color:#60a5fa;">{{ link.from_name }}</span>
-      <span style="color:var(--text-3);">uses</span>
-      <span style="color:#fbbf24;font-weight:600;">{{ link.from_move }}</span>
-      <span style="color:var(--text-3);">→ applies</span>
-      <span style="background:#1e3a6e;color:#a5b4fc;border-radius:20px;padding:1px 8px;font-size:.72rem;font-weight:700;">{{ link.status_name }}</span>
-      <span style="color:var(--text-3);">→</span>
-      <span style="font-weight:700;color:#4ade80;">{{ link.to_name }}</span>
-      <span style="color:var(--text-3);">triggers</span>
-      <span style="color:#fbbf24;font-weight:600;">{{ link.to_move }}</span>
-      <span style="margin-left:auto;background:#052e16;color:#4ade80;border:1px solid #4ade80;border-radius:20px;padding:1px 8px;font-size:.72rem;font-weight:700;">{{ link.amp }}</span>
+<div style="max-width:760px;margin:0 auto;padding:1rem 0 2rem;">
+  <div style="background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-xl);padding:2rem 2rem 1.75rem;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-gold);margin-bottom:.75rem;">
+      Deprecated Page
     </div>
-    {% endfor %}
+    <h1 style="margin:0 0 .5rem;">My Team is offline for now</h1>
+    <p style="color:var(--text-2);line-height:1.65;margin:0 0 1rem;">
+      Battle loadouts are no longer part of the active player loop, so the old team builder has been retired for this release cycle.
+      We are keeping the route in place for now while the rest of the cleanup continues.
+    </p>
+    <div style="display:grid;gap:.75rem;background:rgba(255,255,255,.03);border:1px solid var(--border-lo);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.25rem;">
+      <div style="font-size:.8rem;color:var(--text-2);">Use these pages instead:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem;">
+        <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-primary">My Pokemon</a>
+        <a href="{% url 'pokemon:mi_casa' %}" class="btn btn-secondary">Mi Casa</a>
+        <a href="{% url 'stickers:album' %}" class="btn btn-secondary">Sticker Album</a>
+        <a href="{% url 'game:home' %}" class="btn btn-secondary">Game Hub</a>
+      </div>
+    </div>
+    <p style="color:var(--text-3);font-size:.8rem;margin:0;">The underlying code is still present, but this screen is intentionally deprecated.</p>
   </div>
-  {% else %}
-  <div style="background:#0f1a2e;border:1px dashed var(--border-md);border-radius:var(--radius-sm);padding:1.25rem;text-align:center;color:var(--text-3);font-size:.875rem;">
-    No combo chains detected yet.<br>
-    <span style="font-size:.78rem;">Assign Pokémon with Chase Techniques that trigger on statuses applied by teammates.</span>
-  </div>
-  {% endif %}
-</div>
-
-<div style="display:flex;gap:1rem;flex-wrap:wrap;">
-  <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary">My Pokémon</a>
-  <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary">Type Chart</a>
-  <a href="{% url 'game:home' %}" class="btn btn-secondary">Back to Home</a>
 </div>
 {% endblock %}

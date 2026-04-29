@@ -1,15 +1,18 @@
 """Views for collector arcade experiences under the Fun hub."""
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
-from django.shortcuts import redirect
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.views import View
 from django.views.generic import TemplateView
 from django.utils import timezone
 
-from apps.game.models import LoteriaRoom, LoteriaStatus
+from apps.game.models import LoteriaMode, LoteriaRoom, LoteriaStatus
 from apps.users.services import get_candy_inventory
 
 from .fun import (
@@ -18,24 +21,39 @@ from .fun import (
     advance_silhouette_run,
     answer_silhouette_question,
     cash_out_silhouette_run,
+    build_loteria_pattern_tracker,
     clear_memory_result_state,
     clear_silhouette_reveal_state,
     clear_silhouette_run_state,
+    claim_all_loteria_prizes,
+    claim_loteria_prize,
     complete_memory_run,
+    create_private_loteria_room,
     create_quick_loteria_room,
     ensure_default_loteria_board,
+    ensure_loteria_host_participant,
     get_allowed_loteria_npc_counts,
     get_loteria_deck_config,
+    get_loteria_board_label,
+    get_user_pending_loteria_claims,
+    get_loteria_room_participants,
     LOTERIA_NPC_NAMES,
     get_loteria_species_map,
+    get_loteria_starter_board_slot,
     get_random_memory_species,
     get_user_open_loteria_room,
     get_user_loteria_boards,
     get_user_owned_loteria_species,
     get_user_recent_finished_loteria_room,
+    get_user_loteria_starter_board,
+    get_loteria_entry_display_name,
+    join_private_loteria_room,
+    save_loteria_room_boards,
     save_loteria_board_template,
     serialize_loteria_board,
+    set_loteria_room_participant_ready,
     start_loteria_room,
+    toggle_loteria_pause,
     advance_loteria_room,
     get_memory_board_catalog,
     get_memory_board_config,
@@ -218,24 +236,201 @@ class MemoryHubView(LoginRequiredMixin, TemplateView):
         return context
 
 
-def _get_owned_loteria_room_or_404(user, room_id: int, config):
-    """Return a room owned by the current user or raise 404."""
-    try:
-        return LoteriaRoom.objects.get(pk=room_id, created_by=user, deck_key=config.key)
-    except LoteriaRoom.DoesNotExist as exc:
-        raise Http404("Loteria room not found.") from exc
+def _get_accessible_loteria_room_or_404(user, room_id: int, config):
+    """Return a room the current user hosts or participates in."""
+    room = (
+        LoteriaRoom.objects.select_related("created_by", "guild")
+        .filter(pk=room_id, deck_key=config.key)
+        .filter(created_by=user)
+        .first()
+    )
+    if room is None:
+        room = (
+            LoteriaRoom.objects.select_related("created_by", "guild")
+            .filter(pk=room_id, deck_key=config.key, participants__user=user)
+            .distinct()
+            .first()
+        )
+    if room is None:
+        raise Http404("Loteria room not found.")
+    ensure_loteria_host_participant(room)
+    return room
 
 
-def _build_loteria_board_cards(user, config, called_set: set[int] | None = None):
-    """Serialize the user's saved boards for hub and lobby views."""
+def _build_loteria_board_cards(user, config, called_set: set[int] | None = None, include_empty_slots: bool = False):
+    """Serialize saved boards and optionally expose empty board slots for the hub."""
     species_map = get_loteria_species_map(config)
     active_calls = called_set or set()
+    saved_boards = get_user_loteria_boards(user, config)
+    saved_by_slot = {}
     board_cards = []
-    for board in get_user_loteria_boards(user, config):
+    for board in saved_boards:
         card = serialize_loteria_board(board, species_map, active_calls)
         card["template"] = board
+        card["is_saved"] = True
+        saved_by_slot[board.board_slot] = card
         board_cards.append(card)
+    if include_empty_slots:
+        board_cards = []
+        for slot in range(1, config.max_saved_boards + 1):
+            saved_card = saved_by_slot.get(slot)
+            if saved_card:
+                board_cards.append(saved_card)
+                continue
+                board_cards.append(
+                {
+                    "id": None,
+                    "title": get_loteria_board_label(slot),
+                    "board_slot": slot,
+                    "cells": [],
+                    "board_size": config.board_size,
+                    "marked_count": 0,
+                    "is_complete": False,
+                    "is_saved": False,
+                    "is_starter": False,
+                }
+            )
+    for card in board_cards:
+        card.setdefault("is_starter", False)
     return board_cards
+
+
+def _get_request_guild_membership(user):
+    """Return the current user's guild membership when present."""
+    try:
+        return user.guild_membership
+    except Exception:
+        return None
+
+
+def _serialize_loteria_room_state(user, room, config):
+    """Build a live-room snapshot for both HTML render and JSON polling."""
+    species_map = get_loteria_species_map(config)
+    called_set = set(room.called_species_ids)
+    player_entries = list(
+        room.entries.filter(user=user, is_npc=False)
+        .select_related("board_template")
+        .order_by("board_slot")
+    )
+    serialized_player_boards = []
+    for entry in player_entries:
+        board_payload = serialize_loteria_board(entry, species_map, called_set)
+        serialized_player_boards.append(
+            {
+                **board_payload,
+                "display_name": entry.display_name,
+                "owner_name": entry.user.username,
+                "board_label": board_payload["title"],
+                "board_slot": entry.board_slot,
+            }
+        )
+
+    human_entries = list(
+        room.entries.filter(user__isnull=False, is_npc=False)
+        .select_related("user", "board_template")
+        .order_by("entered_at", "pk")
+    )
+    serialized_seat_entries = []
+    for entry in human_entries:
+        human_board = serialize_loteria_board(entry, species_map, called_set)
+        serialized_seat_entries.append(
+            {
+                "display_name": entry.display_name,
+                "owner_name": entry.user.username,
+                "board_label": human_board["title"],
+                "board_size": human_board["board_size"],
+                "marked_count": human_board["marked_count"],
+                "is_current_user": entry.user_id == user.id,
+            }
+        )
+
+    npc_entries = list(room.entries.filter(is_npc=True).order_by("entered_at", "pk"))
+    serialized_npc_entries = []
+    for entry in npc_entries:
+        npc_board = serialize_loteria_board(entry, species_map, called_set)
+        serialized_npc_entries.append(
+            {
+                "display_name": entry.display_name,
+                "board_size": npc_board["board_size"],
+                "marked_count": npc_board["marked_count"],
+            }
+        )
+
+    latest_species = species_map.get(room.called_species_ids[-1]) if room.called_species_ids else None
+    called_history_species = [species_map.get(species_id) for species_id in reversed(room.called_species_ids[-12:])]
+    called_history = [
+        {
+            "name": pokemon.name,
+            "image_url": _pokemon_image_url(pokemon),
+        }
+        for pokemon in called_history_species
+        if pokemon is not None
+    ]
+
+    seconds_until_next = None
+    next_tick_epoch_ms = None
+    if room.next_tick_at:
+        seconds_until_next = max(0, int((room.next_tick_at - timezone.now()).total_seconds()))
+        next_tick_epoch_ms = int(room.next_tick_at.timestamp() * 1000)
+    pause_remaining_seconds = room.pause_remaining_seconds
+    pause_expires_epoch_ms = None
+    if room.paused_at:
+        elapsed_seconds = max(0, int((timezone.now() - room.paused_at).total_seconds()))
+        pause_remaining_seconds = max(0, room.pause_remaining_seconds - elapsed_seconds)
+        pause_expires_epoch_ms = int((room.paused_at + timedelta(seconds=room.pause_remaining_seconds)).timestamp() * 1000)
+
+    return {
+        "latest_called": latest_species,
+        "latest_called_id": latest_species.id if latest_species else None,
+        "latest_called_image_url": _pokemon_image_url(latest_species) if latest_species else "",
+        "called_history": called_history,
+        "player_boards": serialized_player_boards,
+        "player_board_count": len(serialized_player_boards),
+        "seat_entries": serialized_seat_entries,
+        "human_player_count": len({entry.user_id for entry in human_entries if entry.user_id}),
+        "npc_entries": serialized_npc_entries,
+        "pattern_prizes": build_loteria_pattern_tracker(room, config, viewer_user=user),
+        "seconds_until_next": seconds_until_next,
+        "next_tick_epoch_ms": next_tick_epoch_ms,
+        "called_count": len(room.called_species_ids),
+        "is_paused": bool(room.paused_at),
+        "pause_remaining_seconds": pause_remaining_seconds,
+        "pause_expires_epoch_ms": pause_expires_epoch_ms,
+    }
+
+
+def _build_loteria_player_investment(user, room, config) -> dict:
+    """Summarize the current user's spend and match bonus for one room."""
+    player_board_count = room.entries.filter(user=user, is_npc=False).count()
+    ryo_spent = 0
+    candy_qty = 0
+    candy_label = ""
+    matched_ryo = 0
+    if room.mode == LoteriaMode.PRIVATE:
+        ryo_spent = (room.entry_fee_ryo or 0) * player_board_count
+        matched_ryo = ryo_spent
+    else:
+        ryo_spent = room.entry_fee_ryo or config.entry_fee_for_npc_count(room.npc_count)
+        candy_qty = player_board_count * config.entry_qty_per_board
+        candy_label = config.entry_label
+    spend_parts = []
+    if ryo_spent > 0:
+        spend_parts.append(f"{ryo_spent} Ryo")
+    if candy_qty > 0 and candy_label:
+        spend_parts.append(f"{candy_qty} {candy_label}")
+    return {
+        "board_count": player_board_count,
+        "ryo_spent": ryo_spent,
+        "candy_qty": candy_qty,
+        "candy_label": candy_label,
+        "matched_ryo": matched_ryo,
+        "spend_display": " + ".join(spend_parts) if spend_parts else "No spend recorded",
+        "spend_note": (
+            f"Game matched +{matched_ryo} Ryo into the pot."
+            if matched_ryo > 0
+            else (f"Includes {candy_qty} {candy_label} and the quick-play room fee." if candy_qty > 0 and candy_label else "Includes the quick-play room fee.")
+        ),
+    }
 
 
 class LoteriaHubView(LoginRequiredMixin, TemplateView):
@@ -252,6 +447,20 @@ class LoteriaHubView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        guild_membership = _get_request_guild_membership(self.request.user)
+        starter_board = get_user_loteria_starter_board(self.request.user, self.deck_config)
+        starter_board_card = None
+        if starter_board:
+            starter_board_card = serialize_loteria_board(starter_board, get_loteria_species_map(self.deck_config), set())
+            starter_board_card["template"] = starter_board
+            starter_board_card["is_saved"] = True
+            starter_board_card["is_starter"] = True
+        board_cards = _build_loteria_board_cards(
+            self.request.user,
+            self.deck_config,
+            include_empty_slots=True,
+        )
+        first_open_board = next((board for board in board_cards if not board["is_saved"]), None)
         recent_player_wins = list(self.recent_finished_room.entries.filter(user=self.request.user, is_winner=True).order_by("board_slot")) if self.recent_finished_room else []
         npc_options = []
         for npc_count in get_allowed_loteria_npc_counts(self.deck_config):
@@ -259,6 +468,7 @@ class LoteriaHubView(LoginRequiredMixin, TemplateView):
                 {
                     "npc_count": npc_count,
                     "base_prize": self.deck_config.prize_for_npc_count(npc_count),
+                    "entry_fee_ryo": self.deck_config.entry_fee_for_npc_count(npc_count),
                     "entry_label": f"{npc_count} NPC",
                 }
             )
@@ -268,15 +478,37 @@ class LoteriaHubView(LoginRequiredMixin, TemplateView):
                 "candy_inventory": get_candy_inventory(self.request.user),
                 "open_room": self.open_room,
                 "recent_finished_room": self.recent_finished_room,
-                "board_cards": _build_loteria_board_cards(self.request.user, self.deck_config),
+                "starter_board": starter_board_card,
+                "board_cards": board_cards,
+                "saved_board_count": sum(1 for board in board_cards if board["is_saved"]),
+                "board_builder_slot": first_open_board["board_slot"] if first_open_board else 1,
                 "recent_player_wins": recent_player_wins,
                 "npc_options": npc_options,
+                "my_guild_membership": guild_membership,
             }
         )
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action", "")
+        if action == "create_private_room":
+            guild_only = request.POST.get("guild_only") == "1"
+            try:
+                room = create_private_loteria_room(request.user, self.deck_config, guild_only=guild_only)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                table_label = "guild-only" if room.guild_id else "private"
+                messages.success(request, f"{self.deck_config.title} {table_label} room opened. Share code {room.room_code}.")
+                return redirect("game:loteria_lobby", room_id=room.pk)
+        if action == "join_private_room":
+            try:
+                room = join_private_loteria_room(request.user, self.deck_config, request.POST.get("room_code", ""))
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f"Joined private room {room.room_code}.")
+                return redirect("game:loteria_lobby", room_id=room.pk)
         if action == "create_room":
             try:
                 npc_count = int(request.POST.get("npc_count", "0"))
@@ -294,6 +526,37 @@ class LoteriaHubView(LoginRequiredMixin, TemplateView):
         return redirect("game:loteria_game")
 
 
+class LoteriaRoomJoinView(LoginRequiredMixin, View):
+    """Join or reopen a private/guild room directly from another surface."""
+
+    def post(self, request, room_id: int):
+        deck_config = get_loteria_deck_config("kanto")
+        ensure_default_loteria_board(request.user, deck_config)
+        room = get_object_or_404(
+            LoteriaRoom.objects.select_related("created_by", "guild"),
+            pk=room_id,
+            deck_key=deck_config.key,
+        )
+        if room.mode != LoteriaMode.PRIVATE:
+            messages.error(request, "Only private and guild Loteria rooms can be joined this way.")
+            return redirect("game:loteria_game")
+
+        already_in_room = room.created_by_id == request.user.id or room.participants.filter(user=request.user).exists()
+        if not already_in_room:
+            try:
+                room = join_private_loteria_room(request.user, deck_config, room.room_code or "")
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect("game:loteria_game")
+            messages.success(request, f"Joined {room.title}.")
+
+        if room.status == LoteriaStatus.ACTIVE:
+            return redirect("game:loteria_room", room_id=room.pk)
+        if room.status == LoteriaStatus.FINISHED:
+            return redirect("game:loteria_results", room_id=room.pk)
+        return redirect("game:loteria_lobby", room_id=room.pk)
+
+
 class LoteriaBoardBuilderView(LoginRequiredMixin, TemplateView):
     """Saved board builder for one Loteria generation deck."""
 
@@ -303,6 +566,9 @@ class LoteriaBoardBuilderView(LoginRequiredMixin, TemplateView):
         self.deck_config = get_loteria_deck_config("kanto")
         self.board_slot = int(kwargs["board_slot"])
         ensure_default_loteria_board(request.user, self.deck_config)
+        if self.board_slot < 1 or self.board_slot > self.deck_config.max_saved_boards:
+            messages.info(request, "The starter board is a locked lucky board and cannot be edited.")
+            return redirect("game:loteria_game")
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -341,6 +607,7 @@ class LoteriaBoardBuilderView(LoginRequiredMixin, TemplateView):
                 "existing_board": template,
                 "saved_boards": board_templates,
                 "owned_species": owned_species,
+                "eligible_species_count": len(owned_species),
                 "selected_species": selected_species,
                 "can_build_extra": len(owned_species) >= self.deck_config.board_size,
             }
@@ -348,7 +615,7 @@ class LoteriaBoardBuilderView(LoginRequiredMixin, TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        title = request.POST.get("title", f"{self.deck_config.region_label} Board {self.board_slot}")
+        title = f"Board {self.board_slot}"
         raw_species_ids = [value for value in request.POST.get("species_ids", "").split(",") if value.strip()]
         try:
             save_loteria_board_template(
@@ -374,7 +641,7 @@ class LoteriaRoomView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         self.deck_config = get_loteria_deck_config("kanto")
         ensure_default_loteria_board(request.user, self.deck_config)
-        self.room = _get_owned_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
+        self.room = _get_accessible_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
         if self.room.status in [LoteriaStatus.DRAFT, LoteriaStatus.LOBBY]:
             return redirect("game:loteria_lobby", room_id=self.room.pk)
         self.room = advance_loteria_room(self.room, self.deck_config)
@@ -384,42 +651,34 @@ class LoteriaRoomView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        species_map = get_loteria_species_map(self.deck_config)
-        called_set = set(self.room.called_species_ids)
-        player_entries = list(self.room.entries.filter(user=self.request.user).order_by("board_slot"))
-        serialized_player_boards = [
-            {
-                **serialize_loteria_board(entry, species_map, called_set),
-                "display_name": entry.display_name,
-                "board_slot": entry.board_slot,
-            }
-            for entry in player_entries
-        ]
-        npc_entries = list(self.room.entries.filter(is_npc=True).order_by("entered_at", "pk"))
-        latest_species = species_map.get(self.room.called_species_ids[-1]) if self.room.called_species_ids else None
-        called_history = [species_map.get(species_id) for species_id in reversed(self.room.called_species_ids[-12:])]
-        called_history = [pokemon for pokemon in called_history if pokemon is not None]
-        seconds_until_next = None
-        if self.room.next_tick_at:
-            seconds_until_next = max(0, int((self.room.next_tick_at - timezone.now()).total_seconds()))
-
+        investment = _build_loteria_player_investment(self.request.user, self.room, self.deck_config)
         context.update(
             {
                 "deck": self.deck_config,
                 "candy_inventory": get_candy_inventory(self.request.user),
                 "room": self.room,
-                "latest_called": latest_species,
-                "called_history": called_history,
-                "player_boards": serialized_player_boards,
-                "player_board_count": len(serialized_player_boards),
-                "npc_entries": npc_entries,
-                "seconds_until_next": seconds_until_next,
+                "room_state_url": reverse("game:loteria_room_state", kwargs={"room_id": self.room.pk}),
+                "user_is_host": self.room.created_by_id == self.request.user.id,
+                "room_mode_label": "Guild Table" if self.room.guild_id else ("Private Table" if self.room.mode == LoteriaMode.PRIVATE else "NPC Table"),
+                "player_investment": investment,
             }
         )
+        context.update(_serialize_loteria_room_state(self.request.user, self.room, self.deck_config))
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action", "")
+        if action in {"pause_room", "resume_room"}:
+            try:
+                toggle_loteria_pause(request.user, self.room, pause=action == "pause_room")
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                if action == "pause_room":
+                    messages.info(request, "Loteria table paused. The shared 10-minute break timer is running.")
+                else:
+                    messages.success(request, "Loteria table resumed.")
+            return redirect("game:loteria_room", room_id=self.room.pk)
         if action == "abandon_room":
             try:
                 abandon_loteria_room(request.user, self.room)
@@ -433,6 +692,82 @@ class LoteriaRoomView(LoginRequiredMixin, TemplateView):
         return redirect("game:loteria_room", room_id=self.room.pk)
 
 
+class LoteriaRoomStateView(LoginRequiredMixin, View):
+    """Return live room state without forcing a full page refresh."""
+
+    def get(self, request, room_id: int):
+        deck_config = get_loteria_deck_config("kanto")
+        ensure_default_loteria_board(request.user, deck_config)
+        room = _get_accessible_loteria_room_or_404(request.user, room_id, deck_config)
+        if room.status in [LoteriaStatus.DRAFT, LoteriaStatus.LOBBY]:
+            return JsonResponse({
+                "redirect_url": reverse("game:loteria_lobby", kwargs={"room_id": room.pk}),
+            })
+
+        room = advance_loteria_room(room, deck_config)
+        if room.status == LoteriaStatus.FINISHED:
+            return JsonResponse({
+                "redirect_url": reverse("game:loteria_results", kwargs={"room_id": room.pk}),
+            })
+
+        state = _serialize_loteria_room_state(request.user, room, deck_config)
+        payload = {
+            "room": {
+                "title": room.title,
+                "round_number": room.round_number,
+                "prize_pool_ryo": room.prize_pool_ryo,
+                "called_count": state["called_count"],
+                "status": room.status,
+                "is_paused": state["is_paused"],
+                "pause_remaining_seconds": state["pause_remaining_seconds"],
+                "pause_expires_epoch_ms": state["pause_expires_epoch_ms"],
+            },
+            "latest_called": None,
+            "called_history": state["called_history"],
+            "player_boards": state["player_boards"],
+            "player_board_count": state["player_board_count"],
+            "seat_entries": state["seat_entries"],
+            "human_player_count": state["human_player_count"],
+            "npc_entries": state["npc_entries"],
+            "pattern_prizes": state["pattern_prizes"],
+            "next_tick_epoch_ms": state["next_tick_epoch_ms"],
+            "seconds_until_next": state["seconds_until_next"],
+        }
+
+        latest_called = state["latest_called"]
+        if latest_called:
+            payload["latest_called"] = {
+                "id": latest_called.id,
+                "name": latest_called.name,
+                "pokedex_number": latest_called.pokedex_number,
+                "image_url": state["latest_called_image_url"],
+            }
+
+        return JsonResponse(payload)
+
+
+class LoteriaLobbyStateView(LoginRequiredMixin, View):
+    """Return lightweight lobby status so players can jump into live play."""
+
+    def get(self, request, room_id: int):
+        deck_config = get_loteria_deck_config("kanto")
+        ensure_default_loteria_board(request.user, deck_config)
+        room = _get_accessible_loteria_room_or_404(request.user, room_id, deck_config)
+        payload = {
+            "room": {
+                "status": room.status,
+                "title": room.title,
+            },
+            "participant_ready_count": room.participants.filter(is_ready=True).count(),
+            "participant_count": room.participants.count(),
+        }
+        if room.status == LoteriaStatus.ACTIVE:
+            payload["live_url"] = reverse("game:loteria_room", kwargs={"room_id": room.pk})
+        elif room.status == LoteriaStatus.FINISHED:
+            payload["results_url"] = reverse("game:loteria_results", kwargs={"room_id": room.pk})
+        return JsonResponse(payload)
+
+
 class LoteriaLobbyView(LoginRequiredMixin, TemplateView):
     """Pre-game lobby for a player-owned Loteria room."""
 
@@ -441,7 +776,7 @@ class LoteriaLobbyView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         self.deck_config = get_loteria_deck_config("kanto")
         ensure_default_loteria_board(request.user, self.deck_config)
-        self.room = _get_owned_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
+        self.room = _get_accessible_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
         if self.room.status == LoteriaStatus.ACTIVE:
             return redirect("game:loteria_room", room_id=self.room.pk)
         if self.room.status == LoteriaStatus.FINISHED:
@@ -451,21 +786,62 @@ class LoteriaLobbyView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         board_cards = _build_loteria_board_cards(self.request.user, self.deck_config)
+        current_participant = ensure_loteria_host_participant(self.room) if self.room.created_by_id == self.request.user.id else None
+        if current_participant is None:
+            current_participant = self.room.participants.filter(user=self.request.user).first()
+        starter_board = get_user_loteria_starter_board(self.request.user, self.deck_config)
+        starter_board_card = None
+        if starter_board:
+            starter_board_card = serialize_loteria_board(starter_board, get_loteria_species_map(self.deck_config), set())
+            starter_board_card["template"] = starter_board
+            starter_board_card["is_saved"] = True
+            starter_board_card["is_starter"] = True
         selected_board_ids = set(self.room.entries.filter(user=self.request.user, board_template__isnull=False).values_list("board_template_id", flat=True))
-        if not selected_board_ids and board_cards:
-            selected_board_ids = {board_cards[0]["id"]}
-        for card in board_cards:
+        ordered_board_cards = []
+        if starter_board_card:
+            ordered_board_cards.append(starter_board_card)
+        ordered_board_cards.extend(board_cards)
+        if not selected_board_ids and ordered_board_cards:
+            selected_board_ids = {ordered_board_cards[0]["id"]}
+        for card in ordered_board_cards:
             card["is_selected"] = card["id"] in selected_board_ids
+
+        participants = get_loteria_room_participants(self.room)
+        participant_summaries = []
+        for participant in participants:
+            board_count = self.room.entries.filter(user=participant.user, is_npc=False).count()
+            participant_summaries.append(
+                {
+                    "display_name": participant.user.username,
+                    "username": participant.user.username,
+                    "is_host": participant.is_host,
+                    "is_ready": participant.is_ready,
+                    "board_count": board_count,
+                    "is_current_user": participant.user_id == self.request.user.id,
+                }
+            )
+        total_selected_boards = sum(item["board_count"] for item in participant_summaries)
+        all_ready = bool(participant_summaries) and all(item["is_ready"] and item["board_count"] > 0 for item in participant_summaries)
 
         context.update(
             {
                 "deck": self.deck_config,
                 "room": self.room,
                 "candy_inventory": get_candy_inventory(self.request.user),
-                "board_cards": board_cards,
+                "board_cards": ordered_board_cards,
+                "starter_board_slot": get_loteria_starter_board_slot(self.deck_config),
                 "npc_labels": LOTERIA_NPC_NAMES[: self.room.npc_count],
                 "base_prize": self.deck_config.prize_for_npc_count(self.room.npc_count),
+                "npc_entry_fee_ryo": self.deck_config.entry_fee_for_npc_count(self.room.npc_count),
                 "per_board_bonus": self.deck_config.prize_boost_per_player_board,
+                "user_is_host": self.room.created_by_id == self.request.user.id,
+                "current_participant": current_participant,
+                "participant_summaries": participant_summaries,
+                "total_selected_boards": total_selected_boards,
+                "all_players_ready": all_ready,
+                "room_mode_label": "Guild Table" if self.room.guild_id else ("Private Table" if self.room.mode == LoteriaMode.PRIVATE else "Quick NPC Table"),
+                "room_join_code": self.room.room_code or "",
+                "room_status_url": reverse("game:loteria_lobby_state", kwargs={"room_id": self.room.pk}),
             }
         )
         return context
@@ -481,14 +857,35 @@ class LoteriaLobbyView(LoginRequiredMixin, TemplateView):
             messages.info(request, "Loteria room abandoned.")
             return redirect("game:loteria_game")
 
-        if action == "start_room":
+        if action == "save_selection":
             board_ids = request.POST.getlist("board_ids")
             try:
-                start_loteria_room(request.user, self.room, self.deck_config, board_ids)
+                save_loteria_room_boards(request.user, self.room, self.deck_config, board_ids, mark_ready=True)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, "Boards saved and your seat is ready.")
+            return redirect("game:loteria_lobby", room_id=self.room.pk)
+
+        if action == "set_not_ready":
+            try:
+                set_loteria_room_participant_ready(request.user, self.room, is_ready=False)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.info(request, "Your seat is marked not ready.")
+            return redirect("game:loteria_lobby", room_id=self.room.pk)
+
+        if action == "start_room":
+            try:
+                if self.room.mode == LoteriaMode.PRIVATE:
+                    start_loteria_room(request.user, self.room, self.deck_config)
+                else:
+                    start_loteria_room(request.user, self.room, self.deck_config, request.POST.getlist("board_ids"))
             except ValueError as exc:
                 messages.error(request, str(exc))
                 return redirect("game:loteria_lobby", room_id=self.room.pk)
-            messages.success(request, "Loteria table launched. The first card lands in 4 seconds.")
+            messages.success(request, "Loteria table launched. The first card lands in 15 seconds.")
             return redirect("game:loteria_room", room_id=self.room.pk)
 
         messages.error(request, "Unknown Loteria lobby action.")
@@ -502,7 +899,7 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.deck_config = get_loteria_deck_config("kanto")
-        self.room = _get_owned_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
+        self.room = _get_accessible_loteria_room_or_404(request.user, kwargs["room_id"], self.deck_config)
         if self.room.status in [LoteriaStatus.DRAFT, LoteriaStatus.LOBBY]:
             return redirect("game:loteria_lobby", room_id=self.room.pk)
         if self.room.status == LoteriaStatus.ACTIVE:
@@ -513,21 +910,26 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         species_map = get_loteria_species_map(self.deck_config)
         called_set = set(self.room.called_species_ids)
+        investment = _build_loteria_player_investment(self.request.user, self.room, self.deck_config)
         player_boards = [
             {
-                **serialize_loteria_board(entry, species_map, called_set),
+                **(board_payload := serialize_loteria_board(entry, species_map, called_set)),
                 "display_name": entry.display_name,
+                "owner_name": entry.user.username if entry.user_id else "",
+                "board_label": board_payload["title"],
                 "board_slot": entry.board_slot,
                 "is_winner": entry.is_winner,
                 "reward_ryo": entry.reward_ryo,
             }
-            for entry in self.room.entries.filter(user=self.request.user).order_by("board_slot")
+            for entry in self.room.entries.filter(user=self.request.user).select_related("board_template").order_by("board_slot")
         ]
-        winners = list(self.room.entries.filter(is_winner=True).order_by("entered_at", "pk"))
+        winners = self.room.entries.filter(is_winner=True).select_related("board_template", "user").order_by("entered_at", "pk")
         winning_boards = [
             {
-                **serialize_loteria_board(entry, species_map, called_set),
+                **(board_payload := serialize_loteria_board(entry, species_map, called_set)),
                 "display_name": entry.display_name,
+                "owner_name": entry.user.username if entry.user_id else entry.display_name,
+                "board_label": board_payload["title"],
                 "board_slot": entry.board_slot,
                 "reward_ryo": entry.reward_ryo,
                 "is_npc": entry.is_npc,
@@ -536,6 +938,8 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
         ]
         called_history = [species_map.get(species_id) for species_id in reversed(self.room.called_species_ids[-16:])]
         called_history = [pokemon for pokemon in called_history if pokemon is not None]
+        pending_room_claims = list(get_user_pending_loteria_claims(self.request.user).filter(room=self.room))
+        pending_room_total = sum(claim.reward_ryo for claim in pending_room_claims)
         context.update(
             {
                 "deck": self.deck_config,
@@ -544,10 +948,77 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
                 "player_boards": player_boards,
                 "winners": winners,
                 "winning_boards": winning_boards,
+                "pattern_prizes": build_loteria_pattern_tracker(self.room, self.deck_config, viewer_user=self.request.user),
                 "candy_inventory": get_candy_inventory(self.request.user),
+                "pending_room_claims": pending_room_claims,
+                "pending_room_total": pending_room_total,
+                "player_investment": investment,
             }
         )
         return context
+
+    def post(self, request, *args, **kwargs):
+        next_url = reverse("game:loteria_results", kwargs={"room_id": self.room.pk})
+        action = request.POST.get("action", "")
+        if action == "claim_prize":
+            try:
+                claim_id = int(request.POST.get("claim_id", "0"))
+                claim = claim_loteria_prize(request.user, claim_id, room=self.room)
+            except (TypeError, ValueError) as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f"{claim.pattern_label} collected for {claim.reward_ryo} Ryo.")
+            return redirect(next_url)
+        if action == "claim_all_prizes":
+            try:
+                claim_count, total_ryo = claim_all_loteria_prizes(request.user, room=self.room)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f"Collected {claim_count} Loteria prize{'' if claim_count == 1 else 's'} for {total_ryo} Ryo.")
+            return redirect(next_url)
+        messages.error(request, "Unknown Loteria results action.")
+        return redirect(next_url)
+
+
+class LoteriaPrizeClaimView(LoginRequiredMixin, View):
+    """Claim one or many finished-room Loteria prizes from any surface."""
+
+    def post(self, request):
+        next_url = request.POST.get("next") or reverse("game:loteria_game")
+        action = request.POST.get("action", "")
+        if action == "claim_prize":
+            try:
+                claim_id = int(request.POST.get("claim_id", "0"))
+                room_id = request.POST.get("room_id", "").strip()
+                room = None
+                if room_id:
+                    room = LoteriaRoom.objects.filter(pk=int(room_id)).first()
+                claim = claim_loteria_prize(request.user, claim_id, room=room)
+            except (TypeError, ValueError) as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f"{claim.pattern_label} collected for {claim.reward_ryo} Ryo.")
+            return redirect(next_url)
+        if action == "claim_all_prizes":
+            room_id = request.POST.get("room_id", "").strip()
+            room = None
+            if room_id:
+                try:
+                    room = LoteriaRoom.objects.get(pk=int(room_id))
+                except (LoteriaRoom.DoesNotExist, ValueError):
+                    messages.error(request, "That Loteria room could not be found.")
+                    return redirect(next_url)
+                _get_accessible_loteria_room_or_404(request.user, room.pk, get_loteria_deck_config("kanto"))
+            try:
+                claim_count, total_ryo = claim_all_loteria_prizes(request.user, room=room)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f"Collected {claim_count} Loteria prize{'' if claim_count == 1 else 's'} for {total_ryo} Ryo.")
+            return redirect(next_url)
+        messages.error(request, "Unknown Loteria prize action.")
+        return redirect(next_url)
 
 
 class SilhouetteHubView(LoginRequiredMixin, TemplateView):

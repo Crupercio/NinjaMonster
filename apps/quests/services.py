@@ -28,6 +28,19 @@ def _weekly_period_key() -> str:
 class QuestService:
     """Orchestrates all quest assignment, progress tracking, and reward claiming."""
 
+    SUPPORTED_ACTIVE_CONDITIONS = (
+        QuestCondition.OPEN_PACKS,
+        QuestCondition.COMPLETE_EXPEDITIONS,
+        QuestCondition.BOND_POKEMON,
+    )
+
+    def _supported_templates(self, quest_type: str):
+        return QuestTemplate.objects.filter(
+            quest_type=quest_type,
+            is_active=True,
+            condition__in=self.SUPPORTED_ACTIVE_CONDITIONS,
+        )
+
     # ------------------------------------------------------------------
     # Assignment
     # ------------------------------------------------------------------
@@ -44,26 +57,25 @@ class QuestService:
             UserQuest.objects.filter(
                 user=user,
                 template__quest_type=QuestType.DAILY,
+                template__condition__in=self.SUPPORTED_ACTIVE_CONDITIONS,
                 period_key=period_key,
             ).select_related("template")
         )
-        if existing:
-            return existing
-
-        templates = list(
-            QuestTemplate.objects.filter(
-                quest_type=QuestType.DAILY, is_active=True
-            ).order_by("?")[:3]
-        )
-        if not templates:
-            return []
-
-        created = UserQuest.objects.bulk_create([
-            UserQuest(user=user, template=t, period_key=period_key)
-            for t in templates
-        ])
-        logger.debug("Assigned %d daily quests to %s (%s)", len(created), user, period_key)
-        return created
+        if len(existing) < 3:
+            existing_ids = {quest.template_id for quest in existing}
+            templates = list(
+                self._supported_templates(QuestType.DAILY)
+                .exclude(pk__in=existing_ids)
+                .order_by("?")[: max(0, 3 - len(existing))]
+            )
+            if templates:
+                created = UserQuest.objects.bulk_create([
+                    UserQuest(user=user, template=t, period_key=period_key)
+                    for t in templates
+                ])
+                existing.extend(created)
+                logger.debug("Assigned %d daily quests to %s (%s)", len(created), user, period_key)
+        return existing
 
     def assign_weekly_quests(self, user: User) -> list[UserQuest]:
         """
@@ -76,26 +88,25 @@ class QuestService:
             UserQuest.objects.filter(
                 user=user,
                 template__quest_type=QuestType.WEEKLY,
+                template__condition__in=self.SUPPORTED_ACTIVE_CONDITIONS,
                 period_key=period_key,
             ).select_related("template")
         )
-        if existing:
-            return existing
-
-        templates = list(
-            QuestTemplate.objects.filter(
-                quest_type=QuestType.WEEKLY, is_active=True
-            ).order_by("?")[:3]
-        )
-        if not templates:
-            return []
-
-        created = UserQuest.objects.bulk_create([
-            UserQuest(user=user, template=t, period_key=period_key)
-            for t in templates
-        ])
-        logger.debug("Assigned %d weekly quests to %s (%s)", len(created), user, period_key)
-        return created
+        if len(existing) < 3:
+            existing_ids = {quest.template_id for quest in existing}
+            templates = list(
+                self._supported_templates(QuestType.WEEKLY)
+                .exclude(pk__in=existing_ids)
+                .order_by("?")[: max(0, 3 - len(existing))]
+            )
+            if templates:
+                created = UserQuest.objects.bulk_create([
+                    UserQuest(user=user, template=t, period_key=period_key)
+                    for t in templates
+                ])
+                existing.extend(created)
+                logger.debug("Assigned %d weekly quests to %s (%s)", len(created), user, period_key)
+        return existing
 
     def ensure_story_quests(self, user: User) -> list[UserQuest]:
         """
@@ -418,5 +429,9 @@ class QuestService:
         """
         daily = self.assign_daily_quests(user)
         weekly = self.assign_weekly_quests(user)
-        story = self.ensure_story_quests(user)
-        return {"daily": daily, "weekly": weekly, "story": story}
+        return {
+            "daily": daily,
+            "weekly": weekly,
+            "story": [],
+            "story_is_rebuilding": True,
+        }

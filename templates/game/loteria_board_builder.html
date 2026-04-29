@@ -96,19 +96,11 @@
       <div class="panel-kicker">Loteria Builder</div>
       <h1 class="panel-title">Board {{ board_slot }}</h1>
       <p class="panel-copy">
-        Build a 4 x 4 Kanto board from Pokemon you currently own. The room will auto-mark matching calls, so this is all about shaping your favorite table before the event starts.
+        Build one of your {{ deck.max_saved_boards }} custom 4 x 4 Kanto boards from Pokemon you currently own at level 20 or higher. Your separate starter board stays locked and keeps its own lucky layout.
       </p>
 
-      <label class="field-label" for="board-title">Board Name</label>
-      <input
-        id="board-title"
-        class="builder-input"
-        type="text"
-        name="title"
-        maxlength="80"
-        value="{{ existing_board.title|default:'' }}"
-        placeholder="Kanto Collector Board"
-      >
+      <div class="field-label">Board Label</div>
+      <div class="builder-input" style="display:flex; align-items:center; min-height:52px; opacity:.9;">Board {{ board_slot }} stays fixed so rooms, prizes, and claims all speak the same language.</div>
 
       <div class="slot-grid">
         <template x-for="(slot, index) in selectedSpecies" :key="slot.id">
@@ -142,6 +134,7 @@
         <div>
           <div class="panel-kicker">Owned Kanto Pokemon</div>
           <div class="picker-count" x-text="selectedSpecies.length + ' / ' + boardSize + ' slots filled'"></div>
+          <div class="slot-hint" style="margin-top:0.3rem;">{{ eligible_species_count }} eligible Pokemon at level 20+</div>
         </div>
         <div style="width:min(100%, 320px);">
           <label class="field-label" for="species-search">Search</label>
@@ -167,7 +160,7 @@
         </template>
       </div>
       {% else %}
-      <p class="panel-copy">You need at least {{ deck.board_size }} owned Kanto Pokemon to build extra custom boards. Your starter board is still ready to enter from the hub.</p>
+      <p class="panel-copy">You need at least {{ deck.board_size }} owned Kanto Pokemon at level 20 or higher to build extra custom boards. Your starter board will unlock once you have enough eligible Pokemon.</p>
       {% endif %}
     </aside>
   </form>

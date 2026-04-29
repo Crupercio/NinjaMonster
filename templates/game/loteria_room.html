@@ -12,7 +12,7 @@
 .msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
-.room-layout,
+.room-bar,
 .panel,
 .call-card,
 .called-card,
@@ -23,109 +23,335 @@
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 
-.room-layout {
-  display:grid;
-  grid-template-columns: minmax(0, 1.26fr) minmax(320px, .74fr);
+.room-bar {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
   gap:1rem;
+  flex-wrap:wrap;
+  border-radius:26px;
+  padding:1.05rem 1.1rem;
   margin-bottom:1rem;
 }
-.panel, .call-card, .called-card, .board-card, .seat-card { border-radius:26px; padding:1.15rem 1.2rem; }
+.room-bar-copy { flex:1 1 420px; }
+.room-bar-actions { display:flex; align-items:stretch; gap:.75rem; flex-wrap:wrap; }
+.play-layout { display:grid; grid-template-columns:minmax(0, .86fr) minmax(420px, .68fr); gap:.75rem; margin-bottom:.75rem; align-items:start; }
+.panel, .call-card, .called-card, .board-card, .seat-card { border-radius:26px; padding:1.05rem 1.1rem; }
 .panel-kicker {
   display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase;
   letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem;
 }
 .panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.6rem); line-height:1; }
-.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.7rem; }
-.panel-copy { color:var(--text-2); line-height:1.65; margin-bottom:.9rem; }
-.status-row { display:flex; flex-wrap:wrap; gap:.55rem; margin-bottom:1rem; }
+.panel-copy { color:var(--text-2); line-height:1.55; margin-bottom:.7rem; }
+.status-row { display:flex; flex-wrap:wrap; gap:.55rem; margin-bottom:.2rem; }
 .status-chip {
   display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
   background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
   letter-spacing:.08em; text-transform:uppercase;
 }
 .status-chip.live { color:#86efac; border-color:rgba(74,222,128,.28); }
-.metric-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; }
+.metric-grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:.65rem; min-width:min(100%, 720px); }
 .metric {
   border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
 }
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
+.metric-note {
+  width:100%;
+  margin-top:.2rem;
+  padding:.58rem .78rem;
+  border-radius:14px;
+  border:1px solid rgba(91,129,255,.18);
+  background:rgba(10,15,29,.38);
+  color:var(--text-3);
+  font-size:.76rem;
+  line-height:1.4;
+}
 
 .call-card {
   display:grid;
-  grid-template-columns: minmax(220px, .95fr) minmax(0, 1.05fr);
-  gap:1rem;
-  margin-bottom:1rem;
+  grid-template-rows:auto auto;
+  gap:.55rem;
+  min-height:100%;
 }
+.call-card.reveal-flash { animation: loteriaRevealFlash .72s ease; }
 .call-stage {
-  border-radius:22px;
+  width:88%;
+  margin:0 auto;
+  border-radius:14px;
   border:1px solid rgba(232,184,75,.16);
   background: radial-gradient(circle at center, rgba(91,129,255,.14), rgba(9,14,27,.94) 72%);
-  min-height:290px;
+  min-height:210px;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:1rem;
+  padding:.75rem;
 }
-.call-stage img { max-width:100%; max-height:220px; object-fit:contain; filter:drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
-.call-copy { display:flex; flex-direction:column; justify-content:center; }
-.call-name { color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.9rem,2.6vw,2.4rem); margin:0 0 .25rem; }
-.call-dex { color:#a78bfa; font-size:.94rem; margin-bottom:.7rem; }
-
-.called-card { margin-bottom:1rem; }
-.called-grid { display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap:.65rem; }
-.called-pill {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
-  padding:.55rem .45rem; text-align:center;
+.call-stage img { max-width:100%; max-height:176px; object-fit:contain; filter:drop-shadow(0 14px 22px rgba(0,0,0,.32)); }
+.call-stage img.reveal-pop { animation: loteriaRevealPop .6s cubic-bezier(.2,.8,.2,1); }
+.call-copy { padding:0 .15rem .05rem; }
+.call-copy-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.9rem; align-items:end; }
+.call-info { text-align:left; min-width:0; }
+.call-name { color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.45rem,2vw,1.9rem); margin:0 0 .08rem; text-align:left; }
+.call-dex { color:#a78bfa; font-size:.88rem; margin-bottom:0; text-align:left; }
+.call-recent {
+  display:flex;
+  gap:.45rem;
+  justify-content:flex-end;
+  align-items:flex-end;
 }
-.called-pill img { width:54px; height:54px; object-fit:contain; margin:0 auto .2rem; display:block; }
-.called-pill span { color:var(--text-2); font-size:.74rem; line-height:1.25; display:block; }
+.call-recent-pill {
+  width:54px;
+  padding:.32rem .24rem;
+  border-radius:12px;
+  border:1px solid rgba(232,184,75,.14);
+  background:rgba(10,15,29,.52);
+  text-align:center;
+}
+.call-recent-pill img {
+  width:30px;
+  height:30px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto .15rem;
+}
+.call-recent-pill span {
+  display:block;
+  color:var(--text-3);
+  font-size:.56rem;
+  line-height:1.15;
+}
+.pause-banner {
+  margin-top:.75rem;
+  padding:.7rem .82rem;
+  border-radius:16px;
+  border:1px solid rgba(232,184,75,.18);
+  background:rgba(10,15,29,.44);
+  color:var(--text-2);
+  text-align:center;
+}
+.pause-banner.live {
+  border-color:rgba(74,222,128,.28);
+  background:rgba(22,101,52,.18);
+  color:#d1fae5;
+}
 
-.side-stack { display:grid; gap:1rem; }
-.seat-list { display:grid; gap:.7rem; }
-.seat-card strong { display:block; color:var(--text-1); margin-bottom:.15rem; }
-.seat-card span { color:var(--text-3); font-size:.78rem; }
-.actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+.pattern-panel { padding:.72rem .78rem; }
+.pattern-panel-head {
+  display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem;
+}
+.pattern-panel-title { margin:0; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.06rem; line-height:1.05; }
+.pattern-panel-copy { color:var(--text-3); font-size:.78rem; line-height:1.45; margin:0; max-width:18rem; }
 
 .boards-head {
   display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap;
-  margin-bottom:1rem;
+  margin:0 0 .85rem;
 }
-.boards-grid { display:grid; gap:1rem; }
-.boards-grid.one { grid-template-columns:minmax(0, 560px); justify-content:center; }
-.boards-grid.two { grid-template-columns:repeat(2, minmax(0,1fr)); }
+.boards-grid { display:grid; gap:1rem; grid-template-columns:repeat(3, minmax(0,1fr)); align-items:start; }
+.boards-grid.one,
+.boards-grid.two,
 .boards-grid.three { grid-template-columns:repeat(3, minmax(0,1fr)); }
 .board-card.player { border-color: rgba(251,191,36,.34); box-shadow: inset 0 0 0 1px rgba(251,191,36,.14); }
-.board-head { display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; margin-bottom:.8rem; }
+.boards-grid.one .board-card,
+.boards-grid.two .board-card,
+.boards-grid.three .board-card { grid-column:span 1; }
+.boards-grid.one .board-card { padding:.95rem 1rem .9rem; }
+.board-head { display:flex; justify-content:space-between; align-items:flex-start; gap:.65rem; margin-bottom:.65rem; }
 .board-title { margin:0; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.15rem; }
 .board-subtitle { color:#a78bfa; font-size:.8rem; text-transform:uppercase; letter-spacing:.12em; }
-.board-grid {
-  display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.45rem;
-}
+.board-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.38rem; }
 .board-cell {
   position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
   background:rgba(9,14,27,.9); display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
-.board-cell img { width:74%; height:74%; object-fit:contain; filter:drop-shadow(0 10px 18px rgba(0,0,0,.28)); }
+.board-cell.hit-flash { animation:loteriaCellFlash .62s ease 1.55s both; }
+.board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 10px 18px rgba(0,0,0,.28)); }
 .mark-token {
   position:absolute; right:8px; bottom:8px; width:22px; height:22px; border-radius:999px;
   background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b 62%, #7c2d12 100%);
   box-shadow: 0 3px 12px rgba(245,158,11,.35);
 }
-.board-progress { margin-top:.75rem; color:var(--text-2); font-size:.82rem; line-height:1.5; }
+.marker-fly {
+  position:fixed;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  pointer-events:none;
+  z-index:9999;
+  background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b 62%, #7c2d12 100%);
+  box-shadow: 0 3px 12px rgba(245,158,11,.45);
+  transition: transform 2s cubic-bezier(.2,.8,.2,1), opacity 2s ease;
+}
+.marker-pool-card { margin-top:1rem; }
+.marker-pool-lanes {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:1rem;
+}
+.marker-pool-lane {
+  min-height:68px;
+  border-radius:20px;
+  border:1px solid rgba(91,129,255,.18);
+  background:rgba(10,15,29,.42);
+  padding:.75rem .8rem;
+}
+.marker-pool-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.5rem;
+  margin-bottom:.45rem;
+}
+.marker-pool-title {
+  color:var(--text-2);
+  font-size:.74rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.marker-pool-meta {
+  color:#fcd34d;
+  font-size:.72rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.marker-pool-lane.active {
+  border-color:rgba(251,191,36,.28);
+  box-shadow:inset 0 0 0 1px rgba(251,191,36,.08);
+}
+.marker-pool-lane.hidden {
+  visibility:hidden;
+  pointer-events:none;
+}
+.marker-pool-grid {
+  display:grid;
+  grid-template-columns:repeat(16, 14px);
+  gap:.28rem;
+  align-items:center;
+  align-content:start;
+  min-height:28px;
+}
+.marker-pool-token {
+  width:14px;
+  height:14px;
+  border-radius:999px;
+  background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b 62%, #7c2d12 100%);
+  box-shadow: 0 3px 12px rgba(245,158,11,.28);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.marker-pool-token.launching {
+  opacity:.12;
+  transform:scale(.82);
+}
+.called-card { margin-top:1rem; }
+.called-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:.55rem; }
+.called-pill {
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
+  padding:.5rem .4rem; text-align:center;
+}
+.called-pill.latest {
+  border-color: rgba(232,184,75,.42);
+  box-shadow: inset 0 0 0 1px rgba(232,184,75,.12), 0 10px 24px rgba(0,0,0,.22);
+  animation: loteriaRevealPop .5s ease;
+}
+.called-pill img { width:48px; height:48px; object-fit:contain; margin:0 auto .2rem; display:block; }
+.called-pill span { color:var(--text-2); font-size:.74rem; line-height:1.25; display:block; }
+
+.pattern-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.35rem; }
+.pattern-card {
+  border-radius:18px;
+  border:1px solid rgba(91,129,255,.22);
+  background:rgba(10,15,29,.46);
+  padding:.48rem .48rem;
+}
+.pattern-card.claimed {
+  border-color: rgba(74,222,128,.28);
+  box-shadow: inset 0 0 0 1px rgba(74,222,128,.12);
+}
+.pattern-head { display:flex; justify-content:space-between; align-items:flex-start; gap:.4rem; margin-bottom:.32rem; }
+.pattern-title { color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:.82rem; margin:0; }
+.pattern-reward { color:#fcd34d; font-size:.7rem; font-weight:800; }
+.pattern-mini {
+  display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.18rem;
+  max-width:64px; margin-bottom:.24rem;
+}
+.pattern-mini-cell {
+  aspect-ratio:1/1; border-radius:6px; border:1px solid rgba(91,129,255,.16); background:rgba(9,14,27,.88);
+}
+.pattern-mini-cell.marked { background:linear-gradient(180deg, rgba(251,191,36,.9), rgba(245,158,11,.9)); border-color:rgba(251,191,36,.32); }
+.pattern-status { color:var(--text-2); font-size:.62rem; line-height:1.18; min-height:1rem; }
+.pattern-winner {
+  margin-top:.3rem;
+  padding:.4rem .46rem;
+  border-radius:12px;
+  border:1px solid rgba(251,191,36,.14);
+  background:rgba(10,15,29,.48);
+}
+.pattern-winner.claimed { border-color:rgba(74,222,128,.24); }
+
+.seat-list { display:grid; gap:.55rem; }
+.seat-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.75rem; }
+.seat-card { padding:.8rem .9rem; }
+.seat-card strong { display:block; color:var(--text-1); margin-bottom:.1rem; font-size:.98rem; }
+.seat-card span { color:var(--text-3); font-size:.76rem; }
+.actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+
+@keyframes loteriaRevealFlash {
+  0% { box-shadow: 0 20px 40px rgba(0,0,0,.28), 0 0 0 0 rgba(232,184,75,0); }
+  25% { box-shadow: 0 20px 40px rgba(0,0,0,.28), 0 0 0 3px rgba(232,184,75,.12); }
+  100% { box-shadow: 0 20px 40px rgba(0,0,0,.28), 0 0 0 0 rgba(232,184,75,0); }
+}
+
+@keyframes loteriaRevealPop {
+  0% { opacity: .45; transform: scale(.92) translateY(8px); }
+  65% { opacity: 1; transform: scale(1.03) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes loteriaTokenDrop {
+  0% { opacity: 0; transform: translateY(-14px) scale(.72); }
+  60% { opacity: 1; transform: translateY(2px) scale(1.08); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes loteriaCellFlash {
+  0% { box-shadow: inset 0 0 0 0 rgba(251,191,36,0); transform: scale(.98); }
+  35% { box-shadow: inset 0 0 0 2px rgba(251,191,36,.42), 0 0 0 2px rgba(251,191,36,.18); transform: scale(1.02); }
+  100% { box-shadow: inset 0 0 0 0 rgba(251,191,36,0); transform: scale(1); }
+}
 
 @media (max-width: 1120px) {
-  .room-layout,
+  .play-layout,
   .call-card,
-  .called-grid,
+  .seat-grid { grid-template-columns:1fr; }
+  .boards-grid,
+  .boards-grid.one,
   .boards-grid.two,
-  .boards-grid.three { grid-template-columns:1fr; }
+  .boards-grid.three,
+  .marker-pool-lanes { grid-template-columns:1fr; }
+  .pattern-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .call-copy-row { grid-template-columns:1fr; }
+  .call-recent { justify-content:flex-start; }
+  .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); min-width:100%; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="room-shell" x-data="loteriaRoom({ secondsUntilNext: {{ seconds_until_next|default_if_none:'null' }} })" x-init="init()">
+<div
+  class="room-shell"
+  x-data="loteriaRoom({
+    stateUrl: '{{ room_state_url }}',
+    nextTickEpochMs: {{ next_tick_epoch_ms|default_if_none:'null' }},
+    pauseExpiresEpochMs: {{ pause_expires_epoch_ms|default_if_none:'null' }},
+    pauseRemainingSeconds: {{ pause_remaining_seconds|default:0 }},
+    isPaused: {{ is_paused|yesno:'true,false' }},
+    calledCount: {{ called_count }},
+    latestCalledSpeciesId: {{ latest_called_id|default_if_none:'null' }},
+    fallbackImage: '{% static "images/games/loteria_game_logo.png" %}'
+  })"
+  x-init="init()"
+>
   <a href="{% url 'game:loteria_game' %}" class="room-back">&larr; Back to Loteria Hub</a>
 
   {% if messages %}
@@ -136,114 +362,148 @@
   </div>
   {% endif %}
 
-  <section class="room-layout">
-    <div>
-      <section class="panel">
-        <div class="panel-kicker">Live Table</div>
-        <h1 class="panel-title">{{ room.title }}</h1>
-        <div class="panel-subtitle">{{ deck.region_label }}</div>
-        <p class="panel-copy">
-          The room is live. Every {{ deck.draw_interval_seconds }} seconds a new Kanto card is called, your boards auto-mark matching tiles,
-          and the table stops the instant a full board wins.
-        </p>
-        <div class="status-row">
-          <span class="status-chip live">Active</span>
-          <span class="status-chip">Round {{ room.round_number }}</span>
-          <span class="status-chip">{{ room.npc_count }} NPC</span>
-          <span class="status-chip">{{ room.called_species_ids|length }} called</span>
-        </div>
-        <div class="metric-grid">
-          <div class="metric">
-            <div class="metric-label">Prize Pool</div>
-            <div class="metric-value">{{ room.prize_pool_ryo }} Ryo</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Next Call</div>
-            <div class="metric-value"><span x-text="seconds + 's'">{{ seconds_until_next }}s</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Your Boards</div>
-            <div class="metric-value">{{ player_board_count }}</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="call-card">
-        <div class="call-stage">
-          {% if latest_called %}
-          <img src="{{ latest_called.sprite_url }}" alt="{{ latest_called.name }}">
-          {% else %}
-          <img src="{% static 'images/games/loteria_game_logo.png' %}" alt="Pokemon Loteria">
-          {% endif %}
-        </div>
-        <div class="call-copy">
-          <div class="panel-kicker">Latest Call</div>
-          {% if latest_called %}
-          <h2 class="call-name">{{ latest_called.name }}</h2>
-          <div class="call-dex">#{{ latest_called.pokedex_number }}</div>
-          <p class="panel-copy">Every board carrying this Pokemon just received an automatic marker. Keep an eye on the token drops across your table below.</p>
-          {% else %}
-          <h2 class="call-name">Waiting For The First Card</h2>
-          <div class="call-dex">The deck is ready.</div>
-          <p class="panel-copy">The first Pokemon call will land as soon as the countdown reaches zero.</p>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="called-card">
-        <div class="panel-kicker">Called Cards</div>
-        <div class="called-grid">
-          {% for pokemon in called_history %}
-          <div class="called-pill">
-            <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
-            <span>{{ pokemon.name }}</span>
-          </div>
-          {% empty %}
-          <div class="panel-copy">The first called cards will start filling this tray as the room runs.</div>
-          {% endfor %}
-        </div>
-      </section>
+  <section class="room-bar">
+    <div class="room-bar-copy">
+      <div class="panel-kicker">Live Table</div>
+      <h1 class="panel-title">{{ room.title }}</h1>
+      <div class="status-row">
+        <span class="status-chip live" id="room-status">Active</span>
+        <span class="status-chip" id="room-round">Round {{ room.round_number }}</span>
+        <span class="status-chip">{% if room.mode == "private" %}{{ human_player_count }} player{{ human_player_count|pluralize }}{% else %}{{ room.npc_count }} NPC{% endif %}</span>
+        <span class="status-chip" id="room-called-count">{{ called_count }} called</span>
+      </div>
     </div>
-
-    <aside class="panel">
-      <div class="side-stack">
-        <section>
-          <div class="panel-kicker">Table Seats</div>
-          <div class="seat-list">
-            {% for board in player_boards %}
-            <div class="seat-card">
-              <strong>{{ board.display_name }}</strong>
-              <span>Your board · {{ board.board_size }} tiles · {{ board.marked_count }} marked</span>
-            </div>
-            {% endfor %}
-            {% for entry in npc_entries %}
-            <div class="seat-card">
-              <strong>{{ entry.display_name }}</strong>
-              <span>NPC board · {{ entry.species_ids|length }} tiles</span>
-            </div>
-            {% endfor %}
-          </div>
-        </section>
-
-        <section>
-          <div class="panel-kicker">Candy Wallet</div>
-          <div class="seat-list">
-            {% for key, candy in candy_inventory.items %}
-            <div class="seat-card">
-              <strong>{{ candy.label }}</strong>
-              <span>{{ candy.description }} · x{{ candy.count }}</span>
-            </div>
-            {% endfor %}
-          </div>
-        </section>
-
-        <form method="post" class="actions">
+    <div class="room-bar-actions">
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Buena</div>
+          <div class="metric-value" id="room-prize-pool">{{ room.prize_pool_ryo }} Ryo</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Next Call</div>
+          <div class="metric-value"><span id="next-call-countdown">{% if seconds_until_next is not None %}{{ seconds_until_next }}s{% else %}--{% endif %}</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Your Boards</div>
+          <div class="metric-value" id="player-board-count-metric">{{ player_board_count }}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Your Spend</div>
+          <div class="metric-value">{{ player_investment.spend_display }}</div>
+        </div>
+      </div>
+      <div class="metric-note">{{ player_investment.spend_note }}</div>
+      <div class="actions" style="margin-top:0;">
+        {% if room.mode == "private" %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="{% if is_paused %}resume_room{% else %}pause_room{% endif %}">
+          <button type="submit" class="btn btn-secondary" {% if not is_paused and pause_remaining_seconds <= 0 %}disabled{% endif %}>
+            {% if is_paused %}Resume Table{% else %}Pause Table{% endif %}
+          </button>
+        </form>
+        {% endif %}
+        {% if user_is_host %}
+        <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="abandon_room">
           <button type="submit" class="btn btn-secondary">Abandon Room</button>
         </form>
+        {% endif %}
       </div>
-    </aside>
+    </div>
+  </section>
+
+  <section class="play-layout">
+    <section class="call-card" id="latest-call-panel">
+      <div class="call-stage">
+        {% if latest_called %}
+        <img id="latest-call-image" src="{{ latest_called_image_url }}" alt="{{ latest_called.name }}">
+        {% else %}
+        <img id="latest-call-image" src="{% static 'images/games/loteria_game_logo.png' %}" alt="Pokemon Loteria">
+        {% endif %}
+      </div>
+      <div class="call-copy">
+        <div class="call-copy-row">
+          <div class="call-info">
+            <div class="panel-kicker">Latest Call</div>
+            {% if latest_called %}
+            <h2 class="call-name" id="latest-call-name">{{ latest_called.name }}</h2>
+            <div class="call-dex" id="latest-call-dex">#{{ latest_called.pokedex_number }}</div>
+            {% else %}
+            <h2 class="call-name" id="latest-call-name">Waiting For The First Card</h2>
+            <div class="call-dex" id="latest-call-dex">The deck is ready.</div>
+            {% endif %}
+          </div>
+          <div class="call-recent" id="latest-call-recent">
+            {% for pokemon in called_history|slice:":5" %}
+            <div class="call-recent-pill{% if forloop.first %} latest{% endif %}">
+              <img src="{{ pokemon.image_url }}" alt="{{ pokemon.name }}">
+              <span>{{ pokemon.name }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% if room.mode == "private" %}
+        <div class="pause-banner{% if is_paused %} live{% endif %}" id="pause-banner">
+          {% if is_paused %}
+          Table paused. Shared break time left: <span id="pause-remaining-label">{{ pause_remaining_seconds }}s</span>.
+          {% else %}
+          Shared pause budget left: <span id="pause-remaining-label">{{ pause_remaining_seconds }}s</span>.
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    <section class="panel pattern-panel">
+      <div class="pattern-panel-head">
+        <div>
+          <div class="panel-kicker">Prize Tracker</div>
+          <h2 class="pattern-panel-title">Room Patterns</h2>
+        </div>
+        <span class="status-chip">4 prizes</span>
+      </div>
+      <div class="pattern-grid" id="pattern-prize-grid">
+        {% for prize in pattern_prizes %}
+        <article class="pattern-card{% if prize.is_claimed %} claimed{% endif %}">
+          <div class="pattern-head">
+            <div>
+              <h3 class="pattern-title">{{ prize.label }}</h3>
+              <div class="pattern-reward">{{ prize.reward_ryo }} Ryo</div>
+            </div>
+            {% if prize.viewer_won %}
+            <span class="status-chip{% if prize.viewer_claimed %} live{% endif %}">{% if prize.viewer_claimed %}Claimed{% else %}You Won{% endif %}</span>
+            {% endif %}
+          </div>
+          <div class="pattern-mini">
+            {% for index in "0123456789ABCDEF"|make_list %}
+            <span class="pattern-mini-cell{% if forloop.counter0 in prize.preview_cells %} marked{% endif %}"></span>
+            {% endfor %}
+          </div>
+          <div class="pattern-status">
+            {% if prize.is_claimed %}
+              {{ prize.winner_names|join:", " }}
+              {% if prize.is_split %}<br>{{ prize.split_summary }}.{% endif %}
+            {% else %}
+              Open
+            {% endif %}
+          </div>
+          {% if prize.viewer_won %}
+          <div class="pattern-winner{% if prize.viewer_claimed %} claimed{% endif %}">
+            <div class="pattern-status" style="min-height:0;">
+              {% if prize.viewer_claimed %}
+              You already collected {{ prize.viewer_reward_ryo }} Ryo.
+              {% else %}
+              Your board already locked {{ prize.viewer_reward_ryo }} Ryo.
+              {% if prize.viewer_other_winner_count %}<br>Split with {{ prize.viewer_other_winners|join:", " }}.{% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </section>
   </section>
 
   <section class="boards-head">
@@ -251,36 +511,64 @@
       <div class="panel-kicker">Your Table</div>
       <h2 class="panel-title" style="font-size:2rem;">Live Boards</h2>
     </div>
-    <span class="status-chip">{{ player_board_count }} board{{ player_board_count|pluralize }} entered</span>
+    <span class="status-chip">{% if room.mode == "private" %}{{ room_mode_label }}{% else %}{{ room.npc_count }} NPC chasing this table{% endif %}</span>
   </section>
 
-  <section class="boards-grid {% if player_board_count == 1 %}one{% elif player_board_count == 2 %}two{% else %}three{% endif %}">
+  <section class="boards-grid {% if player_board_count == 1 %}one{% elif player_board_count == 2 %}two{% else %}three{% endif %}" id="player-boards-grid">
     {% for board in player_boards %}
-    <article class="board-card player">
+    <article class="board-card player" data-board-slot="{{ board.board_slot }}">
       <div class="board-head">
         <div>
-          <h3 class="board-title">{{ board.display_name }}</h3>
-          <div class="board-subtitle">Board {{ board.board_slot }}</div>
+          <h3 class="board-title">{{ board.board_label }}</h3>
+          <div class="board-subtitle">{{ board.owner_name }}</div>
         </div>
         <span class="status-chip">{{ board.marked_count }} / {{ board.board_size }}</span>
       </div>
       <div class="board-grid">
         {% for cell in board.cells %}
-        <div class="board-cell">
+        <div class="board-cell" data-cell-species-id="{{ cell.id }}" data-cell-index="{{ forloop.counter0 }}">
           <img src="{{ cell.image_url }}" alt="{{ cell.name }}">
           {% if cell.marked %}<span class="mark-token"></span>{% endif %}
         </div>
         {% endfor %}
       </div>
-      <div class="board-progress">
-        {% if board.is_complete %}
-        Full board complete. This table has already hit Loteria.
-        {% else %}
-        Every called Pokemon that appears on this board automatically drops a marker onto the matching tile.
-        {% endif %}
-      </div>
     </article>
     {% endfor %}
+  </section>
+
+  <section class="panel marker-pool-card">
+    <div class="boards-head" style="margin-bottom:.7rem;">
+      <div>
+        <div class="panel-kicker">Frijoles</div>
+        <h2 class="board-title" style="font-size:1.35rem;">Ready Tokens</h2>
+      </div>
+      <span class="status-chip" id="marker-pool-count">0 ready</span>
+    </div>
+    <div class="marker-pool-lanes" id="marker-pool-lanes"></div>
+  </section>
+
+  <section class="panel" style="margin-top:1rem;">
+    <div class="boards-head" style="margin-bottom:.7rem;">
+      <div>
+        <div class="panel-kicker">Table Progress</div>
+        <h2 class="board-title" style="font-size:1.5rem;">Seat Summary</h2>
+      </div>
+      <span class="status-chip">{% if room.mode == "private" %}{{ human_player_count }} player{{ human_player_count|pluralize }}{% else %}{{ room.npc_count }} NPC seats{% endif %}</span>
+    </div>
+    <div class="seat-grid" id="seat-list">
+      {% for seat in seat_entries %}
+      <div class="seat-card">
+        <strong>{{ seat.display_name }}</strong>
+        <span>{% if seat.is_current_user %}Your board{% else %}Player board{% endif %} &middot; {{ seat.board_size }} tiles &middot; {{ seat.marked_count }} marked</span>
+      </div>
+      {% endfor %}
+      {% for entry in npc_entries %}
+      <div class="seat-card">
+        <strong>{{ entry.display_name }}</strong>
+        <span>NPC board &middot; {{ entry.board_size }} tiles &middot; {{ entry.marked_count }} marked</span>
+      </div>
+      {% endfor %}
+    </div>
   </section>
 </div>
 {% endblock %}
@@ -288,19 +576,369 @@
 {% block extra_js %}
 <script>
 function loteriaRoom(config) {
+  const MARKER_FLIGHT_MS = 2000;
+  const MARKER_STAGGER_MS = 500;
   return {
-    seconds: config.secondsUntilNext,
-    timerId: null,
+    stateUrl: config.stateUrl,
+    nextTickEpochMs: config.nextTickEpochMs,
+    pauseExpiresEpochMs: config.pauseExpiresEpochMs,
+    pauseRemainingSeconds: config.pauseRemainingSeconds || 0,
+    isPaused: !!config.isPaused,
+    currentCalledCount: config.calledCount || 0,
+    latestCalledSpeciesId: config.latestCalledSpeciesId,
+    currentBoards: [],
+    fallbackImage: config.fallbackImage,
+    countdownId: null,
+    syncTimerId: null,
+    syncing: false,
     init() {
-      if (this.seconds === null || this.seconds === undefined) return;
-      this.timerId = window.setInterval(() => {
-        if (this.seconds > 0) {
-          this.seconds -= 1;
+      this.cacheDom();
+      this.currentBoards = this.readInitialBoards();
+      this.renderMarkerPool(this.currentBoards);
+      this.renderPauseState();
+      this.renderCountdown();
+      this.countdownId = window.setInterval(() => this.renderCountdown(), 250);
+      this.scheduleSync();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) this.syncState();
+      });
+    },
+    cacheDom() {
+      this.nextCallEl = document.getElementById('next-call-countdown');
+      this.roundEl = document.getElementById('room-round');
+      this.calledCountEl = document.getElementById('room-called-count');
+      this.prizePoolEl = document.getElementById('room-prize-pool');
+      this.latestCallPanelEl = document.getElementById('latest-call-panel');
+      this.latestCallImageEl = document.getElementById('latest-call-image');
+      this.latestCallNameEl = document.getElementById('latest-call-name');
+      this.latestCallDexEl = document.getElementById('latest-call-dex');
+      this.latestCallRecentEl = document.getElementById('latest-call-recent');
+      this.patternPrizeGridEl = document.getElementById('pattern-prize-grid');
+      this.seatListEl = document.getElementById('seat-list');
+      this.playerBoardsGridEl = document.getElementById('player-boards-grid');
+      this.playerBoardMetricEl = document.getElementById('player-board-count-metric');
+      this.markerPoolLanesEl = document.getElementById('marker-pool-lanes');
+      this.markerPoolCountEl = document.getElementById('marker-pool-count');
+      this.pauseBannerEl = document.getElementById('pause-banner');
+      this.pauseRemainingLabelEl = document.getElementById('pause-remaining-label');
+    },
+    readInitialBoards() {
+      return Array.from(document.querySelectorAll('#player-boards-grid .board-card')).map((card) => ({
+        board_slot: Number(card.dataset.boardSlot || '0'),
+        cells: Array.from(card.querySelectorAll('.board-cell')).map((cell) => ({
+          id: Number(cell.dataset.cellSpeciesId || '0'),
+          marked: !!cell.querySelector('.mark-token'),
+        })),
+      }));
+    },
+    renderCountdown() {
+      if (!this.nextCallEl) return;
+      if (this.isPaused) {
+        if (this.pauseExpiresEpochMs) {
+          const diffMs = Math.max(0, this.pauseExpiresEpochMs - Date.now());
+          const secondsLeft = Math.ceil(diffMs / 1000);
+          this.nextCallEl.textContent = 'Paused';
+          if (this.pauseRemainingLabelEl) this.pauseRemainingLabelEl.textContent = `${secondsLeft}s`;
+        } else {
+          this.nextCallEl.textContent = 'Paused';
+        }
+        return;
+      }
+      if (this.nextTickEpochMs === null || this.nextTickEpochMs === undefined) {
+        this.nextCallEl.textContent = '--';
+        return;
+      }
+      const diffMs = this.nextTickEpochMs - Date.now();
+      if (diffMs <= 0) {
+        this.nextCallEl.textContent = 'Calling...';
+        return;
+      }
+      this.nextCallEl.textContent = `${Math.ceil(diffMs / 1000)}s`;
+    },
+    scheduleSync() {
+      window.clearTimeout(this.syncTimerId);
+      if (this.isPaused) {
+        this.syncTimerId = window.setTimeout(() => this.syncState(), 1000);
+        return;
+      }
+      if (this.nextTickEpochMs === null || this.nextTickEpochMs === undefined) return;
+      const delay = Math.max(150, this.nextTickEpochMs - Date.now() + 180);
+      this.syncTimerId = window.setTimeout(() => this.syncState(), delay);
+    },
+    async syncState() {
+      if (this.syncing) return;
+      this.syncing = true;
+      this.renderCountdown();
+      try {
+        const response = await fetch(this.stateUrl, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error('Failed to load room state');
+        const payload = await response.json();
+        if (payload.redirect_url) {
+          window.location.assign(payload.redirect_url);
           return;
         }
-        window.clearInterval(this.timerId);
-        window.location.reload();
-      }, 1000);
+        this.applyState(payload);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        this.syncing = false;
+        this.renderCountdown();
+        this.scheduleSync();
+      }
+    },
+    applyState(payload) {
+      const hadNewCall = payload.room.called_count > this.currentCalledCount;
+      const hitManifest = hadNewCall ? this.buildNewHitManifest(payload.player_boards) : [];
+      this.nextTickEpochMs = payload.next_tick_epoch_ms;
+      this.pauseExpiresEpochMs = payload.room.pause_expires_epoch_ms;
+      this.pauseRemainingSeconds = payload.room.pause_remaining_seconds || 0;
+      this.isPaused = !!payload.room.is_paused;
+      this.currentCalledCount = payload.room.called_count;
+      this.roundEl.textContent = `Round ${payload.room.round_number}`;
+      this.calledCountEl.textContent = `${payload.room.called_count} called`;
+      this.prizePoolEl.textContent = `${payload.room.prize_pool_ryo} Ryo`;
+      this.playerBoardMetricEl.textContent = String(payload.player_board_count);
+      this.renderLatestCall(payload.latest_called, hadNewCall);
+      this.renderCalledHistory(payload.called_history, hadNewCall);
+      this.renderPatternPrizes(payload.pattern_prizes || []);
+      this.renderSeatList(payload.seat_entries, payload.npc_entries);
+      this.renderBoards(payload.player_boards, hitManifest);
+      if (hitManifest.length) {
+        const orderedHits = this.orderHitManifest(hitManifest);
+        this.animateMarkerFlights(orderedHits);
+        this.commitAnimatedMarks(orderedHits);
+        window.setTimeout(() => this.renderMarkerPool(payload.player_boards), MARKER_FLIGHT_MS + ((orderedHits.length - 1) * MARKER_STAGGER_MS) + 150);
+      } else {
+        this.renderMarkerPool(payload.player_boards);
+      }
+      this.renderPauseState();
+      this.currentBoards = payload.player_boards;
+    },
+    renderLatestCall(latestCalled, animateReveal) {
+      if (!latestCalled) {
+        this.latestCallImageEl.src = this.fallbackImage;
+        this.latestCallImageEl.alt = 'Pokemon Loteria';
+        this.latestCallNameEl.textContent = 'Waiting For The First Card';
+        this.latestCallDexEl.textContent = 'The deck is ready.';
+        if (this.latestCallRecentEl) this.latestCallRecentEl.innerHTML = '';
+        this.latestCalledSpeciesId = null;
+        return;
+      }
+
+      this.latestCallImageEl.src = latestCalled.image_url || this.fallbackImage;
+      this.latestCallImageEl.alt = latestCalled.name;
+      this.latestCallNameEl.textContent = latestCalled.name;
+      this.latestCallDexEl.textContent = `#${latestCalled.pokedex_number}`;
+      this.latestCalledSpeciesId = latestCalled.id || null;
+      if (animateReveal) {
+        this.latestCallPanelEl.classList.remove('reveal-flash');
+        this.latestCallImageEl.classList.remove('reveal-pop');
+        void this.latestCallPanelEl.offsetWidth;
+        this.latestCallPanelEl.classList.add('reveal-flash');
+        this.latestCallImageEl.classList.add('reveal-pop');
+        window.setTimeout(() => {
+          this.latestCallPanelEl.classList.remove('reveal-flash');
+          this.latestCallImageEl.classList.remove('reveal-pop');
+        }, 750);
+      }
+    },
+    renderCalledHistory(calledHistory, animateReveal) {
+      if (!this.latestCallRecentEl) return;
+      if (!calledHistory.length) {
+        this.latestCallRecentEl.innerHTML = '';
+        return;
+      }
+      this.latestCallRecentEl.innerHTML = calledHistory.slice(0, 5).map((pokemon, index) => `
+        <div class="call-recent-pill${animateReveal && index === 0 ? ' latest' : ''}">
+          <img src="${pokemon.image_url || this.fallbackImage}" alt="${pokemon.name}">
+          <span>${pokemon.name}</span>
+        </div>
+      `).join('');
+    },
+    renderPatternPrizes(patternPrizes) {
+      if (!this.patternPrizeGridEl) return;
+      this.patternPrizeGridEl.innerHTML = patternPrizes.map((prize) => {
+        const preview = Array.from({ length: 16 }, (_, index) => `
+          <span class="pattern-mini-cell${(prize.preview_cells || []).includes(index) ? ' marked' : ''}"></span>
+        `).join('');
+        const winnerNames = (prize.winner_names || []).join(', ');
+        const splitLine = prize.is_split ? `<br>${prize.split_summary}.` : '';
+        const viewerBanner = prize.viewer_won ? `
+          <div class="pattern-winner${prize.viewer_claimed ? ' claimed' : ''}">
+            <div class="pattern-status" style="min-height:0;">
+              ${prize.viewer_claimed
+                ? `You already collected ${prize.viewer_reward_ryo} Ryo.`
+                : `Your board already locked ${prize.viewer_reward_ryo} Ryo.${prize.viewer_other_winner_count ? `<br>Split with ${(prize.viewer_other_winners || []).join(', ')}.` : ''}`
+              }
+            </div>
+          </div>
+        ` : '';
+        return `
+          <article class="pattern-card${prize.is_claimed ? ' claimed' : ''}">
+            <div class="pattern-head">
+              <div>
+                <h3 class="pattern-title">${prize.label}</h3>
+                <div class="pattern-reward">${prize.reward_ryo} Ryo</div>
+              </div>
+              ${prize.viewer_won ? `<span class="status-chip${prize.viewer_claimed ? ' live' : ''}">${prize.viewer_claimed ? 'Claimed' : 'You Won'}</span>` : ''}
+            </div>
+            <div class="pattern-mini">${preview}</div>
+            <div class="pattern-status">${prize.is_claimed ? `${winnerNames}${splitLine}` : 'Open'}</div>
+            ${viewerBanner}
+          </article>
+        `;
+      }).join('');
+    },
+    renderSeatList(seatEntries, npcEntries) {
+      const playerHtml = seatEntries.map((seat) => `
+        <div class="seat-card">
+          <strong>${seat.display_name}</strong>
+          <span>${seat.is_current_user ? 'Your board' : 'Player board'} &middot; ${seat.board_size} tiles &middot; ${seat.marked_count} marked</span>
+        </div>
+      `).join('');
+      const npcHtml = npcEntries.map((entry) => `
+        <div class="seat-card">
+          <strong>${entry.display_name}</strong>
+          <span>NPC board &middot; ${entry.board_size} tiles &middot; ${entry.marked_count} marked</span>
+        </div>
+      `).join('');
+      this.seatListEl.innerHTML = playerHtml + npcHtml;
+    },
+    renderBoards(playerBoards, hitManifest) {
+      const hitKeySet = new Set((hitManifest || []).map((hit) => `${hit.board_slot}:${hit.cell_index}`));
+      this.playerBoardsGridEl.className =
+        playerBoards.length <= 1 ? 'boards-grid one' :
+        playerBoards.length === 2 ? 'boards-grid two' :
+        'boards-grid three';
+      this.playerBoardsGridEl.innerHTML = playerBoards.map((board) => `
+        <article class="board-card player" data-board-slot="${board.board_slot}">
+          <div class="board-head">
+            <div>
+              <h3 class="board-title">${board.board_label}</h3>
+              <div class="board-subtitle">${board.owner_name}</div>
+            </div>
+            <span class="status-chip">${board.marked_count} / ${board.board_size}</span>
+          </div>
+          <div class="board-grid">
+            ${board.cells.map((cell, cellIndex) => {
+              const isFreshHit = hitKeySet.has(`${board.board_slot}:${cellIndex}`);
+              return `
+              <div class="board-cell${isFreshHit ? ' hit-flash' : ''}" data-cell-species-id="${cell.id}" data-cell-index="${cellIndex}">
+                <img src="${cell.image_url || this.fallbackImage}" alt="${cell.name}">
+                ${cell.marked && !isFreshHit ? '<span class="mark-token"></span>' : ''}
+              </div>
+            `;
+            }).join('')}
+          </div>
+        </article>
+      `).join('');
+    },
+    renderMarkerPool(playerBoards) {
+      if (!this.markerPoolLanesEl || !this.markerPoolCountEl) return;
+      const remainingCount = playerBoards.reduce((total, board) => (
+        total + board.cells.filter((cell) => !cell.marked).length
+      ), 0);
+      this.markerPoolCountEl.textContent = `${remainingCount} ready`;
+      const lanes = playerBoards.map((board) => {
+        const laneCount = board.cells.filter((cell) => !cell.marked).length;
+        return `
+          <div class="marker-pool-lane${laneCount ? ' active' : ''}" data-board-slot="${board.board_slot}">
+            <div class="marker-pool-head">
+              <span class="marker-pool-title">${board.board_label}</span>
+              <span class="marker-pool-meta">${laneCount} left</span>
+            </div>
+            <div class="marker-pool-grid">
+              ${Array.from({ length: laneCount }, (_, tokenIndex) => `<span class="marker-pool-token" data-board-slot="${board.board_slot}" data-token-index="${tokenIndex}"></span>`).join('')}
+            </div>
+          </div>
+        `;
+      });
+      while (lanes.length < 3) {
+        lanes.push('<div class="marker-pool-lane hidden"></div>');
+      }
+      this.markerPoolLanesEl.innerHTML = lanes.join('');
+    },
+    renderPauseState() {
+      if (!this.pauseBannerEl || !this.pauseRemainingLabelEl) return;
+      this.pauseRemainingLabelEl.textContent = `${this.pauseRemainingSeconds}s`;
+      if (this.isPaused) {
+        this.pauseBannerEl.classList.add('live');
+        this.pauseBannerEl.innerHTML = `Table paused. Shared break time left: <span id="pause-remaining-label">${this.pauseRemainingSeconds}s</span>.`;
+        this.pauseRemainingLabelEl = document.getElementById('pause-remaining-label');
+      } else {
+        this.pauseBannerEl.classList.remove('live');
+        this.pauseBannerEl.innerHTML = `Shared pause budget left: <span id="pause-remaining-label">${this.pauseRemainingSeconds}s</span>.`;
+        this.pauseRemainingLabelEl = document.getElementById('pause-remaining-label');
+      }
+    },
+    animateMarkerFlights(hitManifest) {
+      hitManifest.forEach((hit, index) => {
+        const sourceToken = this.markerPoolLanesEl?.querySelector(`.marker-pool-token[data-board-slot="${hit.board_slot}"]`);
+        const target = this.playerBoardsGridEl?.querySelector(`.board-card[data-board-slot="${hit.board_slot}"] .board-cell[data-cell-index="${hit.cell_index}"]`);
+        if (!target) return;
+        const sourceRect = sourceToken?.getBoundingClientRect();
+        if (!sourceRect) return;
+        const launchDelay = index * MARKER_STAGGER_MS;
+        window.setTimeout(() => {
+          sourceToken.classList.add('launching');
+          const startX = sourceRect.left + (sourceRect.width / 2);
+          const startY = sourceRect.top + (sourceRect.height / 2);
+          const targetRect = target.getBoundingClientRect();
+          const flyToken = document.createElement('span');
+          flyToken.className = 'marker-fly';
+          flyToken.style.left = `${startX - 11}px`;
+          flyToken.style.top = `${startY - 11}px`;
+          document.body.appendChild(flyToken);
+          requestAnimationFrame(() => {
+            flyToken.style.transform = `translate(${(targetRect.left + (targetRect.width / 2)) - startX}px, ${(targetRect.top + (targetRect.height / 2)) - startY}px) scale(.92)`;
+            flyToken.style.opacity = '0.25';
+          });
+          window.setTimeout(() => flyToken.remove(), MARKER_FLIGHT_MS + 100);
+        }, launchDelay);
+      });
+    },
+    orderHitManifest(hitManifest) {
+      const boardCards = Array.from(this.playerBoardsGridEl?.querySelectorAll('.board-card') || []);
+      const visualOrder = new Map(
+        boardCards.map((card, index) => [Number(card.dataset.boardSlot || '0'), index])
+      );
+      return [...hitManifest].sort((left, right) => {
+        const leftOrder = visualOrder.get(Number(left.board_slot)) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = visualOrder.get(Number(right.board_slot)) ?? Number.MAX_SAFE_INTEGER;
+        return leftOrder - rightOrder || left.cell_index - right.cell_index;
+      });
+    },
+    buildNewHitManifest(playerBoards) {
+      const hits = [];
+      playerBoards.forEach((board) => {
+        const previousBoard = this.currentBoards.find((entry) => Number(entry.board_slot) === Number(board.board_slot));
+        board.cells.forEach((cell, cellIndex) => {
+          const wasMarked = !!previousBoard?.cells?.[cellIndex]?.marked;
+          if (!wasMarked && !!cell.marked) {
+            hits.push({
+              board_slot: Number(board.board_slot),
+              cell_index: cellIndex,
+            });
+          }
+        });
+      });
+      return hits;
+    },
+    commitAnimatedMarks(hitManifest) {
+      hitManifest.forEach((hit, index) => {
+        const placementDelay = (index * MARKER_STAGGER_MS) + MARKER_FLIGHT_MS - 120;
+        window.setTimeout(() => {
+          const cell = this.playerBoardsGridEl?.querySelector(`.board-card[data-board-slot="${hit.board_slot}"] .board-cell[data-cell-index="${hit.cell_index}"]`);
+          if (!cell || cell.querySelector('.mark-token')) return;
+          cell.insertAdjacentHTML('beforeend', '<span class="mark-token"></span>');
+        }, placementDelay);
+      });
     }
   }
 }

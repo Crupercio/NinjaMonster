@@ -12,7 +12,7 @@
 .msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
-.layout, .panel, .board-card, .seat-card {
+.panel, .board-card, .seat-card {
   background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
   border: 1px solid rgba(91,129,255,.22);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
@@ -35,12 +35,66 @@
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
 
+.room-code-strip {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.75rem;
+  flex-wrap:wrap;
+  margin:-.05rem 0 1rem;
+  padding:.75rem .85rem;
+  border-radius:18px;
+  border:1px solid rgba(232,184,75,.16);
+  background:rgba(10,15,29,.48);
+}
+.room-code-copy { display:flex; gap:.55rem; align-items:center; flex-wrap:wrap; }
+.room-code-value {
+  padding:.38rem .62rem;
+  border-radius:999px;
+  background:rgba(91,129,255,.12);
+  border:1px solid rgba(91,129,255,.22);
+  color:var(--accent-gold);
+  font-family:"JetBrains Mono", monospace;
+  font-size:.82rem;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.room-code-copy button {
+  min-width:auto;
+  padding:.48rem .75rem;
+}
+.room-code-help { color:var(--text-3); font-size:.76rem; line-height:1.4; }
+.launch-join-banner {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.8rem;
+  flex-wrap:wrap;
+  margin:0 0 1rem;
+  padding:.85rem 1rem;
+  border-radius:18px;
+  border:1px solid rgba(74,222,128,.28);
+  background:rgba(22,101,52,.18);
+}
+.launch-join-copy {
+  color:#d1fae5;
+  font-weight:700;
+  line-height:1.45;
+}
+.launch-join-meta {
+  color:#a7f3d0;
+  font-size:.78rem;
+  font-weight:600;
+}
+
 .seat-list { display:grid; gap:.75rem; }
 .seat-card strong { display:block; color:var(--text-1); margin-bottom:.15rem; }
 .seat-card span { color:var(--text-3); font-size:.78rem; }
 
 .board-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:1rem; }
 .board-card.selected { border-color: rgba(251,191,36,.34); box-shadow: inset 0 0 0 1px rgba(251,191,36,.14); }
+.board-card.starter { border-color: rgba(167,139,250,.26); box-shadow: inset 0 0 0 1px rgba(167,139,250,.12); }
 .board-preview {
   display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
   border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
@@ -65,6 +119,14 @@
 <div class="lobby-shell">
   <a href="{% url 'game:loteria_game' %}" class="lobby-back">&larr; Back to Loteria Hub</a>
 
+  <div class="launch-join-banner" id="launch-join-banner" style="display:none;">
+    <div>
+      <div class="launch-join-copy" id="launch-join-copy">The table is live. Jump in now.</div>
+      <div class="launch-join-meta" id="launch-join-meta">Auto-joining in 3s.</div>
+    </div>
+    <a href="#" class="btn btn-primary" id="launch-join-button">Join Live Table</a>
+  </div>
+
   {% if messages %}
   <div class="msg-stack">
     {% for msg in messages %}
@@ -77,54 +139,108 @@
     <div class="panel">
       <div class="panel-kicker">Room Lobby</div>
       <h1 class="panel-title">{{ room.title }}</h1>
-      <div class="panel-subtitle">{{ deck.region_label }} · {{ room.npc_count }} NPC table</div>
+      <div class="panel-subtitle">
+        {{ deck.region_label }} &middot;
+        {% if room.mode == "private" %}
+          {% if room.guild_id %}Guild code {{ room.room_code }}{% else %}Private code {{ room.room_code }}{% endif %}
+        {% else %}
+          {{ room.npc_count }} NPC table
+        {% endif %}
+      </div>
       <p class="panel-copy">
-        Pick the boards you want to bring, review the NPC seats, and launch the room when everyone at your table is ready.
-        The first Kanto call lands {{ deck.draw_interval_seconds }} seconds after you press start.
+        {% if room.mode == "private" %}
+        Everyone saves their own boards first. Each entered board costs {{ room.entry_fee_ryo }} Ryo when the host starts the room,
+        then the game matches another {{ room.entry_fee_ryo }} Ryo into the pot. Buena gets half of that full pot, and the rest fans out across Chorro, Centrito, and Cuatro Esquinas.
+        {% else %}
+        Pick the boards you want to bring, review the NPC seats, and launch the room when your table is ready.
+        The first Kanto call lands 15 seconds after you press start.
+        {% endif %}
       </p>
+      {% if room.mode == "private" and room_join_code %}
+      <div class="room-code-strip">
+        <div>
+          <div class="metric-label" style="margin-bottom:.25rem;">{% if room.guild_id %}Guild Room Code{% else %}Room Code{% endif %}</div>
+          <div class="room-code-copy">
+            <span class="room-code-value" id="room-code-value">{{ room_join_code }}</span>
+            <button type="button" class="btn btn-secondary btn-sm" data-copy-room-code>Copy Code</button>
+          </div>
+        </div>
+        <div class="room-code-help" id="room-code-feedback">Keep this handy so people can jump back in quickly.</div>
+      </div>
+      {% endif %}
       <div class="metric-grid">
         <div class="metric">
-          <div class="metric-label">Base Prize</div>
-          <div class="metric-value">{{ base_prize }} Ryo</div>
+          <div class="metric-label">{% if room.mode == "private" %}Entry Fee{% else %}Base Prize{% endif %}</div>
+          <div class="metric-value">{% if room.mode == "private" %}{{ room.entry_fee_ryo }} / board{% else %}{{ base_prize }} Ryo{% endif %}</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Board Bonus</div>
-          <div class="metric-value">+{{ per_board_bonus }} / board</div>
+          <div class="metric-label">{% if room.mode == "private" %}House Match{% else %}Room Fee{% endif %}</div>
+          <div class="metric-value">{% if room.mode == "private" %}+{{ room.entry_fee_ryo }} / board{% else %}{{ npc_entry_fee_ryo }} Ryo{% endif %}</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Call Speed</div>
-          <div class="metric-value">{{ deck.draw_interval_seconds }}s</div>
+          <div class="metric-label">{% if room.mode == "private" %}Joined Boards{% else %}Board Bonus{% endif %}</div>
+          <div class="metric-value">{% if room.mode == "private" %}{{ total_selected_boards }} total{% else %}+{{ per_board_bonus }} / board{% endif %}</div>
         </div>
       </div>
     </div>
 
     <aside class="panel">
+      {% if room.mode == "private" %}
+      <div class="panel-kicker">{% if room.guild_id %}Guild Table{% else %}Seat List{% endif %}</div>
+      <div class="seat-list">
+        {% for participant in participant_summaries %}
+        <div class="seat-card">
+          <strong>
+            {{ participant.username }}
+            {% if participant.is_host %}&middot; Host{% endif %}
+            {% if participant.is_current_user %}&middot; You{% endif %}
+          </strong>
+          <span>{{ participant.board_count }} board{{ participant.board_count|pluralize }} saved &middot; {% if participant.is_ready %}Ready{% else %}Waiting{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
       <div class="panel-kicker">NPC Seats</div>
       <div class="seat-list">
         {% for npc_name in npc_labels %}
         <div class="seat-card">
           <strong>{{ npc_name }}</strong>
-          <span>Random {{ deck.region_label }} board · joins when you launch the table</span>
+          <span>Random {{ deck.region_label }} board &middot; joins when you launch the table</span>
         </div>
         {% endfor %}
       </div>
+      {% endif %}
     </aside>
   </section>
 
   <form method="post" class="panel">
     {% csrf_token %}
-    <input type="hidden" name="action" value="start_room">
+    <input type="hidden" name="action" value="{% if room.mode == 'private' %}save_selection{% else %}start_room{% endif %}">
     <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem;">
       <div>
         <div class="panel-kicker">Choose Boards</div>
-        <h2 class="board-title">Your Live Table</h2>
+        <h2 class="board-title">{% if room.mode == "private" %}Your Seat{% else %}Your Live Table{% endif %}</h2>
       </div>
-      <div class="status-chip">Up to {{ deck.max_saved_boards }} boards</div>
+      <div class="status-chip">
+        {% if room.mode == "private" %}
+        Up to {{ deck.max_saved_boards }} for your seat &middot; starter included
+        {% else %}
+        Up to {{ deck.max_saved_boards }} total &middot; starter included
+        {% endif %}
+      </div>
     </div>
+
+    <p class="board-copy" style="margin:-.2rem 0 1rem;">
+      {% if room.mode == "private" %}
+      Save the boards you want to bring from your own collection. Submitting this form marks your seat ready right away.
+      {% else %}
+      Your locked starter board can join the room like any other pick, but you can only bring {{ deck.max_saved_boards }} boards total into one match.
+      {% endif %}
+    </p>
 
     <div class="board-grid">
       {% for board in board_cards %}
-      <article class="board-card{% if board.is_selected %} selected{% endif %}">
+      <article class="board-card{% if board.is_selected %} selected{% endif %}{% if board.is_starter %} starter{% endif %}">
         <div class="board-preview">
           {% for cell in board.cells %}
           <div class="board-cell">
@@ -133,9 +249,21 @@
           {% endfor %}
         </div>
         <h3 class="board-title">{{ board.title }}</h3>
-        <p class="board-copy">Board {{ board.board_slot }}. Every entered board adds {{ per_board_bonus }} Ryo to the pot and costs {{ deck.entry_qty_per_board }} {{ deck.entry_label }}.</p>
+        <p class="board-copy">
+          {% if room.mode == "private" %}
+            {% if board.is_starter %}
+            Locked starter board. This seat pays {{ room.entry_fee_ryo }} Ryo when the room starts.
+            {% else %}
+            {{ board.title }}. This seat pays {{ room.entry_fee_ryo }} Ryo when the room starts.
+            {% endif %}
+          {% elif board.is_starter %}
+          Locked starter board. Room fee is {{ npc_entry_fee_ryo }} Ryo, and every entered board adds {{ per_board_bonus }} Ryo to the pot while costing {{ deck.entry_qty_per_board }} {{ deck.entry_label }}.
+          {% else %}
+          {{ board.title }}. Room fee is {{ npc_entry_fee_ryo }} Ryo, and every entered board adds {{ per_board_bonus }} Ryo to the pot while costing {{ deck.entry_qty_per_board }} {{ deck.entry_label }}.
+          {% endif %}
+        </p>
         <label class="board-check">
-          <input type="checkbox" name="board_ids" value="{{ board.id }}" {% if board.is_selected %}checked{% endif %}>
+          <input type="checkbox" name="board_ids" value="{{ board.id }}" {% if board.is_selected %}checked{% endif %} data-board-picker>
           Bring this board to the table
         </label>
       </article>
@@ -143,14 +271,108 @@
     </div>
 
     <div class="actions">
-      <button type="submit" class="btn btn-primary">Start Match</button>
+      <button type="submit" class="btn btn-primary">{% if room.mode == "private" %}Save Boards &amp; Ready Up{% else %}Start Match{% endif %}</button>
     </div>
   </form>
+
+  {% if room.mode == "private" %}
+  <div class="actions" style="margin-top:1rem;">
+    {% if current_participant and current_participant.is_ready %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="set_not_ready">
+      <button type="submit" class="btn btn-secondary">Mark Not Ready</button>
+    </form>
+    {% endif %}
+    {% if user_is_host %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="start_room">
+      <button type="submit" class="btn btn-primary" {% if not all_players_ready %}disabled{% endif %}>Start Private Match</button>
+    </form>
+    {% else %}
+    <span class="status-chip">Waiting for host</span>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <form method="post" class="actions" style="margin-top:1rem;">
     {% csrf_token %}
     <input type="hidden" name="action" value="abandon_room">
-    <button type="submit" class="btn btn-secondary">Abandon Room</button>
+    <button type="submit" class="btn btn-secondary">{% if user_is_host %}Abandon Room{% else %}Leave Room{% endif %}</button>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const limit = {{ deck.max_saved_boards }};
+  const checkboxes = Array.from(document.querySelectorAll('[data-board-picker]'));
+  const copyButton = document.querySelector('[data-copy-room-code]');
+  const roomCodeValue = document.getElementById('room-code-value');
+  const feedback = document.getElementById('room-code-feedback');
+  const lobbyStateUrl = '{{ room_status_url }}';
+  const joinBanner = document.getElementById('launch-join-banner');
+  const joinButton = document.getElementById('launch-join-button');
+  const joinMeta = document.getElementById('launch-join-meta');
+  let joinCountdown = null;
+  let pollHandle = null;
+  let redirectTarget = '';
+  const enforceLimit = (changedBox) => {
+    const checked = checkboxes.filter((box) => box.checked);
+    if (checked.length <= limit) return;
+    changedBox.checked = false;
+  };
+  checkboxes.forEach((box) => {
+    box.addEventListener('change', () => enforceLimit(box));
+  });
+  if (copyButton && roomCodeValue) {
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(roomCodeValue.textContent.trim());
+        if (feedback) feedback.textContent = 'Code copied. Share it with your table.';
+      } catch (error) {
+        if (feedback) feedback.textContent = 'Copy failed. You can still grab the code above.';
+      }
+    });
+  }
+
+  const startAutoJoin = (url) => {
+    if (!joinBanner || !joinButton || !joinMeta || !url || redirectTarget === url) return;
+    redirectTarget = url;
+    joinButton.href = url;
+    joinBanner.style.display = 'flex';
+    joinMeta.textContent = 'Joining live table now...';
+    if (joinCountdown) window.clearInterval(joinCountdown);
+    joinCountdown = window.setTimeout(() => {
+      window.location.href = url;
+    }, 250);
+  };
+
+  const pollLobbyStatus = async () => {
+    try {
+      const response = await fetch(lobbyStateUrl, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.results_url) {
+        window.location.href = data.results_url;
+        return;
+      }
+      if (data.live_url) {
+        startAutoJoin(data.live_url);
+      }
+    } catch (error) {
+      // Keep the lobby steady if one poll fails.
+    }
+  };
+
+  pollHandle = window.setInterval(pollLobbyStatus, 500);
+  pollLobbyStatus();
+});
+</script>
 {% endblock %}

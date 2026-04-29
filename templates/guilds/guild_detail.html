@@ -3,193 +3,422 @@
 
 {% block extra_css %}
 <style>
-.guild-hero {
-  background: linear-gradient(135deg, #1a1a4e, #0f3460);
-  border: 1px solid #1e3a6e;
-  border-radius: 12px;
-  padding: 1.2rem 1.4rem;
-  margin-bottom: 1.2rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-}
-.guild-big-tag {
-  background: #0f3460;
-  color: #93c5fd;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  flex-shrink: 0;
-}
-.guild-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.2rem; }
-.guild-desc-hero { color: #9ca3af; font-size: 0.85rem; }
-.guild-status {
-  font-size: 0.72rem;
-  color: #6b7280;
-  margin-top: 0.4rem;
-  display: flex;
-  gap: 0.8rem;
+.guild-shell { display: grid; gap: 1rem; }
+.guild-hero,
+.guild-panel,
+.stat-card,
+.member-row,
+.quest-card,
+.perk-row,
+.room-row {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
 }
 
-.stat-row {
+.guild-hero {
+  padding: 1.25rem 1.35rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.guild-tag {
+  padding: 0.65rem 0.95rem;
+  border-radius: 16px;
+  background: var(--bg-raised);
+  color: var(--accent-gold);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.guild-title {
+  margin: 0 0 0.25rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.5rem;
+  color: var(--text-1);
+}
+
+.guild-copy,
+.guild-meta,
+.muted-copy {
+  color: var(--text-2);
+}
+
+.guild-meta {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  margin-top: 0.55rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.guild-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1rem;
+}
+
+.guild-panel {
+  padding: 1.05rem 1.1rem;
+}
+
+.panel-title {
+  margin: 0 0 0.85rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--accent-gold);
+}
+
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1.2rem;
+  gap: 0.7rem;
 }
-.stat-box {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 10px;
-  padding: 0.7rem 0.85rem;
+
+.stat-card {
+  padding: 0.85rem 0.95rem;
   text-align: center;
 }
-.stat-label { font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.2rem; }
-.stat-value { font-size: 1.5rem; font-weight: 800; color: #e2e8f0; }
 
-.member-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.stat-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.35rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+
+.xp-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  margin-top: 0.55rem;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold));
+}
+
+.quest-list,
+.perk-list,
+.member-list,
+.room-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.quest-card,
+.perk-row,
+.member-row,
+.room-row {
+  padding: 0.8rem 0.9rem;
+}
+
+.quest-title,
+.perk-name,
+.member-name {
+  color: var(--text-1);
+  font-weight: 700;
+  margin-bottom: 0.18rem;
+}
+
+.quest-meta,
+.perk-desc,
+.member-meta {
+  color: var(--text-3);
+  font-size: 0.74rem;
+}
+
 .member-row {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
-  border-radius: 8px;
-  padding: 0.6rem 0.9rem;
   display: flex;
+  gap: 0.8rem;
   align-items: center;
-  gap: 0.75rem;
   flex-wrap: wrap;
 }
-.member-role {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.role-owner   { background:#450a0a; color:#fca5a5; }
-.role-officer { background:#1e1a4e; color:#a78bfa; }
-.role-member  { background:#0f1a2e; color:#6b7280; }
-.member-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
-.member-stats { font-size: 0.72rem; color: #6b7280; white-space: nowrap; }
-.member-actions { display: flex; gap: 0.3rem; }
 
-.section-title {
-  font-size: 0.75rem;
-  font-weight: 700;
+.member-role {
+  min-width: 74px;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--text-2);
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #6b7280;
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid #1e3a6e;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.member-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.room-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.room-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.room-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--accent-gold);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 960px) {
+  .guild-hero,
+  .guild-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .room-row {
+    grid-template-columns: 1fr;
+  }
+
+  .room-actions {
+    justify-content: flex-start;
+  }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<div style="margin-bottom:1rem;">
-  {% for msg in messages %}
-  <div style="padding:0.6rem 0.9rem;border-radius:8px;font-size:0.875rem;
-    background:{% if msg.tags == 'error' %}#450a0a{% else %}#052e16{% endif %};
-    color:{% if msg.tags == 'error' %}#fca5a5{% else %}#4ade80{% endif %};">{{ msg }}</div>
-  {% endfor %}
-</div>
-{% endif %}
+<div class="guild-shell">
+  <a href="{% url 'guilds:list' %}" style="color:var(--text-3); text-decoration:none;">&larr; All Guilds</a>
 
-<a href="{% url 'guilds:list' %}" style="color:#6b7280;font-size:0.8rem;text-decoration:none;">← All Guilds</a>
-
-{# ── Guild hero ───────────────────────────────────────────────── #}
-<div class="guild-hero" style="margin-top:0.6rem;">
-  <div class="guild-big-tag">{{ guild.tag }}</div>
-  <div style="flex:1;">
-    <div class="guild-title">{{ guild.name }}</div>
-    {% if guild.description %}<div class="guild-desc-hero">{{ guild.description }}</div>{% endif %}
-    <div class="guild-status">
-      <span>{{ guild.member_count }}/20 members</span>
-      <span>{% if guild.is_recruiting %}🟢 Recruiting{% else %}🔴 Closed{% endif %}</span>
-      <span>Founded {{ guild.created_at|date:"M j, Y" }}</span>
-    </div>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:0.4rem;min-width:120px;align-items:flex-end;">
-    {% if in_this_guild %}
-      {% if my_membership.role == "owner" or my_membership.role == "officer" %}
-      {# Management handled per-member below #}
+  <section class="guild-hero">
+    <div class="guild-tag">{{ guild.tag }}</div>
+    <div>
+      <h1 class="guild-title">{{ guild.name }}</h1>
+      {% if guild.description %}
+      <div class="guild-copy">{{ guild.description }}</div>
       {% endif %}
+      <div class="guild-meta">
+        <span>{{ guild.member_count }}/20 members</span>
+        <span>Guild Lv {{ stats.guild_level }}</span>
+        <span>{% if guild.is_recruiting %}Recruiting{% else %}Closed{% endif %}</span>
+        <span>Founded {{ guild.created_at|date:"M j, Y" }}</span>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <a href="{% url 'guilds:album' guild.pk %}" class="btn btn-secondary btn-sm">Guild Album</a>
+      {% if in_this_guild %}
       <form method="post" action="{% url 'guilds:leave' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-secondary btn-sm"
-          onclick="return confirm('Leave this guild?')">Leave Guild</button>
+        <button type="submit" class="btn btn-secondary btn-sm">Leave Guild</button>
       </form>
-    {% elif not my_membership and guild.is_recruiting and not guild.is_full %}
+      {% elif not my_membership and guild.is_recruiting and not guild.is_full %}
       <form method="post" action="{% url 'guilds:join' guild.pk %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary btn-sm">Join Guild</button>
       </form>
-    {% endif %}
-  </div>
-</div>
-
-{# ── Stats ────────────────────────────────────────────────────── #}
-<div class="stat-row">
-  <div class="stat-box">
-    <div class="stat-label">Total Wins</div>
-    <div class="stat-value">{{ stats.total_wins }}</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-label">Total Battles</div>
-    <div class="stat-value">{{ stats.total_battles }}</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-label">Avg Longest Combo</div>
-    <div class="stat-value">x{{ stats.avg_longest_combo }}</div>
-  </div>
-</div>
-
-{# ── Members ──────────────────────────────────────────────────── #}
-<div class="section-title">Members — {{ guild.member_count }}/20</div>
-<div class="member-list">
-  {% for m in memberships %}
-  <div class="member-row">
-    <span class="member-role role-{{ m.role }}">{{ m.get_role_display }}</span>
-    <span class="member-name">
-      <a href="{% url 'users:profile' m.user.username %}" style="color:#e2e8f0;text-decoration:none;">
-        {{ m.user.display_name|default:m.user.username }}
-      </a>
-    </span>
-    <span class="member-stats">{{ m.user.battles_won }}W · x{{ m.user.longest_combo_chain }} combo</span>
-    <span style="font-size:0.68rem;color:#4b5563;">Since {{ m.joined_at|date:"M j" }}</span>
-
-    {# Actions visible to owner/officer only #}
-    {% if in_this_guild and m.user.pk != request.user.pk %}
-    <div class="member-actions">
-      {% if my_membership.role == "owner" %}
-        {% if m.role == "member" %}
-        <form method="post" action="{% url 'guilds:promote' guild.pk m.user.pk %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;">↑ Officer</button>
-        </form>
-        {% elif m.role == "officer" %}
-        <form method="post" action="{% url 'guilds:demote' guild.pk m.user.pk %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;">↓ Member</button>
-        </form>
-        {% endif %}
-      {% endif %}
-      {% if my_membership.role == "owner" or my_membership.role == "officer" and m.role == "member" %}
-      <form method="post" action="{% url 'guilds:kick' guild.pk m.user.pk %}"
-            onsubmit="return confirm('Kick {{ m.user.username }}?')">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:0.15rem 0.5rem;color:#fca5a5;border-color:#7f1d1d;">Kick</button>
-      </form>
       {% endif %}
     </div>
-    {% endif %}
-  </div>
-  {% endfor %}
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.collection.total_score }}</div>
+      <div class="stat-label">Guild Album Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.album_entries }}</div>
+      <div class="stat-label">Soul-Bound Stickers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.collection.row_completions }}</div>
+      <div class="stat-label">Rows</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.collection.column_completions }}</div>
+      <div class="stat-label">Columns</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.collection.generation_completions }}</div>
+      <div class="stat-label">Generations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.guild_xp }}</div>
+      <div class="stat-label">Guild XP</div>
+      <div class="xp-bar"><div class="xp-bar-fill" style="width: {{ stats.xp_progress_percent }}%;"></div></div>
+      <div class="quest-meta" style="margin-top:0.3rem;">
+        {% if stats.next_level_xp %}
+        Next level at {{ stats.next_level_xp }} XP
+        {% else %}
+        Max tracked perk level reached
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="guild-grid">
+    <div style="display:grid; gap:1rem;">
+      <section class="guild-panel">
+        <h2 class="panel-title">Guild Quests</h2>
+        {% if guild_quests %}
+        <div class="quest-list">
+          {% for quest in guild_quests %}
+          <div class="quest-card">
+            <div class="quest-title">{{ quest.title }}</div>
+            <div class="quest-meta">{{ quest.description }}</div>
+            <div class="quest-meta" style="margin-top:0.35rem;">{{ quest.progress }} / {{ quest.target }}</div>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-top:0.65rem;">
+              <span class="quest-meta">Reward: {{ quest.reward_ryo }} Ryo, {{ quest.reward_amigo_xp }} Amigo XP, {{ quest.reward_guild_xp }} guild XP</span>
+              {% if quest.claimed %}
+              <span class="btn btn-secondary btn-sm" style="pointer-events:none; opacity:0.7;">Claimed</span>
+              {% elif quest.complete %}
+              <form method="post" action="{% url 'guilds:claim_quest' guild.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="quest_key" value="{{ quest.key }}">
+                <input type="hidden" name="next" value="{% url 'guilds:detail' guild.pk %}">
+                <button type="submit" class="btn btn-primary btn-sm">Claim</button>
+              </form>
+              {% else %}
+              <span class="btn btn-secondary btn-sm" style="pointer-events:none; opacity:0.7;">In Progress</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="muted-copy">Join this guild to unlock guild quests.</div>
+        {% endif %}
+      </section>
+
+      <section class="guild-panel">
+        <h2 class="panel-title">Guild Tables</h2>
+        {% if guild_loteria_rooms %}
+        <div class="room-list">
+          {% for item in guild_loteria_rooms %}
+          <div class="room-row">
+            <div>
+              <div class="quest-title">{{ item.room.title }}</div>
+              <div class="quest-meta">{{ item.status_label }} | Host {{ item.host_name }} | {{ item.participant_count }} player{{ item.participant_count|pluralize }}</div>
+              <div class="room-code">Code {{ item.room.room_code }}</div>
+            </div>
+            <div class="room-actions">
+              {% if item.is_participant %}
+              <a href="{% url item.open_url_name item.room.pk %}" class="btn btn-secondary btn-sm">{% if item.room.status == "active" %}Join Live Table{% else %}Open Lobby{% endif %}</a>
+              {% elif item.can_join %}
+              <form method="post" action="{% url 'game:loteria_room_join' item.room.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm">Join Table</button>
+              </form>
+              {% else %}
+              <span class="btn btn-secondary btn-sm" style="pointer-events:none; opacity:0.7;">Guild Access Only</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="muted-copy">No active guild Loteria tables right now. Open one from the Loteria hub and guildmates will see it here.</div>
+        {% endif %}
+      </section>
+
+      <section class="guild-panel">
+        <h2 class="panel-title">Members</h2>
+        <div class="member-list">
+          {% for m in memberships %}
+          <div class="member-row">
+            <div class="member-role">{{ m.get_role_display }}</div>
+            <div style="flex:1; min-width:180px;">
+              <div class="member-name">
+                <a href="{% url 'users:profile' m.user.username %}" style="color:inherit; text-decoration:none;">
+                  {{ m.user.display_name|default:m.user.username }}
+                </a>
+              </div>
+              <div class="member-meta">
+                {{ m.contribution_points }} contribution | {{ m.donated_stickers }} donated | {{ m.guild_quests_completed }} guild quests
+              </div>
+            </div>
+            <div class="member-meta">Joined {{ m.joined_at|date:"M j, Y" }}</div>
+
+            {% if in_this_guild and m.user.pk != request.user.pk %}
+            <div class="member-actions">
+              {% if my_membership.role == "owner" and m.role == "member" %}
+              <form method="post" action="{% url 'guilds:promote' guild.pk m.user.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm">Promote</button>
+              </form>
+              {% elif my_membership.role == "owner" and m.role == "officer" %}
+              <form method="post" action="{% url 'guilds:demote' guild.pk m.user.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm">Demote</button>
+              </form>
+              {% endif %}
+
+              {% if my_membership.role == "owner" or my_membership.role == "officer" and m.role == "member" %}
+              <form method="post" action="{% url 'guilds:kick' guild.pk m.user.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm">Kick</button>
+              </form>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <section class="guild-panel">
+      <h2 class="panel-title">Perks</h2>
+      <div class="perk-list">
+        {% for perk in stats.perks %}
+        <div class="perk-row">
+          <div class="perk-name">Lv {{ perk.level }} - {{ perk.name }}</div>
+          <div class="perk-desc">{{ perk.description }}</div>
+          <div class="quest-meta" style="margin-top:0.35rem;">{% if perk.unlocked %}Unlocked{% else %}Locked{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </section>
 </div>
 {% endblock %}

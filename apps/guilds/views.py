@@ -1,4 +1,5 @@
 """Views for the guild system."""
+
 import logging
 
 from django.contrib import messages
@@ -6,6 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView, TemplateView
+
+from apps.game.models import LoteriaMode, LoteriaRoom, LoteriaStatus
 
 from .models import GUILD_CREATE_COST_RYO, Guild
 from .services import GuildService
@@ -15,7 +18,7 @@ _guild_service = GuildService()
 
 
 class GuildListView(LoginRequiredMixin, ListView):
-    """GET /guilds/ — public list of all guilds ordered by member count."""
+    """Public list of guilds."""
 
     model = Guild
     template_name = "guilds/guild_list.html"
@@ -23,7 +26,7 @@ class GuildListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return Guild.objects.prefetch_related("memberships").order_by("-created_at")
+        return Guild.objects.prefetch_related("memberships").order_by("-level", "-xp", "-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -32,28 +35,79 @@ class GuildListView(LoginRequiredMixin, ListView):
 
 
 class GuildDetailView(LoginRequiredMixin, TemplateView):
-    """GET /guilds/<pk>/ — guild detail with members and stats."""
+    """Guild detail with members, perks, and guild quest progress."""
 
     template_name = "guilds/guild_detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         guild = get_object_or_404(Guild, pk=kwargs["pk"])
-        memberships = guild.memberships.select_related("user").order_by("joined_at")
+        memberships = guild.memberships.select_related("user").order_by("-contribution_points", "joined_at")
         my_membership = _guild_service.get_membership(self.request.user)
         stats = _guild_service.get_guild_stats(guild)
-        context.update({
-            "guild": guild,
-            "memberships": memberships,
-            "my_membership": my_membership,
-            "in_this_guild": my_membership is not None and my_membership.guild_id == guild.pk,
-            "stats": stats,
-        })
+        guild_rooms = (
+            guild.loteria_rooms.select_related("created_by").prefetch_related("participants")
+            .filter(
+                mode=LoteriaMode.PRIVATE,
+                status__in=[LoteriaStatus.DRAFT, LoteriaStatus.LOBBY, LoteriaStatus.ACTIVE],
+            )
+            .order_by("status", "-created_at")
+        )
+        active_guild_rooms = []
+        for room in guild_rooms:
+            participant_count = room.participants.count()
+            is_participant = room.created_by_id == self.request.user.id or room.participants.filter(user=self.request.user).exists()
+            active_guild_rooms.append(
+                {
+                    "room": room,
+                    "host_name": room.created_by.username,
+                    "participant_count": participant_count,
+                    "is_participant": is_participant,
+                    "status_label": "Live" if room.status == LoteriaStatus.ACTIVE else "Lobby",
+                    "open_url_name": "game:loteria_room" if room.status == LoteriaStatus.ACTIVE else "game:loteria_lobby",
+                    "can_join": my_membership is not None and my_membership.guild_id == guild.pk and room.status != LoteriaStatus.ACTIVE,
+                }
+            )
+        context.update(
+            {
+                "guild": guild,
+                "memberships": memberships,
+                "my_membership": my_membership,
+                "in_this_guild": my_membership is not None and my_membership.guild_id == guild.pk,
+                "stats": stats,
+                "guild_quests": _guild_service.get_guild_quests(self.request.user, guild),
+                "guild_loteria_rooms": active_guild_rooms,
+            }
+        )
+        return context
+
+
+class GuildAlbumView(LoginRequiredMixin, TemplateView):
+    """Guild album and donation page."""
+
+    template_name = "guilds/guild_album.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        guild = get_object_or_404(Guild, pk=kwargs["pk"])
+        my_membership = _guild_service.get_membership(self.request.user)
+        stats = _guild_service.get_guild_stats(guild)
+        context.update(
+            {
+                "guild": guild,
+                "my_membership": my_membership,
+                "in_this_guild": my_membership is not None and my_membership.guild_id == guild.pk,
+                "stats": stats,
+                "album_entries": _guild_service.get_guild_album_entries(guild),
+                "donation_stickers": _guild_service.get_available_guild_donation_stickers(self.request.user, guild),
+                "guild_quests": _guild_service.get_guild_quests(self.request.user, guild),
+            }
+        )
         return context
 
 
 class GuildCreateView(LoginRequiredMixin, TemplateView):
-    """GET/POST /guilds/create/"""
+    """Guild create page."""
 
     template_name = "guilds/guild_create.html"
 
@@ -79,7 +133,7 @@ class GuildCreateView(LoginRequiredMixin, TemplateView):
 
 
 class GuildJoinView(LoginRequiredMixin, View):
-    """POST /guilds/<pk>/join/"""
+    """Join a guild."""
 
     def post(self, request, pk: int):
         guild = get_object_or_404(Guild, pk=pk)
@@ -92,7 +146,7 @@ class GuildJoinView(LoginRequiredMixin, View):
 
 
 class GuildLeaveView(LoginRequiredMixin, View):
-    """POST /guilds/leave/"""
+    """Leave the current guild."""
 
     def post(self, request):
         try:
@@ -104,12 +158,13 @@ class GuildLeaveView(LoginRequiredMixin, View):
 
 
 class GuildKickView(LoginRequiredMixin, View):
-    """POST /guilds/<pk>/kick/<user_pk>/"""
+    """Kick a guild member."""
 
     def post(self, request, pk: int, user_pk: int):
         from django.contrib.auth import get_user_model
-        User = get_user_model()
-        target = get_object_or_404(User, pk=user_pk)
+
+        user_model = get_user_model()
+        target = get_object_or_404(user_model, pk=user_pk)
         try:
             _guild_service.kick_member(request.user, target)
             messages.success(request, f"{target} has been removed from the guild.")
@@ -119,12 +174,13 @@ class GuildKickView(LoginRequiredMixin, View):
 
 
 class GuildPromoteView(LoginRequiredMixin, View):
-    """POST /guilds/<pk>/promote/<user_pk>/"""
+    """Promote a guild member."""
 
     def post(self, request, pk: int, user_pk: int):
         from django.contrib.auth import get_user_model
-        User = get_user_model()
-        target = get_object_or_404(User, pk=user_pk)
+
+        user_model = get_user_model()
+        target = get_object_or_404(user_model, pk=user_pk)
         try:
             _guild_service.promote_to_officer(request.user, target)
             messages.success(request, f"{target} is now an officer.")
@@ -134,15 +190,60 @@ class GuildPromoteView(LoginRequiredMixin, View):
 
 
 class GuildDemoteView(LoginRequiredMixin, View):
-    """POST /guilds/<pk>/demote/<user_pk>/"""
+    """Demote a guild officer."""
 
     def post(self, request, pk: int, user_pk: int):
         from django.contrib.auth import get_user_model
-        User = get_user_model()
-        target = get_object_or_404(User, pk=user_pk)
+
+        user_model = get_user_model()
+        target = get_object_or_404(user_model, pk=user_pk)
         try:
             _guild_service.demote_to_member(request.user, target)
             messages.success(request, f"{target} has been demoted to member.")
         except ValueError as exc:
             messages.error(request, str(exc))
+        return redirect("guilds:detail", pk=pk)
+
+
+class GuildDonateStickerView(LoginRequiredMixin, View):
+    """Donate a sticker into the guild album."""
+
+    def post(self, request, pk: int):
+        guild = get_object_or_404(Guild, pk=pk)
+        try:
+            sticker_id = int(request.POST.get("sticker_id", "0"))
+        except ValueError:
+            messages.error(request, "Choose a valid sticker to donate.")
+            return redirect("guilds:album", pk=pk)
+
+        try:
+            entry = _guild_service.donate_sticker(request.user, guild, sticker_id)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(
+                request,
+                f"{entry.sticker.pokemon.name} was donated to [{guild.tag}] and is now guild soul-bound.",
+            )
+        return redirect("guilds:album", pk=pk)
+
+
+class GuildClaimQuestView(LoginRequiredMixin, View):
+    """Claim a completed guild quest."""
+
+    def post(self, request, pk: int):
+        guild = get_object_or_404(Guild, pk=pk)
+        quest_key = request.POST.get("quest_key", "")
+        next_url = request.POST.get("next", "")
+        try:
+            reward = _guild_service.claim_guild_quest(request.user, guild, quest_key)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(
+                request,
+                f"Guild quest claimed: +{reward['ryo']} Ryo, +{reward['amigo_xp']} Amigo XP, +{reward['guild_xp']} guild XP.",
+            )
+        if next_url:
+            return redirect(next_url)
         return redirect("guilds:detail", pk=pk)

@@ -12,59 +12,139 @@
 
 /* ── Filter bar ────────────────────────────────────────────── */
 .filter-bar {
-  background: var(--bg-card);
-  border: 1px solid var(--border-md);
+  background:
+    radial-gradient(circle at top right, rgba(232, 184, 75, .08), transparent 34%),
+    linear-gradient(180deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .98));
+  border: 1px solid rgba(91, 129, 255, .22);
   border-radius: var(--radius-md);
-  padding: .85rem 1rem;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, .24);
+  padding: 1rem 1.1rem;
   margin-bottom: 1.25rem;
   display: flex; flex-direction: column; gap: .75rem;
 }
 .filter-row {
-  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: start;
+  gap: .75rem;
 }
 .filter-label {
   font-size: .72rem; font-weight: 700; color: var(--text-3);
-  min-width: 56px; text-transform: uppercase; letter-spacing: .04em;
+  text-transform: uppercase; letter-spacing: .08em;
+  padding-top: .65rem;
+}
+.filter-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex-wrap: wrap;
 }
 .filter-search {
-  flex: 1; min-width: 160px; max-width: 280px;
-  background: var(--border-lo); border: 1px solid #2d4a7a;
-  border-radius: var(--radius-sm); padding: .35rem .75rem;
-  font-size: .88rem; color: var(--text-1); outline: none;
-  transition: border-color .2s;
+  flex: 1; min-width: 220px; max-width: 360px;
+  background: rgba(15, 23, 42, .55); border: 1px solid #2d4a7a;
+  border-radius: 14px; padding: .62rem .9rem;
+  font-size: .9rem; color: var(--text-1); outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
 }
-.filter-search:focus { border-color: var(--accent-red); }
+.filter-search:focus {
+  border-color: rgba(232, 184, 75, .75);
+  box-shadow: 0 0 0 3px rgba(232, 184, 75, .12);
+  background: rgba(15, 23, 42, .75);
+}
 
 /* Chip toggles */
+.chip-group {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
 .chip {
-  font-size: .72rem; padding: .2rem .55rem; border-radius: 20px;
-  border: 1px solid #374151; cursor: pointer; color: var(--text-2);
-  background: none; transition: border-color .15s, color .15s, background .15s;
+  font-size: .72rem; padding: .34rem .72rem; border-radius: 999px;
+  border: 1px solid rgba(91, 129, 255, .22); cursor: pointer; color: var(--text-2);
+  background: rgba(10, 15, 29, .42);
+  transition: border-color .15s, color .15s, background .15s, transform .15s;
   user-select: none;
 }
+.chip:hover {
+  border-color: rgba(232, 184, 75, .35);
+  color: var(--text-1);
+  transform: translateY(-1px);
+}
 .chip.active {
-  border-color: var(--accent-red); color: var(--text-1);
-  background: rgba(239,68,68,.12);
+  border-color: rgba(232, 184, 75, .6); color: #f8fafc;
+  background: rgba(232, 184, 75, .12);
 }
 
 /* Level range */
-.level-range-wrap {
-  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+.level-inline {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
 }
-.level-range-wrap input[type=range] {
-  width: 110px; accent-color: var(--accent-red);
+
+.level-field {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .36rem .42rem .36rem .65rem;
+  border: 1px solid rgba(91, 129, 255, .28);
+  border-radius: 999px;
+  background: rgba(10, 15, 29, .46);
 }
-.level-val {
-  font-size: .8rem; font-weight: 700; color: var(--accent-red);
-  min-width: 28px; text-align: center;
+
+.level-field-label {
+  font-size: .72rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.level-input {
+  width: 64px;
+  border: 1px solid rgba(91, 129, 255, .22);
+  border-radius: 12px;
+  background: rgba(30, 41, 59, .46);
+  color: var(--text-1);
+  font-size: .88rem;
+  font-weight: 800;
+  text-align: right;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  padding: .35rem .55rem;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+
+.level-input::-webkit-outer-spin-button,
+.level-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.level-input:focus {
+  border-color: rgba(232, 184, 75, .75);
+  box-shadow: 0 0 0 3px rgba(232, 184, 75, .12);
+  background: rgba(30, 41, 59, .7);
+}
+
+.level-separator {
+  font-size: .74rem;
+  color: var(--text-3);
 }
 
 .filter-clear {
-  font-size: .72rem; color: var(--text-3); background: none; border: none;
-  cursor: pointer; padding: .2rem .4rem; margin-left: auto;
-  transition: color .15s;
+  font-size: .74rem; color: var(--text-2); background: rgba(10, 15, 29, .42);
+  border: 1px solid rgba(91, 129, 255, .22); border-radius: 999px;
+  cursor: pointer; padding: .45rem .8rem; margin-left: auto;
+  transition: color .15s, border-color .15s, background .15s;
 }
-.filter-clear:hover { color: var(--text-1); }
+.filter-clear:hover {
+  color: var(--text-1);
+  border-color: rgba(232, 184, 75, .35);
+  background: rgba(232, 184, 75, .08);
+}
 
 /* ── Result count ──────────────────────────────────────────── */
 .result-count {
@@ -133,15 +213,26 @@
 .empty-state {
   grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-3);
 }
+
+@media (max-width: 760px) {
+  .filter-row {
+    grid-template-columns: 1fr;
+    gap: .45rem;
+  }
+  .filter-label {
+    padding-top: 0;
+  }
+  .filter-search-wrap {
+    align-items: stretch;
+  }
+  .level-inline {
+    gap: .55rem;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-{#
-  Serialize owned pokemon data for Alpine filtering.
-  Each pokemon carries: pk, name, types[], chakra, gens[], level, sell_value,
-  is_training, is_on_team (checked server-side via template tag workaround).
-#}
 <script>
 const CASA_POKEMON = [
   {% for op in owned_pokemon %}
@@ -193,50 +284,77 @@ const CASA_POKEMON = [
     {# Name search #}
     <div class="filter-row">
       <span class="filter-label">Name</span>
-      <input class="filter-search" x-model="search" type="search"
-             placeholder="Search by name…" autocomplete="off">
-      <button class="filter-clear" @click="clearAll()" x-show="isDirty()">✕ Clear all</button>
+      <div class="filter-search-wrap">
+        <input class="filter-search" x-model="search" type="search"
+               placeholder="Search by name..." autocomplete="off">
+        <button class="filter-clear" @click="clearAll()" x-show="isDirty()">Clear all</button>
+      </div>
     </div>
 
     {# Type chips #}
     <div class="filter-row">
       <span class="filter-label">Type</span>
+      <div class="chip-group">
       {% for t in all_types %}
       <button class="chip" :class="{ active: types.includes('{{ t.name|lower }}') }"
               @click="toggle(types, '{{ t.name|lower }}')">{{ t.name }}</button>
       {% endfor %}
+      </div>
     </div>
 
     {# Chakra chips #}
     <div class="filter-row">
       <span class="filter-label">Chakra</span>
+      <div class="chip-group">
       {% for c in all_chakras %}
       <button class="chip" :class="{ active: chakras.includes('{{ c.name|lower }}') }"
               @click="toggle(chakras, '{{ c.name|lower }}')">{{ c.name }}</button>
       {% endfor %}
+      </div>
     </div>
 
     {# Generation chips #}
     <div class="filter-row">
       <span class="filter-label">Gen</span>
+      <div class="chip-group">
       {% for g in all_generations %}
       <button class="chip" :class="{ active: gens.includes({{ g.number }}) }"
               @click="toggle(gens, {{ g.number }})">Gen {{ g.number }}</button>
       {% endfor %}
+      </div>
     </div>
 
     {# Level range #}
     <div class="filter-row">
       <span class="filter-label">Level</span>
-      <div class="level-range-wrap">
-        <span style="font-size:.75rem;color:var(--text-3);">Min</span>
-        <input type="range" min="1" max="100" x-model.number="minLevel"
-               @input="if(minLevel > maxLevel) maxLevel = minLevel">
-        <span class="level-val" x-text="minLevel"></span>
-        <span style="font-size:.75rem;color:var(--text-3);">Max</span>
-        <input type="range" min="1" max="100" x-model.number="maxLevel"
-               @input="if(maxLevel < minLevel) minLevel = maxLevel">
-        <span class="level-val" x-text="maxLevel"></span>
+      <div class="level-inline">
+        <label class="level-field">
+          <span class="level-field-label">Min</span>
+          <input
+            class="level-input"
+            type="number"
+            min="1"
+            max="100"
+            inputmode="numeric"
+            :value="minLevel"
+            @input="setMinLevel($event.target.value)"
+            @blur="$event.target.value = minLevel"
+          >
+        </label>
+        <span class="level-separator">to</span>
+        <label class="level-field">
+          <span class="level-field-label">Max</span>
+          <input
+            class="level-input"
+            type="number"
+            min="1"
+            max="100"
+            inputmode="numeric"
+            :value="maxLevel"
+            @input="setMaxLevel($event.target.value)"
+            @blur="$event.target.value = maxLevel"
+          >
+        </label>
       </div>
     </div>
 
@@ -375,6 +493,22 @@ function casaApp() {
       if (idx === -1) arr.push(val);
       else arr.splice(idx, 1);
       this.filter();
+    },
+
+    normalizeLevel(raw) {
+      const parsed = Number.parseInt(raw, 10);
+      if (Number.isNaN(parsed)) return 1;
+      return Math.min(100, Math.max(1, parsed));
+    },
+
+    setMinLevel(raw) {
+      const nextValue = this.normalizeLevel(raw);
+      this.minLevel = Math.min(nextValue, this.maxLevel);
+    },
+
+    setMaxLevel(raw) {
+      const nextValue = this.normalizeLevel(raw);
+      this.maxLevel = Math.max(nextValue, this.minLevel);
     },
 
     clearAll() {

@@ -8,17 +8,30 @@ from math import floor
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils import timezone
 
-from apps.game.models import LoteriaBoardTemplate, LoteriaMode, LoteriaRoom, LoteriaRoomEntry, LoteriaStatus
+from apps.game.models import (
+    LoteriaBoardTemplate,
+    LoteriaMode,
+    LoteriaPrizeClaim,
+    LoteriaRoom,
+    LoteriaRoomEntry,
+    LoteriaRoomParticipant,
+    LoteriaStatus,
+)
 from apps.pokemon.models import Pokemon
-from apps.users.services import award_ryo, get_candy_inventory, use_candy
+from apps.users.services import award_ryo, deduct_ryo, get_candy_inventory, use_candy
 
 SILHOUETTE_SESSION_KEY = "fun_silhouette_run"
 SILHOUETTE_REVEAL_SESSION_KEY = "fun_silhouette_reveal"
 MEMORY_SESSION_KEY = "fun_memory_run"
 MEMORY_RESULT_SESSION_KEY = "fun_memory_result"
+LOTERIA_STARTER_BOARD_TITLE_SUFFIX = "Starter Board"
+LOTERIA_PRIVATE_ENTRY_FEE_RYO = 500
+LOTERIA_ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+LOTERIA_SHARED_PAUSE_SECONDS = 600
+LOTERIA_FIRST_CALL_DELAY_SECONDS = 15
 
 User = get_user_model()
 
@@ -116,6 +129,7 @@ class LoteriaDeckConfig:
     lobby_countdown_seconds: int = 10
     draw_interval_seconds: int = 4
     quick_play_prizes: dict[int, int] | None = None
+    quick_play_entry_fees: dict[int, int] | None = None
     prize_boost_per_player_board: int = 150
     enabled: bool = True
     logo_image: str = "loteria_game_logo.png"
@@ -141,6 +155,11 @@ class LoteriaDeckConfig:
         """Return the base room prize for a quick-play NPC table."""
         prize_map = self.quick_play_prizes or {2: 900, 4: 1500, 6: 2400}
         return prize_map.get(npc_count, prize_map[max(prize_map)])
+
+    def entry_fee_for_npc_count(self, npc_count: int) -> int:
+        """Return the extra Ryo fee to open one quick-play NPC table."""
+        fee_map = self.quick_play_entry_fees or {2: 100, 4: 300, 6: 600}
+        return fee_map.get(npc_count, fee_map[max(fee_map)])
 
 
 ROOKIE_25_DEXES: tuple[int, ...] = (
@@ -236,7 +255,7 @@ MEMORY_BOARDS: dict[str, MemoryBoardConfig] = {
         cols=4,
         entry_candy_type="trail_mix",
         entry_qty=1,
-        base_ryo=120,
+        base_ryo=600,
         base_dust=5,
         speed_target_seconds=45,
     ),
@@ -249,7 +268,7 @@ MEMORY_BOARDS: dict[str, MemoryBoardConfig] = {
         cols=4,
         entry_candy_type="trail_mix",
         entry_qty=1,
-        base_ryo=220,
+        base_ryo=800,
         base_dust=10,
         speed_target_seconds=65,
     ),
@@ -262,7 +281,7 @@ MEMORY_BOARDS: dict[str, MemoryBoardConfig] = {
         cols=5,
         entry_candy_type="sweet_berry",
         entry_qty=1,
-        base_ryo=350,
+        base_ryo=1000,
         base_dust=15,
         speed_target_seconds=90,
     ),
@@ -275,7 +294,7 @@ MEMORY_BOARDS: dict[str, MemoryBoardConfig] = {
         cols=6,
         entry_candy_type="golden_apple",
         entry_qty=1,
-        base_ryo=500,
+        base_ryo=2400,
         base_dust=20,
         speed_target_seconds=115,
     ),
@@ -300,6 +319,7 @@ LOTERIA_DECKS: dict[str, LoteriaDeckConfig] = {
         lobby_countdown_seconds=10,
         draw_interval_seconds=4,
         quick_play_prizes={2: 900, 4: 1500, 6: 2400},
+        quick_play_entry_fees={2: 100, 4: 300, 6: 600},
         prize_boost_per_player_board=150,
     ),
 }
@@ -312,6 +332,25 @@ LOTERIA_NPC_NAMES: tuple[str, ...] = (
     "Arcade Ren",
     "Camper Yumi",
 )
+
+LOTERIA_PATTERN_ORDER: tuple[str, ...] = (
+    "chorro",
+    "centrito",
+    "cuatro_esquinas",
+    "buena",
+)
+LOTERIA_PATTERN_LABELS: dict[str, str] = {
+    "chorro": "Chorro",
+    "centrito": "Centrito",
+    "cuatro_esquinas": "Cuatro Esquinas",
+    "buena": "Buena",
+}
+LOTERIA_PATTERN_PREVIEW_CELLS: dict[str, tuple[int, ...]] = {
+    "chorro": (0, 1, 2, 3),
+    "centrito": (5, 6, 9, 10),
+    "cuatro_esquinas": (0, 3, 12, 15),
+    "buena": tuple(range(16)),
+}
 
 
 def get_silhouette_tower_catalog() -> list[SilhouetteTowerConfig]:
@@ -452,10 +491,11 @@ def get_loteria_species_map(config: LoteriaDeckConfig) -> dict[int, Pokemon]:
 
 
 def get_user_owned_loteria_species(user, config: LoteriaDeckConfig) -> list[Pokemon]:
-    """Return unique owned species that are valid for this deck."""
+    """Return unique owned level-20+ species that are valid for this deck."""
     return list(
         Pokemon.objects.filter(
             owned_instances__owner=user,
+            owned_instances__level__gte=20,
             pokedex_number__in=config.deck_dex_numbers,
         )
         .exclude(sprite_url="")
@@ -475,7 +515,11 @@ def _random_board_species_ids_from_pool(pool_species_ids: list[int], board_size:
 def _next_available_board_slot(user, config: LoteriaDeckConfig) -> int | None:
     """Find the next open saved board slot for this deck."""
     used_slots = set(
-        LoteriaBoardTemplate.objects.filter(owner=user, deck_key=config.key).values_list("board_slot", flat=True)
+        LoteriaBoardTemplate.objects.filter(
+            owner=user,
+            deck_key=config.key,
+            seeded_by_system=False,
+        ).values_list("board_slot", flat=True)
     )
     for slot in range(1, config.max_saved_boards + 1):
         if slot not in used_slots:
@@ -483,35 +527,83 @@ def _next_available_board_slot(user, config: LoteriaDeckConfig) -> int | None:
     return None
 
 
+def get_loteria_starter_board_slot(config: LoteriaDeckConfig) -> int:
+    """Return the reserved slot number used for the locked starter board."""
+    return config.max_saved_boards + 1
+
+
+def get_loteria_board_label(board_slot: int, *, seeded_by_system: bool = False) -> str:
+    """Return the fixed label used for one board slot."""
+    if seeded_by_system:
+        return LOTERIA_STARTER_BOARD_TITLE_SUFFIX
+    return f"Board {board_slot}"
+
+
+def get_loteria_entry_display_name(user, board_slot: int, *, seeded_by_system: bool = False) -> str:
+    """Return the live-room display name for one player's board entry."""
+    user_label = getattr(user, "username", "Player")
+    return f"{user_label} - {get_loteria_board_label(board_slot, seeded_by_system=seeded_by_system)}"
+
+
 def ensure_default_loteria_board(user, config: LoteriaDeckConfig) -> None:
-    """Seed one random default board the first time a user opens the deck."""
-    if LoteriaBoardTemplate.objects.filter(owner=user, deck_key=config.key).exists():
+    """Seed one random locked starter board the first time a user opens the deck."""
+    starter_slot = get_loteria_starter_board_slot(config)
+    starter_board = (
+        LoteriaBoardTemplate.objects.filter(
+            owner=user,
+            deck_key=config.key,
+            seeded_by_system=True,
+        )
+        .order_by("created_at", "pk")
+        .first()
+    )
+    if starter_board:
+        if starter_board.board_slot != starter_slot:
+            starter_board.board_slot = starter_slot
+            starter_board.save(update_fields=["board_slot", "updated_at"])
         return
 
     species_ids = list(get_loteria_species_queryset(config).values_list("id", flat=True))
-    board_slot = _next_available_board_slot(user, config)
-    if board_slot is None:
+    if len(species_ids) < config.board_size:
         return
 
     LoteriaBoardTemplate.objects.create(
         owner=user,
         deck_key=config.key,
-        board_slot=board_slot,
-        title=f"{config.region_label} Starter Board",
+        board_slot=starter_slot,
+        title=get_loteria_board_label(starter_slot, seeded_by_system=True),
         species_ids=_random_board_species_ids_from_pool(species_ids, config.board_size),
         seeded_by_system=True,
     )
 
 
 def get_user_loteria_boards(user, config: LoteriaDeckConfig):
-    """Return the user's saved boards for this deck."""
+    """Return the user's editable custom boards for this deck."""
     return list(
-        LoteriaBoardTemplate.objects.filter(owner=user, deck_key=config.key).order_by("board_slot", "pk")
+        LoteriaBoardTemplate.objects.filter(
+            owner=user,
+            deck_key=config.key,
+            seeded_by_system=False,
+            board_slot__lte=config.max_saved_boards,
+        ).order_by("board_slot", "pk")
+    )
+
+
+def get_user_loteria_starter_board(user, config: LoteriaDeckConfig) -> LoteriaBoardTemplate | None:
+    """Return the locked starter board for this deck, if one exists."""
+    return (
+        LoteriaBoardTemplate.objects.filter(
+            owner=user,
+            deck_key=config.key,
+            seeded_by_system=True,
+        )
+        .order_by("created_at", "pk")
+        .first()
     )
 
 
 def save_loteria_board_template(user, config: LoteriaDeckConfig, *, board_slot: int, title: str, species_ids: list[int]) -> LoteriaBoardTemplate:
-    """Create or update one saved Loteria board from owned species."""
+    """Create or update one saved Loteria board from owned level-20+ species."""
     if board_slot < 1 or board_slot > config.max_saved_boards:
         raise ValueError("That board slot is outside the allowed save range.")
 
@@ -525,13 +617,14 @@ def save_loteria_board_template(user, config: LoteriaDeckConfig, *, board_slot: 
         Pokemon.objects.filter(
             id__in=clean_species_ids,
             owned_instances__owner=user,
+            owned_instances__level__gte=20,
             pokedex_number__in=config.deck_dex_numbers,
         ).values_list("id", flat=True)
     )
     if owned_species_ids != set(clean_species_ids):
-        raise ValueError("You can only build extra Loteria boards from Pokemon you currently own.")
+        raise ValueError("You can only build Loteria boards from Pokemon you own that are at least level 20.")
 
-    board_title = (title or f"{config.region_label} Board {board_slot}").strip()[:80] or f"{config.region_label} Board {board_slot}"
+    board_title = get_loteria_board_label(board_slot, seeded_by_system=False)
     board, _created = LoteriaBoardTemplate.objects.update_or_create(
         owner=user,
         deck_key=config.key,
@@ -569,15 +662,331 @@ def serialize_loteria_board(board, species_map: dict[int, Pokemon], called_speci
     species_ids = list(board.species_ids)
     cells = _serialize_loteria_cells(species_ids, species_map, called_species_ids)
     marked_count = sum(1 for cell in cells if cell["marked"])
+    board_slot = getattr(board, "board_slot", 1)
+    seeded_by_system = getattr(board, "seeded_by_system", False)
+    if not seeded_by_system:
+        board_template = getattr(board, "board_template", None)
+        seeded_by_system = bool(getattr(board_template, "seeded_by_system", False))
     return {
         "id": getattr(board, "id", None),
-        "board_slot": getattr(board, "board_slot", 1),
-        "title": getattr(board, "title", getattr(board, "display_name", "Board")),
+        "board_slot": board_slot,
+        "title": get_loteria_board_label(board_slot, seeded_by_system=seeded_by_system),
         "cells": cells,
         "marked_count": marked_count,
         "board_size": len(cells),
         "is_complete": marked_count == len(cells) and bool(cells),
+        "seeded_by_system": seeded_by_system,
     }
+
+
+def _resolve_loteria_pause_state(room: LoteriaRoom, *, now=None) -> LoteriaRoom:
+    """Expire or preserve the shared pause window for one active room."""
+    if not room.paused_at:
+        return room
+    current_time = now or timezone.now()
+    elapsed_seconds = max(0, int((current_time - room.paused_at).total_seconds()))
+    if elapsed_seconds < room.pause_remaining_seconds:
+        return room
+    consumed_seconds = room.pause_remaining_seconds
+    room.pause_remaining_seconds = 0
+    room.paused_at = None
+    if room.next_tick_at:
+        room.next_tick_at = room.next_tick_at + timedelta(seconds=consumed_seconds)
+    room.save(update_fields=["pause_remaining_seconds", "paused_at", "next_tick_at", "updated_at"])
+    return room
+
+
+@transaction.atomic
+def toggle_loteria_pause(user, room: LoteriaRoom, *, pause: bool) -> LoteriaRoom:
+    """Pause or resume one private/guild Loteria room using the shared timer budget."""
+    if room.mode != LoteriaMode.PRIVATE:
+        raise ValueError("Pause is only available in private or guild tables.")
+    if room.status != LoteriaStatus.ACTIVE:
+        raise ValueError("Only live Loteria rooms can be paused.")
+    participant = room.participants.filter(user=user).first()
+    if participant is None and room.created_by_id != user.id:
+        raise ValueError("Join the table before changing the pause state.")
+
+    room = _resolve_loteria_pause_state(room)
+    if pause:
+        if room.paused_at:
+            raise ValueError("This Loteria table is already paused.")
+        if room.pause_remaining_seconds <= 0:
+            raise ValueError("This table already used the full 10-minute pause budget.")
+        room.paused_at = timezone.now()
+        room.save(update_fields=["paused_at", "updated_at"])
+        return room
+
+    if not room.paused_at:
+        raise ValueError("This Loteria table is already running.")
+    elapsed_seconds = max(0, int((timezone.now() - room.paused_at).total_seconds()))
+    consumed_seconds = min(room.pause_remaining_seconds, elapsed_seconds)
+    room.pause_remaining_seconds = max(0, room.pause_remaining_seconds - consumed_seconds)
+    if room.next_tick_at:
+        room.next_tick_at = room.next_tick_at + timedelta(seconds=consumed_seconds)
+    room.paused_at = None
+    room.save(update_fields=["pause_remaining_seconds", "paused_at", "next_tick_at", "updated_at"])
+    return room
+
+
+def _build_loteria_line_groups(config: LoteriaDeckConfig) -> list[tuple[int, ...]]:
+    """Return every row, column, and diagonal for the current board shape."""
+    rows = [
+        tuple((row * config.board_cols) + col for col in range(config.board_cols))
+        for row in range(config.board_rows)
+    ]
+    cols = [
+        tuple((row * config.board_cols) + col for row in range(config.board_rows))
+        for col in range(config.board_cols)
+    ]
+    diag_lr = tuple((idx * config.board_cols) + idx for idx in range(min(config.board_rows, config.board_cols)))
+    diag_rl = tuple((idx * config.board_cols) + (config.board_cols - 1 - idx) for idx in range(min(config.board_rows, config.board_cols)))
+    return rows + cols + [diag_lr, diag_rl]
+
+
+def _loteria_pattern_groups(config: LoteriaDeckConfig) -> dict[str, list[tuple[int, ...]]]:
+    """Return the board index groups that complete each named Loteria prize."""
+    center_rows = [max(0, (config.board_rows // 2) - 1), min(config.board_rows - 1, config.board_rows // 2)]
+    center_cols = [max(0, (config.board_cols // 2) - 1), min(config.board_cols - 1, config.board_cols // 2)]
+    center_group = tuple((row * config.board_cols) + col for row in center_rows for col in center_cols)
+    corner_group = (
+        0,
+        config.board_cols - 1,
+        ((config.board_rows - 1) * config.board_cols),
+        (config.board_rows * config.board_cols) - 1,
+    )
+    full_group = tuple(range(config.board_size))
+    return {
+        "chorro": _build_loteria_line_groups(config),
+        "centrito": [center_group],
+        "cuatro_esquinas": [corner_group],
+        "buena": [full_group],
+    }
+
+
+def _entry_matches_pattern(entry: LoteriaRoomEntry, called_species_ids: set[int], config: LoteriaDeckConfig, pattern_key: str) -> bool:
+    """True when a room entry has completed the named prize pattern."""
+    groups = _loteria_pattern_groups(config).get(pattern_key, [])
+    if not groups:
+        return False
+    species_ids = list(entry.species_ids)
+    for group in groups:
+        if all(index < len(species_ids) and species_ids[index] in called_species_ids for index in group):
+            return True
+    return False
+
+
+def _split_pattern_reward(total_reward: int, winners: list[LoteriaRoomEntry]) -> list[dict]:
+    """Split one room prize across tied winners while preserving the full amount."""
+    if not winners or total_reward <= 0:
+        return []
+    base_share, remainder = divmod(total_reward, len(winners))
+    allocations = []
+    for index, winner in enumerate(winners):
+        allocations.append(
+            {
+                "entry_id": winner.pk,
+                "display_name": winner.display_name,
+                "board_slot": winner.board_slot,
+                "is_npc": winner.is_npc,
+                "reward_ryo": base_share + (1 if index < remainder else 0),
+            }
+        )
+    return allocations
+
+
+def _build_loteria_split_summary(winner_count: int) -> str:
+    """Return a short shared-winner summary for room pattern copy."""
+    if winner_count <= 1:
+        return ""
+    return f"Split across {winner_count} boards"
+
+
+def build_loteria_pattern_tracker(
+    room: LoteriaRoom,
+    config: LoteriaDeckConfig,
+    viewer_user=None,
+) -> list[dict]:
+    """Return display-ready room prize states for the live tracker and results page."""
+    claim_map = {str(claim.get("pattern_key")): claim for claim in room.pattern_claims}
+    viewer_claim_map: dict[str, LoteriaPrizeClaim] = {}
+    if viewer_user and getattr(viewer_user, "is_authenticated", False):
+        viewer_claim_map = {
+            claim.pattern_key: claim
+            for claim in room.prize_claims.filter(user=viewer_user).select_related("entry")
+        }
+
+    tracker = []
+    for pattern_key in LOTERIA_PATTERN_ORDER:
+        claim = claim_map.get(pattern_key)
+        reward_ryo = room.prize_pool_ryo if pattern_key == "buena" else room.side_pattern_reward_ryo
+        winner_allocations = list(claim.get("winner_allocations", [])) if claim else []
+        winner_names = [allocation.get("display_name", "Board") for allocation in winner_allocations]
+        viewer_claim = viewer_claim_map.get(pattern_key)
+        viewer_names = list(viewer_claim.winner_names_snapshot) if viewer_claim else []
+        viewer_other_winners = [name for name in viewer_names if name != getattr(viewer_claim.entry, "display_name", "")]
+        tracker.append(
+            {
+                "key": pattern_key,
+                "label": LOTERIA_PATTERN_LABELS[pattern_key],
+                "reward_ryo": int(claim.get("reward_ryo", reward_ryo)) if claim else int(reward_ryo),
+                "preview_cells": list(LOTERIA_PATTERN_PREVIEW_CELLS[pattern_key]),
+                "is_claimed": claim is not None,
+                "winner_allocations": winner_allocations,
+                "winner_names": winner_names,
+                "winner_count": len(winner_allocations),
+                "is_split": len(winner_allocations) > 1,
+                "split_summary": _build_loteria_split_summary(len(winner_allocations)),
+                "viewer_won": viewer_claim is not None,
+                "viewer_claimed": bool(viewer_claim and viewer_claim.claimed_at),
+                "viewer_claim_id": viewer_claim.pk if viewer_claim else None,
+                "viewer_reward_ryo": viewer_claim.reward_ryo if viewer_claim else 0,
+                "viewer_board_name": viewer_claim.entry.display_name if viewer_claim else "",
+                "viewer_other_winners": viewer_other_winners,
+                "viewer_other_winner_count": len(viewer_other_winners),
+            }
+        )
+    return tracker
+
+
+def get_user_pending_loteria_claims(user):
+    """Return the caller's pending Loteria prize claims newest first."""
+    return (
+        LoteriaPrizeClaim.objects.filter(user=user, claimed_at__isnull=True)
+        .select_related("room", "entry")
+        .order_by("-created_at", "pk")
+    )
+
+
+@transaction.atomic
+def claim_loteria_prize(user, claim_id: int, room: LoteriaRoom | None = None) -> LoteriaPrizeClaim:
+    """Award one pending Loteria prize to its owner and mark it claimed."""
+    queryset = (
+        LoteriaPrizeClaim.objects.select_related("user", "room", "entry")
+        .select_for_update()
+        .filter(pk=claim_id, user=user)
+    )
+    if room is not None:
+        queryset = queryset.filter(room=room)
+    claim = queryset.first()
+    if claim is None:
+        raise ValueError("That Loteria prize is not available.")
+    if claim.claimed_at:
+        raise ValueError("That Loteria prize was already claimed.")
+    award_ryo(user, claim.reward_ryo)
+    claim.claimed_at = timezone.now()
+    claim.save(update_fields=["claimed_at"])
+    return claim
+
+
+@transaction.atomic
+def claim_all_loteria_prizes(user, room: LoteriaRoom | None = None) -> tuple[int, int]:
+    """Claim all pending Loteria prizes for a user, optionally scoped to one room."""
+    queryset = (
+        LoteriaPrizeClaim.objects.select_related("room")
+        .select_for_update()
+        .filter(user=user, claimed_at__isnull=True)
+        .order_by("created_at", "pk")
+    )
+    if room is not None:
+        queryset = queryset.filter(room=room)
+    claims = list(queryset)
+    if not claims:
+        raise ValueError("No unclaimed Loteria prizes are waiting.")
+    total_ryo = sum(claim.reward_ryo for claim in claims)
+    award_ryo(user, total_ryo)
+    timestamp = timezone.now()
+    LoteriaPrizeClaim.objects.filter(pk__in=[claim.pk for claim in claims]).update(claimed_at=timestamp)
+    return len(claims), total_ryo
+
+
+def _generate_loteria_room_code(length: int = 6) -> str:
+    """Return a short human-shareable room code."""
+    for _ in range(32):
+        code = "".join(random.choices(LOTERIA_ROOM_CODE_ALPHABET, k=length))
+        if not LoteriaRoom.objects.filter(room_code=code).exists():
+            return code
+    raise ValueError("Could not reserve a private Loteria room code right now.")
+
+
+def _get_user_guild_membership(user):
+    """Best-effort guild membership lookup without forcing callers to handle DoesNotExist."""
+    try:
+        return user.guild_membership
+    except Exception:
+        return None
+
+
+def ensure_loteria_host_participant(room: LoteriaRoom) -> LoteriaRoomParticipant | None:
+    """Mirror the room host into participant state so access/readiness stay consistent."""
+    if not room.created_by_id:
+        return None
+    participant, created = LoteriaRoomParticipant.objects.get_or_create(
+        room=room,
+        user=room.created_by,
+        defaults={"is_host": True, "is_ready": False},
+    )
+    if not participant.is_host:
+        participant.is_host = True
+        participant.save(update_fields=["is_host"])
+    return participant
+
+
+def get_loteria_room_participants(room: LoteriaRoom) -> list[LoteriaRoomParticipant]:
+    """Return all room participants with the host normalized into the list."""
+    ensure_loteria_host_participant(room)
+    return list(room.participants.select_related("user").order_by("-is_host", "joined_at", "pk"))
+
+
+def _configure_loteria_rewards(room: LoteriaRoom, config: LoteriaDeckConfig, player_board_count: int) -> tuple[int, int, int]:
+    """Return buena reward, side reward, and per-board fee for the current room mode."""
+    if room.mode == LoteriaMode.PRIVATE:
+        entry_fee_ryo = room.entry_fee_ryo or LOTERIA_PRIVATE_ENTRY_FEE_RYO
+        paid_board_count = max(player_board_count, 0)
+        total_entry_fees = entry_fee_ryo * paid_board_count
+        house_match_bonus = LOTERIA_PRIVATE_ENTRY_FEE_RYO * paid_board_count
+        total_pot = total_entry_fees + house_match_bonus
+        buena_reward = total_pot // 2
+        side_pool = total_pot - buena_reward
+        side_reward = side_pool // 3 if side_pool else 0
+        buena_reward += side_pool - (side_reward * 3)
+        return buena_reward, side_reward, entry_fee_ryo
+    return (
+        config.prize_for_npc_count(room.npc_count) + (config.prize_boost_per_player_board * player_board_count),
+        1000,
+        config.entry_fee_for_npc_count(room.npc_count),
+    )
+
+
+def _claim_loteria_patterns(room: LoteriaRoom, config: LoteriaDeckConfig, called_species_ids: set[int]) -> tuple[LoteriaRoom, bool]:
+    """Resolve any newly won pattern prizes after a card call."""
+    claimed_keys = {str(claim.get("pattern_key")) for claim in room.pattern_claims}
+    room_entries = list(room.entries.select_related("user").order_by("entered_at", "pk"))
+    claims = list(room.pattern_claims)
+    buena_claimed = False
+    for pattern_key in LOTERIA_PATTERN_ORDER:
+        if pattern_key in claimed_keys:
+            continue
+        winners = [entry for entry in room_entries if _entry_matches_pattern(entry, called_species_ids, config, pattern_key)]
+        if not winners:
+            continue
+        reward_ryo = room.prize_pool_ryo if pattern_key == "buena" else room.side_pattern_reward_ryo
+        claims.append(
+            {
+                "pattern_key": pattern_key,
+                "label": LOTERIA_PATTERN_LABELS[pattern_key],
+                "reward_ryo": int(reward_ryo),
+                "winner_allocations": _split_pattern_reward(int(reward_ryo), winners),
+                "claimed_call_count": len(called_species_ids),
+            }
+        )
+        claimed_keys.add(pattern_key)
+        if pattern_key == "buena":
+            buena_claimed = True
+    if claims != list(room.pattern_claims):
+        room.pattern_claims = claims
+        room.save(update_fields=["pattern_claims", "updated_at"])
+    return room, buena_claimed
 
 
 def get_allowed_loteria_npc_counts(config: LoteriaDeckConfig) -> list[int]:
@@ -590,10 +999,13 @@ def get_user_open_loteria_room(user, config: LoteriaDeckConfig) -> LoteriaRoom |
     """Return the user's most recent unfinished room for this deck, if any."""
     return (
         LoteriaRoom.objects.filter(
-            created_by=user,
             deck_key=config.key,
             status__in=[LoteriaStatus.DRAFT, LoteriaStatus.LOBBY, LoteriaStatus.ACTIVE],
         )
+        .filter(
+            Q(created_by=user) | Q(participants__user=user)
+        )
+        .distinct()
         .order_by("-created_at")
         .first()
     )
@@ -603,10 +1015,13 @@ def get_user_recent_finished_loteria_room(user, config: LoteriaDeckConfig) -> Lo
     """Return the user's latest finished room for this deck."""
     return (
         LoteriaRoom.objects.filter(
-            created_by=user,
             deck_key=config.key,
             status=LoteriaStatus.FINISHED,
         )
+        .filter(
+            Q(created_by=user) | Q(participants__user=user) | Q(entries__user=user)
+        )
+        .distinct()
         .order_by("-finished_at", "-created_at")
         .first()
     )
@@ -638,7 +1053,7 @@ def create_quick_loteria_room(user, config: LoteriaDeckConfig, npc_count: int) -
     if open_room:
         raise ValueError("Finish or abandon your current Loteria room before creating a new one.")
 
-    return LoteriaRoom.objects.create(
+    room = LoteriaRoom.objects.create(
         created_by=user,
         deck_key=config.key,
         title=f"{config.title} Quick Play",
@@ -647,9 +1062,82 @@ def create_quick_loteria_room(user, config: LoteriaDeckConfig, npc_count: int) -
         npc_count=npc_count,
         round_number=_next_loteria_round_number(config),
         prize_pool_ryo=0,
+        entry_fee_ryo=config.entry_fee_for_npc_count(npc_count),
         deck_order=[],
         called_species_ids=[],
     )
+    ensure_loteria_host_participant(room)
+    return room
+
+
+@transaction.atomic
+def create_private_loteria_room(user, config: LoteriaDeckConfig, *, guild_only: bool = False) -> LoteriaRoom:
+    """Create a private or guild-locked Loteria room with a share code."""
+    open_room = get_user_open_loteria_room(user, config)
+    if open_room:
+        raise ValueError("Finish, leave, or abandon your current Loteria room before opening another one.")
+
+    guild_membership = _get_user_guild_membership(user)
+    if guild_only and guild_membership is None:
+        raise ValueError("Join a guild before opening a guild-only Loteria room.")
+
+    room = LoteriaRoom.objects.create(
+        created_by=user,
+        deck_key=config.key,
+        title=f"{config.title} {'Guild Table' if guild_only else 'Private Table'}",
+        mode=LoteriaMode.PRIVATE,
+        status=LoteriaStatus.LOBBY,
+        room_code=_generate_loteria_room_code(),
+        guild=guild_membership.guild if guild_only and guild_membership else None,
+        npc_count=0,
+        round_number=_next_loteria_round_number(config),
+        prize_pool_ryo=0,
+        entry_fee_ryo=LOTERIA_PRIVATE_ENTRY_FEE_RYO,
+        deck_order=[],
+        called_species_ids=[],
+    )
+    ensure_loteria_host_participant(room)
+    return room
+
+
+@transaction.atomic
+def join_private_loteria_room(user, config: LoteriaDeckConfig, room_code: str) -> LoteriaRoom:
+    """Join a private or guild-locked Loteria room by code."""
+    normalized_code = "".join(ch for ch in (room_code or "").upper() if ch.isalnum())
+    if not normalized_code:
+        raise ValueError("Enter a room code before joining a private Loteria table.")
+
+    room = (
+        LoteriaRoom.objects.select_related("guild", "created_by")
+        .filter(
+            deck_key=config.key,
+            mode=LoteriaMode.PRIVATE,
+            room_code=normalized_code,
+            status__in=[LoteriaStatus.DRAFT, LoteriaStatus.LOBBY],
+        )
+        .first()
+    )
+    if room is None:
+        raise ValueError("That private Loteria room code could not be found.")
+
+    open_room = get_user_open_loteria_room(user, config)
+    if open_room and open_room.pk != room.pk:
+        raise ValueError("Leave, finish, or abandon your current Loteria room before joining another one.")
+
+    if room.guild_id:
+        membership = _get_user_guild_membership(user)
+        if membership is None or membership.guild_id != room.guild_id:
+            raise ValueError("This Loteria room is locked to guild members only.")
+
+    participant, created = LoteriaRoomParticipant.objects.get_or_create(
+        room=room,
+        user=user,
+        defaults={"is_host": room.created_by_id == user.id, "is_ready": False},
+    )
+    if not created and room.created_by_id == user.id and not participant.is_host:
+        participant.is_host = True
+        participant.save(update_fields=["is_host"])
+    return room
 
 
 def _ensure_exact_npc_entries(room: LoteriaRoom, config: LoteriaDeckConfig) -> None:
@@ -681,6 +1169,86 @@ def _board_entry_is_complete(entry: LoteriaRoomEntry, called_species_ids: set[in
     return bool(entry.species_ids) and all(species_id in called_species_ids for species_id in entry.species_ids)
 
 
+def _validate_loteria_board_templates(user, config: LoteriaDeckConfig, board_ids: list[int]) -> list[LoteriaBoardTemplate]:
+    """Load and validate a user's selected Loteria boards."""
+    cleaned_ids = [int(board_id) for board_id in board_ids]
+    if not cleaned_ids:
+        raise ValueError("Pick at least one saved board before continuing.")
+
+    templates = list(
+        LoteriaBoardTemplate.objects.filter(owner=user, deck_key=config.key, id__in=cleaned_ids).order_by("board_slot")
+    )
+    if len(templates) != len(set(cleaned_ids)):
+        raise ValueError("One or more selected boards could not be found.")
+    if len(templates) > config.max_saved_boards:
+        raise ValueError(f"You can only bring up to {config.max_saved_boards} boards for your seat, starter included.")
+
+    eligible_species_ids = set(
+        Pokemon.objects.filter(
+            owned_instances__owner=user,
+            owned_instances__level__gte=20,
+            pokedex_number__in=config.deck_dex_numbers,
+        ).values_list("id", flat=True)
+    )
+    for board in templates:
+        if board.seeded_by_system:
+            continue
+        if set(board.species_ids) - eligible_species_ids:
+            raise ValueError(
+                "One of the selected boards has Pokemon you no longer own at level 20 or higher. Edit the board first."
+            )
+    return templates
+
+
+@transaction.atomic
+def save_loteria_room_boards(user, room: LoteriaRoom, config: LoteriaDeckConfig, board_ids: list[int], *, mark_ready: bool = True) -> LoteriaRoomParticipant:
+    """Save one participant's board selection for a room lobby."""
+    if room.status not in [LoteriaStatus.DRAFT, LoteriaStatus.LOBBY]:
+        raise ValueError("This Loteria room has already started.")
+    if room.mode == LoteriaMode.PRIVATE and room.guild_id:
+        membership = _get_user_guild_membership(user)
+        if membership is None or membership.guild_id != room.guild_id:
+            raise ValueError("This Loteria room is locked to guild members only.")
+
+    templates = _validate_loteria_board_templates(user, config, board_ids)
+    participant, _created = LoteriaRoomParticipant.objects.get_or_create(
+        room=room,
+        user=user,
+        defaults={"is_host": room.created_by_id == user.id, "is_ready": False},
+    )
+    if room.created_by_id == user.id and not participant.is_host:
+        participant.is_host = True
+
+    room.entries.filter(user=user, is_npc=False).delete()
+    for board in templates:
+        LoteriaRoomEntry.objects.create(
+            room=room,
+            user=user,
+            board_template=board,
+            display_name=get_loteria_entry_display_name(user, board.board_slot, seeded_by_system=board.seeded_by_system),
+            board_slot=board.board_slot,
+            species_ids=list(board.species_ids),
+            is_npc=False,
+        )
+
+    participant.is_ready = mark_ready
+    participant.save(update_fields=["is_host", "is_ready"])
+    return participant
+
+
+@transaction.atomic
+def set_loteria_room_participant_ready(user, room: LoteriaRoom, *, is_ready: bool) -> LoteriaRoomParticipant:
+    """Toggle ready state for one participant inside a lobby."""
+    participant = LoteriaRoomParticipant.objects.filter(room=room, user=user).first()
+    if participant is None:
+        raise ValueError("Join the room before changing your ready state.")
+    if is_ready and not room.entries.filter(user=user, is_npc=False).exists():
+        raise ValueError("Save at least one board before readying up.")
+    participant.is_ready = is_ready
+    participant.save(update_fields=["is_ready"])
+    return participant
+
+
 @transaction.atomic
 def _finalize_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> LoteriaRoom:
     """Lock winners, split rewards, and close the room."""
@@ -688,16 +1256,54 @@ def _finalize_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> Lote
         return room
 
     called_species_ids = set(room.called_species_ids)
+    room, _ = _claim_loteria_patterns(room, config, called_species_ids)
     entries = list(room.entries.select_related("user"))
-    winners = [entry for entry in entries if _board_entry_is_complete(entry, called_species_ids)]
-    split_reward = room.prize_pool_ryo // len(winners) if winners else 0
+    entry_map = {entry.pk: entry for entry in entries}
+    buena_winner_ids = set()
+    reward_totals: dict[int, int] = {}
+    existing_claim_keys = set(
+        LoteriaPrizeClaim.objects.filter(room=room).values_list("entry_id", "pattern_key")
+    )
+    created_claims: list[LoteriaPrizeClaim] = []
 
-    for entry in winners:
-        entry.is_winner = True
-        entry.reward_ryo = split_reward
+    for claim in room.pattern_claims:
+        pattern_key = str(claim.get("pattern_key"))
+        winner_allocations = list(claim.get("winner_allocations", []))
+        winner_names = [allocation.get("display_name", "Board") for allocation in winner_allocations]
+        for allocation in claim.get("winner_allocations", []):
+            entry_id = int(allocation.get("entry_id", 0) or 0)
+            reward_ryo = int(allocation.get("reward_ryo", 0) or 0)
+            if entry_id <= 0 or reward_ryo <= 0:
+                continue
+            reward_totals[entry_id] = reward_totals.get(entry_id, 0) + reward_ryo
+            if pattern_key == "buena":
+                buena_winner_ids.add(entry_id)
+            entry = entry_map.get(entry_id)
+            if entry is None or entry.user_id is None or entry.is_npc:
+                continue
+            if (entry.pk, pattern_key) in existing_claim_keys:
+                continue
+            created_claims.append(
+                LoteriaPrizeClaim(
+                    room=room,
+                    entry=entry,
+                    user=entry.user,
+                    pattern_key=pattern_key,
+                    pattern_label=str(claim.get("label", LOTERIA_PATTERN_LABELS.get(pattern_key, pattern_key.title()))),
+                    reward_ryo=reward_ryo,
+                    shared_winner_count=max(1, len(winner_allocations)),
+                    winner_names_snapshot=winner_names,
+                )
+            )
+            existing_claim_keys.add((entry.pk, pattern_key))
+
+    for entry in entries:
+        entry.reward_ryo = reward_totals.get(entry.pk, 0)
+        entry.is_winner = entry.pk in buena_winner_ids
         entry.save(update_fields=["is_winner", "reward_ryo"])
-        if entry.user_id and split_reward > 0:
-            award_ryo(entry.user, split_reward)
+
+    if created_claims:
+        LoteriaPrizeClaim.objects.bulk_create(created_claims)
 
     room.status = LoteriaStatus.FINISHED
     room.finished_at = timezone.now()
@@ -709,8 +1315,9 @@ def _finalize_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> Lote
 def advance_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> LoteriaRoom:
     """Advance an active room up to the current time."""
     now = timezone.now()
+    room = _resolve_loteria_pause_state(room, now=now)
 
-    if room.status != LoteriaStatus.ACTIVE or not room.next_tick_at:
+    if room.status != LoteriaStatus.ACTIVE or not room.next_tick_at or room.paused_at:
         return room
 
     deck_order = list(room.deck_order)
@@ -728,7 +1335,8 @@ def advance_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> Loteri
         room.save(update_fields=["called_species_ids", "next_tick_at", "updated_at"])
 
         called_set = set(called_species_ids)
-        if any(_board_entry_is_complete(entry, called_set) for entry in room.entries.all()):
+        room, buena_claimed = _claim_loteria_patterns(room, config, called_set)
+        if buena_claimed or any(_board_entry_is_complete(entry, called_set) for entry in room.entries.all()):
             room = _finalize_loteria_room(room, config)
             break
 
@@ -736,72 +1344,111 @@ def advance_loteria_room(room: LoteriaRoom, config: LoteriaDeckConfig) -> Loteri
 
 
 @transaction.atomic
-def start_loteria_room(user, room: LoteriaRoom, config: LoteriaDeckConfig, board_ids: list[int]) -> LoteriaRoom:
-    """Lock in boards, add NPCs, charge candy, and start the room countdown."""
+def start_loteria_room(user, room: LoteriaRoom, config: LoteriaDeckConfig, board_ids: list[int] | None = None) -> LoteriaRoom:
+    """Lock in boards, charge entry costs, and start the room countdown."""
     if room.created_by_id != user.id:
         raise ValueError("Only the room host can start this Loteria match.")
     if room.status not in [LoteriaStatus.DRAFT, LoteriaStatus.LOBBY]:
         raise ValueError("This room has already started.")
 
-    cleaned_ids = [int(board_id) for board_id in board_ids]
-    if not cleaned_ids:
-        raise ValueError("Pick at least one saved board before starting the match.")
+    if room.mode == LoteriaMode.PRIVATE:
+        participants = get_loteria_room_participants(room)
+        if not participants:
+            raise ValueError("Invite at least one player before starting a private Loteria room.")
+        if any(not participant.is_ready for participant in participants):
+            raise ValueError("Every joined player must save boards and ready up before the host can start the table.")
 
-    templates = list(
-        LoteriaBoardTemplate.objects.filter(owner=user, deck_key=config.key, id__in=cleaned_ids).order_by("board_slot")
-    )
-    if len(templates) != len(set(cleaned_ids)):
-        raise ValueError("One or more selected boards could not be found.")
-
-    if len(templates) > config.max_saved_boards:
-        raise ValueError(f"You can only enter up to {config.max_saved_boards} boards per room.")
-
-    for _ in range(len(templates) * config.entry_qty_per_board):
-        use_candy(user, config.entry_candy_type)
-
-    room.entries.all().delete()
-    for board in templates:
-        LoteriaRoomEntry.objects.create(
-            room=room,
-            user=user,
-            board_template=board,
-            display_name=board.title,
-            board_slot=board.board_slot,
-            species_ids=list(board.species_ids),
-            is_npc=False,
+        human_entries = list(
+            room.entries.filter(user__isnull=False, is_npc=False).select_related("user", "board_template").order_by("user_id", "board_slot")
         )
+        if not human_entries:
+            raise ValueError("This private table has no saved boards yet.")
+
+        board_counts: dict[int, int] = {}
+        for entry in human_entries:
+            if entry.user_id is None:
+                continue
+            board_counts[entry.user_id] = board_counts.get(entry.user_id, 0) + 1
+            entry.reward_ryo = 0
+            entry.is_winner = False
+            entry.save(update_fields=["reward_ryo", "is_winner"])
+
+        for participant in participants:
+            board_count = board_counts.get(participant.user_id, 0)
+            if board_count <= 0:
+                raise ValueError(f"{participant.user} still needs to bring at least one board to the room.")
+            if board_count > config.max_saved_boards:
+                raise ValueError(f"Each player can only bring up to {config.max_saved_boards} boards into a private table.")
+            deduct_ryo(participant.user, (room.entry_fee_ryo or LOTERIA_PRIVATE_ENTRY_FEE_RYO) * board_count)
+
+        room.entries.filter(is_npc=True).delete()
+        player_board_count = len(human_entries)
+    else:
+        selected_board_ids = list(board_ids or [])
+        templates = _validate_loteria_board_templates(user, config, selected_board_ids)
+        quick_play_fee_ryo = room.entry_fee_ryo or config.entry_fee_for_npc_count(room.npc_count)
+        if quick_play_fee_ryo > 0:
+            deduct_ryo(user, quick_play_fee_ryo)
+        for _ in range(len(templates) * config.entry_qty_per_board):
+            use_candy(user, config.entry_candy_type)
+        save_loteria_room_boards(user, room, config, selected_board_ids, mark_ready=True)
+        room.entries.filter(is_npc=False).update(reward_ryo=0, is_winner=False)
+        player_board_count = len(templates)
+
+    buena_reward, side_reward, entry_fee_ryo = _configure_loteria_rewards(room, config, player_board_count)
     room.deck_order = _build_loteria_deck_order(config)
     room.called_species_ids = []
-    room.prize_pool_ryo = config.prize_for_npc_count(room.npc_count) + (config.prize_boost_per_player_board * len(templates))
+    room.pattern_claims = []
+    room.entry_fee_ryo = entry_fee_ryo
+    room.side_pattern_reward_ryo = side_reward
+    room.prize_pool_ryo = buena_reward
     room.status = LoteriaStatus.ACTIVE
     room.started_at = timezone.now()
     room.finished_at = None
-    room.next_tick_at = room.started_at + timedelta(seconds=config.draw_interval_seconds)
+    room.pause_remaining_seconds = LOTERIA_SHARED_PAUSE_SECONDS
+    room.paused_at = None
+    room.next_tick_at = room.started_at + timedelta(seconds=LOTERIA_FIRST_CALL_DELAY_SECONDS)
     room.save(
         update_fields=[
             "deck_order",
             "called_species_ids",
+            "pattern_claims",
+            "entry_fee_ryo",
+            "side_pattern_reward_ryo",
             "prize_pool_ryo",
             "status",
             "started_at",
             "finished_at",
+            "pause_remaining_seconds",
+            "paused_at",
             "next_tick_at",
             "updated_at",
         ]
     )
-    _ensure_exact_npc_entries(room, config)
+    if room.mode == LoteriaMode.QUICK_NPC:
+        _ensure_exact_npc_entries(room, config)
     return room
 
 
 @transaction.atomic
 def abandon_loteria_room(user, room: LoteriaRoom) -> None:
-    """Drop a room the host no longer wants to keep."""
-    if room.created_by_id != user.id:
-        raise ValueError("Only the room host can abandon this room.")
+    """Drop a room or leave it, depending on whether the caller is the host."""
     if room.status == LoteriaStatus.FINISHED:
         raise ValueError("This room is already finished.")
-    room.entries.all().delete()
-    room.delete()
+    if room.created_by_id == user.id:
+        room.entries.all().delete()
+        room.participants.all().delete()
+        room.delete()
+        return
+
+    participant = LoteriaRoomParticipant.objects.filter(room=room, user=user).first()
+    if participant is None:
+        raise ValueError("You are not part of this Loteria room.")
+    if room.status == LoteriaStatus.ACTIVE:
+        raise ValueError("This room is already live. The host has to finish or abandon it.")
+
+    room.entries.filter(user=user, is_npc=False).delete()
+    participant.delete()
 
 
 def get_tower_species_map(config: SilhouetteTowerConfig) -> dict[int, Pokemon]:

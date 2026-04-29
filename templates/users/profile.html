@@ -1,324 +1,534 @@
 {% extends "base.html" %}
-{% block title %}{{ profile_user.display_name|default:profile_user.username }} — Trainer Profile{% endblock %}
+{% block title %}{{ profile_user.display_name|default:profile_user.username }} | Amigo Profile{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ── Header ───────────────────────────────────────────────────── */
-.profile-header {
-  display: flex; align-items: flex-start; gap: 1.5rem;
-  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-.profile-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: var(--bg-raised); border: 2px solid var(--border-hi);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; flex-shrink: 0;
-}
-.profile-info { flex: 1; min-width: 160px; }
-.profile-name {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 1.4rem; font-weight: 700; margin-bottom: 0.15rem;
-  color: var(--text-1);
-}
-.profile-username { color: var(--text-3); font-size: 0.85rem; margin-bottom: 0.75rem; }
-
-/* ── Stats row ────────────────────────────────────────────────── */
-.stat-row {
-  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
-}
-.stat-box {
-  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius-md); padding: 0.9rem 1.25rem;
-  text-align: center; flex: 1; min-width: 110px;
-  transition: border-color 0.2s;
-}
-.stat-box:hover { border-color: var(--border-hi); }
-.stat-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);
-  line-height: 1.2; margin-bottom: 0.2rem;
-}
-.stat-label {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.6rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em;
-}
-
-/* ── Section header ───────────────────────────────────────────── */
-.section-title {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.65rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent-gold);
-  margin-bottom: 0.75rem; padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border-md);
-  opacity: 0.85;
-}
-
-/* ── Showcase ─────────────────────────────────────────────────── */
-.showcase-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 0.6rem; margin-bottom: 1.5rem;
-}
-.showcase-card {
-  background: var(--bg-surface); border: 1px solid var(--border-md);
-  border-radius: var(--radius-md); padding: 0.75rem 0.5rem;
-  text-align: center; font-size: 0.72rem;
-  transition: border-color 0.2s;
-}
-.showcase-card:hover { border-color: var(--border-hi); }
-.showcase-card .s-name { font-weight: 700; margin-bottom: 0.2rem; color: var(--text-1); }
-.showcase-card .s-rarity { color: var(--text-3); font-size: 0.65rem; }
-.showcase-empty {
-  color: var(--text-3); font-size: 0.875rem; font-style: italic;
-  padding: 0.75rem 0; margin-bottom: 1.5rem;
-}
-
-/* ── Badges ───────────────────────────────────────────────────── */
-.badge-grid {
-  display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem;
-}
-.badge-item {
-  background: var(--bg-surface); border: 1px solid var(--border-lo);
-  border-radius: var(--radius-md); padding: 0.5rem 0.75rem;
-  display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.8rem; opacity: 0.35; transition: opacity 0.2s;
-}
-.badge-item.earned { opacity: 1; border-color: #4ade80; }
-.badge-icon { font-size: 1.1rem; }
-.badge-info .badge-name { font-weight: 700; font-size: 0.78rem; color: var(--text-1); }
-.badge-info .badge-desc { color: var(--text-2); font-size: 0.68rem; }
-
-/* ── Recent battles ───────────────────────────────────────────── */
-.battle-row {
-  display: flex; align-items: center; gap: 0.75rem;
-  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius-md); padding: 0.6rem 0.9rem;
-  margin-bottom: 0.4rem; font-size: 0.82rem;
-  flex-wrap: wrap;
-}
-.battle-result {
-  font-weight: 800; font-size: 0.75rem;
-  text-transform: uppercase; min-width: 42px;
-}
-.result-win  { color: #4ade80; }
-.result-loss { color: #f87171; }
-.battle-opponent { flex: 1; color: var(--text-2); }
-.battle-chain { color: var(--accent-gold); font-size: 0.75rem; }
-.battle-link { color: var(--text-3); font-size: 0.72rem; margin-left: auto; }
-.battle-link a { color: var(--accent-gold); }
-
-/* ── Story quests ─────────────────────────────────────────────── */
+.profile-shell { display: grid; gap: 1.25rem; }
+.profile-header,
+.profile-panel,
+.stat-box,
+.showcase-card,
+.badge-item,
 .story-row {
-  display: flex; align-items: center; gap: 0.75rem;
-  font-size: 0.82rem; padding: 0.35rem 0;
-  border-bottom: 1px solid var(--border-lo);
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
 }
-.story-row:last-child { border-bottom: none; }
-.story-check { font-size: 0.9rem; }
-.story-name { flex: 1; color: var(--text-1); }
-.story-name.done { color: #4ade80; }
-.story-name.pending { color: var(--text-3); }
+
+.profile-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.2rem;
+  align-items: start;
+  padding: 1.4rem;
+}
+
+.profile-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.7rem;
+  color: var(--accent-gold);
+  background: var(--bg-raised);
+  border: 2px solid var(--border-hi);
+}
+
+.profile-name {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 0.2rem;
+}
+
+.profile-meta {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.7rem;
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-md);
+  background: var(--bg-raised);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.amigo-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-3);
+}
+
+.amigo-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-raised);
+}
+
+.amigo-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold));
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.8rem;
+}
+
+.stat-box {
+  padding: 0.95rem 1rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 0.22rem;
+}
+
+.stat-label {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 0.95fr;
+  gap: 1.1rem;
+}
+
+.profile-panel {
+  padding: 1.15rem;
+}
+
+.panel-title {
+  margin: 0 0 0.85rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.65rem;
+}
+
+.showcase-card {
+  padding: 0.75rem 0.55rem;
+  text-align: center;
+}
+
+.showcase-name {
+  color: var(--text-1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.showcase-rarity,
+.muted-copy {
+  color: var(--text-3);
+  font-size: 0.74rem;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+
+.badge-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  opacity: 0.45;
+}
+
+.badge-item.earned {
+  opacity: 1;
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.badge-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-raised);
+  color: var(--accent-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.badge-name {
+  color: var(--text-1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.badge-rarity,
+.badge-desc {
+  color: var(--text-3);
+  font-size: 0.7rem;
+}
+
+.story-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.claim-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.claim-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 184, 75, 0.2);
+  background: rgba(11, 18, 36, 0.72);
+}
+
+.claim-name {
+  color: var(--text-1);
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin-bottom: 0.12rem;
+}
+
+.claim-detail {
+  color: var(--text-3);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.claim-reward {
+  color: var(--accent-gold);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  text-align: right;
+}
+
+.claim-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.story-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+}
+
+.story-check {
+  width: 26px;
+  text-align: center;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.story-name {
+  color: var(--text-1);
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.story-progress {
+  color: var(--text-3);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 960px) {
+  .profile-header,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="profile-shell">
+  <section class="profile-header">
+    <div class="profile-avatar">AM</div>
 
-{# ── Profile header ───────────────────────────────────────────────────────── #}
-<div class="profile-header">
-  <div class="profile-avatar">🥷</div>
-  <div class="profile-info">
-    <div class="profile-name">{{ profile_user.display_name|default:profile_user.username }}</div>
-    <div class="profile-username">@{{ profile_user.username }}
-      <span style="margin-left:0.75rem;background:#0f3460;border:1px solid #6366f1;border-radius:5px;padding:1px 8px;font-size:0.72rem;color:#a78bfa;font-weight:700;">
-        Trainer Lv.{{ profile_user.trainer_level }}
-      </span>
-    </div>
-    <div style="margin-top:0.4rem;">
-      <div style="font-size:0.65rem;color:#4b5563;margin-bottom:2px;">{{ profile_user.trainer_xp }}/{{ profile_user.trainer_xp_to_next_level }} XP</div>
-      <div style="height:5px;background:#0f1a2e;border-radius:3px;overflow:hidden;width:160px;max-width:100%;">
-        <div style="height:100%;width:{{ profile_user.trainer_xp_percent }}%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:3px;"></div>
-      </div>
-    </div>
-    {% if is_own_profile %}
-    <a href="{% url 'quests:quest_list' %}" class="btn btn-secondary btn-sm" style="margin-right:0.5rem;">Quests</a>
-    <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
-    {% endif %}
-  </div>
-</div>
-
-{# ── Stats row ────────────────────────────────────────────────────────────── #}
-<div class="stat-row">
-  <div class="stat-box">
-    <div class="stat-value" style="color:#a78bfa;">{{ profile_user.trainer_level }}</div>
-    <div class="stat-label">Trainer Lv</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ profile_user.battles_won }}</div>
-    <div class="stat-label">Wins</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ profile_user.battles_played }}</div>
-    <div class="stat-label">Battles</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ profile_user.win_rate }}%</div>
-    <div class="stat-label">Win Rate</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ profile_user.longest_combo_chain }}</div>
-    <div class="stat-label">Best Chain</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ stickers_total }}</div>
-    <div class="stat-label">Stickers</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-value">{{ profile_user.ryo }}</div>
-    <div class="stat-label">Ryo</div>
-  </div>
-</div>
-
-{# ── Bundle pack streak (own profile only) ───────────────────────────────── #}
-{% if is_own_profile and weekly_streak %}
-{% load static %}
-<div class="section-title">Login Streak</div>
-<div style="background:linear-gradient(160deg,var(--bg-surface),var(--bg-felt));border:1px solid var(--border-md);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
-  {# Day pips #}
-  <div style="display:flex;gap:0.4rem;align-items:center;">
-    {% for i in "1234567" %}
-    {% with d=forloop.counter %}
-    {% if d == weekly_streak %}
-      <div style="width:34px;height:34px;border-radius:50%;border:2px solid {% if days_until_bundle == 0 %}#38bdf8{% else %}rgba(125,211,252,0.4){% endif %};background:rgba(125,211,252,0.1);display:flex;align-items:center;justify-content:center;" title="Day 7 — Bundle Pack">
-        <img src="{% static 'images/bundle_pack.png' %}" style="width:18px;height:18px;object-fit:contain;">
-      </div>
-    {% else %}
-      <div style="width:34px;height:34px;border-radius:50%;border:2px solid {% if d <= days_filled %}var(--accent-gold){% else %}var(--border-md){% endif %};background:{% if d <= days_filled %}rgba(232,184,75,0.12){% else %}var(--bg-felt){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:{% if d <= days_filled %}var(--accent-gold){% else %}var(--text-3){% endif %};">{{ d }}</div>
-    {% endif %}
-    {% endwith %}
-    {% endfor %}
-  </div>
-  {# Bundle info #}
-  <div style="display:flex;align-items:center;gap:0.6rem;flex:1;min-width:180px;">
-    <img src="{% static 'images/bundle_pack.png' %}" style="width:40px;height:40px;object-fit:contain;">
     <div>
-      <div style="font-weight:700;font-size:0.875rem;color:#7dd3fc;">Bundle Pack</div>
-      <div style="font-size:0.75rem;color:var(--text-3);">10 stickers · boosted rare odds</div>
+      <div class="profile-name">{{ profile_user.display_name|default:profile_user.username }}</div>
+      <div class="profile-meta">
+        <span>@{{ profile_user.username }}</span>
+        <span class="meta-pill">Amigo Lv {{ profile_user.trainer_level }}</span>
+        {% if guild_membership %}
+        <a href="{% url 'guilds:detail' guild_membership.guild.pk %}" class="meta-pill">
+          [{{ guild_membership.guild.tag }}] {{ guild_membership.guild.name }}
+        </a>
+        {% endif %}
+      </div>
+
+      <div class="amigo-bar-label">
+        <span>Amigo XP</span>
+        <span>{{ profile_user.trainer_xp }} / {{ profile_user.trainer_xp_to_next_level }}</span>
+      </div>
+      <div class="amigo-bar">
+        <div class="amigo-bar-fill" style="width: {{ profile_user.trainer_xp_percent }}%;"></div>
+      </div>
     </div>
-  </div>
-  {# Countdown #}
-  <div style="font-family:'JetBrains Mono',monospace;font-size:0.875rem;color:var(--accent-gold);white-space:nowrap;">
-    {% if days_until_bundle == 0 %}
-      🎁 Earned today!
-    {% else %}
-      {{ days_until_bundle }} day{{ days_until_bundle|pluralize }} to next bundle
-    {% endif %}
-  </div>
-  <a href="{% url 'users:daily_claim' %}" class="btn btn-primary btn-sm" style="white-space:nowrap;">
-    {% if can_claim_daily %}Claim Daily{% else %}View Streak{% endif %}
-  </a>
-</div>
-{% endif %}
 
-{# ── Showcase stickers ────────────────────────────────────────────────────── #}
-<div class="section-title">Showcase</div>
-{% if showcase_stickers %}
-<div class="showcase-grid">
-  {% for sticker in showcase_stickers %}
-  <div class="showcase-card" style="border-color:
-    {% if sticker.rarity == 'secret_rare' %}#a78bfa
-    {% elif sticker.rarity == 'full_art' %}#f97316
-    {% elif sticker.rarity == 'holographic' %}#38bdf8
-    {% elif sticker.rarity == 'epic' %}#c084fc
-    {% elif sticker.rarity == 'rare' %}#facc15
-    {% else %}#1e3a6e{% endif %};">
-    <div class="s-name">{{ sticker.pokemon.name }}</div>
-    <div class="s-rarity">{{ sticker.get_rarity_display }}</div>
-  </div>
-  {% endfor %}
-</div>
-{% else %}
-<div class="showcase-empty">
-  {% if is_own_profile %}
-    No showcase stickers yet — mark stickers as "showcase" in your album.
-  {% else %}
-    This trainer hasn't pinned any stickers to their showcase.
-  {% endif %}
-</div>
-{% endif %}
-
-{# ── Achievement badges ───────────────────────────────────────────────────── #}
-<div class="section-title">Achievement Badges</div>
-<div class="badge-grid" style="margin-bottom:1.5rem;">
-  {% for badge in badges %}
-  <div class="badge-item{% if badge.earned %} earned{% endif %}" title="{{ badge.description }}">
-    <span class="badge-icon">{{ badge.icon }}</span>
-    <div class="badge-info">
-      <div class="badge-name">{{ badge.name }}</div>
-      <div class="badge-desc">{{ badge.rarity }}</div>
+    {% if is_own_profile %}
+    <div class="header-actions">
+      <a href="{% url 'quests:quest_list' %}" class="btn btn-secondary btn-sm">Quests</a>
+      <a href="{% url 'stickers:album' %}" class="btn btn-secondary btn-sm">Sticker Album</a>
+      <a href="{% url 'guilds:list' %}" class="btn btn-secondary btn-sm">Guilds</a>
     </div>
-  </div>
-  {% endfor %}
-</div>
-
-{# ── Story quest progress ──────────────────────────────────────────────────── #}
-{% if story_quests %}
-<div class="section-title">Story Progress</div>
-<div style="background:#16213e;border:1px solid #1e3a6e;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.5rem;">
-  {% for uq in story_quests %}
-  <div class="story-row">
-    <span class="story-check">{% if uq.completed %}✅{% else %}⬜{% endif %}</span>
-    <span class="story-name {% if uq.completed %}done{% else %}pending{% endif %}">{{ uq.template.name }}</span>
-    {% if not uq.completed %}
-    <span style="color:#6b7280;font-size:0.72rem;">{{ uq.progress }}/{{ uq.template.condition_value }}</span>
     {% endif %}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
+  </section>
 
-{# ── Recent battles ───────────────────────────────────────────────────────── #}
-<div class="section-title">Recent Battles</div>
-{% if recent_battles %}
-{% for battle in recent_battles %}
-<div class="battle-row">
-  {% if battle.winner_id == profile_user.pk %}
-    <span class="battle-result result-win">WIN</span>
-  {% elif battle.winner_id %}
-    <span class="battle-result result-loss">LOSS</span>
-  {% else %}
-    <span class="battle-result" style="color:#9ca3af;">–</span>
+  <section class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-value">{{ collection_stats.total_score }}</div>
+      <div class="stat-label">Album Score</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ collection_stats.soul_bound_count }}</div>
+      <div class="stat-label">Soul-Bound</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ collection_stats.row_completions }}</div>
+      <div class="stat-label">Rows</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ collection_stats.column_completions }}</div>
+      <div class="stat-label">Columns</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ collection_stats.generation_completions }}</div>
+      <div class="stat-label">Generations</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ stickers_total }}</div>
+      <div class="stat-label">Stickers</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ story_completed_count }}/{{ story_total_count }}</div>
+      <div class="stat-label">Story</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ profile_user.ryo }}</div>
+      <div class="stat-label">Ryo</div>
+    </div>
+  </section>
+
+  {% if is_own_profile and weekly_streak %}
+  {% load static %}
+  <section class="profile-panel">
+    <h2 class="panel-title">Login Streak</h2>
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+        {% for i in "1234567" %}
+        {% with d=forloop.counter %}
+        <div
+          style="
+            width:34px;
+            height:34px;
+            border-radius:50%;
+            display:grid;
+            place-items:center;
+            border:2px solid {% if d <= days_filled %}var(--accent-gold){% else %}var(--border-md){% endif %};
+            background:{% if d <= days_filled %}rgba(232,184,75,0.12){% else %}var(--bg-raised){% endif %};
+            color:{% if d <= days_filled %}var(--accent-gold){% else %}var(--text-3){% endif %};
+            font-weight:700;
+            font-size:0.72rem;
+          "
+        >
+          {% if d == weekly_streak %}
+          <img src="{% static 'images/bundle_pack.png' %}" alt="Bundle pack" style="width:18px; height:18px; object-fit:contain;">
+          {% else %}
+          {{ d }}
+          {% endif %}
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+
+      <div class="muted-copy" style="flex:1; min-width:220px;">
+        {% if days_until_bundle == 0 %}
+        Bundle Pack earned today.
+        {% else %}
+        {{ days_until_bundle }} day{{ days_until_bundle|pluralize }} until the next Bundle Pack.
+        {% endif %}
+      </div>
+
+      <a href="{% url 'users:daily_claim' %}" class="btn btn-primary btn-sm">
+        {% if can_claim_daily %}Claim Daily{% else %}View Streak{% endif %}
+      </a>
+    </div>
+  </section>
   {% endif %}
 
-  <span class="battle-opponent">
-    {% if battle.is_ai_battle %}
-      vs AI ({{ battle.ai_difficulty|upper }})
-    {% elif battle.player_one_id == profile_user.pk and battle.player_two %}
-      vs {{ battle.player_two.display_name|default:battle.player_two.username }}
-    {% elif battle.player_two_id == profile_user.pk %}
-      vs {{ battle.player_one.display_name|default:battle.player_one.username }}
-    {% else %}
-      Battle #{{ battle.pk }}
-    {% endif %}
-  </span>
+  <section class="profile-grid">
+    <div style="display:grid; gap:1.1rem;">
+      <section class="profile-panel">
+        <h2 class="panel-title">Showcase</h2>
+        {% if showcase_stickers %}
+        <div class="showcase-grid">
+          {% for sticker in showcase_stickers %}
+          <div class="showcase-card">
+            <div class="showcase-name">{{ sticker.pokemon.name }}</div>
+            <div class="showcase-rarity">{{ sticker.get_rarity_display }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="muted-copy">
+          {% if is_own_profile %}
+          No showcase stickers yet. Mark favorites in your album to feature them here.
+          {% else %}
+          No showcase stickers pinned yet.
+          {% endif %}
+        </div>
+        {% endif %}
+      </section>
 
-  {% if battle.max_combo_chain > 0 %}
-  <span class="battle-chain">⛓ x{{ battle.max_combo_chain }}</span>
-  {% endif %}
+      {% if is_own_profile %}
+      <section class="profile-panel">
+        <div style="display:flex; justify-content:space-between; gap:0.8rem; align-items:flex-start; flex-wrap:wrap; margin-bottom:0.85rem;">
+          <div>
+            <h2 class="panel-title" style="margin-bottom:0.2rem;">Loteria Prizes</h2>
+            <div class="muted-copy">Collect any room prizes that are still waiting in your tray.</div>
+          </div>
+          {% if pending_loteria_claims %}
+          <form method="post" action="{% url 'game:loteria_prize_claim' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="claim_all_prizes">
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-secondary btn-sm">Claim All {{ pending_loteria_total }} Ryo</button>
+          </form>
+          {% endif %}
+        </div>
+        {% if pending_loteria_claims %}
+        <div class="claim-list">
+          {% for claim in pending_loteria_claims %}
+          <div class="claim-row">
+            <div>
+              <div class="claim-name">{{ claim.pattern_label }} - {{ claim.room.title }}</div>
+              <div class="claim-detail">
+                {{ claim.entry.display_name }}
+                {% if claim.shared_winner_count > 1 %}
+                - split with {{ claim.shared_winner_count|add:"-1" }} other board{{ claim.shared_winner_count|add:"-1"|pluralize }}
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <div class="claim-reward">{{ claim.reward_ryo }} Ryo</div>
+              <div class="claim-actions">
+                <a href="{% url 'game:loteria_results' claim.room.pk %}" class="btn btn-secondary btn-sm">View Table</a>
+                <form method="post" action="{% url 'game:loteria_prize_claim' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="claim_prize">
+                  <input type="hidden" name="claim_id" value="{{ claim.pk }}">
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="btn btn-primary btn-sm">Claim</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="muted-copy">No Loteria prizes are waiting right now.</div>
+        {% endif %}
+      </section>
+      {% endif %}
 
-  <span class="battle-link">
-    <a href="{% url 'game:battle_detail' battle.pk %}">View</a>
-  </span>
+      <section class="profile-panel">
+        <h2 class="panel-title">Story Progress</h2>
+        {% if story_quests %}
+        <div class="story-list">
+          {% for uq in story_quests %}
+          <div class="story-row">
+            <div class="story-check">{% if uq.completed %}OK{% else %}--{% endif %}</div>
+            <div class="story-name">{{ uq.template.name }}</div>
+            <div class="story-progress">
+              {% if uq.completed %}
+              Complete
+              {% else %}
+              {{ uq.progress }} / {{ uq.template.condition_value }}
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="muted-copy">No story quests unlocked yet.</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="profile-panel">
+      <h2 class="panel-title">Amigo Badges</h2>
+      <div class="badge-grid">
+        {% for badge in badges %}
+        <div class="badge-item{% if badge.earned %} earned{% endif %}" title="{{ badge.description }}">
+          <div class="badge-icon">{{ badge.icon }}</div>
+          <div>
+            <div class="badge-name">{{ badge.name }}</div>
+            <div class="badge-rarity">{{ badge.rarity }}</div>
+            <div class="badge-desc">{{ badge.description }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </section>
 </div>
-{% endfor %}
-
-{% else %}
-<div style="color:#4b5563;font-size:0.875rem;font-style:italic;padding:0.75rem 0;">
-  No battles recorded yet.
-</div>
-{% endif %}
-
 {% endblock %}

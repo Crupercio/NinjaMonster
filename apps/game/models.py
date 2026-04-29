@@ -497,11 +497,25 @@ class LoteriaRoom(models.Model):
     title = models.CharField(max_length=80)
     mode = models.CharField(max_length=16, choices=LoteriaMode.choices, default=LoteriaMode.QUICK_NPC, db_index=True)
     status = models.CharField(max_length=16, choices=LoteriaStatus.choices, default=LoteriaStatus.DRAFT, db_index=True)
+    room_code = models.CharField(max_length=8, null=True, blank=True, unique=True, db_index=True)
+    guild = models.ForeignKey(
+        "guilds.Guild",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="loteria_rooms",
+        db_index=True,
+    )
     npc_count = models.PositiveSmallIntegerField(default=2)
     round_number = models.PositiveIntegerField(default=1)
     prize_pool_ryo = models.PositiveIntegerField(default=0)
+    entry_fee_ryo = models.PositiveIntegerField(default=0)
+    side_pattern_reward_ryo = models.PositiveIntegerField(default=0)
     deck_order = models.JSONField(default=list, help_text="Ordered list of Pokemon ids to deal for this room.")
     called_species_ids = models.JSONField(default=list, help_text="Pokemon ids already called this round.")
+    pattern_claims = models.JSONField(default=list, help_text="Resolved pattern prizes claimed in this room.")
+    pause_remaining_seconds = models.PositiveIntegerField(default=0)
+    paused_at = models.DateTimeField(null=True, blank=True)
     next_tick_at = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
@@ -515,6 +529,35 @@ class LoteriaRoom(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} · Round {self.round_number} ({self.status})"
+
+
+class LoteriaRoomParticipant(models.Model):
+    """Membership and readiness state for a user inside a Loteria room."""
+
+    room = models.ForeignKey(
+        LoteriaRoom,
+        on_delete=models.CASCADE,
+        related_name="participants",
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="loteria_room_participations",
+        db_index=True,
+    )
+    is_host = models.BooleanField(default=False, db_index=True)
+    is_ready = models.BooleanField(default=False, db_index=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_host", "joined_at", "pk"]
+        unique_together = [("room", "user")]
+        verbose_name = "loteria room participant"
+        verbose_name_plural = "loteria room participants"
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.room}"
 
 
 class LoteriaRoomEntry(models.Model):
@@ -556,3 +599,31 @@ class LoteriaRoomEntry(models.Model):
 
     def __str__(self) -> str:
         return f"{self.display_name} · {self.room}"
+
+class LoteriaPrizeClaim(models.Model):
+    """One collectible room prize waiting for a player to claim it."""
+
+    room = models.ForeignKey(LoteriaRoom, on_delete=models.CASCADE, related_name="prize_claims", db_index=True)
+    entry = models.ForeignKey(LoteriaRoomEntry, on_delete=models.CASCADE, related_name="prize_claims", db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="loteria_prize_claims",
+        db_index=True,
+    )
+    pattern_key = models.CharField(max_length=32, db_index=True)
+    pattern_label = models.CharField(max_length=48)
+    reward_ryo = models.PositiveIntegerField(default=0)
+    shared_winner_count = models.PositiveSmallIntegerField(default=1)
+    winner_names_snapshot = models.JSONField(default=list, help_text="Display names that shared this pattern prize.")
+    claimed_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["claimed_at", "-created_at", "pk"]
+        unique_together = [("entry", "pattern_key")]
+        verbose_name = "loteria prize claim"
+        verbose_name_plural = "loteria prize claims"
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.pattern_label} - {self.reward_ryo} Ryo"

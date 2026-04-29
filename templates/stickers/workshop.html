@@ -1055,6 +1055,7 @@
     const submitButton = document.getElementById('craft-submit');
     const rarityButtons = Array.from(document.querySelectorAll('[data-rarity]'));
     const variantButtons = Array.from(document.querySelectorAll('[data-variant]'));
+    let isSubmitting = false;
 
     const rarityLabels = Object.fromEntries(rarityButtons.map((button) => [
       button.dataset.rarity,
@@ -1185,7 +1186,10 @@
         previewStatus.className = 'craft-preview-status missing';
         previewCopy.textContent = 'Crafting is best for exact missing slots. Premium variants cost more dust than base art, and Anime remains a Secret Rare prestige craft only.';
         previewImage.style.display = 'none';
-        submitButton.disabled = true;
+        if (!isSubmitting) {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Craft Sticker';
+        }
         return;
       }
 
@@ -1209,8 +1213,10 @@
         previewCopy.textContent = 'This exact sticker is still missing, so crafting it will fill a real gap in your collection immediately.';
       }
 
-      submitButton.disabled = finalCost > DUST;
-      submitButton.textContent = finalCost > DUST ? 'Not Enough Dust' : 'Craft Sticker';
+      if (!isSubmitting) {
+        submitButton.disabled = finalCost > DUST;
+        submitButton.textContent = finalCost > DUST ? 'Not Enough Dust' : 'Craft Sticker';
+      }
     };
 
     rarityButtons.forEach((button) => {
@@ -1243,6 +1249,15 @@
       }
     });
     missingOnlyInput.addEventListener('change', renderResults);
+    form.addEventListener('submit', (event) => {
+      if (submitButton.disabled) {
+        event.preventDefault();
+        return;
+      }
+      isSubmitting = true;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Crafting...';
+    });
 
     syncVariantAvailability();
     syncPills();

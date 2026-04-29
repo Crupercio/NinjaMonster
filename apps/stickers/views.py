@@ -1,6 +1,7 @@
 """Class-based views for the sticker collection app."""
 import logging
 from urllib.parse import urlencode
+from collections import defaultdict
 
 from django.db.models import Count
 from django.core.paginator import Paginator
@@ -90,6 +91,67 @@ def _filter_placement_slots(slots: list[dict], view_mode: str) -> list[dict]:
     if view_mode == "missing":
         return [slot for slot in slots if not slot["is_placed"]]
     return [slot for slot in slots if slot["is_placeable"]]
+
+
+def _region_for_dex(dex_number: int | None) -> str | None:
+    if dex_number is None:
+        return None
+    for region_name, (low, high) in REGION_RANGES.items():
+        if low <= dex_number <= high:
+            return region_name
+    return None
+
+
+def _build_placement_ready_stash(user, *, selected_region: str, selected_rarity: str) -> tuple[list[dict], int]:
+    rarity_labels = {value: label for value, label in StickerRarity.choices}
+    rarity_order = list(StickerRarity.values)
+    region_order = list(REGION_LABELS.keys())
+    candidate_pairs: set[tuple[str, str]] = set()
+    loose_rows = (
+        Sticker.objects.filter(
+            owner=user,
+            is_album_placed=False,
+            is_trading=False,
+            guild_album_entry__isnull=True,
+            variant__in=_COMPLETION_VARIANTS,
+        )
+        .values("pokemon__pokedex_number", "rarity")
+        .annotate(copies=Count("id"))
+    )
+    for row in loose_rows:
+        dex = row["pokemon__pokedex_number"]
+        if dex is None:
+            continue
+        region_name = _region_for_dex(int(dex))
+        if region_name is None:
+            continue
+        candidate_pairs.add((region_name, row["rarity"]))
+
+    stash_cards = []
+    for region_name, rarity_value in candidate_pairs:
+        placement_data = _album_service.get_placement_slots(user, region_name, rarity_value)
+        count = placement_data["slot_totals"]["placeable"]
+        if count <= 0:
+            continue
+        stash_cards.append(
+            {
+                "region": region_name,
+                "region_label": REGION_LABELS.get(region_name, region_name.title()),
+                "rarity": rarity_value,
+                "rarity_label": rarity_labels.get(rarity_value, rarity_value.replace("_", " ").title()),
+                "count": count,
+                "is_selected": region_name == selected_region and rarity_value == selected_rarity,
+            }
+        )
+
+    stash_cards.sort(
+        key=lambda item: (
+            -item["count"],
+            region_order.index(item["region"]) if item["region"] in region_order else 999,
+            rarity_order.index(item["rarity"]) if item["rarity"] in rarity_order else 999,
+        )
+    )
+    return stash_cards, sum(item["count"] for item in stash_cards)
 
 
 class AlbumView(LoginRequiredMixin, TemplateView):
@@ -258,7 +320,7 @@ class TradeCreateView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["my_stickers"] = Sticker.objects.filter(
-            owner=self.request.user, is_trading=False
+            owner=self.request.user, is_trading=False, guild_album_entry__isnull=True
         ).select_related("pokemon__primary_type")
         context["all_pokemon"] = Pokemon.objects.order_by("name")
         return context
@@ -298,7 +360,7 @@ class TradeDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Show stickers the current user could offer in exchange
         context["my_stickers"] = Sticker.objects.filter(
-            owner=self.request.user, is_trading=False
+            owner=self.request.user, is_trading=False, guild_album_entry__isnull=True
         ).select_related("pokemon")
         return context
 
@@ -461,9 +523,23 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
 
         context = super().get_context_data(**kwargs)
         context["sticker_dust"] = self.request.user.sticker_dust
+        craft_prefilled = any(
+            self.request.GET.get(param)
+            for param in ("pokemon", "rarity", "variant")
+        )
+        active_tab = self.request.GET.get("tab", "craft" if craft_prefilled else "convert")
+        context["active_tab"] = active_tab
 
         # Convert tab
-        context.update(_sticker_service.get_convertible_duplicate_groups(self.request.user))
+        if active_tab == "convert":
+            context.update(_sticker_service.get_convertible_duplicate_groups(self.request.user))
+        else:
+            context.update({
+                "duplicate_groups": [],
+                "convertible_group_count": 0,
+                "convertible_copy_count": 0,
+                "convertible_dust_total": 0,
+            })
 
         # Craft tab
         pokemon_list = list(
@@ -481,15 +557,19 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
         if selected_variant == StickerVariant.ANIME and selected_rarity != StickerRarity.SECRET_RARE:
             selected_variant = StickerVariant.BASE
 
-        owned_slot_keys = set()
-        placed_slot_keys = set()
-        for row in Sticker.objects.filter(owner=self.request.user).values(
-            "pokemon_id", "rarity", "variant", "is_album_placed"
-        ):
-            key = f"{row['pokemon_id']}|{row['rarity']}|{row['variant']}"
-            owned_slot_keys.add(key)
-            if row["is_album_placed"]:
-                placed_slot_keys.add(key)
+        owned_slot_keys = {
+            f"{pokemon_id}|{rarity}|{variant}"
+            for pokemon_id, rarity, variant in Sticker.objects.filter(
+                owner=self.request.user
+            ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
+        }
+        placed_slot_keys = {
+            f"{pokemon_id}|{rarity}|{variant}"
+            for pokemon_id, rarity, variant in Sticker.objects.filter(
+                owner=self.request.user,
+                is_album_placed=True,
+            ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
+        }
 
         context["pokemon_list"] = pokemon_list
         context["pokemon_picker_data"] = [
@@ -528,13 +608,6 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
         # Badge Forge tab (Phase 3 — display only)
         context["badge_requirements"] = BADGE_CRAFT_REQUIREMENTS
         context["badge_tiers"] = BadgeTier.choices
-
-        # Active tab (passed as query param after redirect)
-        craft_prefilled = any(
-            self.request.GET.get(param)
-            for param in ("pokemon", "rarity", "variant")
-        )
-        context["active_tab"] = self.request.GET.get("tab", "craft" if craft_prefilled else "convert")
 
         return context
 
@@ -770,6 +843,13 @@ class PlacementModeView(LoginRequiredMixin, TemplateView):
             1 for slot in page_obj.object_list if slot["is_placeable"]
         )
         context["filtered_slot_count"] = len(filtered_slots)
+        ready_stash_cards, ready_stash_total = _build_placement_ready_stash(
+            self.request.user,
+            selected_region=region,
+            selected_rarity=rarity,
+        )
+        context["ready_stash_cards"] = ready_stash_cards
+        context["ready_stash_total"] = ready_stash_total
         context["current_query"] = {
             "region": region,
             "rarity": rarity,

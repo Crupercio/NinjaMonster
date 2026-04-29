@@ -6,24 +6,31 @@
 <style>
 .results-shell { max-width: 1320px; margin: 0 auto; padding: 1rem 0 2.4rem; }
 .results-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
-.results-layout,
+.msg-stack { display:grid; gap:.65rem; margin:0 0 1rem; }
+.msg { border-radius:16px; padding:.8rem 1rem; border:1px solid transparent; font-weight:600; }
+.msg.success { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
+
 .panel,
-.winner-card,
+.claim-card,
 .board-card,
-.called-card {
+.called-card,
+.pattern-card {
   background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
   border: 1px solid rgba(91,129,255,.22);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
-.results-layout { display:grid; grid-template-columns: minmax(0, 1.02fr) minmax(320px, .98fr); gap:1rem; margin-bottom:1rem; }
-.panel, .winner-card, .board-card, .called-card { border-radius:26px; padding:1.15rem 1.2rem; }
+
+.results-layout { display:grid; grid-template-columns:minmax(0, 1.02fr) minmax(340px, .98fr); gap:1rem; margin-bottom:1rem; }
+.panel, .claim-card, .board-card, .called-card, .pattern-card { border-radius:26px; padding:1.1rem 1.15rem; }
 .panel-kicker {
   display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase;
   letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem;
 }
 .panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.6rem); line-height:1; }
-.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.7rem; }
-.panel-copy { color:var(--text-2); line-height:1.65; margin-bottom:.9rem; }
+.panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; }
+.panel-copy { color:var(--text-2); line-height:1.6; margin-bottom:.9rem; }
 .status-row { display:flex; flex-wrap:wrap; gap:.55rem; margin-bottom:1rem; }
 .status-chip {
   display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
@@ -31,24 +38,41 @@
   letter-spacing:.08em; text-transform:uppercase;
 }
 .status-chip.win { color:#fcd34d; border-color:rgba(251,191,36,.3); }
-.metric-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; }
-.metric {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
-}
+.status-chip.good { color:#86efac; border-color:rgba(74,222,128,.3); }
+.metric-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.75rem; }
+.metric { border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem; }
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
 
-.winner-grid { display:grid; gap:.85rem; }
-.winner-card { border-color: rgba(251,191,36,.28); }
-.winner-title { margin:0 0 .2rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.15rem; }
-.winner-copy { color:var(--text-2); font-size:.86rem; line-height:1.5; }
+.claim-list { display:grid; gap:.75rem; }
+.claim-card { border-color:rgba(251,191,36,.26); }
+.claim-head { display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; margin-bottom:.45rem; }
+.claim-title { margin:0; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.05rem; }
+.claim-meta { color:#fcd34d; font-weight:800; font-size:.9rem; }
+.claim-copy { color:var(--text-2); font-size:.82rem; line-height:1.5; margin-bottom:.7rem; }
+.claim-actions { display:flex; gap:.55rem; flex-wrap:wrap; }
 
-.boards-head {
-  display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap;
-  margin-bottom:1rem;
+.pattern-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.8rem; margin-top:1rem; }
+.pattern-card.claimed { border-color:rgba(74,222,128,.28); box-shadow: inset 0 0 0 1px rgba(74,222,128,.12); }
+.pattern-head { display:flex; justify-content:space-between; align-items:flex-start; gap:.65rem; margin-bottom:.6rem; }
+.pattern-title { color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.08rem; margin:0; }
+.pattern-reward { color:#fcd34d; font-weight:800; font-size:.9rem; }
+.pattern-mini { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.22rem; max-width:102px; margin-bottom:.55rem; }
+.pattern-mini-cell { aspect-ratio:1/1; border-radius:7px; border:1px solid rgba(91,129,255,.16); background:rgba(9,14,27,.88); }
+.pattern-mini-cell.marked { background:linear-gradient(180deg, rgba(251,191,36,.9), rgba(245,158,11,.9)); border-color:rgba(251,191,36,.32); }
+.pattern-status { color:var(--text-2); font-size:.79rem; line-height:1.45; margin-bottom:.55rem; }
+.pattern-claim-box {
+  border-radius:16px;
+  border:1px solid rgba(251,191,36,.16);
+  background:rgba(10,15,29,.5);
+  padding:.7rem .75rem;
 }
+.pattern-claim-box.claimed { border-color:rgba(74,222,128,.24); }
+.pattern-note { color:var(--text-3); font-size:.72rem; line-height:1.4; }
+
+.boards-head { display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem; }
 .boards-grid { display:grid; gap:1rem; }
-.boards-grid.one { grid-template-columns:minmax(0, 560px); justify-content:center; }
+.boards-grid.one { grid-template-columns:minmax(0, 540px); justify-content:center; }
 .boards-grid.two { grid-template-columns:repeat(2, minmax(0,1fr)); }
 .boards-grid.three { grid-template-columns:repeat(3, minmax(0,1fr)); }
 .board-card.winner { border-color: rgba(251,191,36,.36); box-shadow: inset 0 0 0 1px rgba(251,191,36,.16); }
@@ -66,7 +90,7 @@
   background: radial-gradient(circle at 35% 30%, #fef3c7, #f59e0b 62%, #7c2d12 100%);
   box-shadow: 0 3px 12px rgba(245,158,11,.35);
 }
-.called-card { margin-top:1rem; }
+
 .called-grid { display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:.65rem; }
 .called-pill {
   border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
@@ -80,7 +104,9 @@
   .results-layout,
   .boards-grid.two,
   .boards-grid.three,
+  .pattern-grid,
   .called-grid { grid-template-columns:1fr; }
+  .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
 }
 </style>
 {% endblock %}
@@ -89,61 +115,160 @@
 <div class="results-shell">
   <a href="{% url 'game:loteria_game' %}" class="results-back">&larr; Back to Loteria Hub</a>
 
+  {% if messages %}
+  <div class="msg-stack">
+    {% for msg in messages %}
+    <div class="msg {{ msg.tags|default:'info' }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <section class="results-layout">
     <div class="panel">
       <div class="panel-kicker">Table Complete</div>
       <h1 class="panel-title">{{ room.title }}</h1>
       <div class="panel-subtitle">{{ deck.region_label }}</div>
       <p class="panel-copy">
-        The room stopped the instant a full board was completed. The winner list and marked boards below show the exact tables that hit Loteria first.
+        Each pattern below shows who got Chorro, Centrito, Cuatro Esquinas, and Buena before the table closed.
+        Any prize your boards earned stays waiting until you collect it.
       </p>
       <div class="status-row">
         <span class="status-chip win">Finished</span>
-        <span class="status-chip">{{ winners|length }} winner{{ winners|length|pluralize }}</span>
         <span class="status-chip">{{ room.called_species_ids|length }} calls made</span>
+        <span class="status-chip">{{ pattern_prizes|length }} tracked prizes</span>
       </div>
       <div class="metric-grid">
         <div class="metric">
-          <div class="metric-label">Prize Pool</div>
+          <div class="metric-label">Buena Pot</div>
           <div class="metric-value">{{ room.prize_pool_ryo }} Ryo</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Winning Boards</div>
-          <div class="metric-value">{{ winners|length }}</div>
+          <div class="metric-label">Your Pending</div>
+          <div class="metric-value">{{ pending_room_total }} Ryo</div>
         </div>
         <div class="metric">
           <div class="metric-label">Round</div>
           <div class="metric-value">{{ room.round_number }}</div>
         </div>
+        <div class="metric">
+          <div class="metric-label">Your Spend</div>
+          <div class="metric-value">{{ player_investment.spend_display }}</div>
+        </div>
       </div>
       <div class="actions">
         <a href="{% url 'game:loteria_game' %}" class="btn btn-primary">Back to Loteria Hub</a>
+        {% if pending_room_claims %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="claim_all_prizes">
+          <button type="submit" class="btn btn-secondary">Claim All {{ pending_room_total }} Ryo</button>
+        </form>
+        {% endif %}
       </div>
     </div>
 
     <aside class="panel">
-      <div class="panel-kicker">Winners</div>
-      <div class="winner-grid">
-        {% for winner in winners %}
-        <article class="winner-card">
-          <h2 class="winner-title">{{ winner.display_name }}</h2>
-          <div class="winner-copy">
-            {% if winner.is_npc %}NPC board{% else %}Player board{% endif %} · Board {{ winner.board_slot }}<br>
-            {{ winner.reward_ryo }} Ryo awarded
+      <div class="panel-kicker">Prize Tray</div>
+      {% if pending_room_claims %}
+      <div class="claim-list">
+        {% for claim in pending_room_claims %}
+        <article class="claim-card">
+          <div class="claim-head">
+            <div>
+              <h2 class="claim-title">{{ claim.pattern_label }}</h2>
+              <div class="pattern-note">{{ claim.entry.display_name }}</div>
+            </div>
+            <div class="claim-meta">{{ claim.reward_ryo }} Ryo</div>
           </div>
-        </article>
-        {% empty %}
-        <article class="winner-card">
-          <h2 class="winner-title">No winners</h2>
-          <div class="winner-copy">This room ended without a complete board.</div>
+          <div class="claim-copy">
+            {% if claim.shared_winner_count > 1 %}
+            Split with {{ claim.shared_winner_count|add:"-1" }} other board{{ claim.shared_winner_count|add:"-1"|pluralize }}.
+            {% else %}
+            Sole winner on this pattern.
+            {% endif %}
+          </div>
+          <div class="claim-actions">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="claim_prize">
+              <input type="hidden" name="claim_id" value="{{ claim.pk }}">
+              <button type="submit" class="btn btn-primary btn-sm">Claim {{ claim.reward_ryo }} Ryo</button>
+            </form>
+          </div>
         </article>
         {% endfor %}
       </div>
+      {% else %}
+      <div class="claim-card">
+        <h2 class="claim-title">Nothing waiting</h2>
+        <div class="claim-copy">Your room prizes are already collected, or this table did not pay any board you brought in.</div>
+      </div>
+      {% endif %}
     </aside>
   </section>
 
+  <section class="called-card">
+    <div class="boards-head" style="margin-bottom:.7rem;">
+      <div>
+        <div class="panel-kicker">Prize Tracker</div>
+        <h2 class="board-title" style="font-size:1.5rem;">Resolved Room Patterns</h2>
+      </div>
+      <span class="status-chip win">{{ pattern_prizes|length }} tracked prizes</span>
+    </div>
+    <div class="pattern-grid">
+      {% for prize in pattern_prizes %}
+      <article class="pattern-card{% if prize.is_claimed %} claimed{% endif %}">
+        <div class="pattern-head">
+          <div>
+            <h3 class="pattern-title">{{ prize.label }}</h3>
+            <div class="pattern-reward">{{ prize.reward_ryo }} Ryo</div>
+          </div>
+          {% if prize.viewer_won %}
+          <span class="status-chip good">{% if prize.viewer_claimed %}Claimed{% else %}You Won{% endif %}</span>
+          {% endif %}
+        </div>
+        <div class="pattern-mini">
+          {% for index in "0123456789ABCDEF"|make_list %}
+          <span class="pattern-mini-cell{% if forloop.counter0 in prize.preview_cells %} marked{% endif %}"></span>
+          {% endfor %}
+        </div>
+        <div class="pattern-status">
+          {% if prize.is_claimed %}
+            Winner{% if prize.winner_count != 1 %}s{% endif %}: {{ prize.winner_names|join:", " }}
+            {% if prize.is_split %}<br>{{ prize.split_summary }}.{% endif %}
+          {% else %}
+            Left unresolved
+          {% endif %}
+        </div>
+        {% if prize.viewer_won %}
+        <div class="pattern-claim-box{% if prize.viewer_claimed %} claimed{% endif %}">
+          <div class="pattern-status" style="margin-bottom:.45rem;">
+            {% if prize.viewer_claimed %}
+            You already collected {{ prize.viewer_reward_ryo }} Ryo from {{ prize.label|lower }}.
+            {% else %}
+            Your board {{ prize.viewer_board_name }} won {{ prize.viewer_reward_ryo }} Ryo.
+            {% if prize.viewer_other_winner_count %}
+            Split with {{ prize.viewer_other_winners|join:", " }}.
+            {% endif %}
+            {% endif %}
+          </div>
+          {% if not prize.viewer_claimed and prize.viewer_claim_id %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="claim_prize">
+            <input type="hidden" name="claim_id" value="{{ prize.viewer_claim_id }}">
+            <button type="submit" class="btn btn-primary btn-sm">Claim {{ prize.viewer_reward_ryo }} Ryo</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
   {% if winning_boards %}
-  <section class="boards-head">
+  <section class="boards-head" style="margin-top:1rem;">
     <div>
       <div class="panel-kicker">Winning Boards</div>
       <h2 class="panel-title" style="font-size:2rem;">Loteria Tables</h2>
@@ -157,7 +282,7 @@
       <div class="board-head">
         <div>
           <h3 class="board-title">{{ board.display_name }}</h3>
-          <div class="board-subtitle">{% if board.is_npc %}NPC board{% else %}Player board{% endif %} · {{ board.reward_ryo }} Ryo</div>
+          <div class="board-subtitle">{% if board.is_npc %}NPC board{% else %}Player board{% endif %} &middot; {{ board.reward_ryo }} Ryo</div>
         </div>
         <span class="status-chip win">{{ board.marked_count }} / {{ board.board_size }}</span>
       </div>
@@ -174,7 +299,7 @@
   </section>
   {% endif %}
 
-  <section class="called-card">
+  <section class="called-card" style="margin-top:1rem;">
     <div class="panel-kicker">Final Called Cards</div>
     <div class="called-grid">
       {% for pokemon in called_history %}

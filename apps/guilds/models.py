@@ -1,4 +1,5 @@
-"""Guild / clan system models (GDD Phase 4 — Social Retention)."""
+"""Guild and guild album models."""
+
 import logging
 import re
 
@@ -20,13 +21,13 @@ class GuildRole(models.TextChoices):
     MEMBER = "member", "Member"
 
 
-class Guild(models.Model):
-    """
-    A player-created guild (clan).
+class GuildQuestPeriod(models.TextChoices):
+    DAILY = "daily", "Daily"
+    WEEKLY = "weekly", "Weekly"
 
-    name  — unique, shown in full on the guild page.
-    tag   — 2–4 uppercase letters/digits, shown in brackets next to usernames.
-    """
+
+class Guild(models.Model):
+    """A player-created guild."""
 
     name = models.TextField(unique=True)
     tag = models.CharField(
@@ -47,6 +48,8 @@ class Guild(models.Model):
         default=True,
         help_text="When False, no new members can join via the public join button.",
     )
+    level = models.PositiveIntegerField(default=1)
+    xp = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
@@ -58,7 +61,7 @@ class Guild(models.Model):
 
     def clean(self) -> None:
         if self.tag and not _TAG_PATTERN.match(self.tag.upper()):
-            raise ValidationError({"tag": "Tag must be 2–4 uppercase letters or digits."})
+            raise ValidationError({"tag": "Tag must be 2-4 uppercase letters or digits."})
 
     @property
     def member_count(self) -> int:
@@ -70,9 +73,7 @@ class Guild(models.Model):
 
 
 class GuildMembership(models.Model):
-    """
-    A user's membership in a guild.  One user ↔ one guild at a time.
-    """
+    """A user's membership in a guild. One user belongs to one guild at a time."""
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -92,6 +93,9 @@ class GuildMembership(models.Model):
         db_index=True,
     )
     joined_at = models.DateTimeField(default=timezone.now)
+    contribution_points = models.PositiveIntegerField(default=0)
+    donated_stickers = models.PositiveIntegerField(default=0)
+    guild_quests_completed = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["joined_at"]
@@ -100,3 +104,66 @@ class GuildMembership(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} in {self.guild} ({self.role})"
+
+
+class GuildAlbumEntry(models.Model):
+    """A sticker donated into a guild album and permanently soul-bound there."""
+
+    guild = models.ForeignKey(
+        Guild,
+        on_delete=models.CASCADE,
+        related_name="album_entries",
+        db_index=True,
+    )
+    sticker = models.OneToOneField(
+        "stickers.Sticker",
+        on_delete=models.CASCADE,
+        related_name="guild_album_entry",
+        db_index=True,
+    )
+    donated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="guild_album_donations",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "guild album entry"
+        verbose_name_plural = "guild album entries"
+
+    def __str__(self) -> str:
+        return f"{self.guild} <- {self.sticker}"
+
+
+class GuildQuestClaim(models.Model):
+    """Tracks claimed daily and weekly guild contribution quests."""
+
+    guild = models.ForeignKey(
+        Guild,
+        on_delete=models.CASCADE,
+        related_name="quest_claims",
+        db_index=True,
+    )
+    membership = models.ForeignKey(
+        GuildMembership,
+        on_delete=models.CASCADE,
+        related_name="quest_claims",
+        db_index=True,
+    )
+    quest_key = models.CharField(max_length=32)
+    period = models.CharField(max_length=16, choices=GuildQuestPeriod.choices)
+    period_start = models.DateField(db_index=True)
+    claimed_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = [("membership", "quest_key", "period", "period_start")]
+        ordering = ["-claimed_at"]
+        verbose_name = "guild quest claim"
+        verbose_name_plural = "guild quest claims"
+
+    def __str__(self) -> str:
+        return f"{self.membership} claimed {self.quest_key} ({self.period})"

@@ -483,6 +483,8 @@ class StickerService:
             raise ValueError("Cannot convert a favourited sticker — unfavourite it first")
         if sticker.is_album_placed:
             raise ValueError("Cannot convert a sticker that is placed in your album")
+        if hasattr(sticker, "guild_album_entry"):
+            raise ValueError("Cannot convert a sticker that is soul-bound to a guild album")
 
         copy_count = Sticker.objects.filter(
             owner=player,
@@ -509,11 +511,11 @@ class StickerService:
     def _build_duplicate_conversion_state(self, stickers: list[Sticker]) -> dict:
         protected_stickers = [
             sticker for sticker in stickers
-            if sticker.is_album_placed or sticker.is_trading or sticker.is_favorite
+            if sticker.is_album_placed or sticker.is_trading or sticker.is_favorite or hasattr(sticker, "guild_album_entry")
         ]
         free_stickers = [
             sticker for sticker in stickers
-            if not sticker.is_album_placed and not sticker.is_trading and not sticker.is_favorite
+            if not sticker.is_album_placed and not sticker.is_trading and not sticker.is_favorite and not hasattr(sticker, "guild_album_entry")
         ]
         safe_free_count = 0 if protected_stickers else (1 if free_stickers else 0)
         safe_free_stickers = free_stickers[:safe_free_count]
@@ -530,6 +532,7 @@ class StickerService:
             "placed_count": sum(1 for sticker in stickers if sticker.is_album_placed),
             "trading_count": sum(1 for sticker in stickers if sticker.is_trading),
             "favorite_count": sum(1 for sticker in stickers if sticker.is_favorite),
+            "guild_bound_count": sum(1 for sticker in stickers if hasattr(sticker, "guild_album_entry")),
         }
 
     def _get_duplicate_conversion_state(
@@ -586,6 +589,7 @@ class StickerService:
                 "placed_count": state["placed_count"],
                 "trading_count": state["trading_count"],
                 "favorite_count": state["favorite_count"],
+                "guild_bound_count": state["guild_bound_count"],
                 "dust_value": dust_value,
                 "total_dust_value": dust_value * state["convertible_count"],
                 "convert_one_id": state["convertible_stickers"][0].pk,
@@ -664,6 +668,8 @@ class StickerService:
             raise ValueError("Cannot dismantle a favourited sticker — unfavourite it first")
         if sticker.is_album_placed:
             raise ValueError("Cannot dismantle a sticker that is placed in your album")
+        if hasattr(sticker, "guild_album_entry"):
+            raise ValueError("Cannot dismantle a sticker that is soul-bound to a guild album")
 
         dust = DISMANTLE_VALUES.get(sticker.rarity, 5)
         sticker.delete()
@@ -707,6 +713,13 @@ class StickerService:
                 f"Insufficient dust: need {cost}, have {player.sticker_dust}"
             )
 
+        should_check_completion_rewards = not Sticker.objects.filter(
+            owner=player,
+            pokemon=pokemon,
+            rarity=rarity,
+            variant=variant,
+        ).exists()
+
         player.sticker_dust -= cost
         player.save(update_fields=["sticker_dust"])
 
@@ -726,7 +739,8 @@ class StickerService:
             variant,
             cost,
         )
-        self.maybe_award_completion_rewards(player, {pokemon.pk})
+        if should_check_completion_rewards:
+            self.maybe_award_completion_rewards(player, {pokemon.pk})
         return sticker
 
     def get_album(self, user: User) -> dict:
@@ -995,6 +1009,8 @@ class TradeService:
             raise ValueError("This sticker is already listed for trade")
         if sticker.is_album_placed:
             raise ValueError("Cannot trade a sticker that is placed in your album")
+        if hasattr(sticker, "guild_album_entry"):
+            raise ValueError("Cannot trade a sticker that is soul-bound to a guild album")
 
         # Cannot trade the only copy
         copy_count = Sticker.objects.filter(
@@ -1047,6 +1063,8 @@ class TradeService:
             raise ValueError("You do not own the sticker you are offering in exchange")
         if accepting_sticker.is_trading:
             raise ValueError("The sticker you are offering is already in another trade")
+        if accepting_sticker.is_album_placed or hasattr(accepting_sticker, "guild_album_entry"):
+            raise ValueError("You cannot trade a soul-bound sticker")
 
         # Cannot trade the only copy
         copy_count = Sticker.objects.filter(
@@ -1464,6 +1482,8 @@ class AlbumService:
             raise ValueError("This sticker is already placed in your album")
         if sticker.is_trading:
             raise ValueError("Cannot place a sticker that is currently in a trade")
+        if hasattr(sticker, "guild_album_entry"):
+            raise ValueError("This sticker is already soul-bound to a guild album")
 
         pokemon = sticker.pokemon
         if pokemon.region is None:
@@ -1539,6 +1559,8 @@ class AlbumService:
             raise ValueError("Sticker not found or does not belong to you")
         if not sticker.is_album_placed:
             raise ValueError("This sticker is not placed in your album")
+        if hasattr(sticker, "guild_album_entry"):
+            raise ValueError("Guild soul-bound stickers cannot be moved back into your inventory")
 
         region = sticker.pokemon.region
         rarity = sticker.rarity

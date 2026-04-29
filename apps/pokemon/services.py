@@ -10,19 +10,19 @@ EXP rules (as designed):
   - Lose:                half battle EXP (rounded down)
   - Training tick:       3× battle EXP for that Pokemon's level bracket
   - Training ticks:      one tick per 2 minutes of training duration
-  - Duration bonuses:    30 min = ×1.0 | 60 min = ×1.10 | 240 min = ×1.50
+  - Duration bonuses:    15 min = ×1.0 | 30 min = ×1.0 | 480 min = ×1.50
   - Level-up threshold:  three-phase exponential curve (see OwnedPokemon.exp_to_next_level)
   - Training Pokemon:    cannot receive battle EXP; must stop/cancel training first
   - Battle level-up Ryo: min(level × 50, 5000) Ryo awarded per level-up
   - Training level-up Ryo: 25% of the normal level-up payout
 
-Level-up total time estimates (240-min sessions):
+Level-up total time estimates (480-min sessions):
   Lv 1–20:   ~0.8 sessions  (3.4h) — hooks the player fast
   Lv 21–85:  ~10.5 sessions (42h)  — steady grind
   Lv 86–100: ~12.9 sessions (52h)  — 60% of total XP, genuinely hard
   Lv 1–100:  ~24 sessions   (97h)  — roughly 25 days at 1 session/day
 
-Valid training durations (minutes): 30, 60, 240
+Valid training durations (minutes): 15, 30, 480
 """
 import logging
 import random
@@ -39,8 +39,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 MAX_LEVEL = 100
-VALID_DURATIONS = (30, 60, 240)
-_DURATION_BONUS = {30: 1.0, 60: 1.10, 240: 1.50}
+VALID_DURATIONS = (15, 30, 480)
+_DURATION_BONUS = {15: 1.0, 30: 1.0, 480: 1.50}
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +132,7 @@ def start_training(owned: OwnedPokemon, duration_minutes: int = 30) -> None:
 
     Args:
         owned:            The OwnedPokemon to train.
-        duration_minutes: Training length — must be 30, 60, or 240.
+        duration_minutes: Training length — must be 15, 30, or 480.
 
     Raises:
         ValueError: If duration_minutes is not a valid option.
@@ -216,7 +216,7 @@ def claim_training(owned: OwnedPokemon) -> int:
       xp_per_tick = battle_exp_gain × 3
       total = ticks × xp_per_tick × duration_bonus
 
-    Duration bonuses: 30 min → ×1.0 | 60 min → ×1.10 | 240 min → ×1.50
+    Duration bonuses: 15 min → ×1.0 | 30 min → ×1.0 | 480 min → ×1.50
 
     Clears all training fields and removes the lock after awarding XP.
 

@@ -1,252 +1,201 @@
 {% extends "base.html" %}
-{% block title %}Leaderboard{% endblock %}
+{% block title %}Sticker Leaderboard{% endblock %}
 
 {% block extra_css %}
 <style>
-.lb-header { margin-bottom: 1.25rem; }
-.lb-header h2 { margin: 0 0 0.25rem; }
+.lb-shell { display: grid; gap: 1rem; }
+.lb-header,
+.lb-table-wrap {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+}
 
-/* Tab bar */
+.lb-header {
+  padding: 1.2rem 1.3rem;
+}
+
+.lb-title {
+  margin: 0 0 0.35rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.8rem;
+  color: var(--text-1);
+}
+
+.lb-copy {
+  margin: 0;
+  color: var(--text-2);
+  max-width: 760px;
+}
+
 .lb-tabs {
-  display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.95rem;
 }
+
 .lb-tab {
-  background: var(--bg-raised); border: 1px solid var(--border-md);
-  border-radius: 20px; padding: 0.35rem 1rem;
-  font-size: 0.82rem; color: var(--text-2);
-  text-decoration: none; transition: all 0.15s;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-md);
+  background: var(--bg-raised);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
-.lb-tab:hover { border-color: var(--border-hi); color: var(--text-1); }
+
 .lb-tab.active {
   background: linear-gradient(135deg, var(--gold-dark), var(--accent-gold));
-  border-color: var(--accent-gold); color: var(--bg-void); font-weight: 700;
+  border-color: var(--accent-gold);
+  color: var(--bg-void);
 }
 
-/* Table */
+.lb-table-wrap {
+  overflow: hidden;
+}
+
 .lb-table {
-  width: 100%; border-collapse: collapse;
-  background: var(--bg-surface); border-radius: var(--radius-lg); overflow: hidden;
-  font-size: 0.85rem; border: 1px solid var(--border-md);
+  width: 100%;
+  border-collapse: collapse;
 }
+
 .lb-table th {
-  background: var(--bg-raised); color: var(--text-2);
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.65rem;
-  text-transform: uppercase; letter-spacing: 0.1em;
-  padding: 0.6rem 1rem; text-align: left;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-raised);
+  color: var(--text-3);
+  text-align: left;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
-.lb-table td { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border-lo); color: var(--text-1); }
-.lb-table tr:last-child td { border-bottom: none; }
-.lb-table tr:hover td { background: rgba(232,184,75,0.04); }
 
-/* Rank medal */
-.rank-medal { font-weight: 900; font-size: 1rem; }
-.rank-1 { color: #fbbf24; }
-.rank-2 { color: #d1d5db; }
-.rank-3 { color: #d97706; }
-.rank-other { color: var(--text-3); font-size: 0.82rem; }
+.lb-table td {
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid var(--border-lo);
+  color: var(--text-1);
+  font-size: 0.84rem;
+}
 
-/* Highlight own row */
+.lb-table tr:last-child td {
+  border-bottom: 0;
+}
+
 .lb-table tr.own-row td {
-  background: rgba(232,184,75,0.06);
-  border-left: 2px solid var(--accent-gold);
+  background: rgba(232, 184, 75, 0.06);
 }
 
-.lb-stat-main { font-weight: 700; color: var(--text-1); }
-.lb-stat-sub  { font-size: 0.72rem; color: var(--text-3); margin-top: 1px; }
-
-.tier-pill {
-  display: inline-block; font-size: 0.65rem; font-weight: 700;
-  padding: 2px 7px; border-radius: 10px; text-transform: uppercase;
+.rank-badge {
+  font-weight: 900;
+  color: var(--accent-gold);
 }
-.tier-bronze   { background: #78350f; color: #fcd34d; }
-.tier-silver   { background: #1f2937; color: #d1d5db; }
-.tier-gold     { background: #78350f; color: #fbbf24; }
-.tier-platinum { background: #1e3a5f; color: #93c5fd; }
-.tier-diamond  { background: #1e1b4b; color: #a5b4fc; }
-.tier-champion { background: #7f1d1d; color: #fca5a5; }
+
+.rank-normal {
+  color: var(--text-3);
+  font-size: 0.8rem;
+}
+
+.user-link {
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.lb-main {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.lb-sub {
+  margin-top: 0.1rem;
+  color: var(--text-3);
+  font-size: 0.72rem;
+}
 
 .empty-state {
-  text-align: center; padding: 2.5rem; color: var(--text-3); font-size: 0.9rem;
+  padding: 2rem 1.3rem;
+  color: var(--text-3);
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="lb-header">
-  <h2>Leaderboard</h2>
-  <p style="color:#9ca3af;font-size:0.85rem;margin:0;">Top 100 trainers by category.</p>
-</div>
+<div class="lb-shell">
+  <section class="lb-header">
+    <h1 class="lb-title">Sticker Leaderboard</h1>
+    <p class="lb-copy">
+      Personal rankings now track soul-bound sticker placements, album completion, and finished generations.
+      Loose inventory and guild donations do not count toward this board.
+    </p>
 
-<!-- Tab navigation -->
-<div class="lb-tabs">
-  <a href="?tab=wins"
-     class="lb-tab {% if tab == 'wins' %}active{% endif %}">
-    Most Wins
-  </a>
-  <a href="?tab=combo"
-     class="lb-tab {% if tab == 'combo' %}active{% endif %}">
-    Longest Combo Chain
-  </a>
-  <a href="?tab=season"
-     class="lb-tab {% if tab == 'season' %}active{% endif %}">
-    Season Rank
-    {% if tab == 'season' and season %}<span style="color:rgba(255,255,255,0.6);font-weight:400;"> · S{{ season.number }}</span>{% endif %}
-  </a>
-</div>
+    <div class="lb-tabs">
+      <a href="?tab=score" class="lb-tab {% if tab == 'score' %}active{% endif %}">Album Score</a>
+      <a href="?tab=soulbound" class="lb-tab {% if tab == 'soulbound' %}active{% endif %}">Soul-Bound</a>
+      <a href="?tab=completion" class="lb-tab {% if tab == 'completion' %}active{% endif %}">Rows + Columns</a>
+      <a href="?tab=generations" class="lb-tab {% if tab == 'generations' %}active{% endif %}">Generations</a>
+    </div>
+  </section>
 
-<!-- ── Most Wins ────────────────────────────────────────────── -->
-{% if tab == 'wins' %}
-  {% if rows %}
-  <table class="lb-table">
-    <thead>
-      <tr>
-        <th style="width:48px;">#</th>
-        <th>Trainer</th>
-        <th>Wins</th>
-        <th>Win Rate</th>
-        <th>Best Chain</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr {% if row.username == request.user.username %}class="own-row"{% endif %}>
-        <td>
-          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
-          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
-          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
-          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'users:profile' row.username %}" style="color:#93c5fd;text-decoration:none;">
-            {{ row.username }}
-          </a>
-          {% if row.username == request.user.username %}
-            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
-          {% endif %}
-        </td>
-        <td><span class="lb-stat-main">{{ row.battles_won }}</span></td>
-        <td>
-          {% if row.battles_played %}
-            <span class="lb-stat-main">
-              {% widthratio row.battles_won row.battles_played 100 %}%
-            </span>
-            <div class="lb-stat-sub">{{ row.battles_played }} played</div>
-          {% else %}
-            <span style="color:#6b7280;">—</span>
-          {% endif %}
-        </td>
-        <td>
-          {% if row.longest_combo_chain %}
-            <span style="color:#fbbf24;">×{{ row.longest_combo_chain }}</span>
-          {% else %}
-            <span style="color:#6b7280;">—</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty-state">No battles have been played yet. Be the first!</div>
-  {% endif %}
-
-<!-- ── Longest Combo Chain ─────────────────────────────────── -->
-{% elif tab == 'combo' %}
-  {% if rows %}
-  <table class="lb-table">
-    <thead>
-      <tr>
-        <th style="width:48px;">#</th>
-        <th>Trainer</th>
-        <th>Best Chain</th>
-        <th>Total Wins</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr {% if row.username == request.user.username %}class="own-row"{% endif %}>
-        <td>
-          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
-          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
-          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
-          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'users:profile' row.username %}" style="color:#93c5fd;text-decoration:none;">
-            {{ row.username }}
-          </a>
-          {% if row.username == request.user.username %}
-            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
-          {% endif %}
-        </td>
-        <td><span class="lb-stat-main" style="color:#fbbf24;">×{{ row.longest_combo_chain }}</span></td>
-        <td><span style="color:#9ca3af;">{{ row.battles_won }}</span></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty-state">No combo chains recorded yet. Build a team with trigger moves!</div>
-  {% endif %}
-
-<!-- ── Season Rank ─────────────────────────────────────────── -->
-{% elif tab == 'season' %}
-  {% if not season %}
-  <div class="empty-state">No ranked season is currently active.</div>
-  {% elif rows %}
-  <table class="lb-table">
-    <thead>
-      <tr>
-        <th style="width:48px;">#</th>
-        <th>Trainer</th>
-        <th>Tier</th>
-        <th>Points</th>
-        <th>W / L</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for profile in rows %}
-      <tr {% if profile.user.username == request.user.username %}class="own-row"{% endif %}>
-        <td>
-          {% if forloop.counter == 1 %}<span class="rank-medal rank-1">🥇</span>
-          {% elif forloop.counter == 2 %}<span class="rank-medal rank-2">🥈</span>
-          {% elif forloop.counter == 3 %}<span class="rank-medal rank-3">🥉</span>
-          {% else %}<span class="rank-other">{{ forloop.counter }}</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'users:profile' profile.user.username %}" style="color:#93c5fd;text-decoration:none;">
-            {{ profile.user.username }}
-          </a>
-          {% if profile.user.username == request.user.username %}
-            <span style="font-size:0.65rem;color:#6b7280;margin-left:4px;">(you)</span>
-          {% endif %}
-        </td>
-        <td>
-          <span class="tier-pill tier-{{ profile.tier }}">
-            {{ profile.get_tier_display }} {{ profile.sub_tier }}
-          </span>
-        </td>
-        <td><span class="lb-stat-main">{{ profile.rank_points }}</span></td>
-        <td>
-          <span style="color:#4ade80;">{{ profile.season_wins }}</span>
-          <span style="color:#6b7280;"> / </span>
-          <span style="color:#f87171;">{{ profile.season_losses }}</span>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty-state">No ranked matches played this season yet. Be the first!</div>
-  {% endif %}
-{% endif %}
-
-<div style="margin-top:1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-  <a href="{% url 'ranked:home' %}" class="btn btn-secondary btn-sm">← Ranked Home</a>
-  <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
+  <section class="lb-table-wrap">
+    {% if rows %}
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th style="width: 56px;">#</th>
+          <th>Amigo</th>
+          <th>Album Score</th>
+          <th>Soul-Bound</th>
+          <th>Rows</th>
+          <th>Columns</th>
+          <th>Generations</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr {% if row.user.username == request.user.username %}class="own-row"{% endif %}>
+          <td>
+            {% if forloop.counter == 1 %}
+            <span class="rank-badge">#1</span>
+            {% elif forloop.counter == 2 %}
+            <span class="rank-badge">#2</span>
+            {% elif forloop.counter == 3 %}
+            <span class="rank-badge">#3</span>
+            {% else %}
+            <span class="rank-normal">{{ forloop.counter }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'users:profile' row.user.username %}" class="user-link">{{ row.display_name }}</a>
+            <div class="lb-sub">@{{ row.user.username }}{% if row.user.username == request.user.username %} (you){% endif %}</div>
+          </td>
+          <td>
+            <div class="lb-main">{{ row.stats.total_score }}</div>
+            <div class="lb-sub">Base {{ row.stats.sticker_score }} | bonus {{ row.stats.row_bonus|add:row.stats.column_bonus|add:row.stats.generation_bonus }}</div>
+          </td>
+          <td><div class="lb-main">{{ row.stats.soul_bound_count }}</div></td>
+          <td>
+            <div class="lb-main">{{ row.stats.row_completions }}</div>
+            <div class="lb-sub">+{{ row.stats.row_bonus }}</div>
+          </td>
+          <td>
+            <div class="lb-main">{{ row.stats.column_completions }}</div>
+            <div class="lb-sub">+{{ row.stats.column_bonus }}</div>
+          </td>
+          <td>
+            <div class="lb-main">{{ row.stats.generation_completions }}</div>
+            <div class="lb-sub">+{{ row.stats.generation_bonus }}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No soul-bound sticker placements yet.</div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

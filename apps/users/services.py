@@ -203,7 +203,7 @@ def purchase_training_slot_upgrade(user: "User") -> dict[str, int]:  # type: ign
     min_level = int(next_upgrade["min_level"])
     if user.trainer_level < min_level:
         raise ValueError(
-            f"Reach Trainer Level {min_level} to unlock the next training slot upgrade."
+            f"Reach Amigo Level {min_level} to unlock the next training slot upgrade."
         )
 
     cost = int(next_upgrade["cost"])

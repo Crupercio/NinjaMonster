@@ -3,334 +3,389 @@
 
 {% block extra_css %}
 <style>
-.quests-hero {
-  margin-bottom: 1.5rem;
+.quests-shell {
+  display: grid;
+  gap: 1.5rem;
 }
+
+.quests-hero {
+  display: grid;
+  gap: .35rem;
+}
+
 .quests-hero h1 {
+  margin: 0;
   font-family: 'Chakra Petch', sans-serif;
-  font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: var(--text-1);
 }
-.quests-hero p  { color: var(--text-2); font-size: 0.875rem; }
 
-.quest-section { margin-bottom: 2rem; }
+.quests-hero p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: .92rem;
+  line-height: 1.6;
+}
+
+.notice-stack {
+  display: grid;
+  gap: .7rem;
+}
+
+.quest-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(91, 129, 255, .2);
+  background: linear-gradient(180deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .98));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .2);
+}
+
+.quest-notice.success {
+  border-color: rgba(74, 222, 128, .28);
+  background: linear-gradient(180deg, rgba(7, 51, 34, .92), rgba(8, 25, 20, .96));
+}
+
+.quest-notice.error {
+  border-color: rgba(248, 113, 113, .28);
+  background: linear-gradient(180deg, rgba(69, 18, 24, .94), rgba(29, 12, 18, .98));
+}
+
+.quest-notice-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .88rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, .08);
+  color: #f8fafc;
+}
+
+.quest-notice.success .quest-notice-icon {
+  background: rgba(74, 222, 128, .16);
+  color: #86efac;
+}
+
+.quest-notice.error .quest-notice-icon {
+  background: rgba(248, 113, 113, .16);
+  color: #fca5a5;
+}
+
+.quest-notice-body {
+  display: grid;
+  gap: .14rem;
+}
+
+.quest-notice-title {
+  color: var(--text-1);
+  font-size: .82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.quest-notice-copy {
+  color: var(--text-2);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.quest-section {
+  display: grid;
+  gap: .8rem;
+}
+
 .quest-section-title {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.65rem;
+  font-size: .68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: .14em;
   color: var(--accent-gold);
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border-md);
-  opacity: 0.85;
+  padding-bottom: .45rem;
+  border-bottom: 1px solid rgba(91, 129, 255, .18);
 }
 
-.quest-cards { display: flex; flex-direction: column; gap: 0.6rem; }
+.quest-cards {
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+}
 
 .quest-card {
-  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius-lg);
-  padding: 0.9rem 1rem;
-  display: flex;
-  align-items: center;
+  background: linear-gradient(160deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .98));
+  border: 1px solid rgba(91, 129, 255, .18);
+  border-radius: 20px;
+  padding: .95rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 150px 140px 110px;
   gap: 1rem;
-  flex-wrap: wrap;
-  transition: border-color 0.18s;
+  align-items: center;
+  transition: border-color .18s, transform .18s;
 }
-.quest-card:hover { border-color: var(--border-hi); }
-.quest-card.completed  { border-color: rgba(74,222,128,0.5); }
-.quest-card.rewarded   { opacity: 0.55; }
 
-.quest-info { flex: 1; min-width: 180px; }
+.quest-card:hover {
+  border-color: rgba(232, 184, 75, .28);
+  transform: translateY(-1px);
+}
+
+.quest-card.completed {
+  border-color: rgba(74, 222, 128, .35);
+}
+
+.quest-card.rewarded {
+  opacity: .58;
+}
+
+.quest-info {
+  min-width: 0;
+}
+
 .quest-name {
-  font-weight: 700;
-  font-size: 0.9rem;
-  margin-bottom: 0.15rem;
+  font-weight: 800;
+  font-size: .96rem;
+  margin-bottom: .16rem;
   color: var(--text-1);
 }
-.quest-desc { color: var(--text-2); font-size: 0.78rem; }
 
-.quest-progress-wrap { width: 140px; flex-shrink: 0; }
+.quest-desc {
+  color: var(--text-2);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.quest-progress-wrap {
+  width: 100%;
+}
+
 .quest-progress-label {
-  font-size: 0.7rem;
+  font-size: .72rem;
   color: var(--text-2);
   display: flex;
   justify-content: space-between;
-  margin-bottom: 3px;
+  gap: .5rem;
+  margin-bottom: .28rem;
 }
+
 .quest-bar-bg {
-  background: rgba(232,184,75,0.06);
-  border-radius: 4px;
-  height: 6px;
+  background: rgba(232, 184, 75, .08);
+  border-radius: 999px;
+  height: 8px;
   overflow: hidden;
 }
+
 .quest-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 999px;
   background: linear-gradient(90deg, var(--gold-dark), var(--accent-gold));
   transition: width 0.4s ease;
 }
-.quest-bar-fill.done { background: #4ade80; }
+
+.quest-bar-fill.done {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+}
 
 .quest-reward {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-size: .82rem;
   color: var(--accent-gold);
   white-space: nowrap;
   text-align: right;
-  min-width: 90px;
 }
 
-.quest-action { min-width: 90px; text-align: right; }
+.quest-action {
+  text-align: right;
+}
 
-.badge-done {
-  display: inline-block;
-  background: rgba(5,46,22,0.7);
-  color: #4ade80;
-  border: 1px solid #4ade80;
-  border-radius: 20px;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.72rem;
+.quest-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  padding: .3rem .65rem;
+  border-radius: 999px;
+  font-size: .72rem;
   font-weight: 700;
 }
-.badge-claimed {
-  display: inline-block;
+
+.quest-status.in-progress {
+  border: 1px solid rgba(91, 129, 255, .2);
+  color: var(--text-2);
+  background: rgba(15, 23, 42, .48);
+}
+
+.quest-status.complete {
+  background: rgba(5, 46, 22, .7);
+  color: #86efac;
+  border: 1px solid rgba(74, 222, 128, .45);
+}
+
+.quest-status.claimed {
   color: var(--text-3);
-  font-size: 0.72rem;
+  background: rgba(15, 23, 42, .45);
+  border: 1px solid rgba(91, 129, 255, .14);
+}
+
+.quest-story-note {
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  border: 1px dashed rgba(232, 184, 75, .28);
+  background: linear-gradient(160deg, rgba(17, 24, 39, .96), rgba(10, 15, 29, .98));
+}
+
+.quest-story-note strong {
+  display: block;
+  color: var(--text-1);
+  font-size: .92rem;
+  margin-bottom: .22rem;
+}
+
+.quest-story-note span {
+  color: var(--text-2);
+  font-size: .82rem;
+  line-height: 1.55;
 }
 
 .empty-state {
-  background: var(--bg-felt);
-  border: 1px dashed var(--border-md);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
+  background: linear-gradient(160deg, rgba(17, 24, 39, .96), rgba(10, 15, 29, .98));
+  border: 1px dashed rgba(91, 129, 255, .18);
+  border-radius: 18px;
+  padding: 1.3rem;
   text-align: center;
   color: var(--text-3);
-  font-size: 0.875rem;
+  font-size: .88rem;
 }
 
-/* Story chapter styles */
-.chapter-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 1.5rem 0 0.6rem;
-}
-.chapter-badge {
-  background: rgba(232,184,75,0.12);
-  color: var(--accent-gold);
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius-sm);
-  padding: 0.2rem 0.6rem;
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  white-space: nowrap;
-}
-.chapter-title {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text-1);
-}
-.narrative-box {
-  background: var(--bg-void);
-  border-left: 3px solid var(--combo-blue);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  padding: 0.65rem 0.85rem;
-  margin-bottom: 0.75rem;
-  color: var(--combo-blue);
-  font-size: 0.8rem;
-  font-style: italic;
-  line-height: 1.5;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-.narrative-box:hover { border-color: #7dd3fc; }
-.narrative-toggle {
-  font-size: 0.68rem;
-  color: var(--text-3);
-  font-style: normal;
-  margin-top: 0.3rem;
+@media (max-width: 980px) {
+  .quest-card {
+    grid-template-columns: 1fr;
+    gap: .8rem;
+  }
+
+  .quest-reward,
+  .quest-action {
+    text-align: left;
+  }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="quests-hero">
-  <h1>Quests &amp; Missions</h1>
-  <p>Complete missions to earn Ryo, Sticker Dust, and Packs. Daily and Weekly missions reset automatically.</p>
-</div>
-
-{% if messages %}
-<div style="margin-bottom:1rem;">
-  {% for msg in messages %}
-  <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}success{% endif %}" style="padding:0.6rem 0.9rem;border-radius:8px;font-size:0.875rem;">
-    {{ msg }}
+<div class="quests-shell">
+  <div class="quests-hero">
+    <h1>Quests &amp; Missions</h1>
+    <p>Complete collector-focused missions to earn Ryo, Sticker Dust, packs, and expedition progress. Daily and weekly missions reset automatically.</p>
   </div>
-  {% endfor %}
-</div>
-{% endif %}
 
-{# ── Daily Missions ──────────────────────────────────────────── #}
-<div class="quest-section">
-  <div class="quest-section-title">Daily Missions — resets at midnight UTC</div>
-  {% if daily %}
-  <div class="quest-cards">
-    {% for uq in daily %}
-    <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
-      <div class="quest-info">
-        <div class="quest-name">{{ uq.template.name }}</div>
-        {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
-      </div>
-      <div class="quest-progress-wrap">
-        <div class="quest-progress-label">
-          <span>Progress</span>
-          <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
-        </div>
-        <div class="quest-bar-bg">
-          <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
-        </div>
-      </div>
-      <div class="quest-reward">{{ uq.template.reward_summary }}</div>
-      <div class="quest-action">
-        {% if uq.rewarded %}
-          <span class="badge-claimed">Claimed</span>
-        {% elif uq.completed %}
-          <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary btn-sm">Claim</button>
-          </form>
-        {% else %}
-          <span style="color:#4b5563;font-size:0.72rem;">In progress</span>
-        {% endif %}
+  {% if messages %}
+  <div class="notice-stack">
+    {% for msg in messages %}
+    <div class="quest-notice {% if msg.tags == 'error' %}error{% else %}success{% endif %}">
+      <div class="quest-notice-icon">{% if msg.tags == 'error' %}!{% else %}+{% endif %}</div>
+      <div class="quest-notice-body">
+        <div class="quest-notice-title">{% if msg.tags == 'error' %}Couldn’t Claim Reward{% else %}Reward Claimed{% endif %}</div>
+        <div class="quest-notice-copy">{{ msg }}</div>
       </div>
     </div>
     {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state">No daily missions available — check back tomorrow or ask an admin to add quest templates.</div>
   {% endif %}
-</div>
 
-{# ── Weekly Challenges ───────────────────────────────────────── #}
-<div class="quest-section">
-  <div class="quest-section-title">Weekly Challenges — resets every Monday</div>
-  {% if weekly %}
-  <div class="quest-cards">
-    {% for uq in weekly %}
-    <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
-      <div class="quest-info">
-        <div class="quest-name">{{ uq.template.name }}</div>
-        {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
-      </div>
-      <div class="quest-progress-wrap">
-        <div class="quest-progress-label">
-          <span>Progress</span>
-          <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
+  <div class="quest-section">
+    <div class="quest-section-title">Daily Missions — resets at midnight UTC</div>
+    {% if daily %}
+    <div class="quest-cards">
+      {% for uq in daily %}
+      <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
+        <div class="quest-info">
+          <div class="quest-name">{{ uq.template.name }}</div>
+          {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
         </div>
-        <div class="quest-bar-bg">
-          <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
+        <div class="quest-progress-wrap">
+          <div class="quest-progress-label">
+            <span>Progress</span>
+            <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
+          </div>
+          <div class="quest-bar-bg">
+            <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
+          </div>
+        </div>
+        <div class="quest-reward">{{ uq.template.reward_summary }}</div>
+        <div class="quest-action">
+          {% if uq.rewarded %}
+            <span class="quest-status claimed">Claimed</span>
+          {% elif uq.completed %}
+            <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm">Claim</button>
+            </form>
+          {% else %}
+            <span class="quest-status in-progress">In Progress</span>
+          {% endif %}
         </div>
       </div>
-      <div class="quest-reward">{{ uq.template.reward_summary }}</div>
-      <div class="quest-action">
-        {% if uq.rewarded %}
-          <span class="badge-claimed">Claimed</span>
-        {% elif uq.completed %}
-          <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary btn-sm">Claim</button>
-          </form>
-        {% else %}
-          <span style="color:#4b5563;font-size:0.72rem;">In progress</span>
-        {% endif %}
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state">No weekly challenges configured yet.</div>
-  {% endif %}
-</div>
-
-{# ── Story Quests ────────────────────────────────────────────── #}
-<div class="quest-section">
-  <div class="quest-section-title">Story Quests — Act 1: The Foundation</div>
-  {% if story %}
-  {% regroup story by template.chapter as story_chapters %}
-  {% for chapter_group in story_chapters %}
-
-  {# Chapter header #}
-  <div class="chapter-header">
-    {% if chapter_group.grouper == "prologue" %}
-      <span class="chapter-badge">Prologue</span>
-      <span class="chapter-title">Arrival in Ketsurai</span>
-    {% elif chapter_group.grouper == "act_1" %}
-      <span class="chapter-badge">Act I</span>
-      <span class="chapter-title">The Foundation</span>
-    {% elif chapter_group.grouper == "act_1_climax" %}
-      <span class="chapter-badge">Act I — Climax</span>
-      <span class="chapter-title">The True Bond</span>
     {% else %}
-      <span class="chapter-badge">Chapter</span>
-      <span class="chapter-title">{{ chapter_group.grouper|default:"Story" }}</span>
+    <div class="empty-state">No daily collector missions are active right now.</div>
     {% endif %}
   </div>
 
-  <div class="quest-cards" style="margin-bottom:1rem;">
-    {% for uq in chapter_group.list %}
-
-    {# Narrative dialogue (Alpine.js expand/collapse) #}
-    {% if uq.template.narrative_text %}
-    <div x-data="{ open: false }" class="narrative-box" @click="open = !open">
-      <div x-show="!open" style="display:flex;align-items:center;gap:0.4rem;">
-        <span>&#128172;</span>
-        <span>{{ uq.template.narrative_text|truncatechars:80 }}</span>
+  <div class="quest-section">
+    <div class="quest-section-title">Weekly Challenges — resets every Monday</div>
+    {% if weekly %}
+    <div class="quest-cards">
+      {% for uq in weekly %}
+      <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
+        <div class="quest-info">
+          <div class="quest-name">{{ uq.template.name }}</div>
+          {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
+        </div>
+        <div class="quest-progress-wrap">
+          <div class="quest-progress-label">
+            <span>Progress</span>
+            <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
+          </div>
+          <div class="quest-bar-bg">
+            <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
+          </div>
+        </div>
+        <div class="quest-reward">{{ uq.template.reward_summary }}</div>
+        <div class="quest-action">
+          {% if uq.rewarded %}
+            <span class="quest-status claimed">Claimed</span>
+          {% elif uq.completed %}
+            <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm">Claim</button>
+            </form>
+          {% else %}
+            <span class="quest-status in-progress">In Progress</span>
+          {% endif %}
+        </div>
       </div>
-      <div x-show="open" x-cloak>{{ uq.template.narrative_text }}</div>
-      <div class="narrative-toggle" x-text="open ? '▲ collapse' : '▼ read more'"></div>
+      {% endfor %}
     </div>
+    {% else %}
+    <div class="empty-state">No weekly collector challenges are active right now.</div>
     {% endif %}
-
-    <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
-      <div class="quest-info">
-        <div class="quest-name">{{ uq.template.name }}</div>
-        {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
-      </div>
-      <div class="quest-progress-wrap">
-        <div class="quest-progress-label">
-          <span>Progress</span>
-          <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
-        </div>
-        <div class="quest-bar-bg">
-          <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
-        </div>
-      </div>
-      <div class="quest-reward">{{ uq.template.reward_summary }}</div>
-      <div class="quest-action">
-        {% if uq.rewarded %}
-          <span class="badge-claimed">Claimed</span>
-        {% elif uq.completed %}
-          <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary btn-sm">Claim</button>
-          </form>
-        {% else %}
-          <span style="color:#4b5563;font-size:0.72rem;">In progress</span>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
   </div>
-  {% endfor %}
 
-  {% else %}
-  <div class="empty-state">No story quests configured yet.</div>
+  {% if story_is_rebuilding %}
+  <div class="quest-section">
+    <div class="quest-section-title">Story Quests</div>
+    <div class="quest-story-note">
+      <strong>Story quests are being rebuilt.</strong>
+      <span>This section will return once the story is rewritten around collecting, stickers, expeditions, guild albums, and arcade play.</span>
+    </div>
+  </div>
   {% endif %}
 </div>
 {% endblock %}

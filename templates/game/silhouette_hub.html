@@ -4,21 +4,22 @@
 
 {% block extra_css %}
 <style>
-.hub-shell { max-width: 1280px; margin: 0 auto; padding: 1rem 0 2.25rem; }
-.hub-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
-.hub-hero, .wallet-panel, .selector-card, .selector-note {
+.tower-hub-shell { max-width: 1260px; margin: 0 auto; padding: 1rem 0 2.25rem; }
+.tower-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
+.tower-top { display:grid; grid-template-columns: 1.2fr .9fr; gap:1rem; margin-bottom:1.15rem; }
+.tower-hero, .wallet-panel, .tower-card, .hub-note {
   background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
   border: 1px solid rgba(91,129,255,.22);
   border-radius: 26px;
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
-.hub-top { display:grid; grid-template-columns: 1.25fr .9fr; gap:1rem; margin-bottom:1.15rem; }
-.hub-hero { padding:1.2rem 1.25rem; }
+.tower-hero { padding:1.2rem 1.25rem; }
 .hero-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:700; margin-bottom:.45rem; }
 .hero-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(2rem,3vw,2.7rem); line-height:1; }
 .hero-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.8rem; }
 .hero-copy { color:var(--text-2); line-height:1.65; max-width:760px; margin-bottom:1rem; }
 .hero-actions { display:flex; gap:.7rem; flex-wrap:wrap; }
+
 .wallet-panel { padding:1rem 1.05rem; }
 .wallet-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-3); margin-bottom:.8rem; font-weight:700; }
 .wallet-grid { display:grid; gap:.65rem; }
@@ -26,49 +27,56 @@
 .wallet-card strong { display:block; color:var(--text-1); font-size:.9rem; margin-bottom:.15rem; }
 .wallet-card span { color:var(--text-3); font-size:.75rem; }
 .wallet-card em { display:block; margin-top:.35rem; font-style:normal; color:#c4b5fd; font-size:1.08rem; font-weight:800; }
+
 .section-head { margin-bottom:.75rem; }
 .section-title { margin:0 0 .15rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.2rem; }
 .section-copy { color:var(--text-2); font-size:.88rem; }
-.selector-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.85rem; }
-.selector-card { padding:.95rem; overflow:hidden; position:relative; display:flex; flex-direction:column; }
-.selector-card.current { border-color: rgba(232,184,75,.42); box-shadow:0 0 0 1px rgba(232,184,75,.18), 0 20px 40px rgba(0,0,0,.28); }
-.selector-status { display:inline-flex; align-items:center; border-radius:999px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; background:rgba(18,26,53,.9); border:1px solid rgba(91,129,255,.22); color:var(--text-2); }
-.selector-status.live { color:#86efac; border-color:rgba(74,222,128,.3); }
-.selector-status.current { color:var(--accent-gold); border-color:rgba(232,184,75,.34); }
-.selector-art { height:180px; display:flex; gap:.75rem; margin-bottom:.85rem; }
-.selector-silhouette, .selector-tower { flex:1 1 48%; display:flex; align-items:center; justify-content:center; border-radius:18px; }
-.selector-silhouette { border:1px solid rgba(232,184,75,.14); background:linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.45)), url("{% static 'images/games/guess_background.png' %}") center/cover no-repeat; padding:.9rem; }
-.selector-silhouette img { width:auto; height:auto; max-width:78%; max-height:110px; object-fit:contain; filter:brightness(0) saturate(0) contrast(1.05) drop-shadow(0 12px 24px rgba(0,0,0,.34)); opacity:.9; }
-.selector-tower { padding:.9rem; }
-.selector-tower img { width:auto; height:auto; max-width:72%; max-height:128px; object-fit:contain; filter:drop-shadow(0 10px 24px rgba(0,0,0,.35)); }
-.selector-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.08rem; }
-.selector-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.55rem; }
-.selector-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-.selector-copy { color:var(--text-2); font-size:.84rem; line-height:1.5; min-height:104px; }
-.selector-meta { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.55rem; margin:auto 0 .85rem; }
-.selector-box { border-radius:14px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.6rem .65rem; }
-.selector-box span { display:block; color:var(--text-3); font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
-.selector-box strong { color:var(--text-1); font-size:.84rem; }
-.selector-actions { display:flex; gap:.55rem; flex-wrap:wrap; }
-.selector-note { margin-top:.85rem; padding:.9rem 1rem; }
-.selector-note strong { display:block; color:var(--text-1); font-size:.92rem; margin-bottom:.2rem; }
-.selector-note span { color:var(--text-2); font-size:.84rem; line-height:1.5; }
-@media (max-width: 1180px) { .hub-top, .selector-grid { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { .selector-meta { grid-template-columns:1fr; } }
+
+.tower-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.85rem; }
+.tower-card { padding:.95rem; display:flex; flex-direction:column; }
+.tower-card.current { border-color: rgba(232,184,75,.42); box-shadow:0 0 0 1px rgba(232,184,75,.18), 0 20px 40px rgba(0,0,0,.28); }
+.tower-status { display:inline-flex; align-items:center; border-radius:999px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; background:rgba(18,26,53,.9); border:1px solid rgba(91,129,255,.22); color:var(--text-2); }
+.tower-status.live { color:#86efac; border-color:rgba(74,222,128,.3); }
+.tower-status.current { color:var(--accent-gold); border-color:rgba(232,184,75,.34); }
+.tower-art {
+  min-height: 186px; margin-bottom:.85rem; border-radius:20px; border:1px solid rgba(232,184,75,.14);
+  background:
+    radial-gradient(circle at top, rgba(91,129,255,.18), rgba(10,15,29,.92) 70%),
+    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+.tower-art img { max-width:100%; max-height:150px; object-fit:contain; filter:drop-shadow(0 12px 24px rgba(0,0,0,.38)); }
+.tower-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.08rem; }
+.tower-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.55rem; }
+.tower-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.tower-copy { color:var(--text-2); font-size:.84rem; line-height:1.5; min-height:104px; }
+.tower-meta { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.55rem; margin:auto 0 .85rem; }
+.tower-box { border-radius:14px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.6rem .65rem; }
+.tower-box span { display:block; color:var(--text-3); font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
+.tower-box strong { color:var(--text-1); font-size:.84rem; }
+.tower-actions { display:flex; gap:.55rem; flex-wrap:wrap; }
+
+.hub-note { margin-top:.85rem; padding:.9rem 1rem; }
+.hub-note strong { display:block; color:var(--text-1); font-size:.92rem; margin-bottom:.2rem; }
+.hub-note span { color:var(--text-2); font-size:.84rem; line-height:1.5; }
+
+@media (max-width: 1180px) { .tower-top, .tower-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .tower-meta { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="hub-shell">
-  <a href="{% url 'game:home' %}" class="hub-back">&larr; Back to Fun Hub</a>
+<div class="tower-hub-shell">
+  <a href="{% url 'game:home' %}" class="tower-back">&larr; Back to Fun Hub</a>
 
-  <div class="hub-top">
-    <section class="hub-hero">
+  <div class="tower-top">
+    <section class="tower-hero">
       <div class="hero-kicker">Collector Arcade</div>
       <h1 class="hero-title">Silhouette Tower</h1>
       <div class="hero-subtitle">Pick a cabinet and start climbing</div>
       <p class="hero-copy">
-        Rookie stays Kanto-only for a tighter nostalgic ladder. Regional, Master, and National all pull from every generation, so each cabinet feels broader and harder without changing the core game loop.
+        Silhouette Tower is the higher-pressure cabinet in the Fun lane: one shadow at a time, clean cash-out decisions,
+        and bigger collector payouts when you keep your streak alive.
       </p>
       <div class="hero-actions">
         {% if active_silhouette_tower %}
@@ -95,46 +103,39 @@
   <section>
     <div class="section-head">
       <h2 class="section-title">Choose Your Tower</h2>
-      <div class="section-copy">Each cabinet uses the same silhouette engine, so new towers can be added later without changing the game flow.</div>
+      <div class="section-copy">Each cabinet keeps the same silhouette rules, but changes the pool size, entry cost, and how long you can push the run.</div>
     </div>
 
-    <div class="selector-grid">
+    <div class="tower-grid">
       {% for tower_card in tower_cards %}
-      <article class="selector-card{% if tower_card.is_current %} current{% endif %}">
-        <div class="selector-status {% if tower_card.config.enabled %}live{% endif %}{% if tower_card.is_current %} current{% endif %}">
+      <article class="tower-card{% if tower_card.is_current %} current{% endif %}">
+        <div class="tower-status {% if tower_card.config.enabled %}live{% endif %}{% if tower_card.is_current %} current{% endif %}">
           {% if tower_card.is_current %}Current Cabinet{% elif tower_card.config.enabled %}Open Now{% else %}Coming Soon{% endif %}
         </div>
 
-        <div class="selector-art">
-          <div class="selector-silhouette">
-            {% if tower_card.silhouette_url %}
-            <img src="{{ tower_card.silhouette_url }}" alt="" aria-hidden="true">
-            {% endif %}
-          </div>
-          <div class="selector-tower">
-            <img src="{% static 'images/games/'|add:tower_card.config.image_name %}" alt="{{ tower_card.config.title }}">
-          </div>
+        <div class="tower-art">
+          <img src="{% static 'images/games/'|add:tower_card.config.image_name %}" alt="{{ tower_card.config.title }}">
         </div>
 
-        <h3 class="selector-title">{{ tower_card.config.title }}</h3>
-        <div class="selector-tags">
-          <span class="selector-tag">{{ tower_card.config.subtitle }}</span>
-          <span class="selector-tag">{{ tower_card.config.scope_label }}</span>
+        <h3 class="tower-title">{{ tower_card.config.title }}</h3>
+        <div class="tower-tags">
+          <span class="tower-tag">{{ tower_card.config.subtitle }}</span>
+          <span class="tower-tag">{{ tower_card.config.scope_label }}</span>
         </div>
-        <div class="selector-copy">{{ tower_card.config.description }}</div>
+        <div class="tower-copy">{{ tower_card.config.description }}</div>
 
-        <div class="selector-meta">
-          <div class="selector-box">
+        <div class="tower-meta">
+          <div class="tower-box">
             <span>Entry</span>
             <strong>{{ tower_card.config.entry_qty }} {{ tower_card.config.entry_label }}</strong>
           </div>
-          <div class="selector-box">
+          <div class="tower-box">
             <span>Floors</span>
             <strong>{{ tower_card.config.max_floors }}</strong>
           </div>
         </div>
 
-        <div class="selector-actions">
+        <div class="tower-actions">
           {% if tower_card.config.enabled %}
             {% if tower_card.can_enter or tower_card.is_current %}
             <a href="{% url 'game:silhouette_tower' tower_card.config.key %}" class="btn {% if tower_card.is_current %}btn-primary{% else %}btn-secondary{% endif %}">
@@ -151,9 +152,9 @@
       {% endfor %}
     </div>
 
-    <div class="selector-note">
-      <strong>The silhouette selector and the live game are now separate lanes.</strong>
-      <span>Use this page to choose the cabinet. Once you open a tower, the play screen stays focused on the silhouette, the answers, the reveal, and your banked reward.</span>
+    <div class="hub-note">
+      <strong>Silhouette is built as the push-your-luck cabinet.</strong>
+      <span>Open the tower, read the shadow fast, and decide when to bank the run. The active play page stays focused on the silhouette, the guess options, your streak, and the reward you have on the line.</span>
     </div>
   </section>
 </div>

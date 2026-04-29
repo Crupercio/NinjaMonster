@@ -1,64 +1,172 @@
 {% extends "base.html" %}
-{% block title %}My Pokémon{% endblock %}
+{% block title %}My Pokemon{% endblock %}
 
 {% block extra_css %}
 <style>
-.mypoke-header {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: .75rem; margin-bottom: .4rem;
+.mypoke-shell {
+  display: grid;
+  gap: 1rem;
 }
+
+.mypoke-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.mypoke-header h2 {
+  margin: 0 0 .25rem;
+}
+
+.mypoke-subtitle {
+  margin: 0;
+  color: var(--text-2);
+  font-size: .88rem;
+  max-width: 720px;
+}
+
+.mypoke-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .9rem;
+  flex-wrap: wrap;
+  padding: .85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+}
+
+.toolbar-meta {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  flex-wrap: wrap;
+  color: var(--text-2);
+  font-size: .78rem;
+}
+
+.toolbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, .18);
+  background: rgba(15, 23, 42, .55);
+  color: var(--text-1);
+  font-weight: 700;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.hide-max-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .78rem;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.hide-max-toggle input {
+  accent-color: var(--accent-red);
+  width: 14px;
+  height: 14px;
+}
+
+.mypoke-search {
+  width: min(320px, 100%);
+  background: var(--border-lo);
+  border: 1px solid #2d4a7a;
+  border-radius: var(--radius-sm);
+  padding: .55rem .85rem;
+  font-size: .9rem;
+  color: var(--text-1);
+  outline: none;
+  transition: border-color .2s;
+}
+
+.mypoke-search:focus {
+  border-color: var(--accent-red);
+}
+
 .training-overview {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(260px, .9fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, .9fr);
   gap: 1rem;
-  margin: 1rem 0 1.25rem;
 }
+
 .training-panel {
   background: var(--bg-card);
   border: 1px solid var(--border-md);
   border-radius: var(--radius-md);
   padding: 1rem;
 }
+
 .training-panel h3 {
   margin: 0 0 .25rem;
   font-size: 1rem;
 }
+
 .training-panel p {
   margin: 0;
   color: var(--text-2);
   font-size: .8rem;
+  line-height: 1.55;
 }
+
 .training-stats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: .75rem;
-  flex-wrap: wrap;
   margin-top: .9rem;
 }
+
 .training-stat {
-  min-width: 110px;
-  padding: .75rem .85rem;
+  min-width: 0;
+  padding: .8rem .85rem;
   border-radius: var(--radius-sm);
   background: rgba(15, 23, 42, .55);
   border: 1px solid rgba(59, 130, 246, .18);
 }
+
 .training-stat-label {
   display: block;
   color: var(--text-3);
-  font-size: .7rem;
+  font-size: .68rem;
   text-transform: uppercase;
   letter-spacing: .08em;
   margin-bottom: .2rem;
 }
+
 .training-stat-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--text-1);
 }
+
+.training-panel-actions {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-top: .9rem;
+}
+
 .training-upgrade-box {
   display: flex;
   flex-direction: column;
   gap: .8rem;
 }
+
 .training-upgrade-meta {
   display: flex;
   justify-content: space-between;
@@ -67,11 +175,12 @@
   font-size: .78rem;
   color: var(--text-2);
 }
+
 .training-upgrade-chip {
   display: inline-flex;
   align-items: center;
   gap: .3rem;
-  padding: .2rem .55rem;
+  padding: .22rem .58rem;
   border-radius: 999px;
   border: 1px solid rgba(245, 158, 11, .35);
   background: rgba(120, 53, 15, .28);
@@ -79,93 +188,357 @@
   font-size: .72rem;
   font-weight: 700;
 }
+
 .training-upgrade-note {
   font-size: .74rem;
   color: var(--text-3);
+  line-height: 1.55;
 }
-.mypoke-search {
-  flex: 1; min-width: 180px; max-width: 320px;
-  background: var(--border-lo); border: 1px solid #2d4a7a;
-  border-radius: var(--radius-sm); padding: .4rem .85rem;
-  font-size: .9rem; color: var(--text-1); outline: none;
-  transition: border-color .2s;
+
+.batch-panel {
+  position: sticky;
+  top: .85rem;
+  z-index: 10;
+  display: grid;
+  gap: .8rem;
+  padding: .95rem 1rem;
+  background: linear-gradient(180deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .96));
+  border: 1px solid rgba(91, 129, 255, .22);
+  border-radius: var(--radius-md);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, .22);
 }
-.mypoke-search:focus { border-color: var(--accent-red); }
+
+.batch-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.batch-panel-title {
+  display: grid;
+  gap: .2rem;
+}
+
+.batch-panel-title strong {
+  color: var(--text-1);
+  font-size: .96rem;
+}
+
+.batch-panel-title span {
+  color: var(--text-2);
+  font-size: .78rem;
+}
+
+.batch-panel-meta {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.batch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .26rem .62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, .2);
+  background: rgba(15, 23, 42, .55);
+  color: var(--text-1);
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.batch-chip.warning {
+  border-color: rgba(245, 158, 11, .34);
+  color: #fcd34d;
+}
+
+.batch-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.duration-picker {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+
+.duration-pill {
+  position: relative;
+}
+
+.duration-pill input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.duration-pill span {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .45rem .78rem;
+  border-radius: 999px;
+  border: 1px solid #374151;
+  color: var(--text-2);
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.duration-pill input:checked + span {
+  border-color: var(--accent-red);
+  color: var(--text-1);
+  background: rgba(127, 29, 29, .18);
+}
+
+.duration-pill em {
+  font-style: normal;
+  color: #fbbf24;
+  font-size: .7rem;
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
+.batch-note {
+  color: var(--text-3);
+  font-size: .74rem;
+  line-height: 1.5;
+}
 
 .poke-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
 }
 
-/* ── Card ─────────────────────────────────────────────────── */
 .poke-card {
-  background: var(--bg-card); border: 1px solid var(--border-md);
-  border-radius: var(--radius-md); padding: .9rem;
-  display: flex; flex-direction: column; position: relative;
-  transition: border-color .2s;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: .9rem;
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+  position: relative;
+  transition: border-color .2s, box-shadow .2s;
 }
-.poke-card.is-training { border-color: #f59e0b; }
-.poke-card.is-ready    { border-color: #4ade80; }
 
-/* Sprite container */
-.poke-sprite-link { display: block; text-decoration: none; color: inherit; text-align: center; }
-.poke-sprite-wrap { display: flex; justify-content: center; margin-bottom: .5rem; }
+.poke-card.is-selected {
+  border-color: rgba(245, 158, 11, .55);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, .2);
+}
+
+.poke-card.is-training {
+  border-color: #f59e0b;
+}
+
+.poke-card.is-ready {
+  border-color: #4ade80;
+}
+
+.poke-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+}
+
+.card-state-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+
+.select-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  color: var(--text-2);
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-label input {
+  accent-color: var(--accent-red);
+  width: 14px;
+  height: 14px;
+}
+
+.selection-hint {
+  font-size: .7rem;
+  color: var(--text-3);
+}
+
+.poke-sprite-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+.poke-sprite-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: .35rem;
+}
+
 .poke-sprite-wrap img {
-  width: 108px; height: 108px; object-fit: contain;
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
   transition: transform .2s;
 }
-.poke-card:hover .poke-sprite-wrap img { transform: scale(1.06) translateY(-3px); }
 
-/* Name / meta */
-.poke-name { font-weight: 800; font-size: 1rem; text-align: center; margin-bottom: .15rem; }
-.poke-meta { font-size: .75rem; color: var(--text-2); text-align: center; margin-bottom: .5rem; }
+.poke-card:hover .poke-sprite-wrap img {
+  transform: scale(1.05) translateY(-2px);
+}
 
-/* Level + EXP */
+.poke-name {
+  font-weight: 800;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: .15rem;
+}
+
+.poke-meta {
+  font-size: .75rem;
+  color: var(--text-2);
+  text-align: center;
+}
+
 .poke-level-row {
-  display: flex; align-items: baseline; gap: .4rem; margin-bottom: .25rem;
+  display: flex;
+  align-items: baseline;
+  gap: .4rem;
 }
-.poke-level { font-size: .95rem; font-weight: 700; color: var(--accent-red); }
-.poke-exp-label { font-size: .72rem; color: var(--text-3); margin-left: auto; }
-.poke-exp-bar-bg { background: #1e3a6e; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: .75rem; }
-.poke-exp-bar-fill { height: 100%; border-radius: 4px; background: #7c3aed; }
 
-/* Training state */
+.poke-level {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--accent-red);
+}
+
+.poke-exp-label {
+  font-size: .72rem;
+  color: var(--text-3);
+  margin-left: auto;
+}
+
+.poke-exp-bar-bg {
+  background: #1e3a6e;
+  border-radius: 4px;
+  height: 5px;
+  overflow: hidden;
+}
+
+.poke-exp-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #7c3aed;
+}
+
 .training-badge {
-  display: inline-flex; align-items: center; gap: .3rem;
-  font-size: .75rem; font-weight: 700; padding: .2rem .6rem;
-  border-radius: 20px; margin-bottom: .5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .2rem .6rem;
+  border-radius: 20px;
 }
-.training-badge.in-progress { background: #78350f; color: #fcd34d; }
-.training-badge.complete    { background: #052e16; color: #4ade80; border: 1px solid #4ade80; }
 
-.countdown { font-size: .72rem; color: #f59e0b; margin-bottom: .5rem; }
-
-/* Duration radio pills */
-.dur-row { display: flex; gap: .4rem; margin-bottom: .6rem; flex-wrap: wrap; }
-.dur-label {
-  font-size: .72rem; padding: .2rem .55rem; border-radius: 20px;
-  border: 1px solid #374151; cursor: pointer; color: var(--text-2);
-  transition: border-color .15s, color .15s;
+.training-badge.in-progress {
+  background: #78350f;
+  color: #fcd34d;
 }
-.dur-label input { display: none; }
-.dur-label:has(input:checked) { border-color: var(--accent-red); color: var(--text-1); }
 
-.poke-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: auto; }
+.training-badge.complete {
+  background: #052e16;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+
 .max-level-badge {
-  display: inline-flex; align-items: center; gap: .3rem;
-  font-size: .75rem; font-weight: 700; padding: .2rem .6rem;
-  border-radius: 20px; margin-bottom: .5rem;
-  background: #1a1a2e; color: #fbbf24; border: 1px solid #fbbf24;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .2rem .6rem;
+  border-radius: 20px;
+  background: #1a1a2e;
+  color: #fbbf24;
+  border: 1px solid #fbbf24;
 }
 
-/* Empty / no-match state */
-.empty-state {
-  grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: var(--text-3);
+.countdown,
+.poke-note {
+  font-size: .74rem;
+  color: var(--text-3);
+  line-height: 1.5;
 }
-@media (max-width: 860px) {
+
+.countdown {
+  color: #f59e0b;
+}
+
+.poke-actions {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-3);
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+}
+
+.empty-state.hidden {
+  display: none;
+}
+
+@media (max-width: 980px) {
   .training-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .training-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .batch-controls,
+  .mypoke-toolbar {
+    align-items: stretch;
+  }
+
+  .training-stats {
     grid-template-columns: 1fr;
   }
 }
@@ -173,49 +546,71 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="{ search: '', hideMax: true }">
-
+<div class="mypoke-shell">
   <div class="mypoke-header">
     <div>
-      <h2 style="margin-bottom:.2rem;">My Pokémon</h2>
-      <p style="color:var(--text-2);font-size:.85rem;">Train Pokémon to earn bonus EXP — they can't battle while training.</p>
+      <h2>My Pokemon</h2>
+      <p class="mypoke-subtitle">Train Pokemon to earn bonus EXP, build release value, and keep your collector roster moving without opening each card one at a time.</p>
     </div>
-    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-2);cursor:pointer;user-select:none;">
-        <input type="checkbox" x-model="hideMax" style="accent-color:var(--accent-red);width:14px;height:14px;">
+  </div>
+
+  <div class="mypoke-toolbar">
+    <div class="toolbar-meta">
+      <span class="toolbar-chip"><span id="visible-count">{{ owned_pokemon|length }}</span> visible</span>
+      <span class="toolbar-chip">{{ owned_pokemon|length }} total</span>
+      <span class="toolbar-chip">{{ available_training_slots }} free slot{{ available_training_slots|pluralize }}</span>
+    </div>
+    <div class="toolbar-controls">
+      <label class="hide-max-toggle">
+        <input type="checkbox" id="hide-max-toggle" checked>
         Hide Max Level
       </label>
-      <input class="mypoke-search" x-model="search" type="search"
-             placeholder="Search by name…" autocomplete="off">
+      <input class="mypoke-search" id="mypoke-search" type="search" placeholder="Search by name..." autocomplete="off">
     </div>
   </div>
 
   {% if request.GET.sold %}
-    <div class="msg-success" style="margin-bottom:1rem;">
-      Sold {{ request.GET.sold }} for {{ request.GET.ryo }} Ryo!
+    <div class="msg-success">
+      Sold {{ request.GET.sold }} for {{ request.GET.ryo }} Ryo.
     </div>
   {% endif %}
   {% if request.GET.upgrade %}
-    <div class="msg-success" style="margin-bottom:1rem;">
+    <div class="msg-success">
       Training capacity expanded to {{ request.GET.slots }} slots for {{ request.GET.cost }} Ryo.
+    </div>
+  {% endif %}
+  {% if request.GET.trained %}
+    <div class="msg-success">
+      Started {{ request.GET.trained }} training session{{ request.GET.trained|pluralize }}{% if request.GET.duration == "15" %} for 15 minutes{% elif request.GET.duration == "30" %} for 30 minutes{% elif request.GET.duration == "480" %} for 8 hours{% endif %}.
+    </div>
+  {% endif %}
+  {% if request.GET.claimed_all %}
+    <div class="msg-success">
+      Claimed {{ request.GET.claimed_all }} finished training reward{{ request.GET.claimed_all|pluralize }}.
     </div>
   {% endif %}
   {% if request.GET.error %}
     <div class="msg-error">{{ request.GET.error }}</div>
   {% endif %}
-  {% if error %}<div class="msg-error">{{ error }}</div>{% endif %}
+  {% if error %}
+    <div class="msg-error">{{ error }}</div>
+  {% endif %}
 
   <div class="training-overview">
     <section class="training-panel">
-      <h3>Training Network</h3>
-      <p>Training level-ups now pay 25% of normal Ryo, so battle wins stay your main cash flow and training stays a long-term support system.</p>
+      <h3>Amigo Training</h3>
+      <p>Training level-ups still pay 25% of normal Ryo. Use the batch bar to queue multiple Pokemon at once and keep your roster progressing without repeated card resets.</p>
       <div class="training-stats">
         <div class="training-stat">
           <span class="training-stat-label">Active Slots</span>
           <span class="training-stat-value">{{ active_training_count }} / {{ max_training_slots }}</span>
         </div>
         <div class="training-stat">
-          <span class="training-stat-label">Trainer Level</span>
+          <span class="training-stat-label">Free Slots</span>
+          <span class="training-stat-value">{{ available_training_slots }}</span>
+        </div>
+        <div class="training-stat">
+          <span class="training-stat-label">Amigo Level</span>
           <span class="training-stat-value">Lv.{{ request.user.trainer_level }}</span>
         </div>
         <div class="training-stat">
@@ -223,13 +618,22 @@
           <span class="training-stat-value">{{ training_slot_unlock_cap }} slots</span>
         </div>
       </div>
+      <div class="training-panel-actions">
+        {% if ready_training_count %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="claim_all_ready">
+            <button type="submit" class="btn btn-primary">Claim All Ready ({{ ready_training_count }})</button>
+          </form>
+        {% endif %}
+      </div>
     </section>
 
     <section class="training-panel training-upgrade-box">
       <div>
         <h3>Slot Upgrades</h3>
         {% if next_training_slot_upgrade %}
-          <p>Buy more simultaneous training slots as your trainer profile grows.</p>
+          <p>Expand how many Pokemon can train at the same time as your Amigo profile grows.</p>
         {% else %}
           <p>All training slot upgrades are unlocked. Your roster can scale all the way to 40 slots.</p>
         {% endif %}
@@ -244,15 +648,15 @@
           <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="buy_upgrade">
-            <button type="submit" class="btn btn-primary">Buy Slot Upgrade</button>
+            <button type="submit" class="btn btn-secondary">Buy Slot Upgrade</button>
           </form>
           <div class="training-upgrade-note">
             Current limit is {{ max_training_slots }}. Buying this upgrade expands your cap to {{ next_training_slot_upgrade.slots }} slots.
           </div>
         {% else %}
-          <div class="training-upgrade-chip">Reach Trainer Lv.{{ next_training_slot_upgrade.min_level }}</div>
+          <div class="training-upgrade-chip">Reach Amigo Lv.{{ next_training_slot_upgrade.min_level }}</div>
           <div class="training-upgrade-note">
-            Your trainer level currently allows up to {{ training_slot_unlock_cap }} slots. The next purchasable expansion unlocks once you reach Trainer Level {{ next_training_slot_upgrade.min_level }}.
+            Your current profile allows up to {{ training_slot_unlock_cap }} slots. The next purchasable expansion unlocks once you reach Amigo Level {{ next_training_slot_upgrade.min_level }}.
           </div>
         {% endif %}
       {% else %}
@@ -264,124 +668,238 @@
     </section>
   </div>
 
-  <div class="poke-grid">
-    {% for op in owned_pokemon %}
-    <div class="poke-card {% if op.is_training %}{% if op.training_complete %}is-ready{% else %}is-training{% endif %}{% endif %}"
-         x-show="(!search || '{{ op.species.name|lower }}'.includes(search.toLowerCase())) && !(hideMax && {{ op.level }} >= 100)">
+  <form method="post" id="bulk-training-form" class="batch-panel">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="bulk_start">
 
-      {# Sprite + name (clickable → owned detail) #}
+    <div class="batch-panel-head">
+      <div class="batch-panel-title">
+        <strong>Batch Training Queue</strong>
+        <span>Select idle Pokemon from the roster, choose one shared session length, and start them together.</span>
+      </div>
+      <div class="batch-panel-meta">
+        <span class="batch-chip"><span id="selected-count">0</span> selected</span>
+        <span class="batch-chip">Free slots: {{ available_training_slots }}</span>
+        {% if available_training_slots == 0 %}
+          <span class="batch-chip warning">No free slots right now</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="batch-controls">
+      <div class="duration-picker">
+        {% for option in training_duration_options %}
+          <label class="duration-pill">
+            <input type="radio" name="duration" value="{{ option.value }}"{% if option.value == 15 %} checked{% endif %}>
+            <span>{{ option.label }}{% if option.bonus %} <em>{{ option.bonus }}</em>{% endif %}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="batch-actions">
+        <button type="submit" class="btn btn-primary" id="bulk-train-button" {% if available_training_slots == 0 %}disabled{% endif %}>Start Training</button>
+        <button type="button" class="btn btn-secondary" id="clear-selection-button">Clear Selection</button>
+      </div>
+    </div>
+
+    <div class="batch-note">
+      Selection is limited by your current free slots. XP rules stay the same, but the available session lengths are now 15 minutes, 30 minutes, and 8 hours.
+    </div>
+  </form>
+
+  <div class="poke-grid" id="poke-grid">
+    {% for op in owned_pokemon %}
+    <article
+      class="poke-card{% if op.is_training %}{% if op.training_complete %} is-ready{% else %} is-training{% endif %}{% endif %}"
+      data-card
+      data-name="{{ op.species.name|lower }}"
+      data-level="{{ op.level }}"
+    >
+      <div class="poke-card-head">
+        <div class="card-state-row">
+          {% if op.is_training %}
+            {% if op.training_complete %}
+              <span class="training-badge complete">Training Complete</span>
+            {% else %}
+              <span class="training-badge in-progress">In Training</span>
+            {% endif %}
+          {% elif op.level >= 100 %}
+            <span class="max-level-badge">Max Level</span>
+          {% else %}
+            <label class="select-label">
+              <input
+                type="checkbox"
+                class="batch-select"
+                name="owned_ids"
+                value="{{ op.pk }}"
+                form="bulk-training-form"
+              >
+              Select
+            </label>
+          {% endif %}
+        </div>
+        {% if not op.is_training and op.level < 100 %}
+          <span class="selection-hint">Use batch bar</span>
+        {% endif %}
+      </div>
+
       <a href="{% url 'pokemon:owned_detail' op.pk %}" class="poke-sprite-link">
         <div class="poke-sprite-wrap">
           {% if op.species.pokedex_number %}
-            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png"
-                 alt="{{ op.species.name }}"
-                 onerror="this.style.opacity='.2'">
+            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
           {% elif op.species.sprite_url %}
-            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
-                 onerror="this.style.opacity='.2'">
+            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
           {% else %}
-            <div style="width:108px;height:108px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:3rem;">?</div>
+            <div style="width:104px;height:104px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:3rem;">?</div>
           {% endif %}
         </div>
         <div class="poke-name">{{ op.species.name }}</div>
-        <div class="poke-meta">
-          #{{ op.species.pokedex_number }} &nbsp;·&nbsp;
-          {{ op.species.primary_type }}{% if op.species.secondary_type %} / {{ op.species.secondary_type }}{% endif %}
-        </div>
+        <div class="poke-meta">#{{ op.species.pokedex_number }} · {{ op.species.primary_type }}{% if op.species.secondary_type %} / {{ op.species.secondary_type }}{% endif %}</div>
       </a>
 
-      {# Level + EXP #}
       <div class="poke-level-row">
         <span class="poke-level">Lv.{{ op.level }}</span>
         <span class="poke-exp-label">{{ op.experience }} / {{ op.exp_to_next_level }} EXP</span>
       </div>
       <div class="poke-exp-bar-bg">
-        <div class="poke-exp-bar-fill"
-             style="width:{% widthratio op.experience op.exp_to_next_level 100 %}%;"></div>
+        <div class="poke-exp-bar-fill" style="width:{% widthratio op.experience op.exp_to_next_level 100 %}%;"></div>
       </div>
 
-      {# Training / idle state — check training FIRST so max-level pokemon in training can still claim/cancel #}
       {% if op.is_training %}
         {% if op.training_complete %}
-          <span class="training-badge complete">✅ Training Complete!</span>
-          <form method="post">
+          <div class="poke-note">This session is ready to claim now.</div>
+          <form method="post" class="poke-actions">
             {% csrf_token %}
             <input type="hidden" name="owned_id" value="{{ op.pk }}">
             <input type="hidden" name="action" value="claim">
             <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Claim EXP Reward</button>
           </form>
         {% else %}
-          <span class="training-badge in-progress">⏳ In Training ({{ op.training_duration_minutes }} min)</span>
+          <div class="poke-note">Session length: {{ op.training_duration_minutes }} minutes</div>
           <div class="countdown">
             Finishes at {{ op.training_ends_at|date:"H:i" }}
             <span id="cd-{{ op.pk }}" data-ends="{{ op.training_ends_at|date:'U' }}"></span>
           </div>
-          <form method="post">
+          <form method="post" class="poke-actions">
             {% csrf_token %}
             <input type="hidden" name="owned_id" value="{{ op.pk }}">
             <input type="hidden" name="action" value="cancel">
-            <button type="submit" class="btn btn-secondary btn-sm"
-                    onclick="return confirm('Cancel training? No EXP awarded.')">
-              Cancel Training
-            </button>
+            <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Cancel training? No EXP awarded.')">Cancel Training</button>
           </form>
         {% endif %}
       {% elif op.level >= 100 %}
-        <span class="max-level-badge">★ Max Level</span>
-        <div style="font-size:.72rem;color:var(--text-3);text-align:center;">
-          Visit <a href="{% url 'pokemon:mi_casa' %}" style="color:var(--accent-red);">Mi Casa</a> to manage this Pokémon.
-        </div>
+        <div class="poke-note">This Pokemon has finished training. Visit <a href="{% url 'pokemon:mi_casa' %}" style="color:var(--accent-red);">Mi Casa</a> if you want to manage it further.</div>
       {% else %}
-        {# Idle — show duration picker #}
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="owned_id" value="{{ op.pk }}">
-          <input type="hidden" name="action" value="start">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:.35rem;">Training duration:</div>
-          <div class="dur-row">
-            <label class="dur-label">
-              <input type="radio" name="duration" value="30" checked> 30 min
-            </label>
-            <label class="dur-label">
-              <input type="radio" name="duration" value="60"> 1 hr <span style="color:#4ade80;">(+10%)</span>
-            </label>
-            <label class="dur-label">
-              <input type="radio" name="duration" value="240"> 4 hr <span style="color:#f59e0b;">(+50%)</span>
-            </label>
-          </div>
-          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Start Training</button>
-        </form>
+        <div class="poke-note">Select this Pokemon above, then use the batch queue to start a shared training session.</div>
       {% endif %}
-
-    </div>
+    </article>
     {% empty %}
     <div class="empty-state">
-      <div style="font-size:3rem;margin-bottom:.75rem;">🌱</div>
-      <div>No Pokémon yet — visit the <a href="{% url 'pokemon:pokedex' %}">Pokédex</a> to catch some!</div>
+      <div style="font-size:2.4rem;margin-bottom:.75rem;">?</div>
+      <div>No Pokemon yet. Visit the <a href="{% url 'pokemon:pokedex' %}">Pokedex</a> to catch some.</div>
     </div>
     {% endfor %}
+  </div>
 
-    <div class="empty-state" x-show="search && !{{ owned_pokemon|length }} > 0" style="display:none;">
-      No Pokémon match your search.
-    </div>
-
+  <div class="empty-state hidden" id="no-results-state">
+    No Pokemon match your current search and filters.
   </div>
 </div>
 
-{# Countdown timers #}
 <script>
+(function () {
+  const searchInput = document.getElementById('mypoke-search');
+  const hideMaxToggle = document.getElementById('hide-max-toggle');
+  const visibleCount = document.getElementById('visible-count');
+  const selectedCount = document.getElementById('selected-count');
+  const bulkTrainButton = document.getElementById('bulk-train-button');
+  const clearSelectionButton = document.getElementById('clear-selection-button');
+  const noResultsState = document.getElementById('no-results-state');
+  const cards = Array.from(document.querySelectorAll('[data-card]'));
+  const checkboxes = Array.from(document.querySelectorAll('.batch-select'));
+  const maxSelectable = {{ available_training_slots }};
+
+  const SEARCH_KEY = 'my_pokemon_search';
+  const HIDE_MAX_KEY = 'my_pokemon_hide_max';
+
+  const applyFilters = () => {
+    const query = (searchInput.value || '').trim().toLowerCase();
+    const hideMax = hideMaxToggle.checked;
+    let visible = 0;
+
+    cards.forEach((card) => {
+      const name = card.dataset.name || '';
+      const level = Number(card.dataset.level || '0');
+      const matchesSearch = !query || name.includes(query);
+      const matchesLevel = !(hideMax && level >= 100);
+      const isVisible = matchesSearch && matchesLevel;
+      card.style.display = isVisible ? '' : 'none';
+      if (isVisible) visible += 1;
+    });
+
+    visibleCount.textContent = String(visible);
+    noResultsState.classList.toggle('hidden', visible !== 0);
+  };
+
+  const updateSelection = () => {
+    const selected = checkboxes.filter((checkbox) => checkbox.checked);
+    selectedCount.textContent = String(selected.length);
+
+    cards.forEach((card) => {
+      const checkbox = card.querySelector('.batch-select');
+      card.classList.toggle('is-selected', !!checkbox && checkbox.checked);
+    });
+
+    const shouldDisable = selected.length === 0 || selected.length > maxSelectable || maxSelectable === 0;
+    bulkTrainButton.disabled = shouldDisable;
+    if (selected.length > maxSelectable && maxSelectable > 0) {
+      bulkTrainButton.textContent = `Too Many Selected (${selected.length}/${maxSelectable})`;
+    } else if (selected.length > 0) {
+      bulkTrainButton.textContent = `Start Training (${selected.length})`;
+    } else {
+      bulkTrainButton.textContent = 'Start Training';
+    }
+  };
+
+  searchInput.value = localStorage.getItem(SEARCH_KEY) || '';
+  hideMaxToggle.checked = (localStorage.getItem(HIDE_MAX_KEY) || 'true') !== 'false';
+
+  searchInput.addEventListener('input', () => {
+    localStorage.setItem(SEARCH_KEY, searchInput.value);
+    applyFilters();
+  });
+
+  hideMaxToggle.addEventListener('change', () => {
+    localStorage.setItem(HIDE_MAX_KEY, String(hideMaxToggle.checked));
+    applyFilters();
+  });
+
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', updateSelection);
+  });
+
+  clearSelectionButton.addEventListener('click', () => {
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    updateSelection();
+  });
+
+  applyFilters();
+  updateSelection();
+})();
+
 (function () {
   function updateCountdowns() {
     document.querySelectorAll('[id^="cd-"]').forEach(function (el) {
       var remaining = parseInt(el.dataset.ends, 10) * 1000 - Date.now();
       if (remaining <= 0) {
-        el.textContent = ' — done! Refresh to claim.';
+        el.textContent = ' - done! Refresh or use Claim All Ready.';
         el.style.color = '#4ade80';
       } else {
         var h = Math.floor(remaining / 3600000);
         var m = Math.floor((remaining % 3600000) / 60000);
         var s = Math.floor((remaining % 60000) / 1000);
-        el.textContent = ' — ' + (h ? h + 'h ' : '') + m + 'm ' + s + 's left';
+        el.textContent = ' - ' + (h ? h + 'h ' : '') + m + 'm ' + s + 's left';
       }
     });
   }

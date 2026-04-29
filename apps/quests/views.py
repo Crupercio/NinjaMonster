@@ -49,5 +49,5 @@ class QuestClaimView(LoginRequiredMixin, View):
             parts.append(f"+{summary['candy_qty']} {summary['candy_label']}")
 
         reward_text = ", ".join(parts) or "reward granted"
-        messages.success(request, f"Reward claimed: {reward_text}!")
+        messages.success(request, f"{reward_text} added to your inventory.")
         return redirect("quests:quest_list")

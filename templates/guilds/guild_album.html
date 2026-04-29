@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}[{{ guild.tag }}] Guild Album{% endblock %}
+
+{% block extra_css %}
+<style>
+.album-shell { display: grid; gap: 1rem; }
+.album-panel,
+.donation-card,
+.entry-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+}
+
+.album-panel {
+  padding: 1.05rem 1.1rem;
+}
+
+.panel-title {
+  margin: 0 0 0.85rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.album-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.donation-list,
+.entry-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.donation-card,
+.entry-card {
+  padding: 0.8rem 0.9rem;
+}
+
+.entry-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.entry-name {
+  color: var(--text-1);
+  font-weight: 700;
+  margin-bottom: 0.16rem;
+}
+
+.entry-meta {
+  color: var(--text-3);
+  font-size: 0.74rem;
+}
+
+@media (max-width: 960px) {
+  .album-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="album-shell">
+  <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+    <a href="{% url 'guilds:detail' guild.pk %}" class="btn btn-secondary btn-sm">&larr; Back to Guild</a>
+  </div>
+
+  <section class="album-panel">
+    <h1 style="margin:0 0 0.35rem; font-family:'Chakra Petch', sans-serif; color:var(--text-1);">
+      [{{ guild.tag }}] Guild Album
+    </h1>
+    <div class="entry-meta">
+      Donations here become permanently guild soul-bound. They no longer count toward the donor's personal leaderboard.
+    </div>
+  </section>
+
+  <section class="album-grid">
+    <div class="album-panel">
+      <h2 class="panel-title">Donate Stickers</h2>
+      {% if in_this_guild %}
+        {% if donation_stickers %}
+        <div class="donation-list">
+          {% for sticker in donation_stickers %}
+          <div class="donation-card">
+            <div class="entry-name">{{ sticker.pokemon.name }}</div>
+            <div class="entry-meta">{{ sticker.get_rarity_display }} | {{ sticker.get_variant_display }}</div>
+            <form method="post" action="{% url 'guilds:donate' guild.pk %}" style="margin-top:0.7rem;">
+              {% csrf_token %}
+              <input type="hidden" name="sticker_id" value="{{ sticker.pk }}">
+              <button type="submit" class="btn btn-primary btn-sm">Donate to Guild Album</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="entry-meta">No eligible stickers to donate right now. Personal album placements and trade listings cannot be donated.</div>
+        {% endif %}
+      {% else %}
+      <div class="entry-meta">Join this guild to donate stickers into the guild album.</div>
+      {% endif %}
+    </div>
+
+    <div class="album-panel">
+      <h2 class="panel-title">Guild Quests</h2>
+      {% if guild_quests %}
+      <div class="donation-list">
+        {% for quest in guild_quests %}
+        <div class="donation-card">
+          <div class="entry-name">{{ quest.title }}</div>
+          <div class="entry-meta">{{ quest.description }}</div>
+          <div class="entry-meta" style="margin-top:0.35rem;">{{ quest.progress }} / {{ quest.target }}</div>
+          {% if quest.claimed %}
+          <div class="entry-meta" style="margin-top:0.45rem;">Already claimed</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="entry-meta">No guild quests available.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="album-panel">
+    <h2 class="panel-title">Album Collection</h2>
+    {% if album_entries %}
+    <div class="entry-grid">
+      {% for entry in album_entries %}
+      <div class="entry-card">
+        <div class="entry-name">{{ entry.sticker.pokemon.name }}</div>
+        <div class="entry-meta">{{ entry.sticker.get_rarity_display }} | {{ entry.sticker.get_variant_display }}</div>
+        <div class="entry-meta">
+          Donated by
+          {% if entry.donated_by %}
+          {{ entry.donated_by.display_name|default:entry.donated_by.username }}
+          {% else %}
+          Unknown
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="entry-meta">No stickers donated yet.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,114 +1,195 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Login — NinjaMonster{% endblock %}
+{% block title %}Login - MPKM Collector's Edition{% endblock %}
 
 {% block extra_css %}
 <style>
 .login-page {
   min-height: calc(100vh - 80px);
-  display: flex; align-items: stretch;
+  display: flex;
+  align-items: stretch;
 }
 
-/* ── Left panel ── */
 .login-left {
-  flex: 1; min-width: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 4rem 3rem;
   background: transparent;
   border-right: 1px solid var(--border-md);
   text-align: center;
 }
 .login-logo {
-  width: 260px; height: 260px; object-fit: contain;
+  width: 260px;
+  height: 260px;
+  object-fit: contain;
   margin-bottom: 2.5rem;
-  filter: drop-shadow(0 0 30px rgba(232,184,75,0.25));
+  filter: drop-shadow(0 0 30px rgba(232, 184, 75, 0.25));
 }
 .login-game-sub {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.2em; color: var(--accent-gold); opacity: 0.8;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-gold);
+  opacity: 0.8;
   margin-bottom: 1rem;
 }
 .login-tagline {
-  color: var(--text-2); font-size: 0.92rem; line-height: 1.6;
-  max-width: 400px; margin: 0 auto 2.5rem;
+  color: var(--text-2);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto 2.5rem;
 }
-.feature-list { display: flex; flex-direction: column; gap: 0.7rem; text-align: left; width: 100%; max-width: 420px; }
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: left;
+  width: 100%;
+  max-width: 420px;
+}
 .feature-item {
-  display: flex; align-items: flex-start; gap: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
   background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
   border: 1px solid var(--border-md);
-  border-radius: var(--radius-md); padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1rem;
   transition: border-color 0.15s;
 }
 .feature-item:hover { border-color: var(--border-hi); }
-.feature-icon { font-size: 1.2rem; flex-shrink: 0; line-height: 1.4; }
-.feature-text { font-size: 0.85rem; color: var(--text-2); line-height: 1.5; }
+.feature-icon {
+  font-size: 0.82rem;
+  min-width: 3.5rem;
+  padding-top: 0.18rem;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+.feature-text {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
 .feature-text strong { color: var(--text-1); }
 
-/* ── Right panel ── */
 .login-right {
-  width: 520px; flex-shrink: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 520px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 4rem 3.5rem;
   background: transparent;
 }
 .login-form-card {
-  width: 100%; max-width: 420px;
+  width: 100%;
+  max-width: 420px;
   background: linear-gradient(160deg, var(--bg-surface), var(--bg-card));
   border: 1px solid var(--border-hi);
-  border-radius: var(--radius-xl); padding: 2.75rem 2.5rem;
-  position: relative; overflow: hidden;
+  border-radius: var(--radius-xl);
+  padding: 2.75rem 2.5rem;
+  position: relative;
+  overflow: hidden;
 }
 .login-form-card::before {
-  content: '';
-  position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(232,184,75,0.45), transparent);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 184, 75, 0.45), transparent);
 }
 .login-form-header {
-  text-align: center; margin-bottom: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 .login-form-title {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);
-  letter-spacing: 0.05em; margin-bottom: 0.3rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
 }
 .login-form-sub {
-  font-size: 0.8rem; color: var(--text-3);
+  font-size: 0.8rem;
+  color: var(--text-3);
 }
-.form-field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
 .form-field label {
-  font-family: 'Chakra Petch', sans-serif;
-  font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.14em; color: var(--text-3);
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
 }
 .form-field input {
-  width: 100%; padding: 0.75rem 1rem;
-  background: var(--bg-void); border: 1px solid var(--border-md);
-  border-radius: var(--radius-sm); color: var(--text-1);
-  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem;
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-void);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .form-field input:focus {
-  border-color: rgba(232,184,75,0.55);
-  box-shadow: 0 0 0 3px rgba(232,184,75,0.1);
+  border-color: rgba(232, 184, 75, 0.55);
+  box-shadow: 0 0 0 3px rgba(232, 184, 75, 0.1);
 }
 .login-submit {
-  width: 100%; margin-top: 0.5rem; padding: 0.9rem;
-  font-size: 1rem; letter-spacing: 0.08em;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.9rem;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
 }
 .login-divider {
-  display: flex; align-items: center; gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin: 1.5rem 0;
 }
-.login-divider::before, .login-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--border-md);
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-md);
 }
-.login-divider span { font-size: 0.7rem; color: var(--text-3); white-space: nowrap; }
+.login-divider span {
+  font-size: 0.7rem;
+  color: var(--text-3);
+  white-space: nowrap;
+}
 .login-register-link {
-  text-align: center; font-size: 0.88rem; color: var(--text-2);
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-2);
 }
-.login-register-link a { color: var(--accent-gold); text-decoration: none; font-weight: 600; }
+.login-register-link a {
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-weight: 600;
+}
 .login-register-link a:hover { text-decoration: underline; }
 
 @media (max-width: 860px) {
@@ -121,42 +202,39 @@
 
 {% block content %}
 <div class="login-page">
-
-  <!-- Left: branding + features -->
   <div class="login-left">
-    <img src="{% static 'images/logo.png' %}" alt="NinjaMonster" class="login-logo">
-    <div class="login-game-sub">◆ Collector's Edition</div>
-    <p class="login-tagline">Master the art of combo chains. Build bonds between your Pokémon to unleash devastating chain reactions.</p>
+    <img src="{% static 'images/logo.png' %}" alt="MPKM Collector's Edition" class="login-logo">
+    <div class="login-game-sub">Collector's Edition</div>
+    <p class="login-tagline">Jump back into your sticker album, claim your quests, and help your guild grow through daily collection progress.</p>
     <div class="feature-list">
       <div class="feature-item">
-        <span class="feature-icon">⛓</span>
-        <div class="feature-text"><strong>Combo Chain System</strong> — Status moves trigger chain reactions, amplifying damage up to ×2.50</div>
+        <span class="feature-icon">album</span>
+        <div class="feature-text"><strong>Sticker Album</strong> - Fill rows, columns, and generations with soul-bound placements.</div>
       </div>
       <div class="feature-item">
-        <span class="feature-icon">🃏</span>
-        <div class="feature-text"><strong>Sticker Collection</strong> — Open packs, craft, and trade 7-rarity holographic stickers</div>
+        <span class="feature-icon">pack</span>
+        <div class="feature-text"><strong>Sticker Collection</strong> - Open packs, craft variants, and turn duplicates into progress.</div>
       </div>
       <div class="feature-item">
-        <span class="feature-icon">🏆</span>
-        <div class="feature-text"><strong>Ranked Battles</strong> — Climb from Bronze to Champion across 6 competitive tiers</div>
+        <span class="feature-icon">guild</span>
+        <div class="feature-text"><strong>Guild Albums</strong> - Donate stickers, complete guild quests, and unlock account-wide perks.</div>
       </div>
       <div class="feature-item">
-        <span class="feature-icon">🗺️</span>
-        <div class="feature-text"><strong>Expedition Mode</strong> — Explore zones, discover wild encounters, earn rare rewards</div>
+        <span class="feature-icon">quest</span>
+        <div class="feature-text"><strong>Quest Loop</strong> - Earn Ryo and Amigo XP from daily, weekly, and story objectives.</div>
       </div>
       <div class="feature-item">
-        <span class="feature-icon">⚔️</span>
-        <div class="feature-text"><strong>6v6 Tactical Combat</strong> — 3×2 grid formation, front row acts before back row</div>
+        <span class="feature-icon">play</span>
+        <div class="feature-text"><strong>Expeditions &amp; Arcade</strong> - Spend a session exploring zones, playing mini-games, and feeding the album.</div>
       </div>
     </div>
   </div>
 
-  <!-- Right: login form -->
   <div class="login-right">
     <div class="login-form-card">
       <div class="login-form-header">
-        <div class="login-form-title">Trainer Login</div>
-        <div class="login-form-sub">Welcome back, trainer</div>
+        <div class="login-form-title">Amigo Login</div>
+        <div class="login-form-sub">Welcome back to your collection</div>
       </div>
 
       {% if form.errors %}
@@ -177,12 +255,12 @@
           <input type="password" name="password" id="id_password" autocomplete="current-password" required>
         </div>
 
-        <button type="submit" class="btn btn-primary login-submit">◆ Login</button>
+        <button type="submit" class="btn btn-primary login-submit">Sign In</button>
       </form>
 
-      <div class="login-divider"><span>New to NinjaMonster?</span></div>
+      <div class="login-divider"><span>New to MPKM Collector's Edition?</span></div>
       <div class="login-register-link">
-        <a href="{% url 'users:register' %}">Create a free account →</a>
+        <a href="{% url 'users:register' %}">Create a free account &rarr;</a>
       </div>
 
       {% if messages %}
@@ -192,6 +270,5 @@
       {% endif %}
     </div>
   </div>
-
 </div>
 {% endblock %}

@@ -1,9 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ owned.species.name }} — Lv.{{ owned.level }}{% endblock %}
+{% block title %}{{ owned.species.name }} - Lv.{{ owned.level }}{% endblock %}
 {% block content %}
 
 <style>
-  .detail-hero {
+  .owned-shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+  }
+  .owned-hero {
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 2rem;
@@ -14,29 +19,33 @@
     padding: 2rem;
     margin-bottom: 1.5rem;
   }
-  @media (max-width: 600px) {
-    .detail-hero { grid-template-columns: 1fr; text-align: center; }
-    .detail-hero img { margin: 0 auto; }
+  @media (max-width: 700px) {
+    .owned-hero {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    .owned-hero img {
+      margin: 0 auto;
+    }
   }
-  .detail-hero img {
+  .owned-hero img {
     width: 180px;
     height: 180px;
     image-rendering: pixelated;
     display: block;
-    filter: drop-shadow(0 0 24px rgba(232,184,75,0.3));
+    filter: drop-shadow(0 0 24px rgba(232, 184, 75, 0.3));
   }
-  .detail-name {
-    font-family: 'Chakra Petch', sans-serif;
+  .owned-name {
+    font-family: "Chakra Petch", sans-serif;
     font-size: 2rem;
     font-weight: 700;
     color: var(--text-1);
-    margin: 0 0 0.25rem;
-    letter-spacing: 0.02em;
+    margin: 0 0 0.3rem;
   }
-  .detail-meta {
+  .owned-meta {
     font-size: 0.85rem;
     color: var(--text-2);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.9rem;
   }
   .level-badge {
     display: inline-block;
@@ -58,10 +67,47 @@
     letter-spacing: 0.05em;
     margin-right: 4px;
   }
-  .exp-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
-  .exp-label { font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
-  .exp-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
-  .exp-bar { height: 100%; background: #7c3aed; border-radius: 4px; }
+  .type-Fire { background:#b22222;color:#fff; }
+  .type-Water { background:#1e90ff;color:#fff; }
+  .type-Grass { background:#228b22;color:#fff; }
+  .type-Electric { background:#b8860b;color:#fff; }
+  .type-Psychic { background:#8b008b;color:#fff; }
+  .type-Ice { background:#008b8b;color:#fff; }
+  .type-Dragon { background:#4b0082;color:#fff; }
+  .type-Ghost { background:#483d8b;color:#fff; }
+  .type-Dark { background:#2f2f2f;color:#ddd; }
+  .type-Steel { background:#4f4f4f;color:#ddd; }
+  .type-Poison { background:#6a0dad;color:#fff; }
+  .type-Fighting { background:#8b0000;color:#fff; }
+  .type-Rock { background:#8b7355;color:#fff; }
+  .type-Ground { background:#d2691e;color:#fff; }
+  .type-Flying { background:#4169e1;color:#fff; }
+  .type-Bug { background:#6b8e23;color:#fff; }
+  .type-Normal { background:#696969;color:#fff; }
+  .type-Fairy { background:#c71585;color:#fff; }
+  .exp-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .exp-label {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+  .exp-bar-wrap {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .exp-bar {
+    height: 100%;
+    background: #7c3aed;
+    border-radius: 4px;
+  }
   .training-badge {
     display: inline-block;
     margin-top: 0.75rem;
@@ -70,10 +116,8 @@
     padding: 4px 10px;
     border-radius: 6px;
   }
-  .training-badge.active  { background: #78350f; color: #fde68a; }
-  .training-badge.done    { background: #14532d; color: #86efac; }
-
-  /* ── stats panel ── */
+  .training-badge.active { background: #78350f; color: #fde68a; }
+  .training-badge.done { background: #14532d; color: #86efac; }
   .panel {
     background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
     border: 1px solid var(--border-md);
@@ -82,7 +126,7 @@
     margin-bottom: 1rem;
   }
   .panel-title {
-    font-family: 'Chakra Petch', sans-serif;
+    font-family: "Chakra Petch", sans-serif;
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -98,12 +142,27 @@
     gap: 0.75rem;
     margin-bottom: 0.55rem;
   }
-  .stat-label { font-size: 0.8rem; color: var(--text-2); }
-  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--text-1); text-align: right; }
-  .stat-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
-  .stat-bar { height: 100%; border-radius: 4px; }
-
-  /* ── moves grid ── */
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-2);
+  }
+  .stat-value {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-1);
+    text-align: right;
+  }
+  .stat-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .stat-bar {
+    height: 100%;
+    border-radius: 4px;
+  }
   .moves-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -114,15 +173,9 @@
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: var(--radius-md);
     padding: 0.9rem 1rem;
-    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-  }
-  .move-card:hover {
-    border-color: rgba(255,255,255,0.28);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
   }
   .move-slot-label {
-    font-family: 'Chakra Petch', sans-serif;
+    font-family: "Chakra Petch", sans-serif;
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -163,322 +216,103 @@
   }
   .move-empty {
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.45);
     font-style: italic;
   }
-
-  /* ── combo synergy section ── */
-  .synergy-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.65rem;
-  }
-  .synergy-card {
-    display: block;
-    text-decoration: none;
-    border-radius: 8px;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid transparent;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .synergy-primer {
-    background: var(--bg-surface);
-    border-color: rgba(124,58,237,0.27);
-  }
-  .synergy-primer:hover { border-color: #7c3aed; }
-  .synergy-chaser {
-    background: var(--bg-surface);
-    border-color: rgba(180,83,9,0.27);
-  }
-  .synergy-chaser:hover { border-color: #f59e0b; }
-  .synergy-role-tag {
-    font-family: 'Chakra Petch', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-  }
-  .synergy-primer .synergy-role-tag { color: #a78bfa; }
-  .synergy-chaser .synergy-role-tag { color: #fbbf24; }
-  .synergy-name {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--text-1);
-    margin-bottom: 3px;
-    display: flex;
-    align-items: center;
-  }
-  .synergy-detail {
-    font-size: 0.72rem;
-    color: var(--text-2);
-    line-height: 1.4;
-  }
-
-  /* ── passive / chase card variants ── */
-  .move-card-passive { border-color: rgba(139,92,246,0.45); background: rgba(10,6,28,0.9); }
-  .move-card-passive:hover { border-color: #8b5cf6; box-shadow: 0 6px 24px rgba(124,58,237,0.25); }
-  .move-card-chase { border-color: rgba(251,146,60,0.45); background: rgba(20,10,4,0.9); }
-  .move-card-chase:hover { border-color: #fb923c; box-shadow: 0 6px 24px rgba(180,83,9,0.3); }
-
-  .slot-auto-tag {
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    background: #7c3aed;
-    color: #fff;
-    border-radius: 3px;
-    padding: 1px 5px;
-    vertical-align: middle;
-    margin-left: 4px;
-  }
-  .slot-chase-tag {
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    background: #c2410c;
-    color: #fed7aa;
-    border-radius: 3px;
-    padding: 1px 5px;
-    vertical-align: middle;
-    margin-left: 4px;
-  }
-
-  .passive-trigger-hint {
-    font-size: 0.73rem;
-    color: #c4b5fd;
-    margin: 5px 0 6px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-  }
-  .passive-icon { font-size: 0.7rem; color: #a78bfa; }
-
-  .chase-trigger-hint {
-    font-size: 0.73rem;
-    color: #fde68a;
-    margin: 5px 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 600;
-  }
-  .chain-icon { font-size: 0.75rem; color: #fbbf24; }
-
-  .combo-prime-hint {
-    font-size: 0.73rem;
-    color: #86efac;
-    margin: 4px 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 600;
-  }
-  .prime-icon { font-size: 0.7rem; color: #4ade80; }
-
-  /* type pill colours (reused from pokemon_detail.html) */
-  .type-Fire     { background:#b22222;color:#fff; }
-  .type-Water    { background:#1e90ff;color:#fff; }
-  .type-Grass    { background:#228b22;color:#fff; }
-  .type-Electric { background:#b8860b;color:#fff; }
-  .type-Psychic  { background:#8b008b;color:#fff; }
-  .type-Ice      { background:#008b8b;color:#fff; }
-  .type-Dragon   { background:#4b0082;color:#fff; }
-  .type-Ghost    { background:#483d8b;color:#fff; }
-  .type-Dark     { background:#2f2f2f;color:#ddd; }
-  .type-Steel    { background:#4f4f4f;color:#ddd; }
-  .type-Poison   { background:#6a0dad;color:#fff; }
-  .type-Fighting { background:#8b0000;color:#fff; }
-  .type-Rock     { background:#8b7355;color:#fff; }
-  .type-Ground   { background:#d2691e;color:#fff; }
-  .type-Flying   { background:#4169e1;color:#fff; }
-  .type-Bug      { background:#6b8e23;color:#fff; }
-  .type-Normal   { background:#696969;color:#fff; }
-  .type-Fairy    { background:#c71585;color:#fff; }
 </style>
 
-<!-- back link -->
-<div style="margin-bottom:1rem;">
-  <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary btn-sm">← My Pokemon</a>
-</div>
+<div class="owned-shell">
+  <div style="margin-bottom:1rem;">
+    <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary btn-sm">&larr; My Pokemon</a>
+  </div>
 
-<!-- ── HERO ── -->
-<div class="detail-hero">
-  {% if owned.species.pokedex_number %}
-    <img src="/media/pokemon/sprites/{{ owned.species.pokedex_number|stringformat:'03d' }}.png"
-         alt="{{ owned.species.name }}">
-  {% elif owned.species.sprite_url %}
-    <img src="{{ owned.species.sprite_url }}" alt="{{ owned.species.name }}">
-  {% else %}
-    <div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;
-                background:#0f3460;border-radius:8px;font-size:3rem;">?</div>
-  {% endif %}
-
-  <div>
-    <div class="detail-name">{{ owned.species.name }}</div>
-    <div class="detail-meta">#{{ owned.species.pokedex_number }}</div>
-
-    <div style="margin-bottom:0.5rem;">
-      <span class="level-badge">Lv.{{ owned.level }}</span>
-      <span class="type-pill type-{{ owned.species.primary_type }}">{{ owned.species.primary_type }}</span>
-      {% if owned.species.secondary_type %}
-        <span class="type-pill type-{{ owned.species.secondary_type }}">{{ owned.species.secondary_type }}</span>
-      {% endif %}
-    </div>
-
-    <!-- EXP bar -->
-    <div class="exp-row">
-      <span class="exp-label">EXP {{ owned.experience }} / {{ owned.exp_to_next_level }}</span>
-      <div class="exp-bar-wrap">
-        <div class="exp-bar"
-             style="width:{% widthratio owned.experience owned.exp_to_next_level 100 %}%;"></div>
-      </div>
-    </div>
-
-    <!-- Training status -->
-    {% if owned.is_training %}
-      {% if owned.training_complete %}
-        <span class="training-badge done">✅ Training complete — go claim your reward</span>
-      {% else %}
-        <span class="training-badge active">⏳ In Training · {{ owned.training_duration_minutes }} min</span>
-      {% endif %}
+  <div class="owned-hero">
+    {% if owned.species.pokedex_number %}
+      <img src="/media/pokemon/sprites/{{ owned.species.pokedex_number|stringformat:'03d' }}.png" alt="{{ owned.species.name }}">
+    {% elif owned.species.sprite_url %}
+      <img src="{{ owned.species.sprite_url }}" alt="{{ owned.species.name }}">
+    {% else %}
+      <div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;background:#0f3460;border-radius:8px;font-size:3rem;">?</div>
     {% endif %}
-  </div>
-</div>
 
-<!-- ── STATS ── -->
-<div class="panel">
-  <div class="panel-title">Stats at Level {{ owned.level }}</div>
-  {% for label, value, base in stats %}
-    <div class="stat-row">
-      <span class="stat-label">{{ label }}</span>
-      <span class="stat-value">{{ value }}</span>
-      <div class="stat-bar-wrap">
-        {% if label == "HP" %}
-          <div class="stat-bar" style="width:{% widthratio value 400 100 %}%;
-            background:{% if value < 80 %}#ef4444{% elif value < 140 %}#facc15{% else %}#4ade80{% endif %};"></div>
-        {% else %}
-          <div class="stat-bar" style="width:{% widthratio value 250 100 %}%;
-            background:{% if value < 50 %}#ef4444{% elif value < 90 %}#facc15{% else %}#4ade80{% endif %};"></div>
+    <div>
+      <div class="owned-name">{{ owned.species.name }}</div>
+      <div class="owned-meta">#{{ owned.species.pokedex_number }} in your collection</div>
+
+      <div style="margin-bottom:0.5rem;">
+        <span class="level-badge">Lv.{{ owned.level }}</span>
+        <span class="type-pill type-{{ owned.species.primary_type }}">{{ owned.species.primary_type }}</span>
+        {% if owned.species.secondary_type %}
+          <span class="type-pill type-{{ owned.species.secondary_type }}">{{ owned.species.secondary_type }}</span>
         {% endif %}
       </div>
+
+      <div class="exp-row">
+        <span class="exp-label">EXP {{ owned.experience }} / {{ owned.exp_to_next_level }}</span>
+        <div class="exp-bar-wrap">
+          <div class="exp-bar" style="width:{% widthratio owned.experience owned.exp_to_next_level 100 %}%;"></div>
+        </div>
+      </div>
+
+      {% if owned.is_training %}
+        {% if owned.training_complete %}
+          <span class="training-badge done">Training complete - go claim your reward</span>
+        {% else %}
+          <span class="training-badge active">In Training - {{ owned.training_duration_minutes }} min</span>
+        {% endif %}
+      {% endif %}
     </div>
-  {% endfor %}
-</div>
-
-<!-- ── COMBO SYNERGY ── -->
-{% if pairing_hints %}
-<div class="panel" style="margin-bottom:1rem;">
-  <div class="panel-title">&#9889; Combo Synergy — Recommended Partners</div>
-  <div class="synergy-grid">
-    {% for hint in pairing_hints %}
-      <a href="{% url 'pokemon:detail' hint.partner.pk %}" class="synergy-card synergy-{{ hint.role }}">
-        <div class="synergy-role-tag">
-          {% if hint.role == 'primer' %}You prime &rarr; they chain{% else %}They prime &rarr; you chain{% endif %}
-        </div>
-        <div class="synergy-name">
-          {% if hint.partner.pokedex_number %}
-            <img src="/media/pokemon/sprites/{{ hint.partner.pokedex_number|stringformat:'03d' }}.png"
-                 alt="{{ hint.partner.name }}"
-                 style="width:32px;height:32px;object-fit:contain;image-rendering:pixelated;margin-right:6px;vertical-align:middle;">
-          {% endif %}
-          {{ hint.partner.name }}
-        </div>
-        <div class="synergy-detail">{{ hint.detail }}</div>
-      </a>
-    {% endfor %}
   </div>
-</div>
-{% endif %}
 
-<!-- ── MOVES ── -->
-<div class="panel">
-  <div class="panel-title">Assigned Moves</div>
-  <div class="moves-grid">
-    {% for slot_label, slot_key, move in move_slots %}
-      <div class="move-card{% if slot_key == 'passive_1' or slot_key == 'passive_2' %} move-card-passive{% endif %}{% if slot_key == 'chase' %} move-card-chase{% endif %}">
-        <div class="move-slot-label">
-          {{ slot_label }}
-          {% if slot_key == 'passive_1' %}<span class="slot-auto-tag">AUTO</span>{% endif %}
-          {% if slot_key == 'passive_2' %}<span class="slot-auto-tag">FORMATION</span>{% endif %}
-          {% if slot_key == 'chase' %}<span class="slot-chase-tag">CHAIN</span>{% endif %}
-        </div>
-        {% if move %}
-          <div class="move-display-name">{{ move.name }}</div>
-          <div style="margin-bottom:4px;">
-            <span class="type-pill type-{{ move.move_type }}" style="font-size:0.65rem;">{{ move.move_type }}</span>
-          </div>
-
-          {% if slot_key == 'passive_1' %}
-            <!-- Passive 1: auto-fires on cooldown schedule -->
-            <div class="passive-trigger-hint">
-              <span class="passive-icon">&#9654;</span>
-              {% if move.cooldown > 0 %}
-                Auto-fires every {{ move.cooldown }} round{{ move.cooldown|pluralize }}
-              {% else %}
-                Auto-fires every round
-              {% endif %}
-              &middot; No player input needed
-            </div>
-            <div class="move-stats">
-              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
-              {% if move.cooldown > 0 %}<span class="move-stat-chip">CD {{ move.cooldown }}r</span>{% endif %}
-            </div>
-
-          {% elif slot_key == 'passive_2' %}
-            <!-- Passive 2: formation / condition bonus -->
-            <div class="passive-trigger-hint">
-              <span class="passive-icon">&#9670;</span>
-              Formation passive &middot; Activates by team condition
-            </div>
-            <div class="move-stats">
-              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
-            </div>
-
-          {% elif slot_key == 'chase' %}
-            <!-- Chase: triggers when enemy has a specific status -->
-            {% if move.trigger_status %}
-              <div class="chase-trigger-hint">
-                <span class="chain-icon">&#9889;</span>
-                Fires when: <strong>{{ move.trigger_status.get_name_display }}</strong>
-              </div>
-            {% endif %}
-            {% if move.applies_status %}
-              <div class="combo-prime-hint">
-                <span class="prime-icon">&#8594;</span>
-                Applies: <strong>{{ move.applies_status.get_name_display }}</strong>
-              </div>
-            {% endif %}
-            <div class="move-stats">
-              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
-              <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
-            </div>
-
+  <div class="panel">
+    <div class="panel-title">Stats at Level {{ owned.level }}</div>
+    {% for label, value, base in stats %}
+      <div class="stat-row">
+        <span class="stat-label">{{ label }}</span>
+        <span class="stat-value">{{ value }}</span>
+        <div class="stat-bar-wrap">
+          {% if label == "HP" %}
+            <div class="stat-bar" style="width:{% widthratio value 400 100 %}%;background:{% if value < 80 %}#ef4444{% elif value < 140 %}#facc15{% else %}#4ade80{% endif %};"></div>
           {% else %}
-            <!-- Standard / Mystery -->
-            <div class="move-stats">
-              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
-              <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
-              {% if move.cooldown > 0 %}<span class="move-stat-chip">CD {{ move.cooldown }}r</span>{% endif %}
-            </div>
-            {% if move.applies_status %}
-              <div class="combo-prime-hint">
-                <span class="prime-icon">&#9654;</span>
-                Primes <strong>{{ move.applies_status.get_name_display }}</strong> &rarr; enables Chase combos
-              </div>
-            {% endif %}
+            <div class="stat-bar" style="width:{% widthratio value 250 100 %}%;background:{% if value < 50 %}#ef4444{% elif value < 90 %}#facc15{% else %}#4ade80{% endif %};"></div>
           {% endif %}
-
-          {% if move.description %}
-            <div class="move-desc">{{ move.description }}</div>
-          {% endif %}
-
-        {% else %}
-          <div class="move-empty">No move assigned</div>
-        {% endif %}
+        </div>
       </div>
     {% endfor %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Assigned Moves</div>
+    <div class="moves-grid">
+      {% for slot_label, slot_key, move in move_slots %}
+        <div class="move-card">
+          <div class="move-slot-label">{{ slot_label }}</div>
+          {% if move %}
+            <div class="move-display-name">{{ move.name }}</div>
+            <div style="margin-bottom:4px;">
+              <span class="type-pill type-{{ move.move_type }}" style="font-size:0.65rem;">{{ move.move_type }}</span>
+            </div>
+            <div class="move-stats">
+              {% if move.power > 0 %}<span class="move-stat-chip">PWR {{ move.power }}</span>{% endif %}
+              <span class="move-stat-chip">ACC {{ move.accuracy }}%</span>
+              <span class="move-stat-chip">PP {{ move.pp }}</span>
+              {% if move.cooldown > 0 %}<span class="move-stat-chip">CD {{ move.cooldown }}r</span>{% endif %}
+            </div>
+            {% if move.description %}
+              <div class="move-desc">{{ move.description }}</div>
+            {% endif %}
+          {% else %}
+            <div class="move-empty">No move assigned</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="{% url 'pokemon:my_pokemon' %}" class="btn btn-secondary">My Pokemon</a>
+    <a href="{% url 'pokemon:mi_casa' %}" class="btn btn-secondary">Mi Casa</a>
+    <a href="{% url 'pokemon:type_chart' %}" class="btn btn-secondary">Type Chart</a>
   </div>
 </div>
 

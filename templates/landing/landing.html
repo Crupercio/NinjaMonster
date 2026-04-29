@@ -4,12 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MPKM — Battle. Collect. Conquer.</title>
+  <title>MPKM - Collect. Explore. Share.</title>
   <link rel="stylesheet" href="{% static 'css/landing.css' %}">
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <span class="nav-brand">
     <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="nav-logo">
@@ -21,29 +20,27 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
   <div class="container">
     <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="hero-logo-img">
     <div class="hero-eyebrow">Now in Beta</div>
-    <h1>Battle.<br><span>Collect.</span><br>Conquer.</h1>
+    <h1>Collect.<br><span>Explore.</span><br>Share.</h1>
     <div class="hero-divider">
-      <span class="divider-dot">◆</span>
-      <span class="divider-dot">◆</span>
-      <span class="divider-dot">◆</span>
+      <span class="divider-dot">&#9670;</span>
+      <span class="divider-dot">&#9670;</span>
+      <span class="divider-dot">&#9670;</span>
     </div>
     <p>
-      A 6v6 Pokemon battle game where chain combos decide the winner —
-      and every victory fills your Collector's Album. One game, two obsessions.
+      Build your album, open sticker packs, train your Amigo level, and help your guild
+      fill a shared collection. The live game is all about collecting momentum.
     </p>
     <div class="hero-cta">
-      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">◆ Open a Pack</a>
+      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Start Your Album</a>
       <a href="{% url 'login' %}" class="btn btn-outline btn-lg">I Have an Account</a>
     </div>
   </div>
 </section>
 
-<!-- STATS PREVIEW BAR -->
 <div class="stats-bar">
   <div class="container stats-bar-inner">
     <div class="stat-item">
@@ -58,48 +55,47 @@
     <div class="stat-item">
       <div class="stat-dot dot-blue"></div>
       <div>
-        <div class="stat-label">Pokédex</div>
+        <div class="stat-label">Pokedex</div>
         <div class="stat-value">898</div>
-        <div class="stat-sub">Pokémon to collect</div>
+        <div class="stat-sub">Pokemon to collect</div>
       </div>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
       <div class="stat-dot dot-green"></div>
       <div>
-        <div class="stat-label">Battles</div>
-        <div class="stat-value">6v6</div>
-        <div class="stat-sub">3×2 grid formation</div>
+        <div class="stat-label">Guilds</div>
+        <div class="stat-value">Shared</div>
+        <div class="stat-sub">Albums and quests</div>
       </div>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
       <div class="stat-dot dot-gold"></div>
       <div>
-        <div class="stat-label">Ranked</div>
-        <div class="stat-value">6 Tiers</div>
-        <div class="stat-sub">Bronze → Champion</div>
+        <div class="stat-label">Arcade</div>
+        <div class="stat-value">Daily</div>
+        <div class="stat-sub">Mini-games and quests</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- FEATURED POKEMON / RECENT PULLS -->
 <section class="featured">
   <div class="container">
     <div class="section-header-bar">
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
       <span class="section-header-text">FEATURED PULLS</span>
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
     </div>
     <div class="section-title">Build Your Collection</div>
     <div class="section-body">
-      7 rarity tiers × 7 art variants per Pokémon. Every pack is a chance at a
+      7 rarity tiers x 7 art variants per Pokemon. Every pack is a chance at a
       Holographic, Full Art, or Secret Rare. Craft what you're missing using Sticker Dust.
     </div>
     <div class="cards-grid">
       {% for pokemon in featured_pokemon %}
-      <a class="poke-card {% if forloop.counter == 1 %}rarity-holo{% elif forloop.counter == 2 %}rarity-epic{% elif forloop.counter == 3 %}rarity-rare{% else %}rarity-common{% endif %}" href="/pokemon/{{ pokemon.pk }}/">
+      <a class="poke-card {% if forloop.counter == 1 %}rarity-holo{% elif forloop.counter == 2 %}rarity-epic{% elif forloop.counter == 3 %}rarity-rare{% else %}rarity-common{% endif %}" href="{% url 'pokemon:detail' pokemon.pk %}">
         <div class="card-dex-num">#{{ pokemon.pokedex_number|stringformat:'03d' }}</div>
         {% if pokemon.pokedex_number %}
           <img class="sprite"
@@ -122,37 +118,29 @@
               {% endif %}
             </div>
             <span class="rarity-badge {% if forloop.counter == 1 %}rb-holo{% elif forloop.counter == 2 %}rb-epic{% elif forloop.counter == 3 %}rb-rare{% else %}rb-common{% endif %}">
-              {% if forloop.counter == 1 %}◆ Holo{% elif forloop.counter == 2 %}◆ Epic{% elif forloop.counter == 3 %}● Rare{% else %}○ Common{% endif %}
+              {% if forloop.counter == 1 %}&#9670; Holo{% elif forloop.counter == 2 %}&#9670; Epic{% elif forloop.counter == 3 %}&#9679; Rare{% else %}&#9675; Common{% endif %}
             </span>
           </div>
-          {% with trigger=pokemon.moves.all %}
-            {% for move in trigger %}
-              {% if move.trigger_status %}
-                <div class="poke-combo">⚡ Combo: <span>{{ move.trigger_status.get_name_display }}</span></div>
-                {% if True %}{% comment %}break{% endcomment %}{% endif %}
-              {% endif %}
-            {% endfor %}
-          {% endwith %}
+          <div class="poke-combo">Album target for packs, expeditions, and guild donations.</div>
         </div>
       </a>
       {% empty %}
-        <p style="color:#9ca3af;grid-column:1/-1;text-align:center;padding:3rem;">No featured Pokémon found yet.</p>
+        <p style="color:#9ca3af;grid-column:1/-1;text-align:center;padding:3rem;">No featured Pokemon found yet.</p>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- RARITY TIERS -->
 <section class="rarity-section">
   <div class="container">
     <div class="section-header-bar">
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
       <span class="section-header-text">RARITY SYSTEM</span>
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
     </div>
     <div class="section-title">7 Tiers of Rarity</div>
     <div class="section-body">
-      From everyday Commons to ultra-rare Secret Rares — each Pokémon has 7 possible art variants.
+      From everyday Commons to ultra-rare Secret Rares, each Pokemon has 7 possible art variants.
       Collect, craft, and complete your album.
     </div>
     <div class="rarity-ladder">
@@ -160,160 +148,157 @@
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Common</span>
-          <span class="rr-desc">Base &amp; Chibi art · Craft: 10 Dust</span>
+          <span class="rr-desc">Base &amp; Chibi art - Craft: 10 Dust</span>
         </div>
-        <span class="rr-badge">○</span>
+        <span class="rr-badge">&#9675;</span>
       </div>
       <div class="rarity-rung rarity-rung-uncommon">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Uncommon</span>
-          <span class="rr-desc">Shiny &amp; Anime art · Craft: 25 Dust</span>
+          <span class="rr-desc">Shiny &amp; Anime art - Craft: 25 Dust</span>
         </div>
-        <span class="rr-badge">◐</span>
+        <span class="rr-badge">&#9680;</span>
       </div>
       <div class="rarity-rung rarity-rung-rare">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Rare</span>
-          <span class="rr-desc">Manga Panel art · Craft: 75 Dust</span>
+          <span class="rr-desc">Manga Panel art - Craft: 75 Dust</span>
         </div>
-        <span class="rr-badge">●</span>
+        <span class="rr-badge">&#9679;</span>
       </div>
       <div class="rarity-rung rarity-rung-epic">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Epic</span>
-          <span class="rr-desc">Battle Scene art · Craft: 150 Dust</span>
+          <span class="rr-desc">Battle Scene art - Craft: 150 Dust</span>
         </div>
-        <span class="rr-badge">◆</span>
+        <span class="rr-badge">&#9670;</span>
       </div>
       <div class="rarity-rung rarity-rung-holo">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Holographic</span>
-          <span class="rr-desc">Holographic foil · Craft: 300 Dust</span>
+          <span class="rr-desc">Holographic foil - Craft: 300 Dust</span>
         </div>
-        <span class="rr-badge">◈</span>
+        <span class="rr-badge">&#9672;</span>
       </div>
       <div class="rarity-rung rarity-rung-fullart">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Full Art</span>
-          <span class="rr-desc">Full Illustration art · Craft: 500 Dust</span>
+          <span class="rr-desc">Full Illustration art - Craft: 500 Dust</span>
         </div>
-        <span class="rr-badge">✦</span>
+        <span class="rr-badge">&#10022;</span>
       </div>
       <div class="rarity-rung rarity-rung-secret">
         <div class="rr-dot"></div>
         <div class="rr-info">
           <span class="rr-name">Secret Rare</span>
-          <span class="rr-desc">Ultra-rare variant · Craft: 1,000 Dust</span>
+          <span class="rr-desc">Ultra-rare variant - Craft: 1,000 Dust</span>
         </div>
-        <span class="rr-badge">★</span>
+        <span class="rr-badge">&#9733;</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ALBUM PROGRESS PREVIEW -->
 <section class="album-section">
   <div class="container">
     <div class="section-header-bar">
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
       <span class="section-header-text">COLLECTOR'S ALBUM</span>
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
     </div>
     <div class="section-title">Complete Every Region</div>
     <div class="section-body">
-      Organise your stickers by generation. Fill every slot across all 9 regions —
+      Organize your stickers by generation. Fill every slot across all 9 regions,
       from Kanto's 151 to the modern Paldea roster.
     </div>
     <div class="album-regions">
       <div class="region-card">
-        <div class="region-label" style="color:#ef4444;">■ KANTO REGION</div>
+        <div class="region-label" style="color:#ef4444;">&#9632; KANTO REGION</div>
         <div class="region-name">Generation I</div>
-        <div class="region-count">151 Pokémon</div>
+        <div class="region-count">151 Pokemon</div>
         <div class="region-bar"><div class="region-fill" style="width:27%;background:#ef4444;"></div></div>
       </div>
       <div class="region-card">
-        <div class="region-label" style="color:#22c55e;">■ JOHTO REGION</div>
+        <div class="region-label" style="color:#22c55e;">&#9632; JOHTO REGION</div>
         <div class="region-name">Generation II</div>
-        <div class="region-count">100 Pokémon</div>
+        <div class="region-count">100 Pokemon</div>
         <div class="region-bar"><div class="region-fill" style="width:5%;background:#22c55e;"></div></div>
       </div>
       <div class="region-card">
-        <div class="region-label" style="color:#3b82f6;">■ HOENN REGION</div>
+        <div class="region-label" style="color:#3b82f6;">&#9632; HOENN REGION</div>
         <div class="region-name">Generation III</div>
-        <div class="region-count">135 Pokémon</div>
+        <div class="region-count">135 Pokemon</div>
         <div class="region-bar"><div class="region-fill" style="width:0%;background:#3b82f6;"></div></div>
       </div>
       <div class="region-card">
-        <div class="region-label" style="color:#a855f7;">■ SINNOH REGION</div>
+        <div class="region-label" style="color:#a855f7;">&#9632; SINNOH REGION</div>
         <div class="region-name">Generation IV</div>
-        <div class="region-count">107 Pokémon</div>
+        <div class="region-count">107 Pokemon</div>
         <div class="region-bar"><div class="region-fill" style="width:0%;background:#a855f7;"></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- COMBO BATTLE SYSTEM -->
 <section class="combo-section">
   <div class="container">
     <div class="combo-layout">
       <div>
         <div class="section-header-bar" style="justify-content:flex-start;gap:0.5rem;margin-bottom:0.75rem;">
-          <span class="section-header-diamond">◆</span>
-          <span class="section-header-text">THE CORE MECHANIC</span>
+          <span class="section-header-diamond">&#9670;</span>
+          <span class="section-header-text">COMMUNITY LOOP</span>
         </div>
-        <div class="section-title">The Combo Chain System</div>
+        <div class="section-title">The Guild Album Loop</div>
         <div class="section-body">
-          Every move that applies a status effect can trigger a teammate whose ability
-          matches that status. Chains cascade up to 10 deep — turning a single
-          well-placed move into a team-wide assault.
+          Stickers matter more when you decide where they live. Keep them for your personal
+          album, place them permanently in your guild collection, and grow your guild level
+          through daily contributions and weekly goals.
         </div>
         <ul class="combo-features">
-          <li>30 unique status effects across 3 categories</li>
-          <li>Chains cascade automatically — up to 10 links deep</li>
-          <li>3×2 grid formation — front row acts before back row</li>
-          <li>Anti-loop guard prevents the same pair from firing twice</li>
-          <li>AI opponent reads your team (Easy / Medium / Hard)</li>
+          <li>Donate stickers into a guild album and make them guild soul-bound</li>
+          <li>Earn guild XP from donations, rows, columns, and quest completions</li>
+          <li>Unlock perks like bonus Ryo from mini-games and extra board utility</li>
+          <li>Track progress by rarity, rows, columns, and completed generations</li>
+          <li>Give every member a reason to contribute each day and week</li>
         </ul>
       </div>
       <div class="combo-chain-demo">
-        <h4>⚡ LIVE COMBO EXAMPLE</h4>
+        <h4>LIVE GUILD EXAMPLE</h4>
         <div class="chain-step">
           <div class="chain-num">1</div>
-          <div class="chain-text">Jolteon uses <strong>Thunder Wave</strong> — applies Paralysis</div>
+          <div class="chain-text">A member donates a <strong>Rare Pikachu sticker</strong> to the guild album.</div>
         </div>
         <div class="chain-step">
           <div class="chain-num">2</div>
-          <div class="chain-text">Gengar triggers on Paralysis — uses <strong>Shadow Ball</strong></div>
+          <div class="chain-text">The donation finishes a <strong>row</strong> and grants guild XP.</div>
         </div>
         <div class="chain-step">
           <div class="chain-num">3</div>
-          <div class="chain-text">Espeon triggers — uses <strong>Psybeam</strong> → Confusion</div>
+          <div class="chain-text">That row completion helps finish the <strong>weekly guild quest</strong>.</div>
         </div>
         <div class="chain-step">
           <div class="chain-num">4</div>
-          <div class="chain-text">Alakazam triggers on Confusion — <strong>Psychic</strong> finisher</div>
+          <div class="chain-text">The guild levels up and unlocks a <strong>mini-game Ryo bonus</strong>.</div>
         </div>
         <div class="combo-result">
-          ◆ COMBO ×4 — 247% damage amplification
+          Shared progress, better perks, stronger collector identity
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- QUESTS & EXPEDITIONS -->
 <section class="quests-section">
   <div class="container">
     <div class="section-header-bar">
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
       <span class="section-header-text">QUESTS &amp; EXPLORATION</span>
-      <span class="section-header-diamond">◆</span>
+      <span class="section-header-diamond">&#9670;</span>
     </div>
     <div class="section-title">Always Something to Do</div>
     <div class="section-body">
@@ -322,104 +307,98 @@
     </div>
     <div class="quest-cards">
       <div class="quest-card">
-        <div class="quest-icon" style="color:#facc15;">☀</div>
+        <div class="quest-icon" style="color:#facc15;">&#9728;</div>
         <div class="quest-type" style="color:#facc15;">DAILY MISSION</div>
-        <div class="quest-name">Chain Starter</div>
-        <div class="quest-desc">Achieve a 3-link combo chain in any battle. Reward: Ryo + Sticker Dust.</div>
+        <div class="quest-name">Album Builder</div>
+        <div class="quest-desc">Place soul-bound stickers in your album. Reward: Ryo + Amigo XP.</div>
       </div>
       <div class="quest-card">
-        <div class="quest-icon" style="color:#38bdf8;">⚔</div>
+        <div class="quest-icon" style="color:#38bdf8;">&#9876;</div>
         <div class="quest-type" style="color:#38bdf8;">WEEKLY CHALLENGE</div>
         <div class="quest-name">Pack Hunter</div>
-        <div class="quest-desc">Open 5 Sticker Packs this week. Reward: Sticker Pack + Ryo bonus.</div>
+        <div class="quest-desc">Open 5 sticker packs this week. Reward: Sticker Pack + Ryo bonus.</div>
       </div>
       <div class="quest-card">
-        <div class="quest-icon" style="color:#a855f7;">✦</div>
+        <div class="quest-icon" style="color:#a855f7;">&#10022;</div>
         <div class="quest-type" style="color:#a855f7;">STORY QUEST</div>
-        <div class="quest-name">The First Chain</div>
-        <div class="quest-desc">Win your first battle using a 4-link combo. Unlocks ranked mode.</div>
+        <div class="quest-name">Guild Welcome</div>
+        <div class="quest-desc">Join a guild and make your first album contribution for a starter reward.</div>
       </div>
       <div class="quest-card">
-        <div class="quest-icon" style="color:#4ade80;">⬡</div>
+        <div class="quest-icon" style="color:#4ade80;">&#11035;</div>
         <div class="quest-type" style="color:#4ade80;">EXPEDITION</div>
         <div class="quest-name">Zone Exploration</div>
-        <div class="quest-desc">Spend Ryo to explore zones, bond Pokémon, and earn rare stickers from encounters.</div>
+        <div class="quest-desc">Spend Ryo to explore zones, bond Pokemon, and earn rare stickers from encounters.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- RANKED LADDER -->
 <section class="ranked-section">
   <div class="container">
     <div class="ranked-layout">
       <div>
         <div class="section-header-bar" style="justify-content:flex-start;gap:0.5rem;margin-bottom:0.75rem;">
-          <span class="section-header-diamond">◆</span>
-          <span class="section-header-text">RANKED LADDER</span>
+          <span class="section-header-diamond">&#9670;</span>
+          <span class="section-header-text">PLAY FOR PROGRESS</span>
         </div>
-        <div class="section-title">Climb to Champion</div>
+        <div class="section-title">Arcade Energy, Collector Rewards</div>
         <div class="section-body">
-          Six competitive tiers. Earn Rank Points every win. Reach Champion rank
-          and fight for a top-100 leaderboard spot.
+          Your time in mini-games, expeditions, quests, and Loteria should always feed
+          back into the album loop. Earn Ryo, unlock better placements, and keep your
+          sticker progress moving forward every session.
         </div>
       </div>
       <div class="tier-ladder">
-        <div class="tier-rung" style="--tier-color: #cd7f32;">
-          <span class="tier-icon">🥉</span>
-          <span class="tier-name">Bronze</span>
-          <span class="tier-pts">0 RP</span>
-        </div>
-        <div class="tier-rung" style="--tier-color: #9ca3af;">
-          <span class="tier-icon">🥈</span>
-          <span class="tier-name">Silver</span>
-          <span class="tier-pts">300 RP</span>
-        </div>
-        <div class="tier-rung" style="--tier-color: #e8b84b;">
-          <span class="tier-icon">🥇</span>
-          <span class="tier-name">Gold</span>
-          <span class="tier-pts">800 RP</span>
+        <div class="tier-rung" style="--tier-color: #22c55e;">
+          <span class="tier-icon">Pack</span>
+          <span class="tier-name">Sticker Packs</span>
+          <span class="tier-pts">Open, place, donate</span>
         </div>
         <div class="tier-rung" style="--tier-color: #38bdf8;">
-          <span class="tier-icon">💎</span>
-          <span class="tier-name">Platinum</span>
-          <span class="tier-pts">1,500 RP</span>
+          <span class="tier-icon">Quest</span>
+          <span class="tier-name">Daily Quests</span>
+          <span class="tier-pts">Ryo + Amigo XP</span>
         </div>
-        <div class="tier-rung" style="--tier-color: #818cf8;">
-          <span class="tier-icon">♦</span>
-          <span class="tier-name">Diamond</span>
-          <span class="tier-pts">2,500 RP</span>
+        <div class="tier-rung" style="--tier-color: #a855f7;">
+          <span class="tier-icon">Guild</span>
+          <span class="tier-name">Guild Album</span>
+          <span class="tier-pts">Shared contribution</span>
+        </div>
+        <div class="tier-rung" style="--tier-color: #f97316;">
+          <span class="tier-icon">Play</span>
+          <span class="tier-name">Mini-Games</span>
+          <span class="tier-pts">Bonus Ryo loops</span>
         </div>
         <div class="tier-rung tier-champion" style="--tier-color: #e8b84b;">
-          <span class="tier-icon">👑</span>
-          <span class="tier-name">Champion</span>
-          <span class="tier-pts">4,000 RP · Top 100</span>
+          <span class="tier-icon">Album</span>
+          <span class="tier-name">Completion</span>
+          <span class="tier-pts">Rows, columns, generations</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CTA BANNER -->
 <section class="cta-banner">
   <div class="container">
     <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="cta-logo-img">
-    <h2>Ready to Build Your Chain?</h2>
-    <p>Join trainers already collecting, battling, and climbing the ranked ladder.</p>
+    <h2>Ready to Start Collecting?</h2>
+    <p>Join players already building albums, finishing quests, and growing their guilds.</p>
     <div class="hero-divider" style="margin-bottom:2rem;">
-      <span class="divider-dot">◆</span>
-      <span class="divider-dot">◆</span>
-      <span class="divider-dot">◆</span>
+      <span class="divider-dot">&#9670;</span>
+      <span class="divider-dot">&#9670;</span>
+      <span class="divider-dot">&#9670;</span>
     </div>
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">◆ Create Free Account</a>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Create Free Account</a>
       <a href="{% url 'login' %}" class="btn btn-outline btn-lg">Sign In</a>
     </div>
   </div>
 </section>
 
 <footer>
-  &copy; 2025 MPKM Collector's Edition &mdash; Fan project, not affiliated with Nintendo or Game Freak.
+  &copy; 2026 MPKM Collector's Edition &mdash; Fan project, not affiliated with Nintendo or Game Freak.
 </footer>
 
 </body>

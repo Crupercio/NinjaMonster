@@ -1,15 +1,18 @@
 """Views for the users app."""
+
 import logging
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import get_user_model
-from django.db.models import Count, Q
-from django.shortcuts import redirect, render
+from django.db.models import Count
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import DetailView, FormView
+
+from apps.stickers.collection_stats import build_personal_collection_stats
 
 from .forms import RegistrationForm
 from .services import DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_daily_reward, get_candy_inventory
@@ -28,8 +31,7 @@ def landing(request):
 
     featured_names = ["Charizard", "Vaporeon", "Jolteon", "Venusaur", "Espeon", "Lapras"]
     qs = (
-        Pokemon.objects
-        .filter(name__in=featured_names)
+        Pokemon.objects.filter(name__in=featured_names)
         .select_related("primary_type", "secondary_type")
         .prefetch_related("moves__trigger_status", "moves__applies_status")
     )
@@ -41,23 +43,20 @@ def landing(request):
 
 @login_required
 def dashboard(request):
-    """Logged-in trainer home page. Redirects new trainers to the tutorial."""
-    if not request.user.tutorial_complete:
-        return redirect("game:tutorial")
-    return render(request, "game/home.html", {"user": request.user})
+    """Logged-in home page for the current collector-first experience."""
+    return redirect("game:home")
 
 
 class RegisterView(FormView):
-    """Trainer registration — creates a new user and redirects to login."""
+    """Registration view that creates a new user and redirects to login."""
 
     template_name = "registration/register.html"
     form_class = RegistrationForm
 
     def form_valid(self, form: RegistrationForm):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
+        user_model = get_user_model()
 
-        User.objects.create_user(
+        user_model.objects.create_user(
             username=form.cleaned_data["username"],
             email=form.cleaned_data["email"],
             password=form.cleaned_data["password"],
@@ -75,10 +74,7 @@ class RegisterView(FormView):
 
 
 class TrainerProfileView(LoginRequiredMixin, DetailView):
-    """
-    Public trainer profile — stats, showcase stickers, achievement badges,
-    and recent battles.  Accessible at /accounts/profile/<username>/.
-    """
+    """Public amigo profile with collection, quest, and guild progress."""
 
     model = User
     template_name = "users/profile.html"
@@ -90,53 +86,51 @@ class TrainerProfileView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         profile_user = self.object
 
-        # ── Showcase stickers (is_showcase=True, up to 6) ───────────────────
+        from apps.quests.models import QuestType, UserQuest
         from apps.stickers.models import Sticker, StickerRarity
+
         showcase = list(
             Sticker.objects.filter(owner=profile_user, is_showcase=True)
             .select_related("pokemon")
             .order_by("-rarity", "-date_caught")[:6]
         )
-        context["showcase_stickers"] = showcase
-
-        # ── Sticker collection stats ─────────────────────────────────────────
         sticker_qs = Sticker.objects.filter(owner=profile_user)
-        context["stickers_total"] = sticker_qs.count()
         rarity_counts = dict(
             sticker_qs.values_list("rarity").annotate(n=Count("id")).values_list("rarity", "n")
         )
-        context["rarity_counts"] = rarity_counts
-        context["StickerRarity"] = StickerRarity
-
-        # ── Achievement badges (GDD Section 14.4) ───────────────────────────
-        context["badges"] = _compute_badges(profile_user, rarity_counts)
-
-        # ── Recent battles (last 10) ─────────────────────────────────────────
-        from apps.game.models import Battle
-        recent_battles = list(
-            Battle.objects.filter(
-                Q(player_one=profile_user) | Q(player_two=profile_user)
-            )
-            .select_related("player_one", "player_two", "winner")
-            .order_by("-created_at")[:10]
-        )
-        context["recent_battles"] = recent_battles
-
-        # ── Completed story quests ───────────────────────────────────────────
-        from apps.quests.models import QuestType, UserQuest
-        context["story_quests"] = list(
+        story_quests = list(
             UserQuest.objects.filter(
                 user=profile_user,
                 template__quest_type=QuestType.STORY,
                 period_key="story",
-            ).select_related("template").order_by("template__order")
+            )
+            .select_related("template")
+            .order_by("template__order")
+        )
+        collection_stats = build_personal_collection_stats(profile_user)
+        guild_membership = getattr(profile_user, "guild_membership", None)
+
+        context.update(
+            {
+                "showcase_stickers": showcase,
+                "stickers_total": sticker_qs.count(),
+                "placed_stickers_total": sticker_qs.filter(is_album_placed=True).count(),
+                "rarity_counts": rarity_counts,
+                "StickerRarity": StickerRarity,
+                "collection_stats": collection_stats,
+                "badges": _compute_badges(profile_user, rarity_counts, collection_stats),
+                "story_quests": story_quests,
+                "story_completed_count": sum(1 for quest in story_quests if quest.completed),
+                "story_total_count": len(story_quests),
+                "guild_membership": guild_membership,
+                "is_own_profile": self.request.user == profile_user,
+            }
         )
 
-        context["is_own_profile"] = self.request.user == profile_user
-
-        # ── Bundle pack progress (only shown on own profile) ─────────────────
         if self.request.user == profile_user:
-            from .services import WEEKLY_LOGIN_STREAK, can_claim_daily
+            from .services import WEEKLY_LOGIN_STREAK
+            from apps.game.fun import get_user_pending_loteria_claims
+
             streak = profile_user.daily_claim_streak
             days_until_bundle = WEEKLY_LOGIN_STREAK - (streak % WEEKLY_LOGIN_STREAK)
             if days_until_bundle == WEEKLY_LOGIN_STREAK:
@@ -147,128 +141,112 @@ class TrainerProfileView(LoginRequiredMixin, DetailView):
             context["days_filled"] = days_filled
             context["weekly_streak"] = WEEKLY_LOGIN_STREAK
             context["can_claim_daily"] = can_claim_daily(profile_user)
+            pending_loteria_claims = list(get_user_pending_loteria_claims(profile_user)[:8])
+            context["pending_loteria_claims"] = pending_loteria_claims
+            context["pending_loteria_total"] = sum(claim.reward_ryo for claim in pending_loteria_claims)
 
         return context
 
 
-def _compute_badges(user: "User", rarity_counts: dict) -> list[dict]:
-    """
-    Return a list of badge dicts from GDD Section 14.4 (all 13 badges).
-
-    Each dict: {icon, name, description, rarity, earned}
-    """
+def _compute_badges(user: "User", rarity_counts: dict, collection_stats) -> list[dict]:
+    """Return a profile badge list aligned with the sticker-first experience."""
     from apps.stickers.models import StickerRarity
 
     total_stickers = sum(rarity_counts.values())
 
     return [
         {
-            "icon": "⚡",
-            "name": "Chain Initiate",
-            "description": "Achieve your first 2-link combo chain.",
+            "icon": "AL",
+            "name": "Album Starter",
+            "description": "Place your first soul-bound sticker.",
             "rarity": "Common",
-            "earned": user.longest_combo_chain >= 2,
+            "earned": collection_stats.soul_bound_count >= 1,
         },
         {
-            "icon": "🔥",
-            "name": "Chain Warrior",
-            "description": "Achieve a 5-link combo chain.",
+            "icon": "RW",
+            "name": "Row Builder",
+            "description": "Complete your first album row.",
             "rarity": "Uncommon",
-            "earned": user.longest_combo_chain >= 5,
+            "earned": collection_stats.row_completions >= 1,
         },
         {
-            "icon": "🌀",
-            "name": "Chain Master",
-            "description": "Achieve a 10-link combo chain.",
+            "icon": "CL",
+            "name": "Column Keeper",
+            "description": "Complete your first album column.",
             "rarity": "Rare",
-            "earned": user.longest_combo_chain >= 10,
+            "earned": collection_stats.column_completions >= 1,
         },
         {
-            "icon": "🏆",
-            "name": "First Victory",
-            "description": "Win your first battle.",
-            "rarity": "Common",
-            "earned": user.battles_won >= 1,
+            "icon": "GN",
+            "name": "Generation Keeper",
+            "description": "Complete one full generation in the album.",
+            "rarity": "Epic",
+            "earned": collection_stats.generation_completions >= 1,
         },
         {
-            "icon": "💯",
-            "name": "Centurion",
-            "description": "Win 100 battles.",
-            "rarity": "Rare",
-            "earned": user.battles_won >= 100,
-        },
-        {
-            "icon": "📖",
+            "icon": "ST",
             "name": "Collector",
             "description": "Own 50 stickers.",
             "rarity": "Uncommon",
             "earned": total_stickers >= 50,
         },
         {
-            "icon": "🌟",
+            "icon": "AR",
             "name": "Archivist",
             "description": "Own 200 stickers.",
             "rarity": "Rare",
             "earned": total_stickers >= 200,
         },
         {
-            "icon": "💎",
+            "icon": "SR",
             "name": "Secret Hunter",
             "description": "Own at least 1 Secret Rare sticker.",
             "rarity": "Epic",
             "earned": rarity_counts.get(StickerRarity.SECRET_RARE, 0) >= 1,
         },
         {
-            "icon": "🤝",
-            "name": "Trader",
-            "description": "Complete 10 trades with other trainers.",
-            "rarity": "Uncommon",
-            "earned": user.trades_completed >= 10,
-        },
-        {
-            "icon": "☀️",
+            "icon": "QD",
             "name": "Daily Devotion",
             "description": "Claim your daily reward 30 days in a row.",
             "rarity": "Rare",
             "earned": user.max_daily_claim_streak >= 30,
         },
         {
-            "icon": "🎯",
-            "name": "Perfect Victory",
-            "description": "Win a battle with no Pokémon fainted on your team.",
+            "icon": "GD",
+            "name": "Guildmate",
+            "description": "Join a guild.",
             "rarity": "Uncommon",
-            "earned": user.perfect_victories >= 1,
+            "earned": hasattr(user, "guild_membership"),
         },
         {
-            "icon": "🤖",
-            "name": "AI Breaker",
-            "description": "Defeat the Hard AI opponent 10 times.",
+            "icon": "ST",
+            "name": "Story Runner",
+            "description": "Complete 5 story quests.",
             "rarity": "Rare",
-            "earned": user.hard_ai_wins >= 10,
+            "earned": user.quests.filter(period_key="story", completed=True).count() >= 5,
         },
         {
-            "icon": "👑",
-            "name": "Champion",
-            "description": "Reach Diamond tier in PvP ranked play.",
+            "icon": "RY",
+            "name": "Ryo Reserve",
+            "description": "Reach 5,000 Ryo.",
             "rarity": "Epic",
-            "earned": False,  # PvP ranked not yet implemented (GDD §15.3)
+            "earned": user.ryo >= 5000,
         },
     ]
 
 
 class DailyClaimView(LoginRequiredMixin, View):
-    """GET  /accounts/daily-claim/ — show claim status.
-    POST /accounts/daily-claim/ — attempt to claim daily Ryo reward.
-    """
+    """GET shows claim status. POST attempts to claim the daily Ryo reward."""
 
     def get(self, request):
         user = request.user
         user.refresh_from_db(fields=["ryo", "last_daily_claim", "daily_claim_streak"])
         from .services import WEEKLY_LOGIN_STREAK
+
         streak = user.daily_claim_streak
         days_until_bundle = WEEKLY_LOGIN_STREAK - (streak % WEEKLY_LOGIN_STREAK)
         if days_until_bundle == WEEKLY_LOGIN_STREAK:
-            days_until_bundle = 0  # just earned one this claim
+            days_until_bundle = 0
         return render(
             request,
             "users/daily_claim.html",
@@ -289,7 +267,7 @@ class DailyClaimView(LoginRequiredMixin, View):
             result = claim_daily_reward(user)
             msg = f"Daily reward claimed! +{result['ryo']} Ryo"
             if result["bundle_pack"]:
-                msg += " + 🎁 Bundle Pack (7-day streak bonus!)"
+                msg += " + Bundle Pack (7-day streak bonus!)"
             messages.success(request, msg)
         except ValueError as exc:
             messages.error(request, str(exc))
@@ -297,10 +275,11 @@ class DailyClaimView(LoginRequiredMixin, View):
 
 
 class BuyCandyAPI(LoginRequiredMixin, View):
-    """POST /accounts/buy-candy/ — purchase one candy with Ryo."""
+    """POST endpoint to purchase one candy with Ryo."""
 
     def post(self, request):
         import json
+
         try:
             body = json.loads(request.body)
             candy_type = body.get("candy_type", "")
@@ -314,10 +293,12 @@ class BuyCandyAPI(LoginRequiredMixin, View):
 
         request.user.refresh_from_db()
         inventory = get_candy_inventory(request.user)
-        return JsonResponse({
-            "ryo": request.user.ryo,
-            "candy_trail_mix": request.user.candy_trail_mix,
-            "candy_sweet_berry": request.user.candy_sweet_berry,
-            "candy_golden_apple": request.user.candy_golden_apple,
-            "costs": {k: v["cost"] for k, v in inventory.items()},
-        })
+        return JsonResponse(
+            {
+                "ryo": request.user.ryo,
+                "candy_trail_mix": request.user.candy_trail_mix,
+                "candy_sweet_berry": request.user.candy_sweet_berry,
+                "candy_golden_apple": request.user.candy_golden_apple,
+                "costs": {k: v["cost"] for k, v in inventory.items()},
+            }
+        )

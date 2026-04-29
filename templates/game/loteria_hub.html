@@ -12,7 +12,7 @@
 .msg.error { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
-.hero-grid, .panel, .mode-card, .board-card, .result-card, .wallet-card {
+.panel, .mode-card, .board-card, .result-card, .wallet-card {
   background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
   border: 1px solid rgba(91,129,255,.22);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
@@ -62,11 +62,35 @@
   display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
   border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
 }
+.board-preview.empty {
+  min-height: 230px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-style:dashed;
+  border-color:rgba(232,184,75,.22);
+  background:
+    radial-gradient(circle at top, rgba(251,191,36,.08), transparent 46%),
+    rgba(10,15,29,.42);
+}
 .board-cell {
   position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
   background:rgba(9,14,27,.86); display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
 .board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
+.empty-board-copy {
+  max-width: 15rem;
+  text-align:center;
+  color:var(--text-2);
+  line-height:1.6;
+}
+.empty-board-copy strong {
+  display:block;
+  margin-bottom:.35rem;
+  color:var(--text-1);
+  font-family:"Chakra Petch",sans-serif;
+  font-size:1.1rem;
+}
 
 @media (max-width: 1120px) {
   .hero-grid, .mode-grid, .board-grid, .result-grid { grid-template-columns: 1fr; }
@@ -92,12 +116,16 @@
       <h1 class="panel-title">{{ deck.title }}</h1>
       <div class="panel-subtitle">{{ deck.region_label }}</div>
       <p class="panel-copy">
-        Build up to {{ deck.max_saved_boards }} custom Kanto boards, choose how many NPC collectors you want to face,
+        Keep one locked lucky starter board plus up to {{ deck.max_saved_boards }} custom Kanto boards, choose how many NPC collectors you want to face,
         and launch the match only when your table is ready. Calls now land every {{ deck.draw_interval_seconds }} seconds,
-        and the room stops the moment a full board wins.
+        and the room stops the moment a full board wins. Private and guild tables use a 500 Ryo fee per entered board,
+        then the game matches that same 500 into the pot.
+        Only Pokemon you own at level 20 or higher can be placed on custom boards.
       </p>
       <div class="hero-actions">
-        <a href="{% url 'game:loteria_builder' 1 %}" class="btn btn-primary">Build Boards</a>
+        <a href="{% url 'game:loteria_builder' board_builder_slot %}" class="btn btn-primary">
+          {% if saved_board_count < deck.max_saved_boards %}Create Next Board{% else %}Edit Boards{% endif %}
+        </a>
         {% if open_room %}
           {% if open_room.status == "active" %}
           <a href="{% url 'game:loteria_room' open_room.pk %}" class="btn btn-secondary">Resume Match</a>
@@ -144,10 +172,11 @@
               <div class="metric-value">{{ option.base_prize }} Ryo</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Call Speed</div>
-              <div class="metric-value">{{ deck.draw_interval_seconds }}s</div>
+              <div class="metric-label">Room Fee</div>
+              <div class="metric-value">{{ option.entry_fee_ryo }} Ryo</div>
             </div>
           </div>
+          <div class="board-copy" style="margin:-.15rem 0 .85rem;">Launch cost: {{ option.entry_fee_ryo }} Ryo + {{ deck.entry_qty_per_board }} {{ deck.entry_label }}.</div>
           <div class="mode-actions">
             <button type="submit" class="btn btn-primary" {% if open_room %}disabled{% endif %}>Create Room</button>
           </div>
@@ -159,14 +188,111 @@
     <div class="panel">
       <div class="boards-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:.9rem;">
         <div>
+          <div class="panel-kicker">Private Tables</div>
+          <h2 class="board-title">Friends And Guild Rooms</h2>
+        </div>
+        <div class="status-chip">500 Ryo per board + 500 Ryo house match · up to {{ deck.max_saved_boards }} boards per player</div>
+      </div>
+      <div class="result-grid" style="grid-template-columns: repeat(3, minmax(0,1fr));">
+        <form method="post" class="mode-card">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_private_room">
+          <input type="hidden" name="guild_only" value="0">
+          <div class="panel-kicker">Private</div>
+          <h3 class="mode-title">Open Friend Table</h3>
+          <p class="mode-copy">Create a room code, invite anyone you trust, and let each player bring up to {{ deck.max_saved_boards }} boards.</p>
+          <div class="mode-metrics">
+            <div class="metric">
+              <div class="metric-label">Entry Fee</div>
+              <div class="metric-value">500 / board</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">House Match</div>
+              <div class="metric-value">+500 / board</div>
+            </div>
+          </div>
+          <div class="board-copy" style="margin:-.15rem 0 .85rem;">Code join room. Bigger player tables now scale both the paid pot and the matched pot.</div>
+          <button type="submit" class="btn btn-primary" {% if open_room %}disabled{% endif %}>Open Private Room</button>
+        </form>
+
+        <form method="post" class="mode-card">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_private_room">
+          <input type="hidden" name="guild_only" value="1">
+          <div class="panel-kicker">Guild</div>
+          <h3 class="mode-title">Open Guild Table</h3>
+          <p class="mode-copy">
+            {% if my_guild_membership %}
+            Share the code with guildmates only. Anyone outside [{{ my_guild_membership.guild.tag }}] will be blocked at join time.
+            {% else %}
+            Join a guild first if you want a room code that only guildmates can use.
+            {% endif %}
+          </p>
+          <div class="mode-metrics">
+            <div class="metric">
+              <div class="metric-label">Entry Fee</div>
+              <div class="metric-value">500 / board</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">House Match</div>
+              <div class="metric-value">+500 / board</div>
+            </div>
+          </div>
+          <div class="board-copy" style="margin:-.15rem 0 .85rem;">{% if my_guild_membership %}[{{ my_guild_membership.guild.tag }}] only.{% else %}Guild required first.{% endif %}</div>
+          <button type="submit" class="btn btn-primary" {% if open_room or not my_guild_membership %}disabled{% endif %}>Open Guild Room</button>
+        </form>
+
+        <form method="post" class="mode-card">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="join_private_room">
+          <div class="panel-kicker">Join</div>
+          <h3 class="mode-title">Join By Code</h3>
+          <p class="mode-copy">Paste a friend or guild room code and jump straight into their lobby.</p>
+          <div class="mode-metrics" style="grid-template-columns: 1fr;">
+            <label class="metric" style="display:block;">
+              <div class="metric-label">Room Code</div>
+              <input
+                type="text"
+                name="room_code"
+                maxlength="8"
+                placeholder="AB12CD"
+                style="width:100%; background:transparent; border:0; color:var(--text-1); font-size:1rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; outline:none;"
+              >
+            </label>
+          </div>
+          <button type="submit" class="btn btn-secondary" {% if open_room %}disabled{% endif %}>Join Room</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="boards-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:.75rem; flex-wrap:wrap; margin-bottom:.9rem;">
+        <div>
           <div class="panel-kicker">Saved Boards</div>
           <h2 class="board-title">Your Kanto Boards</h2>
         </div>
-        <div class="status-chip">{{ board_cards|length }} / {{ deck.max_saved_boards }} saved</div>
+        <div class="status-chip">{{ saved_board_count }} / {{ deck.max_saved_boards }} custom saved</div>
       </div>
       <div class="board-grid">
+        {% if starter_board %}
+        <article class="board-card">
+          <div class="board-preview">
+            {% for cell in starter_board.cells %}
+            <div class="board-cell">
+              <img src="{{ cell.image_url }}" alt="{{ cell.name }}">
+            </div>
+            {% endfor %}
+          </div>
+          <h3 class="board-title">{{ starter_board.title }}</h3>
+          <p class="board-copy">Random locked starter board. Keep it as your lucky option, and bring it into a room when you want a nostalgic fallback.</p>
+          <div class="board-actions">
+            <span class="status-chip">Starter Only · Not Editable</span>
+          </div>
+        </article>
+        {% endif %}
         {% for board in board_cards %}
         <article class="board-card">
+          {% if board.is_saved %}
           <div class="board-preview">
             {% for cell in board.cells %}
             <div class="board-cell">
@@ -174,10 +300,26 @@
             </div>
             {% endfor %}
           </div>
+          {% else %}
+          <div class="board-preview empty">
+            <div class="empty-board-copy">
+              <strong>Board {{ board.board_slot }} is open</strong>
+              Save another Kanto layout so you can bring more than one board into quick play.
+            </div>
+          </div>
+          {% endif %}
           <h3 class="board-title">{{ board.title }}</h3>
-          <p class="board-copy">Board {{ board.board_slot }}. Ready to bring into your next Kanto table.</p>
+          <p class="board-copy">
+            {% if board.is_saved %}
+            {{ board.title }}. Ready to bring into your next Kanto table.
+            {% else %}
+            {{ board.title }} is empty right now. Build it once and it will appear here like your other saved boards.
+            {% endif %}
+          </p>
           <div class="board-actions">
-            <a href="{% url 'game:loteria_builder' board.board_slot %}" class="btn btn-secondary">Edit Board</a>
+            <a href="{% url 'game:loteria_builder' board.board_slot %}" class="btn btn-secondary">
+              {% if board.is_saved %}Edit Board{% else %}Create Board{% endif %}
+            </a>
           </div>
         </article>
         {% endfor %}
@@ -191,7 +333,13 @@
       {% if open_room %}
       <h2 class="board-title">{{ open_room.title }}</h2>
       <p class="board-copy">
-        {% if open_room.status == "active" %}
+        {% if open_room.mode == "private" %}
+          {% if open_room.status == "active" %}
+          Your private table is live under code {{ open_room.room_code }}.
+          {% else %}
+          Your private lobby is waiting under code {{ open_room.room_code }}. Share it, lock boards in, and start when the table is ready.
+          {% endif %}
+        {% elif open_room.status == "active" %}
         Your match is live. The table is already calling cards every {{ deck.draw_interval_seconds }} seconds.
         {% else %}
         Your room is waiting in the lobby. Pick your boards, review the NPC seats, and launch when ready.
@@ -217,7 +365,7 @@
       <p class="board-copy">The last finished Kanto table closed with {{ recent_finished_room.prize_pool_ryo }} Ryo on the table.</p>
       <ul style="margin:.6rem 0 0; padding-left:1rem; color:var(--text-2);">
         {% for winner in recent_player_wins %}
-        <li>{{ winner.display_name }} · {{ winner.reward_ryo }} Ryo</li>
+        <li>{{ winner.display_name }} &middot; {{ winner.reward_ryo }} Ryo</li>
         {% empty %}
         <li>No player board from your account won the last table.</li>
         {% endfor %}

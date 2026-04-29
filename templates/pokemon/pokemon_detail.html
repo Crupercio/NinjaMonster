@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% block title %}{{ pokemon.name }} — Pokedex{% endblock %}
+{% block title %}{{ pokemon.name }} - Pokedex{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* ── DETAIL HERO ── */
   .detail-hero {
     background: radial-gradient(ellipse at 60% 0%, var(--bg-felt) 0%, var(--bg-void) 70%);
     border-bottom: 1px solid var(--border-md);
@@ -23,15 +22,26 @@
     .detail-hero-img { order: -1; }
   }
   .detail-dex-id {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem; color: var(--text-3); font-weight: 700; margin-bottom: 0.25rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem;
+    color: var(--text-3);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
   }
   .detail-name {
-    font-family: 'Chakra Petch', sans-serif;
-    font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; line-height: 1.1;
+    font-family: "Chakra Petch", sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    line-height: 1.1;
     color: var(--text-1);
   }
-  .detail-types { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .detail-types {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
   .type-pill {
     padding: 0.3rem 1rem;
     border-radius: 20px;
@@ -40,25 +50,24 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .type-fire    { background: #7f1d1d; color: #fca5a5; }
-  .type-water   { background: #1e3a5f; color: #93c5fd; }
-  .type-grass   { background: #14532d; color: #86efac; }
-  .type-electric{ background: #78350f; color: #fcd34d; }
+  .type-fire { background: #7f1d1d; color: #fca5a5; }
+  .type-water { background: #1e3a5f; color: #93c5fd; }
+  .type-grass { background: #14532d; color: #86efac; }
+  .type-electric { background: #78350f; color: #fcd34d; }
   .type-psychic { background: #4a044e; color: #f0abfc; }
-  .type-dragon  { background: #1e1b4b; color: #a5b4fc; }
-  .type-ice     { background: #164e63; color: #a5f3fc; }
-  .type-ghost   { background: #2d1b69; color: #c4b5fd; }
-  .type-dark    { background: #1c1917; color: #a8a29e; }
-  .type-steel   { background: #374151; color: #d1d5db; }
-  .type-poison  { background: #3b0764; color: #e879f9; }
-  .type-fighting{ background: #7c2d12; color: #fdba74; }
-  .type-rock    { background: #292524; color: #d6d3d1; }
-  .type-ground  { background: #451a03; color: #fcd34d; }
-  .type-flying  { background: #1e1b4b; color: #c7d2fe; }
-  .type-bug     { background: #1a2e05; color: #bef264; }
-  .type-normal  { background: #374151; color: #f3f4f6; }
-  .type-fairy   { background: #500724; color: #fda4af; }
-
+  .type-dragon { background: #1e1b4b; color: #a5b4fc; }
+  .type-ice { background: #164e63; color: #a5f3fc; }
+  .type-ghost { background: #2d1b69; color: #c4b5fd; }
+  .type-dark { background: #1c1917; color: #a8a29e; }
+  .type-steel { background: #374151; color: #d1d5db; }
+  .type-poison { background: #3b0764; color: #e879f9; }
+  .type-fighting { background: #7c2d12; color: #fdba74; }
+  .type-rock { background: #292524; color: #d6d3d1; }
+  .type-ground { background: #451a03; color: #fcd34d; }
+  .type-flying { background: #1e1b4b; color: #c7d2fe; }
+  .type-bug { background: #1a2e05; color: #bef264; }
+  .type-normal { background: #374151; color: #f3f4f6; }
+  .type-fairy { background: #500724; color: #fda4af; }
   .detail-hero-img {
     text-align: center;
     padding-bottom: 0;
@@ -67,17 +76,24 @@
     width: 220px;
     height: 220px;
     object-fit: contain;
-    filter: drop-shadow(0 8px 30px rgba(232,184,75,0.3));
+    filter: drop-shadow(0 8px 30px rgba(232, 184, 75, 0.3));
     display: block;
     margin: 0 auto;
   }
-
-  /* ── BODY LAYOUT ── */
-  .detail-body { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-  @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
-
-  /* ── CARD PANEL ── */
+  .detail-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 640px) {
+    .detail-grid { grid-template-columns: 1fr; }
+  }
   .panel {
     background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
     border: 1px solid var(--border-md);
@@ -85,7 +101,7 @@
     padding: 1.5rem;
   }
   .panel-title {
-    font-family: 'Chakra Petch', sans-serif;
+    font-family: "Chakra Petch", sans-serif;
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -94,64 +110,77 @@
     margin-bottom: 1.25rem;
     opacity: 0.85;
   }
-
-  /* ── STAT BARS ── */
-  .stat-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
-  .stat-label { font-size: 0.75rem; color: var(--text-2); width: 80px; flex-shrink: 0; }
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    width: 80px;
+    flex-shrink: 0;
+  }
   .stat-val {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
     color: var(--text-1);
   }
-  .stat-bar-track { flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
+  .stat-bar-track {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
   .stat-bar-fill { height: 100%; border-radius: 4px; }
-  .stat-hp      { background: #4ade80; }
-  .stat-atk     { background: #f87171; }
-  .stat-def     { background: #60a5fa; }
-  .stat-spatk   { background: #f97316; }
-  .stat-spdef   { background: #a78bfa; }
-  .stat-speed   { background: #fbbf24; }
-
-  /* ── COMBO PANEL ── */
-  .combo-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border-lo); font-size: 0.875rem; }
-  .combo-row:last-child { border-bottom: none; }
-  .combo-label { color: var(--text-2); }
-  .combo-val { font-weight: 700; color: var(--accent-gold); }
-  .no-combo { color: var(--text-3); font-size: 0.85rem; }
-
-  /* ── MOVES TABLE ── */
-  .moves-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .stat-hp { background: #4ade80; }
+  .stat-atk { background: #f87171; }
+  .stat-def { background: #60a5fa; }
+  .stat-spatk { background: #f97316; }
+  .stat-spdef { background: #a78bfa; }
+  .stat-speed { background: #fbbf24; }
+  .dash { color: var(--text-3); }
+  .slot-desc {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+  .moves-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
   .moves-table th {
-    color: var(--text-2); text-align: left; padding: 0.5rem 0.75rem;
+    color: var(--text-2);
+    text-align: left;
+    padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--border-md);
-    font-family: 'Chakra Petch', sans-serif;
-    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+    font-family: "Chakra Petch", sans-serif;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     background: var(--bg-raised);
   }
-  .moves-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-lo); vertical-align: middle; color: var(--text-1); }
+  .moves-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-lo);
+    vertical-align: middle;
+    color: var(--text-1);
+  }
   .moves-table tr:last-child td { border-bottom: none; }
-  .moves-table tr:hover td { background: rgba(232,184,75,0.03); }
+  .moves-table tr:hover td { background: rgba(232, 184, 75, 0.03); }
   .move-name { font-weight: 600; }
-  .moves-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  .badge-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
-  .badge-applies    { background: rgba(127,29,29,0.6); color: #fca5a5; }
-  .badge-trigger    { background: rgba(120,53,15,0.6); color: #fcd34d; }
-  .badge-trigger-on { background: rgba(120,53,15,0.6); color: #fcd34d; }
-  .dash { color: var(--text-3); }
-  .slot-desc { font-size: 0.72rem; color: var(--text-3); margin-bottom: 0.5rem; font-style: italic; }
-  /* Combo chain panel */
-  .chain-group-header { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); padding: 0.4rem 0 0.25rem; margin-top: 0.5rem; border-top: 1px solid var(--border-lo); }
-  .chain-group-header:first-child { border-top: none; margin-top: 0; }
-  .chain-move-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border-lo); flex-wrap: wrap; font-size: 0.82rem; }
-  .chain-move-row:last-child { border-bottom: none; }
-  .chain-move-name { font-weight: 700; color: var(--text-1); min-width: 110px; }
-  .chain-arrow { color: var(--text-3); }
 </style>
 {% endblock %}
 
 {% block content %}
-
-<!-- HERO -->
 <div class="detail-hero">
   <div class="detail-hero-inner">
     <div>
@@ -169,8 +198,7 @@
     </div>
     <div class="detail-hero-img">
       {% if pokemon.pokedex_number %}
-        <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
-             alt="{{ pokemon.name }}">
+        <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png" alt="{{ pokemon.name }}">
       {% elif pokemon.sprite_url %}
         <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
       {% else %}
@@ -180,12 +208,8 @@
   </div>
 </div>
 
-<!-- BODY -->
 <div class="detail-body">
-
   <div class="detail-grid">
-
-    <!-- BASE STATS -->
     <div class="panel">
       <div class="panel-title">Base Stats</div>
 
@@ -211,7 +235,7 @@
         </div>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Ninjutsu</span>
+        <span class="stat-label">Sp. Atk</span>
         <span class="stat-val" style="color:#f97316;">{{ pokemon.base_ninjutsu }}</span>
         <div class="stat-bar-track">
           <div class="stat-bar-fill stat-spatk" style="width:{{ pokemon.base_ninjutsu|floatformat:0 }}%;max-width:100%;"></div>
@@ -224,8 +248,8 @@
           <div class="stat-bar-fill stat-spdef" style="width:{{ pokemon.base_sp_defense|floatformat:0 }}%;max-width:100%;"></div>
         </div>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">Initiative</span>
+      <div class="stat-row" style="margin-bottom:0;">
+        <span class="stat-label">Speed</span>
         <span class="stat-val" style="color:#fbbf24;">{{ pokemon.base_initiative }}</span>
         <div class="stat-bar-track">
           <div class="stat-bar-fill stat-speed" style="width:{{ pokemon.base_initiative|floatformat:0 }}%;max-width:100%;"></div>
@@ -233,84 +257,28 @@
       </div>
     </div>
 
-    <!-- COMBO CHAIN INFO -->
     <div class="panel">
-      <div class="panel-title">&#9889; Combo Chain</div>
-      {% if combo_moves %}
-        {# Starters — standard/mystery moves that apply a status #}
-        {% with starters=combo_moves|dictsort:"slot_type" %}
-        {% for move in combo_moves %}{% if move.applies_status and not move.trigger_status %}
-          {% if forloop.first or not forloop.parentloop %}{# header once #}{% endif %}
-        {% endif %}{% endfor %}
-        {% endwith %}
-
-        {# Group: STARTS CHAIN (applies_status, no trigger_status) #}
-        {% for move in combo_moves %}
-          {% if move.applies_status and not move.trigger_status %}
-            {% if forloop.first %}
-              <div class="chain-group-header">&#128293; Starts Chain</div>
-            {% endif %}
-            <div class="chain-move-row">
-              <span class="chain-move-name">{{ move.name }}</span>
-              <span class="chain-arrow">&#8594;</span>
-              <span class="badge-status badge-applies">Applies: {{ move.applies_status.get_name_display }}</span>
-            </div>
-          {% endif %}
-        {% endfor %}
-
-        {# Group: JOINS CHAIN (has trigger_status) #}
-        {% for move in combo_moves %}
-          {% if move.trigger_status %}
-            {% if forloop.first %}
-              <div class="chain-group-header">&#9889; Joins Chain</div>
-            {% endif %}
-            <div class="chain-move-row">
-              <span class="chain-move-name">{{ move.name }}</span>
-              <span class="badge-status badge-trigger-on">Fires on: {{ move.trigger_status.get_name_display }}</span>
-              {% if move.applies_status %}
-                <span class="chain-arrow">&#8594;</span>
-                <span class="badge-status badge-applies">Applies: {{ move.applies_status.get_name_display }}</span>
-              {% endif %}
-            </div>
-          {% endif %}
-        {% endfor %}
-
-        {# Moves that only apply_status AND are chase (both trigger + apply) already caught above #}
-
-      {% else %}
-        <p class="no-combo">No combo moves in this pool.</p>
-      {% endif %}
-      {% if not is_battle_ready %}
-        <div style="margin-top:1rem;padding:0.5rem 0.75rem;background:#450a0a;border-radius:6px;font-size:0.78rem;color:#fca5a5;">
-          &#9888; Move pool incomplete — species is not battle-ready.
+      <div class="panel-title">Pokedex Notes</div>
+      <p style="color:var(--text-2);font-size:0.92rem;line-height:1.65;margin:0 0 1rem;">
+        {{ pokemon.name }} is cataloged here for album tracking, expeditions, and collection planning.
+      </p>
+      <div style="display:grid;gap:0.75rem;">
+        <div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid var(--border-lo);padding-bottom:0.65rem;">
+          <span style="color:var(--text-3);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.12em;">Primary Type</span>
+          <span style="color:var(--text-1);font-weight:700;">{{ pokemon.primary_type.name }}</span>
         </div>
-      {% endif %}
-    </div>
-
-  </div>
-
-  <!-- PAIRING HINTS -->
-  {% if pairing_hints %}
-  <div class="panel" style="margin-bottom:2rem;">
-    <div class="panel-title">&#9889; Combo Synergy — Recommended Partners</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.75rem;">
-      {% for hint in pairing_hints %}
-        <a href="{% url 'pokemon:detail' hint.partner.pk %}"
-           style="display:block;text-decoration:none;background:#1a1a2e;border:1px solid {% if hint.role == 'primer' %}#7c3aed55{% else %}#b4530955{% endif %};border-radius:8px;padding:0.85rem 1rem;transition:border-color 0.15s;"
-           onmouseover="this.style.borderColor='{% if hint.role == 'primer' %}#7c3aed{% else %}#f59e0b{% endif %}'"
-           onmouseout="this.style.borderColor='{% if hint.role == 'primer' %}#7c3aed55{% else %}#b4530955{% endif %}'">
-          <div style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;color:{% if hint.role == 'primer' %}#a78bfa{% else %}#fbbf24{% endif %};">
-            {% if hint.role == 'primer' %}You prime &#8594; they chain{% else %}They prime &#8594; you chain{% endif %}
-          </div>
-          <div style="font-weight:700;color:#f1f5f9;margin-bottom:4px;">{{ hint.partner.name }}</div>
-          <div style="font-size:0.75rem;color:#9ca3af;">{{ hint.detail }}</div>
-        </a>
-      {% endfor %}
+        <div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid var(--border-lo);padding-bottom:0.65rem;">
+          <span style="color:var(--text-3);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.12em;">Secondary Type</span>
+          <span style="color:var(--text-1);font-weight:700;">{% if pokemon.secondary_type %}{{ pokemon.secondary_type.name }}{% else %}<span class="dash">-</span>{% endif %}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:1rem;">
+          <span style="color:var(--text-3);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.12em;">Expedition Zones</span>
+          <span style="color:var(--accent-gold);font-weight:700;">{{ spawn_zones|length }}</span>
+        </div>
+      </div>
     </div>
   </div>
-  {% endif %}
 
-  <!-- FOUND IN ZONES -->
   <div class="panel" style="margin-bottom:1.5rem;">
     <div class="panel-title">&#127758; Found in Expedition Zones</div>
     {% if spawn_zones %}
@@ -334,26 +302,25 @@
     {% endif %}
   </div>
 
-  <!-- BATTLE MOVE POOL (organized by slot type) -->
   <div class="panel">
-    <div class="panel-title">Battle Move Pool</div>
+    <div class="panel-title">Move Pool</div>
     {% if move_pool_by_slot %}
       {% for slot_label, slot_desc, slot_moves in move_pool_by_slot %}
-        {% if slot_moves %}
         <div style="margin-bottom:1.75rem;">
           <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.2rem;">
             {{ slot_label }}
           </div>
           <div class="slot-desc">{{ slot_desc }}</div>
+          {% if slot_moves %}
           <div style="overflow-x:auto;">
-
-            {% if slot_label == "Ninja Trait" or slot_label == "Hidden Trait" %}
-            {# Passive slots — no Power/Acc columns; show description instead #}
             <table class="moves-table">
               <thead>
                 <tr>
                   <th>Move</th>
                   <th>Type</th>
+                  <th>Power</th>
+                  <th>Acc</th>
+                  <th>PP</th>
                   <th>Description</th>
                 </tr>
               </thead>
@@ -366,106 +333,23 @@
                       {{ move.move_type.name }}
                     </span>
                   </td>
-                  <td style="font-size:0.78rem;color:var(--text-2);">{{ move.description|default:"—" }}</td>
+                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">-</span>{% endif %}</td>
+                  <td>{% if move.accuracy %}{{ move.accuracy }}%{% else %}<span class="dash">-</span>{% endif %}</td>
+                  <td>{{ move.pp }}</td>
+                  <td style="font-size:0.78rem;color:var(--text-2);">{{ move.description|default:"-" }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
-
-            {% elif slot_label == "Chase Technique" %}
-            {# Chase slots — show both trigger + applies badges #}
-            <table class="moves-table">
-              <thead>
-                <tr>
-                  <th>Move</th>
-                  <th>Type</th>
-                  <th>Power</th>
-                  <th>Acc</th>
-                  <th>Chain Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for move in slot_moves %}
-                <tr>
-                  <td class="move-name">{{ move.name }}</td>
-                  <td>
-                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
-                      {{ move.move_type.name }}
-                    </span>
-                  </td>
-                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
-                  <td>{{ move.accuracy }}%</td>
-                  <td>
-                    {% if move.trigger_status or move.applies_status %}
-                    <div style="display:flex;flex-direction:column;gap:3px;">
-                      {% if move.trigger_status %}
-                        <span class="badge-status badge-trigger-on">&#9889; Fires when: {{ move.trigger_status.get_name_display }}</span>
-                      {% endif %}
-                      {% if move.applies_status %}
-                        <span class="badge-status badge-applies">&#8594; Applies: {{ move.applies_status.get_name_display }}</span>
-                      {% endif %}
-                    </div>
-                    {% else %}
-                      <span class="dash">—</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-
-            {% else %}
-            {# Standard / Mystery slots #}
-            <table class="moves-table">
-              <thead>
-                <tr>
-                  <th>Move</th>
-                  <th>Type</th>
-                  <th>Power</th>
-                  <th>Acc</th>
-                  <th>Applies</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for move in slot_moves %}
-                <tr>
-                  <td class="move-name">{{ move.name }}</td>
-                  <td>
-                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
-                      {{ move.move_type.name }}
-                    </span>
-                  </td>
-                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">—</span>{% endif %}</td>
-                  <td>{{ move.accuracy }}%</td>
-                  <td>
-                    {% if move.applies_status %}
-                      <span class="badge-status badge-applies">{{ move.applies_status.get_name_display }}</span>
-                    {% else %}
-                      <span class="dash">—</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            {% endif %}
-
           </div>
+          {% else %}
+            <p style="color:#4b5563;font-size:0.85rem;margin:0;">No moves assigned for this slot.</p>
+          {% endif %}
         </div>
-        {% else %}
-        <div style="margin-bottom:1rem;">
-          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.2rem;">
-            {{ slot_label }}
-          </div>
-          <div class="slot-desc">{{ slot_desc }}</div>
-          <p style="color:#4b5563;font-size:0.85rem;margin:0;">No moves assigned for this slot.</p>
-        </div>
-        {% endif %}
       {% endfor %}
     {% else %}
       <p style="color:#6b7280;">No move pool data for this species yet.</p>
     {% endif %}
   </div>
-
 </div>
 {% endblock %}

@@ -3,9 +3,10 @@ import json
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
@@ -52,11 +53,11 @@ class PokemonDetailView(DetailView):
     context_object_name = "pokemon"
 
     _SLOT_LABELS: tuple[tuple[str, str], ...] = (
-        ("standard", "Basic Technique"),
-        ("chase", "Chase Technique"),
-        ("mystery", "Secret Technique"),
-        ("passive_1", "Ninja Trait"),
-        ("passive_2", "Hidden Trait"),
+        ("standard", "Core Move"),
+        ("chase", "Support Move"),
+        ("mystery", "Signature Move"),
+        ("passive_1", "Passive 1"),
+        ("passive_2", "Passive 2"),
     )
 
     _SLOT_DESCRIPTIONS: dict[str, str] = {
@@ -171,12 +172,43 @@ class MyPokemonView(LoginRequiredMixin, TemplateView):
             .order_by("species__pokedex_number", "species__name")
         )
         user = self.request.user
+        active_training_count = owned_pokemon.filter(is_training=True).count()
+        max_training_slots = user.max_training_slots
         context["owned_pokemon"] = owned_pokemon
-        context["active_training_count"] = owned_pokemon.filter(is_training=True).count()
-        context["max_training_slots"] = user.max_training_slots
+        context["active_training_count"] = active_training_count
+        context["max_training_slots"] = max_training_slots
+        context["available_training_slots"] = max(0, max_training_slots - active_training_count)
+        context["ready_training_count"] = owned_pokemon.filter(
+            is_training=True,
+            training_ends_at__lte=timezone.now(),
+        ).count()
         context["training_slot_unlock_cap"] = user.training_slot_unlock_cap
         context["next_training_slot_upgrade"] = user.next_training_slot_upgrade
+        context["training_duration_options"] = [
+            {"value": 15, "label": "15 Min", "bonus": ""},
+            {"value": 30, "label": "30 Min", "bonus": ""},
+            {"value": 480, "label": "8 Hr", "bonus": "+50%"},
+        ]
         return context
+
+    def _get_selected_owned_pokemon(self, request):
+        raw_ids = request.POST.getlist("owned_ids")
+        selected_ids: list[int] = []
+        for raw_id in raw_ids:
+            try:
+                pokemon_id = int(raw_id)
+            except (TypeError, ValueError):
+                continue
+            if pokemon_id not in selected_ids:
+                selected_ids.append(pokemon_id)
+
+        queryset = OwnedPokemon.objects.filter(
+            owner=request.user,
+            pk__in=selected_ids,
+        ).select_related("species")
+        owned_lookup = {owned.pk: owned for owned in queryset}
+        owned_list = [owned_lookup[pokemon_id] for pokemon_id in selected_ids if pokemon_id in owned_lookup]
+        return owned_list, len(selected_ids)
 
     def post(self, request, *args, **kwargs):
         """Handle training form submissions: start, cancel, or claim."""
@@ -189,6 +221,73 @@ class MyPokemonView(LoginRequiredMixin, TemplateView):
             return redirect(
                 f"{request.path}?upgrade=1&slots={result['max_training_slots']}&cost={result['cost']}"
             )
+
+        if action == "claim_all_ready":
+            ready_to_claim = list(
+                OwnedPokemon.objects.filter(
+                    owner=request.user,
+                    is_training=True,
+                    training_ends_at__lte=timezone.now(),
+                ).select_related("species")
+            )
+            if not ready_to_claim:
+                return self.render_to_response(
+                    self.get_context_data(error="No finished training sessions are ready to claim.")
+                )
+
+            claimed_count = 0
+            with transaction.atomic():
+                for owned in ready_to_claim:
+                    claim_training(owned)
+                    claimed_count += 1
+            return redirect(f"{request.path}?claimed_all={claimed_count}")
+
+        if action == "bulk_start":
+            owned_list, requested_count = self._get_selected_owned_pokemon(request)
+            if requested_count == 0:
+                return self.render_to_response(
+                    self.get_context_data(error="Select at least one Pokemon to start training.")
+                )
+            if len(owned_list) != requested_count:
+                return self.render_to_response(
+                    self.get_context_data(error="One or more selected Pokemon could not be found.")
+                )
+
+            try:
+                duration = int(request.POST.get("duration", 15))
+            except (TypeError, ValueError):
+                duration = 15
+
+            active_training_count = OwnedPokemon.objects.filter(
+                owner=request.user,
+                is_training=True,
+            ).count()
+            available_slots = max(0, request.user.max_training_slots - active_training_count)
+            if len(owned_list) > available_slots:
+                return self.render_to_response(
+                    self.get_context_data(
+                        error=(
+                            f"Only {available_slots} training slots are free right now. "
+                            f"You selected {len(owned_list)} Pokemon."
+                        )
+                    )
+                )
+
+            for owned in owned_list:
+                if owned.is_training:
+                    return self.render_to_response(
+                        self.get_context_data(error=f"{owned.species.name} is already in training.")
+                    )
+                if owned.level >= 100:
+                    return self.render_to_response(
+                        self.get_context_data(error=f"{owned.species.name} is already at max level.")
+                    )
+
+            with transaction.atomic():
+                for owned in owned_list:
+                    start_training(owned, duration_minutes=duration)
+
+            return redirect(f"{request.path}?trained={len(owned_list)}&duration={duration}")
 
         owned_id = request.POST.get("owned_id")
         if not owned_id:
@@ -240,7 +339,7 @@ def _build_combo_preview(owned_pokemon_list: list) -> list[dict]:
       }
 
     Only OwnedPokemon with all four move slots assigned are considered
-    (they must be battle-ready).
+    so the preview uses fully configured move sets.
     """
     from apps.game.services import COMBO_AMP
 
@@ -474,16 +573,16 @@ class OwnedPokemonDetailView(LoginRequiredMixin, DetailView):
             ("HP", sp.calculate_max_hp(lv), sp.base_hp),
             ("Attack", sp.calculate_stat(sp.base_attack, lv), sp.base_attack),
             ("Defense", sp.calculate_stat(sp.base_defense, lv), sp.base_defense),
-            ("Ninjutsu", sp.calculate_stat(sp.base_ninjutsu, lv), sp.base_ninjutsu),
+            ("Sp. Atk", sp.calculate_stat(sp.base_ninjutsu, lv), sp.base_ninjutsu),
             ("Sp. Def", sp.calculate_stat(sp.base_sp_defense, lv), sp.base_sp_defense),
-            ("Initiative", sp.calculate_stat(sp.base_initiative, lv), sp.base_initiative),
+            ("Speed", sp.calculate_stat(sp.base_initiative, lv), sp.base_initiative),
         ]
         context["move_slots"] = [
-            ("Basic Technique", "standard", op.move_standard),
-            ("Chase Technique", "chase", op.move_chase),
-            ("Secret Technique", "mystery", op.move_special),
-            ("Ninja Trait", "passive_1", op.move_support),
-            ("Hidden Trait", "passive_2", op.move_passive),
+            ("Core Move", "standard", op.move_standard),
+            ("Support Move", "chase", op.move_chase),
+            ("Signature Move", "mystery", op.move_special),
+            ("Passive 1", "passive_1", op.move_support),
+            ("Passive 2", "passive_2", op.move_passive),
         ]
 
         # Combo synergy hints based on this pokemon's equipped moves
