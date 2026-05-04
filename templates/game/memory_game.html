@@ -169,6 +169,9 @@
 .finish-panel { margin-top:1rem; }
 .finish-title { margin:0 0 .3rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.18rem; }
 .finish-copy { color:var(--text-2); line-height:1.55; margin-bottom:.85rem; }
+.mascot-comment { display:flex; align-items:baseline; gap:.5rem; margin-bottom:.65rem; padding:.6rem .75rem; background:rgba(167,139,250,.08); border:1px solid rgba(167,139,250,.2); border-radius:14px; }
+.mc-name { color:#a78bfa; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; flex-shrink:0; }
+.mc-line { color:var(--text-2); font-size:.86rem; font-style:italic; }
 .finish-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin-bottom:.9rem; }
 .finish-box { border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem; }
 .finish-box span { display:block; color:var(--text-3); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
@@ -278,19 +281,62 @@
       </form>
     </div>
     {% elif board_result %}
-    <section class="finish-panel">
-      <h2 class="finish-title">{{ board_result.grade }} Clear</h2>
-      <div class="finish-copy">
-        {{ board.title }} is complete. Your reward has already been added, and you can either replay this board or head back to the selector for a new table.
+    <section class="finish-panel" id="finish-panel">
+      {% with grade=board_result.grade %}
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;">
+        <h2 class="finish-title" style="margin:0;">
+          {% if grade == 'Perfect' %}⭐ Perfect Clear!
+          {% elif grade == 'Great' %}✨ Great Clear!
+          {% elif grade == 'Good' %}👍 Good Clear
+          {% else %}✓ Board Cleared{% endif %}
+        </h2>
+        {% if board_result.speed_bonus %}
+        <span style="background:rgba(232,184,75,.18);border:1px solid rgba(232,184,75,.35);border-radius:999px;color:#fef08a;font-size:.7rem;font-weight:800;padding:.28rem .7rem;letter-spacing:.12em;text-transform:uppercase;">⚡ Speed Bonus</span>
+        {% endif %}
       </div>
-      <div class="finish-metrics">
-        <div class="finish-box">
-          <span>Reward</span>
-          <strong>{{ board_result.reward_ryo }} Ryo</strong>
+      <div class="mascot-comment">
+        {% if board.key == 'rookie_3x4' %}
+          <span class="mc-name">Penny</span>
+          {% if grade == 'Perfect' %}<span class="mc-line">"Flawless! I knew you had it in you!"</span>
+          {% elif grade == 'Great' %}<span class="mc-line">"Almost perfect — you're really getting the hang of it!"</span>
+          {% elif grade == 'Good' %}<span class="mc-line">"Good job! Every flip is a fresh start, remember?"</span>
+          {% else %}<span class="mc-line">"You cleared it! Keep going, you'll nail it next time."</span>{% endif %}
+        {% elif board.key == 'standard_4x4' %}
+          <span class="mc-name">Biscuit</span>
+          {% if grade == 'Perfect' %}<span class="mc-line">"Perfect rhythm. That's the Biscuit way!"</span>
+          {% elif grade == 'Great' %}<span class="mc-line">"Sharp! Just a couple of hesitations — you'll iron those out."</span>
+          {% elif grade == 'Good' %}<span class="mc-line">"Solid. Find your rhythm and it'll flow cleaner."</span>
+          {% else %}<span class="mc-line">"Board's clear! Trust the pattern next time."</span>{% endif %}
+        {% elif board.key == 'collector_4x5' %}
+          <span class="mc-name">Rex</span>
+          {% if grade == 'Perfect' %}<span class="mc-line">"Precision over speed — and you had both."</span>
+          {% elif grade == 'Great' %}<span class="mc-line">"Tight. A few careless flips, but overall very controlled."</span>
+          {% elif grade == 'Good' %}<span class="mc-line">"Decent. The grid rewards patience — slow down and read it."</span>
+          {% else %}<span class="mc-line">"Done. This board demands accuracy — focus up next run."</span>{% endif %}
+        {% elif board.key == 'master_6x4' %}
+          <span class="mc-name">Nova</span>
+          {% if grade == 'Perfect' %}<span class="mc-line">"The mind never forgets. And yours proved it."</span>
+          {% elif grade == 'Great' %}<span class="mc-line">"Strong. A near-perfect read. You're close to the limit."</span>
+          {% elif grade == 'Good' %}<span class="mc-line">"Cleared. But the Master board gives nothing for free — sharpen your focus."</span>
+          {% else %}<span class="mc-line">"Finished. The Master board is unforgiving. You'll be back."</span>{% endif %}
+        {% endif %}
+      </div>
+      <div class="finish-copy">
+        {% if grade == 'Perfect' %}Flawless! Every pair matched on the first try. Maximum rewards applied.
+        {% elif grade == 'Great' %}Sharp memory — just a couple of misses. Strong clear.
+        {% elif grade == 'Good' %}Solid clear. Fewer turns next time for a bigger payout.
+        {% else %}Board complete. Go again for a cleaner run and better grade.{% endif %}
+      </div>
+
+      <!-- Animated reward counters -->
+      <div class="finish-metrics" style="margin-bottom:.75rem;">
+        <div class="finish-box" style="grid-column:span 1;">
+          <span>Ryo Earned</span>
+          <strong id="ryo-counter" style="font-size:1.4rem;color:var(--accent-gold);">0</strong>
         </div>
         <div class="finish-box">
-          <span>Dust</span>
-          <strong>{{ board_result.reward_dust }} Dust</strong>
+          <span>Dust Earned</span>
+          <strong id="dust-counter" style="color:#c4b5fd;">0</strong>
         </div>
         <div class="finish-box">
           <span>Turns</span>
@@ -302,26 +348,66 @@
         </div>
         <div class="finish-box">
           <span>Best Streak</span>
-          <strong>{{ board_result.best_streak }}</strong>
+          <strong>{{ board_result.best_streak }} pairs</strong>
         </div>
         <div class="finish-box">
-          <span>Board</span>
-          <strong>{{ board.rows }} x {{ board.cols }}</strong>
+          <span>Grade</span>
+          <strong style="color:{% if grade == 'Perfect' %}#e8b84b{% elif grade == 'Great' %}#86efac{% elif grade == 'Good' %}#60a5fa{% else %}#94a3b8{% endif %};">{{ grade }}</strong>
         </div>
       </div>
+
       <div class="finish-actions">
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="start_run">
           <button type="submit" class="btn btn-primary">Play Again</button>
         </form>
+        {% comment %}Upgrade CTA — show next board if not on Master{% endcomment %}
+        {% if board.key == 'rookie' %}
+        <a href="{% url 'game:memory_board' 'standard' %}" class="btn btn-secondary">Try Standard Board ↑</a>
+        {% elif board.key == 'standard' %}
+        <a href="{% url 'game:memory_board' 'collector' %}" class="btn btn-secondary">Try Collector Board ↑</a>
+        {% elif board.key == 'collector' %}
+        <a href="{% url 'game:memory_board' 'master' %}" class="btn btn-secondary">Try Master Board ↑</a>
+        {% else %}
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="dismiss_result">
           <button type="submit" class="btn btn-secondary">Back to Boards</button>
         </form>
+        {% endif %}
       </div>
+      {% endwith %}
     </section>
+    <script>
+    // Animated reward counters on grade screen
+    (function() {
+      function animateCount(elId, target, duration, prefix, suffix) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        var start = 0, startTime = null;
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var progress = Math.min((ts - startTime) / duration, 1);
+          var ease = 1 - Math.pow(1 - progress, 3);
+          el.textContent = (prefix || '') + Math.floor(ease * target) + (suffix || '');
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = (prefix || '') + target + (suffix || '');
+        }
+        requestAnimationFrame(step);
+      }
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          animateCount('ryo-counter', {{ board_result.reward_ryo }}, 1200, '', ' Ryo');
+          animateCount('dust-counter', {{ board_result.reward_dust }}, 900, '', ' Dust');
+          if (window.GameSounds) {
+            GameSounds.play('coin');
+            setTimeout(function() { GameSounds.play('dust'); }, 400);
+          }
+        }, 200);
+      });
+    })();
+    </script>
     {% else %}
     <section class="empty-state">
       <h2>This board is ready when you are.</h2>
@@ -471,8 +557,14 @@
       startTimer() {
         if (this.started) return;
         this.started = true;
+        const speedTarget = {{ board.speed_target_seconds }};
         this.timerId = window.setInterval(() => {
           this.elapsedSeconds += 1;
+          // Urgent tick in last 10 seconds of speed target
+          const remaining = speedTarget - this.elapsedSeconds;
+          if (remaining <= 10 && remaining > 0 && window.GameSounds) {
+            GameSounds.play('tick');
+          }
         }, 1000);
       },
       stopTimer() {
@@ -486,6 +578,9 @@
         if (!card || card.revealed || card.matched || this.resolving || this.completed) return;
         this.startTimer();
         card.revealed = true;
+
+        // Sound: card flip
+        if (window.GameSounds) GameSounds.play('flip');
 
         if (this.firstIndex === null) {
           this.firstIndex = index;
@@ -507,7 +602,32 @@
             this.matchedPairs += 1;
             this.streak += 1;
             this.bestStreak = Math.max(this.bestStreak, this.streak);
+
+            // Sound: match + bounce animation on matched cards
+            if (window.GameSounds) GameSounds.play('match');
+            this.$nextTick(() => {
+              const allCards = document.querySelectorAll('.memory-card.is-matched');
+              allCards.forEach(el => {
+                el.classList.remove('matched');
+                void el.offsetWidth; // reflow to restart animation
+                el.classList.add('matched');
+              });
+            });
+
+            // Streak announcement toast
+            if (this.streak >= 3 && window.showToast) {
+              showToast(this.streak + ' in a row! 🔥', 'warning');
+            }
           } else {
+            // Sound: mismatch + red flash
+            if (window.GameSounds) GameSounds.play('mismatch');
+            this.$nextTick(() => {
+              const els = document.querySelectorAll('.memory-card.is-open:not(.is-matched)');
+              els.forEach(el => {
+                el.classList.add('mismatch-flash');
+                setTimeout(() => el.classList.remove('mismatch-flash'), 380);
+              });
+            });
             first.revealed = false;
             second.revealed = false;
             this.streak = 0;
@@ -525,6 +645,30 @@
       finishBoard() {
         this.completed = true;
         this.stopTimer();
+
+        // Save personal best to localStorage
+        (function(turns, seconds, streak, pairCount, boardKey, boardTitle) {
+          try {
+            var grade = turns <= pairCount ? 'Perfect' : turns <= Math.ceil(pairCount * 1.3) ? 'Great' : turns <= Math.ceil(pairCount * 1.6) ? 'Good' : 'Clear';
+            var bests = JSON.parse(localStorage.getItem('memory_bests') || '{}');
+            var prev = bests[boardKey];
+            var gradeRank = { Perfect: 4, Great: 3, Good: 2, Clear: 1 };
+            if (!prev || gradeRank[grade] > gradeRank[prev.grade] || (grade === prev.grade && turns < prev.turns)) {
+              bests[boardKey] = { board: boardTitle, grade: grade, turns: turns, seconds: seconds,
+                ryo: '?', dust: '?', date: new Date().toLocaleDateString() };
+              localStorage.setItem('memory_bests', JSON.stringify(bests));
+            }
+          } catch(e) {}
+        })(this.turns, this.elapsedSeconds, this.bestStreak, this.pairCount,
+           '{{ board.key }}', '{{ board.title }}');
+
+        // Sound: victory + screen flash
+        if (window.GameSounds) GameSounds.play('victory');
+        const flash = document.createElement('div');
+        flash.className = 'victory-flash';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 800);
+
         this.$refs.turnsField.value = this.turns;
         this.$refs.elapsedField.value = this.elapsedSeconds;
         this.$refs.streakField.value = this.bestStreak;

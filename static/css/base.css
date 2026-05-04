@@ -813,3 +813,127 @@ label {
 .animate-stagger {
   animation-delay: calc(var(--i, 0) * 50ms);
 }
+
+/* ── Micro-interactions & Game UI Polish ─────────────────────── */
+
+/* Button active press — stronger feedback than default */
+.btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.07s ease !important;
+}
+
+/* Game cards on Fun Hub — hover lift */
+.game-card {
+  transition: transform 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s ease;
+}
+.game-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 28px 52px rgba(0,0,0,.42), 0 0 0 1px rgba(232,184,75,.18);
+}
+
+/* Sticker/album cards — hover lift */
+.sticker-card,
+.album-card,
+.slot-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sticker-card:hover,
+.album-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(0,0,0,.32);
+}
+
+/* Pokemon collection cards (mi_casa) — image hover zoom */
+.pokemon-card img {
+  transition: transform 0.22s ease, filter 0.22s ease;
+}
+.pokemon-card:hover img {
+  transform: scale(1.06) translateY(-2px);
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.4));
+}
+
+/* Memory game card hover hint (before flip) */
+.memory-card:not(.flipped):not(.matched) {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.memory-card:not(.flipped):not(.matched):hover {
+  transform: scale(1.04) translateY(-2px);
+}
+
+/* Matched pair bounce animation */
+@keyframes matchBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.12); }
+  55%  { transform: scale(0.96); }
+  75%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.memory-card.matched {
+  animation: matchBounce 0.45s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+/* Mismatch red flash */
+@keyframes mismatchFlash {
+  0%   { box-shadow: none; }
+  40%  { box-shadow: 0 0 0 3px rgba(248,113,113,.7); }
+  100% { box-shadow: none; }
+}
+.memory-card.mismatch-flash {
+  animation: mismatchFlash 0.35s ease forwards;
+}
+
+/* Silhouette Tower — Ryo float-up animation */
+@keyframes ryoFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  60%  { opacity: 1; transform: translateY(-28px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-48px) scale(0.9); }
+}
+.ryo-float {
+  position: absolute; pointer-events: none;
+  color: #e8b84b; font-weight: 800; font-size: 1.1rem;
+  font-family: 'JetBrains Mono', monospace;
+  animation: ryoFloat 0.9s cubic-bezier(.22,1,.36,1) forwards;
+  z-index: 100;
+}
+
+/* Loteria — draw card slide-in */
+@keyframes loteriaDrawIn {
+  from { opacity: 0; transform: translateY(-18px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.loteria-draw-new {
+  animation: loteriaDrawIn 0.32s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+/* Loteria — near-miss board pulse */
+@keyframes nearMissPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,184,75,.0); }
+  50%       { box-shadow: 0 0 0 4px rgba(232,184,75,.55); }
+}
+.board-near-miss {
+  animation: nearMissPulse 1.2s ease infinite;
+}
+
+/* Victory / complete flash overlay */
+@keyframes victoryFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.18; }
+  100% { opacity: 0; }
+}
+.victory-flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9990;
+  background: radial-gradient(circle at center, rgba(232,184,75,.35), transparent 65%);
+  animation: victoryFlash 0.7s ease forwards;
+}
+
+/* Wallet / candy count pulse on change */
+@keyframes countPop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.22); color: #e8b84b; }
+  100% { transform: scale(1); }
+}
+.count-pop {
+  animation: countPop 0.35s cubic-bezier(.22,1,.36,1) forwards;
+}
+

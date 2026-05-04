@@ -1,0 +1,20 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+healthcheckPath = "/health/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[[deploy.envVars]]
+# These must be set in the Railway dashboard under Variables.
+# Required:
+#   SECRET_KEY              — long random string, e.g. `openssl rand -hex 50`
+#   DATABASE_URL            — provided automatically by Railway PostgreSQL plugin
+#   REDIS_URL               — provided automatically by Railway Redis plugin
+#   ALLOWED_HOSTS           — your Railway domain, e.g. pokemon-amigo.up.railway.app
+#   CSRF_TRUSTED_ORIGINS    — https://pokemon-amigo.up.railway.app
+#   DJANGO_SETTINGS_MODULE  — config.settings.production

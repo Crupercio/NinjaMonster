@@ -157,5 +157,74 @@
       <span>Open the tower, read the shadow fast, and decide when to bank the run. The active play page stays focused on the silhouette, the guess options, your streak, and the reward you have on the line.</span>
     </div>
   </section>
+
+  <!-- Leaderboard Strip -->
+  <section id="silhouette-lb-section" style="display:none; margin-top:1.15rem;">
+    <div class="section-head">
+      <h2 class="section-title">🏆 Top Runs · This Device</h2>
+      <div class="section-copy">Highest floors reached across all towers on this device.</div>
+    </div>
+    <div id="silhouette-lb-strip" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem;"></div>
+  </section>
+
+  <!-- Personal Bests -->
+  <section id="silhouette-bests-section" style="display:none; margin-top:1.15rem;">
+    <div class="section-head">
+      <h2 class="section-title">Your Records</h2>
+      <div class="section-copy">Best runs saved on this device.</div>
+    </div>
+    <div id="silhouette-bests-grid" style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.85rem;"></div>
+  </section>
 </div>
+
+{% block extra_js %}
+<script>
+// ── Leaderboard strip: top 3 runs by floor across all towers ──
+(function() {
+  var bests = JSON.parse(localStorage.getItem('silhouette_bests') || '{}');
+  var entries = Object.values(bests).filter(function(b) { return b && b.floor; });
+  if (!entries.length) return;
+
+  entries.sort(function(a, b) { return (b.floor - a.floor) || (b.ryo - a.ryo); });
+  var top3 = entries.slice(0, 3);
+  var medals = ['🥇', '🥈', '🥉'];
+  var lbSection = document.getElementById('silhouette-lb-section');
+  var lbStrip = document.getElementById('silhouette-lb-strip');
+  if (!lbSection || !lbStrip) return;
+  lbSection.style.display = '';
+
+  lbStrip.innerHTML = top3.map(function(b, i) {
+    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
+      '<div style="font-size:2rem;flex-shrink:0;">' + medals[i] + '</div>' +
+      '<div>' +
+        '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.2rem;">' + (b.tower || 'Unknown Tower') + '</div>' +
+        '<div style="color:var(--text-1);font-family:\'Chakra Petch\',sans-serif;font-size:1.55rem;font-weight:800;line-height:1;">' + b.floor + ' <span style="font-size:.78rem;color:var(--text-3);">floors</span></div>' +
+        '<div style="color:#c4b5fd;font-size:.8rem;margin-top:.25rem;">' + b.ryo + ' Ryo · ' + (b.date || '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+})();
+
+(function() {
+  var bests = JSON.parse(localStorage.getItem('silhouette_bests') || '{}');
+  var keys = Object.keys(bests);
+  if (!keys.length) return;
+
+  var section = document.getElementById('silhouette-bests-section');
+  var grid = document.getElementById('silhouette-bests-grid');
+  if (!section || !grid) return;
+  section.style.display = '';
+
+  grid.innerHTML = keys.map(function(key) {
+    var b = bests[key];
+    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.22);border-radius:20px;padding:.9rem 1rem;">' +
+      '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.35rem;">' + (b.tower || key) + '</div>' +
+      '<div style="color:var(--text-1);font-family:\'Chakra Petch\',sans-serif;font-size:1.5rem;font-weight:800;line-height:1;">' + b.floor + ' <span style="font-size:.78rem;color:var(--text-3);">floors</span></div>' +
+      '<div style="color:#c4b5fd;font-size:.82rem;margin-top:.3rem;">' + b.ryo + ' Ryo earned</div>' +
+      '<div style="color:var(--text-3);font-size:.72rem;margin-top:.18rem;">' + (b.date || '') + '</div>' +
+      '</div>';
+  }).join('');
+})();
+</script>
+{% endblock %}
 {% endblock %}

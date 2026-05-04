@@ -13,7 +13,10 @@ from django.views.generic import TemplateView
 from django.utils import timezone
 
 from apps.game.models import LoteriaMode, LoteriaRoom, LoteriaStatus
+from apps.quests.services import QuestService
 from apps.users.services import get_candy_inventory
+
+_quest_service = QuestService()
 
 from .fun import (
     abandon_memory_run,
@@ -191,6 +194,7 @@ class MemoryMatchView(ComingSoonGameView):
                 request,
                 f"{result['grade']} clear! You earned {result['reward_ryo']} Ryo and {result['reward_dust']} Dust.",
             )
+            _quest_service.on_memory_completed(request.user)
             return redirect(return_url)
 
         messages.error(request, "Unknown memory board action.")
@@ -968,6 +972,7 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
                 messages.error(request, str(exc))
             else:
                 messages.success(request, f"{claim.pattern_label} collected for {claim.reward_ryo} Ryo.")
+                _quest_service.on_loteria_played(request.user)
             return redirect(next_url)
         if action == "claim_all_prizes":
             try:
@@ -976,6 +981,7 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
                 messages.error(request, str(exc))
             else:
                 messages.success(request, f"Collected {claim_count} Loteria prize{'' if claim_count == 1 else 's'} for {total_ryo} Ryo.")
+                _quest_service.on_loteria_played(request.user)
             return redirect(next_url)
         messages.error(request, "Unknown Loteria results action.")
         return redirect(next_url)
@@ -1075,6 +1081,18 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
             return redirect("game:home")
         self.species_map = get_tower_species_map(self.tower_config)
         return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("advance") == "1":
+            reveal_state = get_silhouette_reveal_state(request.session)
+            tower_reveal = reveal_state if reveal_state and reveal_state.get("tower_key") == self.tower_config.key else None
+            if tower_reveal and tower_reveal.get("status") == "correct" and tower_reveal.get("next_run_state"):
+                try:
+                    advance_silhouette_run(request.session, self.tower_config.key)
+                except ValueError:
+                    pass
+            return redirect(reverse("game:silhouette_tower", kwargs={"tower_key": self.tower_config.key}))
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1198,6 +1216,7 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
                 return redirect(return_url)
             payout = cash_out_silhouette_run(request.user, request.session, tower_run)
             messages.success(request, f"You cashed out {payout} Ryo from {self.tower_config.title}.")
+            _quest_service.on_silhouette_played(request.user)
             return redirect(return_url)
 
         if action == "abandon":
@@ -1237,8 +1256,10 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
 
             if result["status"] == "cleared":
                 messages.success(request, f"Tower cleared! {correct_name} finished the climb. You earned {result['payout']} Ryo.")
+                _quest_service.on_silhouette_played(request.user)
             elif result["status"] == "wrong":
                 messages.error(request, f"Wrong. It was {correct_name}. You salvaged {result['payout']} Ryo from the run.")
+                _quest_service.on_silhouette_played(request.user)
             return redirect(return_url)
 
         messages.error(request, "Unknown tower action.")

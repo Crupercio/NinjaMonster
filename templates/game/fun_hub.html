@@ -47,7 +47,45 @@
 .wallet-card span { color: var(--text-3); font-size: .75rem; }
 .wallet-card em { display:block; margin-top: .35rem; font-style: normal; color: #c4b5fd; font-size: 1.08rem; font-weight: 800; }
 
-.games-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+/* ── Games Grid — featured layout ────────────────────────────── */
+.games-grid { display: grid; grid-template-columns: 1.45fr 1fr 1fr; gap: 1rem; align-items: start; }
+.game-card.featured .game-logo { height: 290px; }
+.game-card.featured .game-title { font-size: 1.6rem; }
+.game-card.featured .game-copy { font-size: .94rem; }
+.active-players-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  border-radius: 999px; border: 1px solid rgba(74,222,128,.32);
+  background: rgba(22,101,52,.22); color: #86efac;
+  padding: .28rem .58rem; font-size: .7rem; font-weight: 700; margin-left: .4rem;
+}
+.active-players-chip::before { content: "●"; font-size: .55rem; animation: pulse 1.8s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* Coming Soon card */
+.game-card.coming-soon { border-color: rgba(167,139,250,.22); }
+.game-card.coming-soon::before {
+  background: radial-gradient(circle at top right, rgba(167,139,250,.12), transparent 48%);
+}
+.cs-silhouette {
+  height: 220px; border-radius: 20px; border: 1px solid rgba(167,139,250,.18);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(139,92,246,.22), transparent 55%),
+    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .95rem; position: relative; overflow: hidden;
+}
+.cs-silhouette::after {
+  content: "???"; font-family: 'Chakra Petch', sans-serif; font-size: 3.5rem;
+  font-weight: 800; color: rgba(139,92,246,.35);
+  letter-spacing: .1em; animation: csFloat 3s ease-in-out infinite;
+}
+@keyframes csFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.cs-scan {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(139,92,246,.12) 50%, transparent 100%);
+  animation: csScan 2.4s linear infinite;
+}
+@keyframes csScan { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
 .game-card { padding: 1.15rem 1.15rem 1.1rem; overflow: hidden; position: relative; }
 .game-card::before {
   content: ""; position: absolute; inset: 0;
@@ -92,8 +130,48 @@
 .game-actions { display:flex; gap:.65rem; flex-wrap:wrap; }
 .btn-disabled { opacity: .55; cursor: not-allowed; pointer-events: none; }
 
+/* ── Daily Challenge Widget ─────────────────────────────────── */
+.daily-challenge {
+  background: linear-gradient(135deg, rgba(232,184,75,.10) 0%, rgba(25,38,78,.96) 40%);
+  border: 1px solid rgba(232,184,75,.32);
+  border-radius: 22px;
+  padding: 1rem 1.3rem;
+  margin-bottom: 1.45rem;
+  display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap;
+}
+.dc-icon { font-size: 2rem; flex-shrink: 0; }
+.dc-body { flex: 1; min-width: 200px; }
+.dc-label {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .18em;
+  color: var(--accent-gold); font-weight: 700; margin-bottom: .3rem;
+}
+.dc-title { color: var(--text-1); font-weight: 700; font-size: 1.02rem; margin-bottom: .55rem; font-family: 'Chakra Petch', sans-serif; }
+.dc-tasks { display: flex; flex-direction: column; gap: .35rem; }
+.dc-task {
+  display: flex; align-items: center; gap: .55rem;
+  color: var(--text-2); font-size: .88rem;
+}
+.dc-task.done { color: var(--text-3); text-decoration: line-through; }
+.dc-check {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 2px solid rgba(232,184,75,.45); background: rgba(10,15,29,.7);
+  display: flex; align-items: center; justify-content: center; font-size: .72rem;
+}
+.dc-task.done .dc-check { background: rgba(74,222,128,.22); border-color: rgba(74,222,128,.55); }
+.dc-reward {
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  background: rgba(10,15,29,.65); border: 1px solid rgba(232,184,75,.22);
+  border-radius: 16px; padding: .65rem .9rem; text-align: center; flex-shrink: 0;
+}
+.dc-reward-label { font-size: .64rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .14em; }
+.dc-reward-val { font-size: 1.35rem; font-weight: 800; color: var(--accent-gold); font-family: 'Chakra Petch', sans-serif; }
+.dc-reward-val.claimed { color: #86efac; font-size: 1rem; }
+.dc-progress-bar { margin-top: .55rem; height: 5px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.dc-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-gold), #f97316); transition: width .6s ease; }
+
 @media (max-width: 1080px) {
   .fun-hero, .games-grid { grid-template-columns: 1fr; }
+  .game-card.featured .game-logo { height: 220px; }
 }
 </style>
 {% endblock %}
@@ -140,8 +218,23 @@
     </aside>
   </section>
 
-  <section class="games-grid">
-    <article class="game-card">
+  <!-- ── Daily Challenge Widget ────────────────────────────────── -->
+  <div class="daily-challenge" id="daily-challenge" style="display:none">
+    <div class="dc-icon">🎯</div>
+    <div class="dc-body">
+      <div class="dc-label">Daily Challenge · <span id="dc-date-label"></span></div>
+      <div class="dc-title" id="dc-title">Today's Duo</div>
+      <div class="dc-tasks" id="dc-tasks"></div>
+      <div class="dc-progress-bar"><div class="dc-progress-fill" id="dc-progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="dc-reward">
+      <div class="dc-reward-label">Bonus</div>
+      <div class="dc-reward-val" id="dc-reward-val">+200 Ryo</div>
+    </div>
+  </div>
+
+  <section class="games-grid" id="games-grid">
+    <article class="game-card" id="gc-silhouette">
       <div class="game-head">
         <div>
           <div class="game-kicker">Skill Game</div>
@@ -170,7 +263,7 @@
       </div>
     </article>
 
-    <article class="game-card">
+    <article class="game-card" id="gc-memory">
       <div class="game-head">
         <div>
           <div class="game-kicker">Memory Game</div>
@@ -199,11 +292,11 @@
       </div>
     </article>
 
-    <article class="game-card">
+    <article class="game-card" id="gc-loteria">
       <div class="game-head">
         <div>
           <div class="game-kicker">Luck Game</div>
-          <h2 class="game-title">Pokemon Loteria</h2>
+          <h2 class="game-title">Pokemon Loteria <span class="active-players-chip" id="loteria-active-chip" style="display:none"></span></h2>
         </div>
         <div class="game-status live">Live</div>
       </div>
@@ -228,5 +321,165 @@
       </div>
     </article>
   </section>
+
+  <!-- ── Coming Soon Teasers ────────────────────────────────── -->
+  <section style="margin-top:.85rem; display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem;">
+    <article class="game-card coming-soon">
+      <div class="game-head">
+        <div>
+          <div class="game-kicker">Coming Soon</div>
+          <h2 class="game-title" style="color:#c4b5fd;">??? Cabinet</h2>
+        </div>
+        <div class="game-status" style="color:#a78bfa; border-color:rgba(167,139,250,.3);">In Dev</div>
+      </div>
+      <div class="cs-silhouette"><div class="cs-scan"></div></div>
+      <p class="game-copy">A new collector cabinet is being built in the back room. Something competitive. Something with stakes. Watch this space.</p>
+      <div class="game-meta">
+        <div class="meta-box"><span class="meta-label">Status</span><span class="meta-value" style="color:#a78bfa;">Classified</span></div>
+        <div class="meta-box"><span class="meta-label">ETA</span><span class="meta-value">Soon™</span></div>
+      </div>
+      <div class="game-actions"><span class="btn btn-secondary btn-disabled">Not Yet Open</span></div>
+    </article>
+
+    <article class="game-card coming-soon">
+      <div class="game-head">
+        <div>
+          <div class="game-kicker">Coming Soon</div>
+          <h2 class="game-title" style="color:#c4b5fd;">Guild Raids</h2>
+        </div>
+        <div class="game-status" style="color:#a78bfa; border-color:rgba(167,139,250,.3);">Planned</div>
+      </div>
+      <div class="cs-silhouette"><div class="cs-scan"></div></div>
+      <p class="game-copy">Team up with your guild to take on raid bosses and split the spoils. Rare sticker drops, pack bonuses, and champion bragging rights.</p>
+      <div class="game-meta">
+        <div class="meta-box"><span class="meta-label">Players</span><span class="meta-value" style="color:#a78bfa;">Co-op</span></div>
+        <div class="meta-box"><span class="meta-label">Rewards</span><span class="meta-value">Rare drops</span></div>
+      </div>
+      <div class="game-actions"><span class="btn btn-secondary btn-disabled">Not Yet Open</span></div>
+    </article>
+  </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  // Rotating daily challenges — keyed by day-of-week (0=Sun … 6=Sat)
+  const CHALLENGES = [
+    { title: "Tower & Memory Sunday", tasks: [
+        { label: "Reach Floor 3 in Silhouette Tower", key: "silhouette_floor3" },
+        { label: "Clear any Memory board", key: "memory_clear" }
+      ], reward: "+200 Ryo" },
+    { title: "Monday Grind", tasks: [
+        { label: "Play 2 Silhouette Tower runs", key: "silhouette_2runs" },
+        { label: "Play a Loteria round", key: "loteria_round" }
+      ], reward: "+180 Ryo" },
+    { title: "Memory Tuesday", tasks: [
+        { label: "Clear 2 Memory boards", key: "memory_2clears" },
+        { label: "Reach Floor 5 in Silhouette Tower", key: "silhouette_floor5" }
+      ], reward: "+250 Ryo" },
+    { title: "Wild Wednesday", tasks: [
+        { label: "Play all 3 games today", key: "play_all_3" },
+        { label: "Clear any Memory board in under 90s", key: "memory_speed" }
+      ], reward: "+300 Ryo" },
+    { title: "Tower Thursday", tasks: [
+        { label: "Cash out with 3+ correct in Silhouette", key: "silhouette_cashout3" },
+        { label: "Mark 8+ cells in a Loteria round", key: "loteria_8cells" }
+      ], reward: "+220 Ryo" },
+    { title: "Friday Frenzy", tasks: [
+        { label: "Play 3 Silhouette Tower runs", key: "silhouette_3runs" },
+        { label: "Clear the 6×6 Memory board", key: "memory_6x6" }
+      ], reward: "+280 Ryo" },
+    { title: "Weekend Collector", tasks: [
+        { label: "Play a full Loteria round (Buena!)", key: "loteria_buena" },
+        { label: "Reach Floor 4 in Silhouette Tower", key: "silhouette_floor4" }
+      ], reward: "+240 Ryo" },
+  ];
+
+  const today = new Date();
+  const dateKey = today.toISOString().slice(0, 10);
+  const dow = today.getDay();
+  const challenge = CHALLENGES[dow];
+  const storageKey = 'dc_progress_' + dateKey;
+
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch(e) {}
+
+  function save() { localStorage.setItem(storageKey, JSON.stringify(progress)); }
+
+  function render() {
+    const widget = document.getElementById('daily-challenge');
+    widget.style.display = 'flex';
+    document.getElementById('dc-date-label').textContent = today.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+    document.getElementById('dc-title').textContent = challenge.title;
+    document.getElementById('dc-reward-val').textContent = challenge.reward;
+
+    const tasksEl = document.getElementById('dc-tasks');
+    tasksEl.innerHTML = '';
+    let doneCount = 0;
+
+    challenge.tasks.forEach(function(task) {
+      const done = !!progress[task.key];
+      if (done) doneCount++;
+      const row = document.createElement('div');
+      row.className = 'dc-task' + (done ? ' done' : '');
+      row.innerHTML =
+        '<div class="dc-check">' + (done ? '✓' : '') + '</div>' +
+        '<span>' + task.label + '</span>';
+      tasksEl.appendChild(row);
+    });
+
+    const pct = Math.round(doneCount / challenge.tasks.length * 100);
+    document.getElementById('dc-progress-fill').style.width = pct + '%';
+
+    if (doneCount === challenge.tasks.length) {
+      document.getElementById('dc-reward-val').textContent = '✓ Complete!';
+      document.getElementById('dc-reward-val').classList.add('claimed');
+    }
+  }
+
+  // Expose so game pages can call window.dcComplete('key') on relevant events
+  window.dcComplete = function(taskKey) {
+    const today2 = new Date().toISOString().slice(0, 10);
+    const sk = 'dc_progress_' + today2;
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem(sk) || '{}'); } catch(e) {}
+    if (!p[taskKey]) {
+      p[taskKey] = true;
+      localStorage.setItem(sk, JSON.stringify(p));
+      if (typeof showToast === 'function') {
+        showToast('Daily challenge task completed! 🎯', 'success');
+      }
+    }
+  };
+
+  render();
+})();
+
+// ── Featured game rotation (day-of-week) ─────────────────────
+(function() {
+  const ORDER = ['silhouette', 'memory', 'loteria'];
+  const featured = ORDER[new Date().getDay() % ORDER.length];
+  const el = document.getElementById('gc-' + featured);
+  if (el) el.classList.add('featured');
+  // Re-order grid so featured is always first visually on mobile
+  const grid = document.getElementById('games-grid');
+  if (grid && el && grid.firstElementChild !== el) {
+    grid.insertBefore(el, grid.firstElementChild);
+  }
+})();
+
+// ── Loteria active players chip ───────────────────────────────
+(function() {
+  // Show a fake-but-plausible "active players" count based on time of day
+  var chip = document.getElementById('loteria-active-chip');
+  if (!chip) return;
+  var hour = new Date().getHours();
+  // More players in evening hours
+  var base = (hour >= 18 && hour <= 22) ? 8 : (hour >= 12 && hour < 18) ? 4 : 2;
+  var count = base + Math.floor(Math.random() * 4);
+  chip.textContent = count + ' playing';
+  chip.style.display = 'inline-flex';
+})();
+</script>
 {% endblock %}

@@ -55,6 +55,9 @@
 .hub-note { margin-top:.85rem; padding:.9rem 1rem; }
 .hub-note strong { display:block; color:var(--text-1); font-size:.92rem; margin-bottom:.2rem; }
 .hub-note span { color:var(--text-2); font-size:.84rem; line-height:1.5; }
+.board-mascot-tag { display:flex; align-items:baseline; gap:.45rem; margin-bottom:.45rem; }
+.mascot-name { color:#a78bfa; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+.mascot-quote { color:var(--text-3); font-size:.76rem; font-style:italic; }
 @media (max-width: 1180px) { .memory-top, .board-grid { grid-template-columns: 1fr; } }
 @media (max-width: 900px) { .board-meta { grid-template-columns:1fr; } }
 </style>
@@ -113,6 +116,17 @@
         </div>
 
         <h3 class="board-title">{{ board_card.config.title }}</h3>
+        <div class="board-mascot-tag">
+          {% if board_card.config.key == 'rookie_3x4' %}
+          <span class="mascot-name">Penny</span><span class="mascot-quote">"Every flip is a fresh start!"</span>
+          {% elif board_card.config.key == 'standard_4x4' %}
+          <span class="mascot-name">Biscuit</span><span class="mascot-quote">"Find your rhythm and trust it."</span>
+          {% elif board_card.config.key == 'collector_4x5' %}
+          <span class="mascot-name">Rex</span><span class="mascot-quote">"Precision over speed."</span>
+          {% elif board_card.config.key == 'master_6x4' %}
+          <span class="mascot-name">Nova</span><span class="mascot-quote">"The mind never forgets."</span>
+          {% endif %}
+        </div>
         <div class="board-tags">
           <span class="board-tag">{{ board_card.config.rows }} x {{ board_card.config.cols }}</span>
           <span class="board-tag">{{ board_card.config.pair_count }} pairs</span>
@@ -152,5 +166,86 @@
       <span>Clear the board, finish with fewer turns, and keep your pace clean for better rewards. The active play page stays focused on the card grid, your stats, and your finish grade.</span>
     </div>
   </section>
+
+  <!-- Leaderboard Strip -->
+  <section id="memory-lb-section" style="display:none; margin-top:1.15rem;">
+    <div class="section-head">
+      <h2 class="section-title">🏆 Top Clears · This Device</h2>
+      <div class="section-copy">Best board completions ranked by grade, then fewest turns.</div>
+    </div>
+    <div id="memory-lb-strip" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem;"></div>
+  </section>
+
+  <!-- Personal Bests -->
+  <section id="memory-bests-section" style="display:none; margin-top:1.15rem;">
+    <div class="section-head">
+      <h2 class="section-title">Your Records</h2>
+      <div class="section-copy">Best clears saved on this device.</div>
+    </div>
+    <div id="memory-bests-grid" style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.85rem;"></div>
+  </section>
 </div>
+
+{% block extra_js %}
+<script>
+// ── Leaderboard strip: top 3 memory clears ──
+(function() {
+  var GRADE_RANK = { Perfect: 4, Great: 3, Good: 2, Clear: 1 };
+  var gradeColors = { Perfect: '#e8b84b', Great: '#86efac', Good: '#60a5fa', Clear: '#94a3b8' };
+  var medals = ['🥇', '🥈', '🥉'];
+  var bests = JSON.parse(localStorage.getItem('memory_bests') || '{}');
+  var entries = Object.values(bests).filter(function(b) { return b && b.grade; });
+  if (!entries.length) return;
+
+  entries.sort(function(a, b) {
+    var gr = (GRADE_RANK[b.grade] || 0) - (GRADE_RANK[a.grade] || 0);
+    if (gr !== 0) return gr;
+    return (a.turns || 999) - (b.turns || 999);
+  });
+  var top3 = entries.slice(0, 3);
+  var lbSection = document.getElementById('memory-lb-section');
+  var lbStrip = document.getElementById('memory-lb-strip');
+  if (!lbSection || !lbStrip) return;
+  lbSection.style.display = '';
+
+  lbStrip.innerHTML = top3.map(function(b, i) {
+    var gc = gradeColors[b.grade] || '#94a3b8';
+    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
+      '<div style="font-size:2rem;flex-shrink:0;">' + medals[i] + '</div>' +
+      '<div>' +
+        '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.2rem;">' + (b.board || 'Board') + '</div>' +
+        '<div style="color:' + gc + ';font-family:\'Chakra Petch\',sans-serif;font-size:1.45rem;font-weight:800;line-height:1;">' + b.grade + '</div>' +
+        '<div style="color:var(--text-2);font-size:.8rem;margin-top:.25rem;">' + b.turns + ' turns · ' + b.seconds + 's</div>' +
+        '<div style="color:#c4b5fd;font-size:.78rem;margin-top:.15rem;">' + b.ryo + ' Ryo · ' + (b.date || '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+})();
+
+(function() {
+  var bests = JSON.parse(localStorage.getItem('memory_bests') || '{}');
+  var keys = Object.keys(bests);
+  if (!keys.length) return;
+
+  var section = document.getElementById('memory-bests-section');
+  var grid = document.getElementById('memory-bests-grid');
+  if (!section || !grid) return;
+  section.style.display = '';
+
+  var gradeColors = { Perfect: '#e8b84b', Great: '#86efac', Good: '#60a5fa', Clear: '#94a3b8' };
+
+  grid.innerHTML = keys.map(function(key) {
+    var b = bests[key];
+    var gc = gradeColors[b.grade] || '#94a3b8';
+    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.22);border-radius:20px;padding:.9rem 1rem;">' +
+      '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.35rem;">' + (b.board || key) + '</div>' +
+      '<div style="color:' + gc + ';font-family:\'Chakra Petch\',sans-serif;font-size:1.3rem;font-weight:800;line-height:1.1;">' + b.grade + '</div>' +
+      '<div style="color:var(--text-2);font-size:.82rem;margin-top:.3rem;">' + b.turns + ' turns · ' + b.seconds + 's</div>' +
+      '<div style="color:#c4b5fd;font-size:.78rem;margin-top:.18rem;">' + b.ryo + ' Ryo · ' + b.dust + ' Dust</div>' +
+      '<div style="color:var(--text-3);font-size:.72rem;margin-top:.18rem;">' + (b.date || '') + '</div>' +
+      '</div>';
+  }).join('');
+})();
+</script>
+{% endblock %}
 {% endblock %}

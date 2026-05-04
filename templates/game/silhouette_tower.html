@@ -3,6 +3,9 @@
 {% block title %}{{ tower.title }}{% endblock %}
 
 {% block extra_css %}
+{% if auto_advance %}
+<meta http-equiv="refresh" content="2;url={% url 'game:silhouette_tower' tower.key %}?advance=1">
+{% endif %}
 <style>
 .tower-shell { max-width: 1220px; margin: 0 auto; padding: 1rem 0 2.25rem; }
 .tower-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
@@ -52,6 +55,63 @@
     url("{% static guess_background %}") center/cover no-repeat;
   padding:1rem;
   display:flex; flex-direction:column; justify-content:space-between;
+}
+
+/* ── Tower Themes ──────────────────────────────────────────── */
+/* Rookie: warm sunny yellow — friendly, beginner */
+.theme-rookie .stage-panel {
+  border-color: rgba(251,191,36,.28);
+  box-shadow: 0 0 0 1px rgba(251,191,36,.10), inset 0 0 80px rgba(251,191,36,.07);
+}
+.theme-rookie .stage-panel::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(251,191,36,.18) 0%, transparent 65%);
+}
+.theme-rookie .stage-floor { color:#fbbf24; }
+.theme-rookie .bank-value.gold { color:#fbbf24; }
+
+/* Regional: forest green — adventurous, all-generations */
+.theme-regional .stage-panel {
+  border-color: rgba(74,222,128,.24);
+  box-shadow: 0 0 0 1px rgba(74,222,128,.08), inset 0 0 80px rgba(74,222,128,.06);
+}
+.theme-regional .stage-panel::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(74,222,128,.16) 0%, transparent 65%);
+}
+.theme-regional .stage-floor { color:#4ade80; }
+.theme-regional .bank-value.gold { color:#4ade80; }
+
+/* Master: deep blue cave — dark, serious */
+.theme-master .stage-panel {
+  border-color: rgba(96,165,250,.28);
+  box-shadow: 0 0 0 1px rgba(96,165,250,.10), inset 0 0 80px rgba(96,165,250,.08);
+}
+.theme-master .stage-panel::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(96,165,250,.18) 0%, transparent 65%);
+}
+.theme-master .stage-floor { color:#60a5fa; }
+.theme-master .bank-value.gold { color:#60a5fa; }
+
+/* National: cosmic purple — epic, 905 Pokemon */
+.theme-national .stage-panel {
+  border-color: rgba(167,139,250,.32);
+  box-shadow: 0 0 0 1px rgba(167,139,250,.12), inset 0 0 80px rgba(167,139,250,.10);
+}
+.theme-national .stage-panel::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(167,139,250,.22) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(232,121,249,.12) 0%, transparent 50%);
+}
+.theme-national .stage-floor { color:#a78bfa; }
+.theme-national .bank-value.gold { color:#a78bfa; }
+/* Star particles for national */
+.theme-national .stage-panel::before {
+  content:"✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧"; position:absolute; top:.75rem; left:0; right:0;
+  text-align:center; font-size:.55rem; color:rgba(167,139,250,.35);
+  letter-spacing:.5rem; pointer-events:none;
 }
 .stage-top, .stage-foot { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap; }
 .stage-floor { color:var(--accent-gold); font-size:.78rem; text-transform:uppercase; letter-spacing:.16em; font-weight:700; }
@@ -132,11 +192,21 @@
 
 @media (max-width: 1120px) { .tower-grid { grid-template-columns:1fr; } }
 @media (max-width: 900px) { .metric-grid, .option-grid { grid-template-columns:1fr; } }
+
+/* Run history log */
+.run-log { margin-top:1rem; border-radius:22px; border:1px solid rgba(91,129,255,.22); background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96)); box-shadow:0 20px 40px rgba(0,0,0,.28); padding:.9rem 1rem; }
+.run-log-title { color:var(--text-3); font-size:.68rem; text-transform:uppercase; letter-spacing:.16em; font-weight:700; margin-bottom:.65rem; }
+.run-log-list { display:flex; gap:.55rem; flex-wrap:wrap; align-items:center; }
+.run-log-chip { display:inline-flex; align-items:center; gap:.35rem; border-radius:12px; padding:.35rem .6rem .35rem .4rem; border:1px solid transparent; font-size:.75rem; font-weight:700; }
+.run-log-chip.correct { background:rgba(22,101,52,.22); border-color:rgba(74,222,128,.28); color:#bbf7d0; }
+.run-log-chip.wrong { background:rgba(127,29,29,.24); border-color:rgba(248,113,113,.28); color:#fecaca; }
+.run-log-chip img { width:28px; height:28px; object-fit:contain; border-radius:6px; }
+.run-log-empty { color:var(--text-3); font-size:.82rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="tower-shell">
+<div class="tower-shell theme-{% if tower.key == 'rookie' %}rookie{% elif tower.key == 'regional_100' %}regional{% elif tower.key == 'master_500' %}master{% elif tower.key == 'national_905' %}national{% else %}rookie{% endif %}">
   <a href="{% url 'game:silhouette_hub' %}" class="tower-back">&larr; Back to Silhouette Hub</a>
 
   {% if messages %}
@@ -222,9 +292,9 @@
             Spend candy to enter, clear one silhouette at a time, and decide how long you want to stay in the cabinet.
           {% endif %}
         </div>
-        <div class="stage-chip">
-          {% if reveal_mode and auto_advance %}
-            Advancing...
+        <div class="stage-chip" id="stage-chip-txt">
+          {% if reveal_mode and tower_reveal.status == 'correct' %}
+            Advancing... <button type="button" id="manual-advance-btn" onclick="document.getElementById('auto-advance-form').submit()" style="margin-left:.5rem;background:rgba(232,184,75,.18);border:1px solid rgba(232,184,75,.4);border-radius:8px;color:var(--accent-gold);padding:.2rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer;display:none;">Continue →</button>
           {% else %}
             6 choices • 50% safety on a miss
           {% endif %}
@@ -344,22 +414,208 @@
   </section>
   {% endif %}
 
-  {% if auto_advance %}
+  {% if reveal_mode %}
   <form id="auto-advance-form" method="post" style="display:none;">
     {% csrf_token %}
     <input type="hidden" name="action" value="advance">
   </form>
   {% endif %}
+
+  <!-- Run Answer History -->
+  {% if tower_run or tower_reveal %}
+  <div class="run-log" id="run-log-panel">
+    <div class="run-log-title">◆ Run History — This Session</div>
+    <div class="run-log-list" id="run-log-list">
+      <span class="run-log-empty">No answers yet this run.</span>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% if auto_advance %}
 <script>
-  window.setTimeout(function () {
-    const form = document.getElementById('auto-advance-form');
-    if (form) form.submit();
-  }, 1500);
+(function() {
+  // ── Silhouette Tower — Sound & Micro-interactions ──────────
+
+  // ── Save personal best to localStorage ────────────────────
+  function saveBest(towerKey, towerTitle, floor, ryo) {
+    var bests = JSON.parse(localStorage.getItem('silhouette_bests') || '{}');
+    var prev = bests[towerKey];
+    if (!prev || floor > prev.floor || (floor === prev.floor && ryo > prev.ryo)) {
+      bests[towerKey] = {
+        tower: towerTitle,
+        floor: floor,
+        ryo: ryo,
+        date: new Date().toLocaleDateString()
+      };
+      localStorage.setItem('silhouette_bests', JSON.stringify(bests));
+    }
+  }
+
+  // Fire sounds based on current reveal state
+  var revealStatus = "{{ tower_reveal.status|default:'' }}";
+  var autoAdvance  = {{ auto_advance|yesno:"true,false" }};
+  var bankedRyo    = {{ tower_run.banked_ryo|default:0 }};
+
+  window.addEventListener('load', function() {
+    if (!window.GameSounds) return;
+
+    if (revealStatus === 'correct') {
+      GameSounds.play('correct');
+      setTimeout(function() { GameSounds.play('coin'); }, 320);
+      spawnRyoFloat();
+    } else if (revealStatus === 'wrong') {
+      GameSounds.play('wrong');
+      // Save best on wrong answer (run ends with salvage)
+      saveBest(
+        '{{ tower.key }}', '{{ tower.title }}',
+        {{ tower_reveal.floor_number|default:0 }},
+        {{ tower_reveal.payout|default:0 }}
+      );
+    } else if (revealStatus === 'cleared') {
+      GameSounds.play('victory');
+      spawnVictoryFlash();
+      saveBest(
+        '{{ tower.key }}', '{{ tower.title }}',
+        {{ tower.max_floors }},
+        {{ tower_reveal.payout|default:0 }}
+      );
+    }
+  });
+
+  // Ryo float-up from the bank box
+  function spawnRyoFloat() {
+    var bankEl = document.querySelector('.bank-value.gold');
+    if (!bankEl) return;
+    var rect = bankEl.getBoundingClientRect();
+    var el = document.createElement('div');
+    el.className = 'ryo-float';
+    el.textContent = '+Ryo';
+    el.style.cssText = 'left:' + (rect.left + rect.width/2 - 24) + 'px;top:' + (rect.top + window.scrollY - 8) + 'px;';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 1000);
+  }
+
+  // Gold screen flash on victory
+  function spawnVictoryFlash() {
+    var el = document.createElement('div');
+    el.className = 'victory-flash';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 800);
+  }
+
+  // ── Run history log (localStorage per tower run) ───────────
+  var RUN_LOG_KEY = 'silhouette_run_log_{{ tower.key }}';
+
+  function loadRunLog() {
+    try { return JSON.parse(localStorage.getItem(RUN_LOG_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function saveRunLog(log) {
+    try { localStorage.setItem(RUN_LOG_KEY, JSON.stringify(log.slice(-20))); } catch(e) {}
+  }
+  function clearRunLog() {
+    try { localStorage.removeItem(RUN_LOG_KEY); } catch(e) {}
+  }
+  function renderRunLog() {
+    var list = document.getElementById('run-log-list');
+    if (!list) return;
+    var log = loadRunLog();
+    if (!log.length) { list.innerHTML = '<span class="run-log-empty">No answers yet this run.</span>'; return; }
+    // Show last 8, most recent last (rightmost)
+    list.innerHTML = log.slice(-8).map(function(entry) {
+      var cls = entry.correct ? 'correct' : 'wrong';
+      var icon = entry.correct ? '✓' : '✗';
+      return '<span class="run-log-chip ' + cls + '">' +
+        (entry.image ? '<img src="' + entry.image + '" alt="">' : '') +
+        icon + ' ' + entry.name +
+        '</span>';
+    }).join('');
+  }
+
+  // Record current reveal into log
+  {% if tower_reveal and question_card %}
+  (function() {
+    var log = loadRunLog();
+    // Only add if not already recorded (page might reload)
+    var lastEntry = log[log.length - 1];
+    var thisName = '{{ question_card.name|escapejs }}';
+    if (!lastEntry || lastEntry.name !== thisName || lastEntry.floor !== {{ tower_reveal.floor_number|default:0 }}) {
+      log.push({
+        name: thisName,
+        image: '{{ question_card.image_url|escapejs }}',
+        correct: {{ tower_reveal.status|yesno:"'correct','wrong','cleared'" }} === 'correct' || {{ tower_reveal.status|yesno:"'correct','wrong','cleared'" }} === 'cleared',
+        floor: {{ tower_reveal.floor_number|default:0 }}
+      });
+      saveRunLog(log);
+    }
+    // Clear log when run ends
+    if ('{{ tower_reveal.status }}' === 'wrong' || '{{ tower_reveal.status }}' === 'cleared') {
+      setTimeout(clearRunLog, 3000);
+    }
+  })();
+  {% endif %}
+
+  renderRunLog();
+
+  // Option button click sound
+  document.querySelectorAll('.option-btn:not(.locked)').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (window.GameSounds) GameSounds.play('click');
+    });
+  });
+
+  // Cash out button
+  var cashOutBtn = document.querySelector('[name="action"][value="cash_out"]');
+  if (cashOutBtn) {
+    cashOutBtn.closest('form').addEventListener('submit', function() {
+      if (window.GameSounds) GameSounds.play('coin');
+      saveBest(
+        '{{ tower.key }}', '{{ tower.title }}',
+        {{ cleared_count|default:0 }},
+        {{ tower_run.banked_ryo|default:0 }}
+      );
+    });
+  }
+
+})();
+
+// Auto-advance — fires whenever we're in a correct reveal, independent of IIFE
+(function() {
+  var revealStatus = "{{ tower_reveal.status|default:'' }}";
+  var hasNextState = {{ auto_advance|yesno:"true,false" }};
+  if (revealStatus !== 'correct' || !hasNextState) return;
+
+  var fired = false;
+  function doAdvance() {
+    if (fired) return;
+    fired = true;
+    try { if (window.GameSounds) GameSounds.play('floorUp'); } catch(e) {}
+    setTimeout(function() {
+      var form = document.getElementById('auto-advance-form');
+      if (form) {
+        form.submit();
+      } else {
+        // Fallback: direct POST via fetch
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        var token = csrfToken ? csrfToken.value : '';
+        fetch(window.location.href, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'csrfmiddlewaretoken=' + encodeURIComponent(token) + '&action=advance'
+        }).then(function(r) { if (r.ok || r.redirected) window.location.reload(); });
+      }
+    }, 300);
+  }
+
+  // Primary: auto-fire after 1500ms
+  setTimeout(doAdvance, 1500);
+
+  // Fallback: show manual button after 3s if still on page
+  setTimeout(function() {
+    var btn = document.getElementById('manual-advance-btn');
+    if (btn && !fired) btn.style.display = 'inline-block';
+  }, 3000);
+})();
 </script>
-{% endif %}
 {% endblock %}

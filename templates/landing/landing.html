@@ -1,4 +1,4 @@
-{% load static %}
+{% load static sticker_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,7 +56,7 @@
       <div class="stat-dot dot-blue"></div>
       <div>
         <div class="stat-label">Pokedex</div>
-        <div class="stat-value">898</div>
+        <div class="stat-value">{{ pokedex_total }}</div>
         <div class="stat-sub">Pokemon to collect</div>
       </div>
     </div>
@@ -90,43 +90,80 @@
     </div>
     <div class="section-title">Build Your Collection</div>
     <div class="section-body">
-      7 rarity tiers x 7 art variants per Pokemon. Every pack is a chance at a
-      Holographic, Full Art, or Secret Rare. Craft what you're missing using Sticker Dust.
+      Seven rarity tiers, a deep variant pool, and plenty of reasons to keep opening packs.
+      Chase Prismatic, Full Art, and Secret Rare highlights, then craft the missing pieces with Sticker Dust.
     </div>
-    <div class="cards-grid">
-      {% for pokemon in featured_pokemon %}
-      <a class="poke-card {% if forloop.counter == 1 %}rarity-holo{% elif forloop.counter == 2 %}rarity-epic{% elif forloop.counter == 3 %}rarity-rare{% else %}rarity-common{% endif %}" href="{% url 'pokemon:detail' pokemon.pk %}">
-        <div class="card-dex-num">#{{ pokemon.pokedex_number|stringformat:'03d' }}</div>
-        {% if pokemon.pokedex_number %}
-          <img class="sprite"
-               src="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/{{ pokemon.pokedex_number|stringformat:'03d' }}.png"
-               alt="{{ pokemon.name }}">
-        {% elif pokemon.sprite_url %}
-          <img class="sprite" src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
-        {% else %}
-          <div class="sprite sprite-missing">?</div>
-        {% endif %}
-        <div class="card-bottom">
-          <div class="card-name-row">
-            <span class="poke-name">{{ pokemon.name }}</span>
+    <div class="featured-showcase-grid">
+      {% for card in featured_showcase_cards %}
+      <a class="feature-pull-card rarity-{{ card.rarity }}" href="{% url 'pokemon:detail' card.pokemon.pk %}">
+        <div class="feature-pull-head">
+          <span class="card-dex-num">#{{ card.pokemon.pokedex_number|stringformat:'03d' }}</span>
+          <span class="feature-pull-rarity feature-pull-rarity-{{ card.rarity }}">{{ card.rarity_label }}</span>
+        </div>
+        <div class="feature-pull-stage feature-pull-stage-{{ card.rarity }}">
+          <img class="feature-pull-sprite {{ card.fit|default:'' }}"
+               src="{{ card.pokemon.pokedex_number|sticker_sprite:card.variant }}"
+               alt="{{ card.pokemon.name }} {{ card.variant_label }}"
+               onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+          <img class="feature-pull-frame"
+               src="/static/img/frames/{{ card.rarity }}.png"
+               alt="">
+        </div>
+        <div class="feature-pull-body">
+          <div class="feature-pull-name-row">
+            <span class="poke-name">{{ card.pokemon.name }}</span>
+            <span class="feature-pull-variant">{{ card.variant_label }}</span>
           </div>
           <div class="card-meta-row">
             <div class="poke-types">
-              <span class="type-badge type-{{ pokemon.primary_type.name|lower }}">{{ pokemon.primary_type.name }}</span>
-              {% if pokemon.secondary_type %}
-                <span class="type-badge type-{{ pokemon.secondary_type.name|lower }}">{{ pokemon.secondary_type.name }}</span>
+              <span class="type-badge type-{{ card.pokemon.primary_type.name|lower }}">{{ card.pokemon.primary_type.name }}</span>
+              {% if card.pokemon.secondary_type %}
+                <span class="type-badge type-{{ card.pokemon.secondary_type.name|lower }}">{{ card.pokemon.secondary_type.name }}</span>
               {% endif %}
             </div>
-            <span class="rarity-badge {% if forloop.counter == 1 %}rb-holo{% elif forloop.counter == 2 %}rb-epic{% elif forloop.counter == 3 %}rb-rare{% else %}rb-common{% endif %}">
-              {% if forloop.counter == 1 %}&#9670; Holo{% elif forloop.counter == 2 %}&#9670; Epic{% elif forloop.counter == 3 %}&#9679; Rare{% else %}&#9675; Common{% endif %}
-            </span>
           </div>
-          <div class="poke-combo">Album target for packs, expeditions, and guild donations.</div>
+          <div class="poke-combo">{{ card.caption }}</div>
         </div>
       </a>
-      {% empty %}
-        <p style="color:#9ca3af;grid-column:1/-1;text-align:center;padding:3rem;">No featured Pokemon found yet.</p>
       {% endfor %}
+    </div>
+    <div class="album-preview-shell">
+      <div class="album-preview-top">
+        <div>
+          <div class="album-preview-kicker">Mini Album Preview</div>
+          <h3 class="album-preview-title">Three Pokemon, a few hits, and a few missing slots to chase.</h3>
+        </div>
+        <div class="album-preview-pill">Collected and missing variants</div>
+      </div>
+      <div class="album-preview-grid">
+        {% for row in album_preview_rows %}
+        <article class="album-preview-row">
+          <div class="album-preview-mon">
+            <img class="album-preview-mon-sprite"
+                 src="{{ row.pokemon.pokedex_number|official_artwork }}"
+                 alt="{{ row.pokemon.name }}">
+            <div>
+              <div class="album-preview-mon-name">{{ row.pokemon.name }}</div>
+              <div class="album-preview-mon-meta">{{ row.rarity_label }} row · {{ row.slots|length }} variant slots shown</div>
+            </div>
+          </div>
+          <div class="album-preview-slots">
+            {% for slot in row.slots %}
+            <div class="album-slot album-slot-{{ row.rarity }}{% if slot.collected %} is-collected{% else %} is-missing{% endif %}">
+              <div class="album-slot-stage">
+                <img class="album-slot-sprite {{ row.fit|default:'' }}"
+                     src="{{ row.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+                     alt="{{ row.pokemon.name }} {{ slot.variant_label }}"
+                     onerror="this.src='{{ row.pokemon.pokedex_number|official_artwork }}'">
+                <img class="album-slot-frame" src="/static/img/frames/{{ row.rarity }}.png" alt="">
+              </div>
+              <div class="album-slot-label">{{ slot.variant_label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </section>
@@ -140,66 +177,36 @@
     </div>
     <div class="section-title">7 Tiers of Rarity</div>
     <div class="section-body">
-      From everyday Commons to ultra-rare Secret Rares, each Pokemon has 7 possible art variants.
-      Collect, craft, and complete your album.
+      From easy album staples to true chase pulls, every rarity tier changes how a pack feels and how fast your collection grows.
     </div>
-    <div class="rarity-ladder">
-      <div class="rarity-rung rarity-rung-common">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Common</span>
-          <span class="rr-desc">Base &amp; Chibi art - Craft: 10 Dust</span>
+    <div class="rarity-showcase-grid">
+      {% for sample in rarity_showcase_cards %}
+      <article class="rarity-card rarity-card-{{ sample.rarity }}">
+        <div class="rarity-card-top">
+          <div>
+            <div class="rarity-card-kicker">{{ sample.badge }}</div>
+            <h3 class="rarity-card-title">{{ sample.label }}</h3>
+          </div>
+          <span class="rarity-card-cost">{{ sample.craft_cost }} Dust</span>
         </div>
-        <span class="rr-badge">&#9675;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-uncommon">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Uncommon</span>
-          <span class="rr-desc">Shiny &amp; Anime art - Craft: 25 Dust</span>
+        <div class="rarity-card-stage">
+          {% if sample.pokemon.pokedex_number %}
+          <img
+            class="rarity-card-sprite {{ sample.fit|default:'' }}"
+            src="{{ sample.pokemon.pokedex_number|sticker_sprite:sample.variant }}"
+            alt="{{ sample.pokemon.name }} {{ sample.variant_label }}"
+            onerror="this.src='{{ sample.pokemon.pokedex_number|official_artwork }}'"
+          >
+          {% elif sample.pokemon.sprite_url %}
+          <img class="rarity-card-sprite {{ sample.fit|default:'' }}" src="{{ sample.pokemon.sprite_url }}" alt="{{ sample.pokemon.name }}">
+          {% endif %}
+          <img class="rarity-card-frame" src="/static/img/frames/{{ sample.rarity }}.png" alt="">
         </div>
-        <span class="rr-badge">&#9680;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-rare">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Rare</span>
-          <span class="rr-desc">Manga Panel art - Craft: 75 Dust</span>
-        </div>
-        <span class="rr-badge">&#9679;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-epic">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Epic</span>
-          <span class="rr-desc">Battle Scene art - Craft: 150 Dust</span>
-        </div>
-        <span class="rr-badge">&#9670;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-holo">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Holographic</span>
-          <span class="rr-desc">Holographic foil - Craft: 300 Dust</span>
-        </div>
-        <span class="rr-badge">&#9672;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-fullart">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Full Art</span>
-          <span class="rr-desc">Full Illustration art - Craft: 500 Dust</span>
-        </div>
-        <span class="rr-badge">&#10022;</span>
-      </div>
-      <div class="rarity-rung rarity-rung-secret">
-        <div class="rr-dot"></div>
-        <div class="rr-info">
-          <span class="rr-name">Secret Rare</span>
-          <span class="rr-desc">Ultra-rare variant - Craft: 1,000 Dust</span>
-        </div>
-        <span class="rr-badge">&#9733;</span>
-      </div>
+        <div class="rarity-card-name">{{ sample.pokemon.name }}</div>
+        <div class="rarity-card-variant">{{ sample.variant_label }}</div>
+        <p class="rarity-card-copy">{{ sample.description }}</p>
+      </article>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -213,8 +220,8 @@
     </div>
     <div class="section-title">Complete Every Region</div>
     <div class="section-body">
-      Organize your stickers by generation. Fill every slot across all 9 regions,
-      from Kanto's 151 to the modern Paldea roster.
+      Organize your stickers by generation and fill every slot from Kanto through Galar.
+      Every placed sticker pushes your personal album and your guild progress forward.
     </div>
     <div class="album-regions">
       <div class="region-card">
@@ -302,7 +309,7 @@
     </div>
     <div class="section-title">Always Something to Do</div>
     <div class="section-body">
-      Daily missions, weekly challenges, story quests, and zone expeditions keep your roster growing
+      Daily missions, weekly challenges, guild goals, and zone expeditions keep your roster growing
       and your wallet full of Ryo.
     </div>
     <div class="quest-cards">
@@ -320,9 +327,9 @@
       </div>
       <div class="quest-card">
         <div class="quest-icon" style="color:#a855f7;">&#10022;</div>
-        <div class="quest-type" style="color:#a855f7;">STORY QUEST</div>
+        <div class="quest-type" style="color:#a855f7;">GUILD QUEST</div>
         <div class="quest-name">Guild Welcome</div>
-        <div class="quest-desc">Join a guild and make your first album contribution for a starter reward.</div>
+        <div class="quest-desc">Join a guild, donate your first sticker, and push the shared album toward its next perk.</div>
       </div>
       <div class="quest-card">
         <div class="quest-icon" style="color:#4ade80;">&#11035;</div>

@@ -123,6 +123,9 @@
         Only Pokemon you own at level 20 or higher can be placed on custom boards.
       </p>
       <div class="hero-actions">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('loteria-rules-modal').style.display='flex'" style="gap:.45rem;">
+          ❓ How to Play
+        </button>
         <a href="{% url 'game:loteria_builder' board_builder_slot %}" class="btn btn-primary">
           {% if saved_board_count < deck.max_saved_boards %}Create Next Board{% else %}Edit Boards{% endif %}
         </a>
@@ -327,6 +330,15 @@
     </div>
   </section>
 
+  <!-- Leaderboard Strip -->
+  <section id="loteria-lb-section" style="display:none; margin-bottom:1rem;">
+    <div style="margin-bottom:.75rem;">
+      <h2 style="margin:0 0 .15rem;color:var(--text-1);font-family:'Chakra Petch',sans-serif;font-size:1.2rem;">🏆 Best Rounds · This Device</h2>
+      <div style="color:var(--text-2);font-size:.88rem;">Top 3 Ryo hauls from finished Loteria rounds.</div>
+    </div>
+    <div id="loteria-lb-strip" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem;"></div>
+  </section>
+
   <section class="result-grid">
     <article class="result-card">
       <div class="panel-kicker">Current Room</div>
@@ -380,4 +392,123 @@
     </article>
   </section>
 </div>
+
+<!-- ── Loteria Rules Modal ─────────────────────────────────── -->
+<div id="loteria-rules-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(5,8,20,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:linear-gradient(180deg,rgba(25,38,78,.98),rgba(12,18,38,.98));border:1px solid rgba(232,184,75,.28);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.55);max-width:760px;width:100%;padding:1.5rem 1.6rem;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('loteria-rules-modal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:999px;color:var(--text-2);width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+
+    <div style="color:var(--accent-gold);font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;font-weight:700;margin-bottom:.4rem;">◆ How to Play</div>
+    <h2 style="margin:0 0 .35rem;color:var(--text-1);font-family:'Chakra Petch',sans-serif;font-size:1.8rem;line-height:1;">Pokemon Loteria</h2>
+    <p style="color:var(--text-2);line-height:1.6;margin-bottom:1.25rem;">Like Mexican Bingo — a caller draws Pokemon cards one at a time every 4 seconds. Mark them on your board. First to complete a pattern wins that prize. All 4 patterns can be won in the same game.</p>
+
+    {% with on="background:linear-gradient(135deg,rgba(96,165,250,.9),rgba(59,130,246,.9))" off="background:rgba(9,14,27,.88);border:1px solid rgba(91,129,255,.16)" %}
+    {% with pon="background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(139,92,246,.9))" oon="background:linear-gradient(135deg,rgba(249,115,22,.9),rgba(234,88,12,.9))" gon="background:linear-gradient(135deg,rgba(232,184,75,.9),rgba(200,152,42,.9))" %}
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem;margin-bottom:1.2rem;">
+
+      <!-- Chorro: top row highlighted -->
+      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+        <div style="color:#60a5fa;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Chorro</div>
+        <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">Any full row, column, or diagonal</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ on }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ on }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ on }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ on }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+        </div>
+        <div style="color:var(--text-2);font-size:.78rem;">Side prize — first to call it wins solo.</div>
+      </div>
+
+      <!-- Centrito: center 2×2 (cells 5,6,9,10) -->
+      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+        <div style="color:#a78bfa;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Centrito</div>
+        <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">The 2×2 center block (cells 5, 6, 9, 10)</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ pon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ pon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ pon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ pon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+        </div>
+        <div style="color:var(--text-2);font-size:.78rem;">Side prize — shared if multiple boards hit simultaneously.</div>
+      </div>
+
+      <!-- Cuatro Esquinas: corners (0,3,12,15) -->
+      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+        <div style="color:#f97316;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Cuatro Esquinas</div>
+        <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">All 4 corners (cells 0, 3, 12, 15)</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ oon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ oon }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ oon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ off }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ oon }}"></div>
+        </div>
+        <div style="color:var(--text-2);font-size:.78rem;">Side prize — shared if tied.</div>
+      </div>
+
+      <!-- Buena: full board -->
+      <div style="border-radius:20px;border:1px solid rgba(232,184,75,.3);background:rgba(10,15,29,.52);padding:.9rem 1rem;box-shadow:inset 0 0 0 1px rgba(232,184,75,.1);">
+        <div style="color:var(--accent-gold);font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">¡Buena! 🏆</div>
+        <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">Full board — all 16 cells marked</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div>
+          <div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div><div style="aspect-ratio:1/1;border-radius:5px;{{ gon }}"></div>
+        </div>
+        <div style="color:var(--text-2);font-size:.78rem;">Main prize pool — the big one. Shared if tied.</div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endwith %}
+
+    <div style="border-radius:18px;border:1px solid rgba(232,184,75,.18);background:rgba(10,15,29,.44);padding:.9rem 1rem;margin-bottom:1rem;">
+      <div style="color:var(--accent-gold);font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.5rem;">Your Board = Your Pokemon</div>
+      <p style="color:var(--text-2);font-size:.85rem;line-height:1.6;margin:0;">Your Loteria board is built from Pokemon you own at <strong style="color:var(--text-1);">Level 20 or higher</strong>. The board is a 4×4 grid of 16 Pokemon. When a Pokemon is called and it matches one of yours, your board is automatically marked. You don't tap anything — just watch it fill up.</p>
+    </div>
+
+    <div style="display:flex;gap:.65rem;flex-wrap:wrap;">
+      <button onclick="document.getElementById('loteria-rules-modal').style.display='none'" class="btn btn-primary">Got it, let's play!</button>
+      <a href="{% url 'game:loteria_builder' board_builder_slot %}" class="btn btn-secondary">Build My Board</a>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+// ── Leaderboard strip: top 3 Loteria rounds by Ryo ──
+(function() {
+  var medals = ['🥇', '🥈', '🥉'];
+  var results = JSON.parse(localStorage.getItem('loteria_results') || '[]');
+  if (!results.length) return;
+
+  results.sort(function(a, b) { return (b.ryo || 0) - (a.ryo || 0); });
+  var top3 = results.slice(0, 3);
+  var lbSection = document.getElementById('loteria-lb-section');
+  var lbStrip = document.getElementById('loteria-lb-strip');
+  if (!lbSection || !lbStrip) return;
+  lbSection.style.display = '';
+
+  lbStrip.innerHTML = top3.map(function(r, i) {
+    var prizes = r.prizes ? r.prizes.join(' · ') : '';
+    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
+      '<div style="font-size:2rem;flex-shrink:0;">' + medals[i] + '</div>' +
+      '<div>' +
+        '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.2rem;">Round ' + (r.round || '—') + '</div>' +
+        '<div style="color:var(--text-1);font-family:\'Chakra Petch\',sans-serif;font-size:1.55rem;font-weight:800;line-height:1;">' + (r.ryo || 0) + ' <span style="font-size:.78rem;color:var(--text-3);">Ryo</span></div>' +
+        (prizes ? '<div style="color:#86efac;font-size:.78rem;margin-top:.25rem;">' + prizes + '</div>' : '') +
+        '<div style="color:var(--text-3);font-size:.72rem;margin-top:.15rem;">' + (r.date || '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+})();
+
+// Auto-show rules on first visit
+(function() {
+  if (!localStorage.getItem('loteria_rules_seen')) {
+    document.getElementById('loteria-rules-modal').style.display = 'flex';
+    localStorage.setItem('loteria_rules_seen', '1');
+  }
+})();
+</script>
+{% endblock %}
 {% endblock %}

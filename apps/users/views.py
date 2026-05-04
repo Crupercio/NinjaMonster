@@ -28,17 +28,227 @@ def landing(request):
         return redirect("dashboard")
 
     from apps.pokemon.models import Pokemon
+    from apps.stickers.models import StickerRarity, StickerVariant
 
-    featured_names = ["Charizard", "Vaporeon", "Jolteon", "Venusaur", "Espeon", "Lapras"]
+    featured_showcase = [
+        {
+            "pokemon_name": "Charizard",
+            "rarity": StickerRarity.FULL_ART,
+            "variant": StickerVariant.BATTLE_SCENE,
+            "fit": "fit-small",
+            "caption": "A big showcase pull that feels like a boss clear for your album.",
+        },
+        {
+            "pokemon_name": "Vaporeon",
+            "rarity": StickerRarity.PRISMATIC,
+            "variant": StickerVariant.GLITTER,
+            "fit": "fit-tall",
+            "caption": "A trade-friendly foil chase built for collectors who like flashier pages.",
+        },
+        {
+            "pokemon_name": "Jolteon",
+            "rarity": StickerRarity.RARE,
+            "variant": StickerVariant.SHINY,
+            "fit": "fit-compact",
+            "caption": "A clean mid-tier hit that keeps album progress feeling rewarding.",
+        },
+        {
+            "pokemon_name": "Venusaur",
+            "rarity": StickerRarity.COMMON,
+            "variant": StickerVariant.BASE,
+            "fit": "fit-wide",
+            "caption": "The kind of staple card that quietly fills real album rows fast.",
+        },
+        {
+            "pokemon_name": "Espeon",
+            "rarity": StickerRarity.EPIC,
+            "variant": StickerVariant.WATERCOLOR,
+            "fit": "fit-tall",
+            "caption": "A premium variant that starts turning a collection into a curated shelf.",
+        },
+    ]
+    album_preview = [
+        {
+            "pokemon_name": "Bulbasaur",
+            "rarity": StickerRarity.COMMON,
+            "fit": "fit-wide",
+            "slots": [
+                {"variant": StickerVariant.BASE, "collected": True},
+                {"variant": StickerVariant.SHINY, "collected": True},
+                {"variant": StickerVariant.WATERCOLOR, "collected": False},
+                {"variant": StickerVariant.CARTOON, "collected": False},
+            ],
+        },
+        {
+            "pokemon_name": "Eevee",
+            "rarity": StickerRarity.RARE,
+            "fit": "fit-compact",
+            "slots": [
+                {"variant": StickerVariant.TV_90S, "collected": True},
+                {"variant": StickerVariant.COLOR_SWAP, "collected": True},
+                {"variant": StickerVariant.SKETCH, "collected": False},
+                {"variant": StickerVariant.BURN_SCROLL, "collected": False},
+            ],
+        },
+        {
+            "pokemon_name": "Lapras",
+            "rarity": StickerRarity.PRISMATIC,
+            "fit": "fit-wide",
+            "slots": [
+                {"variant": StickerVariant.GLITTER, "collected": True},
+                {"variant": StickerVariant.CHROME, "collected": False},
+                {"variant": StickerVariant.NEON_GLOW, "collected": True},
+                {"variant": StickerVariant.BATTLE_SCENE, "collected": False},
+            ],
+        },
+    ]
+    rarity_showcase = [
+        {
+            "rarity": "common",
+            "label": "Common",
+            "pokemon_name": "Bulbasaur",
+            "fit": "fit-wide",
+            "description": "Your everyday album backbone and the easiest way to start filling rows.",
+            "craft_cost": 10,
+            "badge": "Base pull",
+            "variant": StickerVariant.BASE,
+        },
+        {
+            "rarity": "uncommon",
+            "label": "Uncommon",
+            "pokemon_name": "Togepi",
+            "fit": "fit-compact",
+            "description": "A brighter pull tier that starts making duplicate conversion feel worthwhile.",
+            "craft_cost": 25,
+            "badge": "Spark pull",
+            "variant": StickerVariant.SHINY,
+        },
+        {
+            "rarity": "rare",
+            "label": "Rare",
+            "pokemon_name": "Gardevoir",
+            "fit": "fit-tall",
+            "description": "A satisfying hit tier for collectors chasing cleaner album progress and better showcase cards.",
+            "craft_cost": 75,
+            "badge": "Solid hit",
+            "variant": StickerVariant.SKETCH,
+        },
+        {
+            "rarity": "epic",
+            "label": "Epic",
+            "pokemon_name": "Lucario",
+            "fit": "fit-tall",
+            "description": "A premium pull tier that starts to feel like a real collector event when it lands.",
+            "craft_cost": 150,
+            "badge": "Showpiece",
+            "variant": StickerVariant.BATTLE_SCENE,
+        },
+        {
+            "rarity": "prismatic",
+            "label": "Prismatic",
+            "pokemon_name": "Milotic",
+            "fit": "fit-tall",
+            "description": "The foil-style chase tier for players who want sharper album highlights and flashier trades.",
+            "craft_cost": 300,
+            "badge": "Foil chase",
+            "variant": StickerVariant.GLITTER,
+        },
+        {
+            "rarity": "full_art",
+            "label": "Full Art",
+            "pokemon_name": "Rayquaza",
+            "fit": "fit-small",
+            "description": "A centerpiece card tier built to stand out in showcases, guild goals, and collector flex slots.",
+            "craft_cost": 500,
+            "badge": "Centerpiece",
+            "variant": StickerVariant.COLOR_SWAP,
+        },
+        {
+            "rarity": "secret_rare",
+            "label": "Secret Rare",
+            "pokemon_name": "Mewtwo",
+            "fit": "fit-tall",
+            "description": "The ultra-chase finish that turns a normal pack opening into a memorable collector moment.",
+            "craft_cost": 1000,
+            "badge": "Ultra chase",
+            "variant": StickerVariant.CHROME,
+        },
+    ]
+    required_names = {
+        *[entry["pokemon_name"] for entry in featured_showcase],
+        *[entry["pokemon_name"] for entry in album_preview],
+        *[entry["pokemon_name"] for entry in rarity_showcase],
+    }
     qs = (
-        Pokemon.objects.filter(name__in=featured_names)
+        Pokemon.objects.filter(
+            name__in=required_names
+        )
         .select_related("primary_type", "secondary_type")
         .prefetch_related("moves__trigger_status", "moves__applies_status")
     )
-    name_order = {name: i for i, name in enumerate(featured_names)}
-    featured_pokemon = sorted(qs, key=lambda p: name_order.get(p.name, 99))
+    pokemon_by_name = {pokemon.name: pokemon for pokemon in qs}
+    rarity_labels = {value: label for value, label in StickerRarity.choices}
 
-    return render(request, "landing/landing.html", {"featured_pokemon": featured_pokemon})
+    rarity_showcase_cards = []
+    fallback_pool = iter(Pokemon.objects.order_by("pokedex_number")[:40])
+    for entry in rarity_showcase:
+        pokemon = pokemon_by_name.get(entry["pokemon_name"])
+        if pokemon is None:
+            pokemon = next(fallback_pool, None)
+        if pokemon is None:
+            continue
+        rarity_showcase_cards.append(
+            {
+                **entry,
+                "pokemon": pokemon,
+                "variant_label": StickerVariant(entry["variant"]).label,
+            }
+        )
+
+    featured_showcase_cards = []
+    for entry in featured_showcase:
+        pokemon = pokemon_by_name.get(entry["pokemon_name"])
+        if pokemon is None:
+            continue
+        featured_showcase_cards.append(
+            {
+                **entry,
+                "pokemon": pokemon,
+                "rarity_label": rarity_labels[entry["rarity"]],
+                "variant_label": StickerVariant(entry["variant"]).label,
+            }
+        )
+
+    album_preview_rows = []
+    for row in album_preview:
+        pokemon = pokemon_by_name.get(row["pokemon_name"])
+        if pokemon is None:
+            continue
+        album_preview_rows.append(
+            {
+                "pokemon": pokemon,
+                "rarity": row["rarity"],
+                "rarity_label": rarity_labels[row["rarity"]],
+                "slots": [
+                    {
+                        **slot,
+                        "variant_label": StickerVariant(slot["variant"]).label,
+                    }
+                    for slot in row["slots"]
+                ],
+            }
+        )
+
+    return render(
+        request,
+        "landing/landing.html",
+        {
+            "featured_showcase_cards": featured_showcase_cards,
+            "album_preview_rows": album_preview_rows,
+            "rarity_showcase_cards": rarity_showcase_cards,
+            "pokedex_total": Pokemon.objects.count(),
+        },
+    )
 
 
 @login_required

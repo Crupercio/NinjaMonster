@@ -198,24 +198,334 @@ section { padding: 5rem 2rem; }
   background: linear-gradient(180deg, var(--bg-void), var(--bg-felt));
   border-bottom: 1px solid var(--border-md);
 }
-.cards-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem; margin-top: 2.5rem;
+.featured-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
 }
-.poke-card {
+.feature-pull-card {
   background: var(--bg-card);
   border: 1px solid var(--border-md);
   border-radius: var(--radius-lg);
-  overflow: hidden; position: relative;
-  text-align: center;
+  overflow: hidden;
+  position: relative;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  color: inherit; text-decoration: none; display: flex; flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 430px;
 }
-.poke-card:hover { transform: translateY(-5px); }
+.feature-pull-card:hover { transform: translateY(-5px); }
+.feature-pull-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.8rem 0.95rem 0;
+}
+.feature-pull-rarity {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.feature-pull-rarity-common { color: #d1d5db; }
+.feature-pull-rarity-uncommon { color: #86efac; }
+.feature-pull-rarity-rare { color: #38bdf8; }
+.feature-pull-rarity-epic { color: #c084fc; }
+.feature-pull-rarity-prismatic { color: var(--accent-gold); }
+.feature-pull-rarity-full_art { color: #fb923c; }
+.feature-pull-rarity-secret_rare { color: #fb7185; }
+.feature-pull-stage {
+  position: relative;
+  min-height: 320px;
+  aspect-ratio: 2 / 3;
+  margin: 0.25rem 0.95rem 0.7rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,0.08), transparent 65%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,0.05), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  pointer-events: none;
+}
+.feature-pull-stage-common {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(156,163,175,0.16), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-stage-rare {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(56,189,248,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-stage-epic {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(192,132,252,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-stage-prismatic {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(232,184,75,0.2), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-stage-full_art {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(249,115,22,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.feature-pull-sprite {
+  width: auto;
+  height: min(220px, 68%);
+  max-width: 72%;
+  max-height: 76%;
+  object-fit: contain;
+  object-position: center center;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.5));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.feature-pull-frame {
+  position: absolute;
+  left: -16%;
+  top: -16%;
+  width: 132%;
+  height: 132%;
+  object-fit: fill;
+  z-index: 2;
+  pointer-events: none;
+}
+.feature-pull-sprite.fit-wide,
+.rarity-card-sprite.fit-wide,
+.album-slot-sprite.fit-wide {
+  height: min(208px, 64%);
+  max-width: 74%;
+  max-height: 72%;
+  object-position: center 54%;
+}
+.feature-pull-sprite.fit-tall,
+.rarity-card-sprite.fit-tall,
+.album-slot-sprite.fit-tall {
+  height: min(228px, 72%);
+  max-width: 58%;
+  max-height: 82%;
+  object-position: center 46%;
+}
+.feature-pull-sprite.fit-compact,
+.rarity-card-sprite.fit-compact,
+.album-slot-sprite.fit-compact {
+  height: min(196px, 60%);
+  max-width: 62%;
+  max-height: 70%;
+  object-position: center center;
+}
+.feature-pull-sprite.fit-small,
+.rarity-card-sprite.fit-small,
+.album-slot-sprite.fit-small {
+  height: min(182px, 56%);
+  max-width: 56%;
+  max-height: 64%;
+  object-position: center center;
+}
+.feature-pull-body {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-lo);
+  padding: 0.9rem 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.feature-pull-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  margin-bottom: 0.55rem;
+}
+.feature-pull-variant {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.album-preview-shell {
+  margin-top: 1.35rem;
+  background: linear-gradient(160deg, var(--bg-card), rgba(18, 28, 54, 0.92));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xl);
+  padding: 1.4rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.album-preview-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.album-preview-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 0.25rem;
+}
+.album-preview-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: var(--text-1);
+  max-width: 520px;
+}
+.album-preview-pill {
+  flex-shrink: 0;
+  padding: 0.38rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-md);
+  color: var(--text-2);
+  background: rgba(10,10,24,0.65);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.album-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.album-preview-row {
+  background: rgba(12, 18, 34, 0.85);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+.album-preview-mon {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.album-preview-mon-sprite {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45));
+}
+.album-preview-mon-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-1);
+  font-weight: 700;
+}
+.album-preview-mon-meta {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.album-preview-slots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.album-slot {
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  background: rgba(18,28,54,0.72);
+  border: 1px solid rgba(255,255,255,0.05);
+  text-align: center;
+}
+.album-slot.is-collected {
+  border-color: rgba(232,184,75,0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.album-slot.is-missing {
+  border-style: dashed;
+  opacity: 0.82;
+}
+.album-slot-stage {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255,255,255,0.06), transparent 64%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  margin-bottom: 0.45rem;
+}
+.album-slot-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,0.04), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  pointer-events: none;
+}
+.album-slot-sprite {
+  width: auto;
+  height: min(110px, 62%);
+  max-width: 72%;
+  max-height: 74%;
+  object-fit: contain;
+  object-position: center center;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.42));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.album-slot.is-missing .album-slot-sprite {
+  filter: grayscale(1) brightness(0.25);
+  opacity: 0.6;
+}
+.album-slot-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 2;
+}
+.album-slot-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
 
 /* Rarity glow borders */
-.rarity-holo  { border-color: rgba(232,184,75,0.55); box-shadow: 0 0 18px rgba(232,184,75,0.12); }
-.rarity-holo:hover  { box-shadow: 0 8px 32px rgba(232,184,75,0.28); }
+.rarity-holo,
+.rarity-prismatic  { border-color: rgba(232,184,75,0.55); box-shadow: 0 0 18px rgba(232,184,75,0.12); }
+.rarity-holo:hover,
+.rarity-prismatic:hover  { box-shadow: 0 8px 32px rgba(232,184,75,0.28); }
 .rarity-epic  { border-color: rgba(168,85,247,0.5);  box-shadow: 0 0 16px rgba(168,85,247,0.1); }
 .rarity-epic:hover  { box-shadow: 0 8px 32px rgba(168,85,247,0.25); }
 .rarity-rare  { border-color: rgba(56,189,248,0.4);  box-shadow: 0 0 14px rgba(56,189,248,0.08); }
@@ -285,7 +595,8 @@ section { padding: 5rem 2rem; }
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em;
 }
-.rb-holo   { color: var(--accent-gold); }
+.rb-holo,
+.rb-prismatic   { color: var(--accent-gold); }
 .rb-epic   { color: #c084fc; }
 .rb-rare   { color: #38bdf8; }
 .rb-common { color: var(--text-3); }
@@ -298,6 +609,221 @@ section { padding: 5rem 2rem; }
 /* ── RARITY SECTION ────────────────────────────────────────── */
 .rarity-section {
   background: var(--bg-void); border-bottom: 1px solid var(--border-md);
+}
+.rarity-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+.rarity-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)),
+    var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.rarity-card:hover {
+  transform: translateY(-4px);
+}
+.rarity-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+}
+.rarity-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.rarity-card-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 0.2rem;
+}
+.rarity-card-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.1;
+}
+.rarity-card-cost {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  border: 1px solid var(--border-md);
+  background: rgba(10, 10, 24, 0.7);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.64rem;
+  color: var(--text-2);
+}
+.rarity-card-stage {
+  position: relative;
+  min-height: 300px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 65%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.rarity-card-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,0.045), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  pointer-events: none;
+}
+.rarity-card-sprite {
+  width: auto;
+  height: min(210px, 66%);
+  max-width: 72%;
+  max-height: 76%;
+  object-fit: contain;
+  object-position: center center;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.rarity-card-frame {
+  position: absolute;
+  left: -16%;
+  top: -16%;
+  width: 132%;
+  height: 132%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 2;
+}
+.rarity-card-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 0.18rem;
+}
+.rarity-card-variant {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 0.45rem;
+}
+.rarity-card-copy {
+  color: var(--text-2);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.rarity-card-common {
+  border-color: rgba(156, 163, 175, 0.18);
+}
+.rarity-card-common:hover {
+  border-color: rgba(156, 163, 175, 0.38);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.45);
+}
+.rarity-card-common .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(156,163,175,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-uncommon {
+  border-color: rgba(74, 222, 128, 0.18);
+}
+.rarity-card-uncommon:hover {
+  border-color: rgba(74, 222, 128, 0.42);
+  box-shadow: 0 10px 26px rgba(74,222,128,0.1);
+}
+.rarity-card-uncommon .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(74,222,128,0.16), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-rare {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+.rarity-card-rare:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 10px 28px rgba(56,189,248,0.12);
+}
+.rarity-card-rare .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(56,189,248,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-epic {
+  border-color: rgba(192, 132, 252, 0.24);
+}
+.rarity-card-epic:hover {
+  border-color: rgba(192, 132, 252, 0.5);
+  box-shadow: 0 10px 28px rgba(192,132,252,0.14);
+}
+.rarity-card-epic .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(192,132,252,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-prismatic {
+  border-color: rgba(232, 184, 75, 0.32);
+  box-shadow: 0 0 16px rgba(232,184,75,0.08);
+}
+.rarity-card-prismatic:hover {
+  border-color: rgba(245, 217, 128, 0.55);
+  box-shadow: 0 12px 32px rgba(232,184,75,0.16);
+}
+.rarity-card-prismatic .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(232,184,75,0.2), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-full_art {
+  border-color: rgba(249, 115, 22, 0.28);
+}
+.rarity-card-full_art:hover {
+  border-color: rgba(251, 146, 60, 0.55);
+  box-shadow: 0 12px 30px rgba(249,115,22,0.16);
+}
+.rarity-card-full_art .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(249,115,22,0.2), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+}
+.rarity-card-secret_rare {
+  border-color: rgba(233, 69, 96, 0.28);
+}
+.rarity-card-secret_rare:hover {
+  border-color: rgba(251, 113, 133, 0.55);
+  box-shadow: 0 12px 30px rgba(233,69,96,0.18);
+}
+.rarity-card-secret_rare .rarity-card-stage {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(233,69,96,0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
 }
 .rarity-ladder {
   margin-top: 2.5rem;
@@ -337,6 +863,49 @@ section { padding: 5rem 2rem; }
 .rarity-rung-holo     .rr-badge { color: var(--accent-gold); }
 .rarity-rung-fullart  .rr-badge { color: #f97316; }
 .rarity-rung-secret   .rr-badge { color: #e94560; }
+@media (max-width: 640px) {
+  .featured-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+  .feature-pull-card {
+    min-height: auto;
+  }
+  .album-preview-top {
+    flex-direction: column;
+  }
+  .album-preview-grid {
+    grid-template-columns: 1fr;
+  }
+  .album-preview-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rarity-card {
+    min-height: 300px;
+    padding: 1rem;
+  }
+  .rarity-card-stage {
+    min-height: 220px;
+  }
+  .rarity-card-sprite {
+    width: 200px;
+    height: 200px;
+    max-width: 58%;
+    max-height: 72%;
+  }
+}
+@media (max-width: 1100px) {
+  .featured-showcase-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .album-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 840px) {
+  .featured-showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 /* ── ALBUM SECTION ─────────────────────────────────────────── */
 .album-section {

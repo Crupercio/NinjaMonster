@@ -342,6 +342,7 @@
   class="room-shell"
   x-data="loteriaRoom({
     stateUrl: '{{ room_state_url }}',
+    wsUrl: 'ws{{ request.is_secure|yesno:"s," }}://{{ request.get_host }}/ws/loteria/{{ room.pk }}/',
     nextTickEpochMs: {{ next_tick_epoch_ms|default_if_none:'null' }},
     pauseExpiresEpochMs: {{ pause_expires_epoch_ms|default_if_none:'null' }},
     pauseRemainingSeconds: {{ pause_remaining_seconds|default:0 }},
@@ -511,7 +512,10 @@
       <div class="panel-kicker">Your Table</div>
       <h2 class="panel-title" style="font-size:2rem;">Live Boards</h2>
     </div>
-    <span class="status-chip">{% if room.mode == "private" %}{{ room_mode_label }}{% else %}{{ room.npc_count }} NPC chasing this table{% endif %}</span>
+    <div style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;">
+      <span class="status-chip">{% if room.mode == "private" %}{{ room_mode_label }}{% else %}{{ room.npc_count }} NPC chasing this table{% endif %}</span>
+      <span class="status-chip" id="near-miss-chip" style="display:none;color:#fef08a;border-color:rgba(232,184,75,.42);background:rgba(92,68,8,.72);">🎯 —</span>
+    </div>
   </section>
 
   <section class="boards-grid {% if player_board_count == 1 %}one{% elif player_board_count == 2 %}two{% else %}three{% endif %}" id="player-boards-grid">
@@ -569,6 +573,12 @@
       </div>
       {% endfor %}
     </div>
+
+    <!-- NPC Activity Feed -->
+    <div style="margin-top:.9rem;">
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.16em;color:var(--text-3);font-weight:700;margin-bottom:.5rem;">Live Activity</div>
+      <div id="npc-activity-feed" style="display:flex;flex-direction:column;gap:.4rem;"></div>
+    </div>
   </section>
 </div>
 {% endblock %}
@@ -580,6 +590,9 @@ function loteriaRoom(config) {
   const MARKER_STAGGER_MS = 500;
   return {
     stateUrl: config.stateUrl,
+    wsUrl: config.wsUrl,
+    ws: null,
+    wsReady: false,
     nextTickEpochMs: config.nextTickEpochMs,
     pauseExpiresEpochMs: config.pauseExpiresEpochMs,
     pauseRemainingSeconds: config.pauseRemainingSeconds || 0,
@@ -598,10 +611,43 @@ function loteriaRoom(config) {
       this.renderPauseState();
       this.renderCountdown();
       this.countdownId = window.setInterval(() => this.renderCountdown(), 250);
-      this.scheduleSync();
+      this.connectWs();
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) this.syncState();
       });
+    },
+    connectWs() {
+      try {
+        this.ws = new WebSocket(this.wsUrl);
+      } catch(e) {
+        this.wsReady = false;
+        this.scheduleSync();
+        return;
+      }
+      this.ws.onopen = () => {
+        this.wsReady = true;
+        // Server pushes state on connect, so no immediate scheduleSync needed
+        this.scheduleSync();
+      };
+      this.ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'redirect') {
+            window.location.assign(msg.url);
+          } else if (msg.type === 'state') {
+            this.applyState(msg.payload);
+            this.scheduleSync();
+          }
+        } catch(e) {}
+      };
+      this.ws.onerror = () => {
+        this.wsReady = false;
+      };
+      this.ws.onclose = () => {
+        this.wsReady = false;
+        // Fall back to HTTP polling
+        this.scheduleSync();
+      };
     },
     cacheDom() {
       this.nextCallEl = document.getElementById('next-call-countdown');
@@ -666,6 +712,12 @@ function loteriaRoom(config) {
       this.syncTimerId = window.setTimeout(() => this.syncState(), delay);
     },
     async syncState() {
+      // --- WebSocket path: send a sync message; server will group_send back ---
+      if (this.wsReady && this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'sync' }));
+        return;
+      }
+      // --- HTTP fallback ---
       if (this.syncing) return;
       this.syncing = true;
       this.renderCountdown();
@@ -695,11 +747,28 @@ function loteriaRoom(config) {
     applyState(payload) {
       const hadNewCall = payload.room.called_count > this.currentCalledCount;
       const hitManifest = hadNewCall ? this.buildNewHitManifest(payload.player_boards) : [];
+
+      // Sound: new card drawn
+      if (hadNewCall && window.GameSounds) {
+        GameSounds.play('loteriaDraw');
+        if (payload.latest_called) {
+          setTimeout(() => speakPokemonName(
+            payload.latest_called.pokedex_number,
+            payload.latest_called.name
+          ), 350);
+        }
+      }
+
+      // Sound: player got a hit on their board
+      if (hitManifest.length > 0 && window.GameSounds) {
+        setTimeout(() => GameSounds.play('place'), 600);
+      }
       this.nextTickEpochMs = payload.next_tick_epoch_ms;
       this.pauseExpiresEpochMs = payload.room.pause_expires_epoch_ms;
       this.pauseRemainingSeconds = payload.room.pause_remaining_seconds || 0;
       this.isPaused = !!payload.room.is_paused;
       this.currentCalledCount = payload.room.called_count;
+      this.currentRound = payload.room.round_number;
       this.roundEl.textContent = `Round ${payload.room.round_number}`;
       this.calledCountEl.textContent = `${payload.room.called_count} called`;
       this.prizePoolEl.textContent = `${payload.room.prize_pool_ryo} Ryo`;
@@ -718,7 +787,40 @@ function loteriaRoom(config) {
         this.renderMarkerPool(payload.player_boards);
       }
       this.renderPauseState();
+      this.renderNearMiss(payload.player_boards);
       this.currentBoards = payload.player_boards;
+    },
+    renderNearMiss(playerBoards) {
+      var chip = document.getElementById('near-miss-chip');
+      if (!chip || !playerBoards.length) return;
+      // Find best board: fewest unmarked cells
+      var bestRemaining = Infinity;
+      playerBoards.forEach(function(board) {
+        var unmarked = board.cells.filter(function(c) { return !c.marked; }).length;
+        if (unmarked < bestRemaining) bestRemaining = unmarked;
+      });
+      if (bestRemaining <= 0) { chip.style.display = 'none'; return; }
+      chip.style.display = 'inline-flex';
+      if (bestRemaining === 1) {
+        chip.textContent = '🔥 1 cell from Buena!';
+        chip.style.color = '#fef08a';
+        // Pulse the boards
+        document.querySelectorAll('.board-card.player').forEach(function(el) {
+          el.classList.add('board-near-miss');
+        });
+      } else if (bestRemaining <= 3) {
+        chip.textContent = '🎯 ' + bestRemaining + ' cells from Buena';
+        chip.style.color = '#fef08a';
+        document.querySelectorAll('.board-card.player').forEach(function(el) {
+          el.classList.remove('board-near-miss');
+        });
+      } else {
+        chip.textContent = bestRemaining + ' cells left';
+        chip.style.color = 'var(--text-2)';
+        document.querySelectorAll('.board-card.player').forEach(function(el) {
+          el.classList.remove('board-near-miss');
+        });
+      }
     },
     renderLatestCall(latestCalled, animateReveal) {
       if (!latestCalled) {
@@ -739,12 +841,15 @@ function loteriaRoom(config) {
       if (animateReveal) {
         this.latestCallPanelEl.classList.remove('reveal-flash');
         this.latestCallImageEl.classList.remove('reveal-pop');
+        this.latestCallNameEl.classList.remove('loteria-draw-new');
         void this.latestCallPanelEl.offsetWidth;
         this.latestCallPanelEl.classList.add('reveal-flash');
         this.latestCallImageEl.classList.add('reveal-pop');
+        this.latestCallNameEl.classList.add('loteria-draw-new');
         window.setTimeout(() => {
           this.latestCallPanelEl.classList.remove('reveal-flash');
           this.latestCallImageEl.classList.remove('reveal-pop');
+          this.latestCallNameEl.classList.remove('loteria-draw-new');
         }, 750);
       }
     },
@@ -763,6 +868,32 @@ function loteriaRoom(config) {
     },
     renderPatternPrizes(patternPrizes) {
       if (!this.patternPrizeGridEl) return;
+      // Sound + leaderboard save: detect newly claimed prizes
+      const newWins = patternPrizes.filter(p => p.is_claimed && p.viewer_won && !p.viewer_claimed);
+      if (newWins.length > 0) {
+        if (window.GameSounds) {
+          GameSounds.play('loteriaWin');
+          GameSounds.speak('¡Loteria!', { pitch: 1.3, rate: 0.75 });
+          var flash = document.createElement('div');
+          flash.className = 'victory-flash';
+          document.body.appendChild(flash);
+          setTimeout(function() { flash.remove(); }, 800);
+        }
+        // Save to leaderboard
+        try {
+          const totalRyo = newWins.reduce((s, p) => s + (p.viewer_reward_ryo || 0), 0);
+          const prizeLabels = newWins.map(p => p.label);
+          const results = JSON.parse(localStorage.getItem('loteria_results') || '[]');
+          results.push({
+            ryo: totalRyo,
+            prizes: prizeLabels,
+            round: this.currentRound || '?',
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          });
+          results.sort((a, b) => (b.ryo || 0) - (a.ryo || 0));
+          localStorage.setItem('loteria_results', JSON.stringify(results.slice(0, 20)));
+        } catch(e) {}
+      }
       this.patternPrizeGridEl.innerHTML = patternPrizes.map((prize) => {
         const preview = Array.from({ length: 16 }, (_, index) => `
           <span class="pattern-mini-cell${(prize.preview_cells || []).includes(index) ? ' marked' : ''}"></span>
@@ -940,6 +1071,83 @@ function loteriaRoom(config) {
         }, placementDelay);
       });
     }
+  }
+}
+</script>
+
+<script>
+// ── NPC Activity Feed ──────────────────────────────────────────
+// Fires fake NPC events after each draw to make the room feel alive.
+(function() {
+  const feed = document.getElementById('npc-activity-feed');
+  if (!feed) return;
+
+  const NPC_NAMES = ['Trainer Red', 'Misty', 'Brock', 'Gary', 'Giovanni', 'Sabrina', 'Erika', 'Lt. Surge'];
+  const NPC_EVENTS = [
+    (n) => `${n} marked a cell!`,
+    (n) => `${n} is heating up 🔥`,
+    (n) => `${n} locked a row!`,
+    (n) => `${n} is 2 cells from Buena…`,
+    (n) => `${n} missed a call 😬`,
+    (n) => `${n} marked 3 in a row!`,
+    (n) => `${n} just marked center!`,
+  ];
+
+  function addEvent(msg) {
+    const el = document.createElement('div');
+    el.style.cssText = 'display:flex;align-items:center;gap:.45rem;padding:.38rem .65rem;border-radius:12px;background:rgba(10,15,29,.55);border:1px solid rgba(91,129,255,.14);font-size:.8rem;color:var(--text-2);opacity:0;transition:opacity .35s ease;';
+    el.innerHTML = '<span style="font-size:.9rem;">👾</span><span>' + msg + '</span>';
+    feed.insertBefore(el, feed.firstChild);
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
+    // Keep max 4 events visible
+    while (feed.children.length > 4) feed.removeChild(feed.lastChild);
+    // Fade out after 6s
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 400);
+    }, 6000);
+  }
+
+  function fireRandomEvent() {
+    const npc = NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)];
+    const ev = NPC_EVENTS[Math.floor(Math.random() * NPC_EVENTS.length)];
+    addEvent(ev(npc));
+  }
+
+  // Hook into draw cycle: fire 1–2 NPC events shortly after each new call
+  // We watch for changes to latest-call-name using MutationObserver
+  const callNameEl = document.getElementById('latest-call-name');
+  if (!callNameEl) return;
+
+  let lastCall = '';
+  const obs = new MutationObserver(() => {
+    const current = callNameEl.textContent.trim();
+    if (current && current !== lastCall) {
+      lastCall = current;
+      // First event: 400–1200ms after draw
+      setTimeout(fireRandomEvent, 400 + Math.random() * 800);
+      // Second event (50% chance): 2000–3500ms after draw
+      if (Math.random() > 0.5) {
+        setTimeout(fireRandomEvent, 2000 + Math.random() * 1500);
+      }
+    }
+  });
+  obs.observe(callNameEl, { childList: true, subtree: true, characterData: true });
+})();
+
+// ── Pokemon name audio caller ─────────────────────────────────
+// Plays real WAV recordings through GameSounds.playUrl() (Web Audio API,
+// already unlocked by the user's first click).
+function speakPokemonName(dexNumber, name) {
+  var num = String(dexNumber).padStart(3, '0');
+  var filename = num + ' - ' + name + '.wav';
+  var encodedFilename = filename.split('').map(function(c) {
+    return c === ' ' ? '%20' : c;
+  }).join('');
+  var url = '/media/pokemon/audio/name/Kanto/' + encodedFilename;
+
+  if (window.GameSounds && GameSounds.playUrl) {
+    GameSounds.playUrl(url);
   }
 }
 </script>

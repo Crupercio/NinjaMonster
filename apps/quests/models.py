@@ -20,6 +20,9 @@ class QuestCondition(models.TextChoices):
     OPEN_PACKS = "open_packs", "Open N Sticker Packs"
     COMPLETE_EXPEDITIONS = "complete_expeditions", "Complete N Expeditions"
     BOND_POKEMON = "bond_pokemon", "Bond N Pokémon on Expeditions"
+    PLAY_SILHOUETTE = "play_silhouette", "Play N Silhouette Tower Runs"
+    PLAY_MEMORY = "play_memory", "Clear N Memory Boards"
+    PLAY_LOTERIA = "play_loteria", "Play N Loteria Rounds"
 
 
 class RewardType(models.TextChoices):

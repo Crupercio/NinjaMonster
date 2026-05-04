@@ -32,6 +32,9 @@ class QuestService:
         QuestCondition.OPEN_PACKS,
         QuestCondition.COMPLETE_EXPEDITIONS,
         QuestCondition.BOND_POKEMON,
+        QuestCondition.PLAY_SILHOUETTE,
+        QuestCondition.PLAY_MEMORY,
+        QuestCondition.PLAY_LOTERIA,
     )
 
     def _supported_templates(self, quest_type: str):
@@ -348,6 +351,42 @@ class QuestService:
             len(active_quests),
             user,
         )
+
+    def _increment_condition(self, user: User, condition: str) -> None:
+        """Generic helper: increment progress by 1 for all active quests of a condition."""
+        period_keys = [_daily_period_key(), _weekly_period_key(), "story"]
+        active_quests = list(
+            UserQuest.objects.filter(
+                user=user,
+                completed=False,
+                period_key__in=period_keys,
+                template__condition=condition,
+            ).select_related("template")
+        )
+        for uq in active_quests:
+            uq.progress = min(uq.progress + 1, uq.template.condition_value)
+            if uq.progress >= uq.template.condition_value:
+                uq.completed = True
+                uq.completed_at = timezone.now()
+            uq.save(update_fields=["progress", "completed", "completed_at"])
+        logger.debug(
+            "_increment_condition(%s): updated %d quest(s) for %s",
+            condition,
+            len(active_quests),
+            user,
+        )
+
+    def on_silhouette_played(self, user: User) -> None:
+        """Called after any Silhouette Tower run ends (cash out, cleared, or wrong answer)."""
+        self._increment_condition(user, QuestCondition.PLAY_SILHOUETTE)
+
+    def on_memory_completed(self, user: User) -> None:
+        """Called after a Memory board is successfully cleared."""
+        self._increment_condition(user, QuestCondition.PLAY_MEMORY)
+
+    def on_loteria_played(self, user: User) -> None:
+        """Called when a player claims at least one Loteria prize (round participated)."""
+        self._increment_condition(user, QuestCondition.PLAY_LOTERIA)
 
     # ------------------------------------------------------------------
     # Reward claiming
