@@ -3,7 +3,7 @@ import logging
 from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import F
 
 logger = logging.getLogger(__name__)
@@ -251,6 +251,132 @@ def use_candy(user: "User", candy_type: str) -> int:
     boost = CANDY_BOOST[candy_type]
     logger.debug("%s used 1x %s (+%d%% bond).", user, candy_type, boost)
     return boost
+
+
+def _blank_arcade_daily_progress(progress_date: date | None = None) -> dict[str, object]:
+    """Return a normalized daily arcade progress payload for one calendar day."""
+    current_date = progress_date or date.today()
+    return {
+        "date": current_date.isoformat(),
+        "silhouette_runs": 0,
+        "silhouette_best_floor": 0,
+        "silhouette_cashout_3plus": 0,
+        "memory_clears": 0,
+        "memory_best_seconds": 0,
+        "memory_master_clears": 0,
+        "loteria_rounds": 0,
+        "loteria_best_marked": 0,
+        "loteria_buena_rounds": 0,
+        "loteria_room_ids": [],
+        "challenge_claimed": False,
+    }
+
+
+def get_arcade_daily_progress(user: "User") -> dict[str, object]:
+    """Return today's arcade progress, resetting stale data automatically."""
+    today = date.today()
+    progress = user.arcade_daily_progress or {}
+    if progress.get("date") != today.isoformat():
+        progress = _blank_arcade_daily_progress(today)
+        User.objects.filter(pk=user.pk).update(arcade_daily_progress=progress)
+        user.arcade_daily_progress = progress
+        return progress
+
+    normalized = _blank_arcade_daily_progress(today)
+    normalized.update(progress)
+    normalized["date"] = today.isoformat()
+    normalized["loteria_room_ids"] = [int(room_id) for room_id in normalized.get("loteria_room_ids", [])]
+    for key in (
+        "silhouette_runs",
+        "silhouette_best_floor",
+        "silhouette_cashout_3plus",
+        "memory_clears",
+        "memory_best_seconds",
+        "memory_master_clears",
+        "loteria_rounds",
+        "loteria_best_marked",
+        "loteria_buena_rounds",
+    ):
+        normalized[key] = int(normalized.get(key, 0) or 0)
+    if normalized != progress:
+        User.objects.filter(pk=user.pk).update(arcade_daily_progress=normalized)
+        user.arcade_daily_progress = normalized
+    return normalized
+
+
+@transaction.atomic
+def record_arcade_daily_progress(
+    user: "User",
+    *,
+    silhouette_run: bool = False,
+    silhouette_floor: int | None = None,
+    silhouette_cashout_3plus: bool = False,
+    memory_clear: bool = False,
+    memory_elapsed_seconds: int | None = None,
+    memory_master_clear: bool = False,
+    loteria_room_id: int | None = None,
+    loteria_marked_count: int | None = None,
+    loteria_buena: bool = False,
+) -> dict[str, object]:
+    """Update the user's Fun Hub daily challenge progress."""
+    user.refresh_from_db(fields=["arcade_daily_progress"])
+    progress = get_arcade_daily_progress(user)
+
+    if silhouette_run:
+        progress["silhouette_runs"] = int(progress["silhouette_runs"]) + 1
+    if silhouette_floor is not None:
+        progress["silhouette_best_floor"] = max(int(progress["silhouette_best_floor"]), int(silhouette_floor))
+    if silhouette_cashout_3plus:
+        progress["silhouette_cashout_3plus"] = max(int(progress["silhouette_cashout_3plus"]), 1)
+
+    if memory_clear:
+        progress["memory_clears"] = int(progress["memory_clears"]) + 1
+    if memory_elapsed_seconds is not None and memory_elapsed_seconds > 0:
+        best_seconds = int(progress["memory_best_seconds"])
+        progress["memory_best_seconds"] = memory_elapsed_seconds if best_seconds == 0 else min(best_seconds, memory_elapsed_seconds)
+    if memory_master_clear:
+        progress["memory_master_clears"] = int(progress["memory_master_clears"]) + 1
+
+    if loteria_room_id is not None:
+        seen_room_ids = {int(room_id) for room_id in progress.get("loteria_room_ids", [])}
+        if int(loteria_room_id) not in seen_room_ids:
+            seen_room_ids.add(int(loteria_room_id))
+            progress["loteria_room_ids"] = sorted(seen_room_ids)
+            progress["loteria_rounds"] = int(progress["loteria_rounds"]) + 1
+        if loteria_marked_count is not None:
+            progress["loteria_best_marked"] = max(int(progress["loteria_best_marked"]), int(loteria_marked_count))
+        if loteria_buena:
+            progress["loteria_buena_rounds"] = max(int(progress["loteria_buena_rounds"]), 1)
+
+    User.objects.filter(pk=user.pk).update(arcade_daily_progress=progress)
+    user.arcade_daily_progress = progress
+    return progress
+
+
+@transaction.atomic
+def claim_arcade_daily_challenge(user: "User", reward_ryo: int) -> dict[str, object]:
+    """
+    Award the arcade daily challenge Ryo bonus if all tasks are complete and
+    the reward has not already been claimed today.
+
+    Raises ValueError if already claimed or tasks not complete.
+    Returns dict with new ryo balance.
+    """
+    user.refresh_from_db(fields=["arcade_daily_progress", "ryo"])
+    progress = get_arcade_daily_progress(user)
+
+    if progress.get("challenge_claimed"):
+        raise ValueError("Already claimed today.")
+
+    progress["challenge_claimed"] = True
+    User.objects.filter(pk=user.pk).update(
+        arcade_daily_progress=progress,
+        ryo=models.F("ryo") + reward_ryo,
+    )
+    user.refresh_from_db(fields=["ryo"])
+    user.arcade_daily_progress = progress
+    logger.info("User %s claimed arcade daily challenge: +%s Ryo", user.pk, reward_ryo)
+    return {"ryo": user.ryo}
 
 
 def can_claim_daily(user: "User") -> bool:  # type: ignore[name-defined]

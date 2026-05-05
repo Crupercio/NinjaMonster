@@ -17,8 +17,8 @@
 
 /* ── Trainer bar ──────────────────────────────────────────────── */
 .trainer-bar {
-  background: #16213e;
-  border-bottom: 1px solid #1e3a6e;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-md);
   padding: 0.65rem 1.25rem;
   display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
 }
@@ -30,7 +30,7 @@
 .candy-counts { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .candy-chip {
   font-size: 0.68rem; font-weight: 700; border-radius: 5px;
-  padding: 2px 8px; background: #0f1a2e; border: 1px solid #1e3a6e;
+  padding: 2px 8px; background: #0f1a2e; border: 1px solid var(--border-md);
   color: #94a3b8;
 }
 .candy-chip.has-candy { border-color: #4ade80; color: #4ade80; }
@@ -68,7 +68,7 @@
 .zone-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
 .zone-tag {
   font-size: 0.62rem; font-weight: 700; border-radius: 4px;
-  padding: 2px 7px; background: #0f1a2e; border: 1px solid #1e3a6e; color: #6b7280;
+  padding: 2px 7px; background: #0f1a2e; border: 1px solid var(--border-md); color: #6b7280;
 }
 .zone-tag.cost    { border-color: #fbbf24; color: #fbbf24; }
 .zone-tag.enc     { border-color: #60a5fa; color: #60a5fa; }
@@ -98,7 +98,7 @@
 .modal-overlay.open { display: flex; }
 .exp-modal {
   background: #0d1117;
-  border: 1px solid #1e3a6e;
+  border: 1px solid var(--border-md);
   border-radius: 16px;
   width: min(540px, 96vw);
   max-height: 90vh;
@@ -110,7 +110,7 @@
 /* ── Log (text adventure output) ─────────────────────────────── */
 .exp-log {
   background: #0a1020;
-  border: 1px solid #1e3a6e;
+  border: 1px solid var(--border-md);
   border-radius: 8px;
   padding: 0.9rem 1rem;
   font-size: 0.8rem;
@@ -129,8 +129,8 @@
 
 /* ── Encounter card ───────────────────────────────────────────── */
 .encounter-card {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-md);
   border-radius: 10px;
   padding: 1rem;
   text-align: center;
@@ -148,7 +148,7 @@
 .candy-bar { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
 .candy-btn {
   padding: 6px 14px; border-radius: 7px; font-size: 0.72rem; font-weight: 700;
-  border: 1px solid #1e3a6e; background: #0f1a2e; color: #94a3b8; cursor: pointer;
+  border: 1px solid var(--border-md); background: #0f1a2e; color: #94a3b8; cursor: pointer;
   transition: all 0.12s;
 }
 .candy-btn:hover:not(:disabled) { border-color: #4ade80; color: #4ade80; }
@@ -176,7 +176,7 @@
 .enc-progress { font-size: 0.72rem; color: #4b5563; text-align: center; }
 .enc-progress span { color: #60a5fa; font-weight: 700; }
 
-.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #1e3a6e; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border-md); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Result overlay ───────────────────────────────────────────── */
@@ -188,7 +188,7 @@
 .result-banner.fail    { background: #1a0505; border: 1px solid #f87171; color: #f87171; }
 
 .done-banner {
-  background: #16213e; border: 1px solid #4ade80; border-radius: 10px;
+  background: var(--bg-surface); border: 1px solid #4ade80; border-radius: 10px;
   padding: 1.2rem; text-align: center;
 }
 .done-banner h3 { color: #4ade80; font-size: 1rem; margin: 0 0 0.4rem; }
@@ -208,11 +208,11 @@
 .candy-shop-title {
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1.5px; color: #6b7280; margin-bottom: 0.75rem;
-  padding-bottom: 0.4rem; border-bottom: 1px solid #1e3a6e;
+  padding-bottom: 0.4rem; border-bottom: 1px solid var(--border-md);
 }
 .candy-shop-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .candy-shop-item {
-  background: #16213e; border: 1px solid #1e3a6e; border-radius: 10px;
+  background: var(--bg-surface); border: 1px solid var(--border-md); border-radius: 10px;
   padding: 0.75rem 1rem; flex: 1; min-width: 140px; text-align: center;
 }
 .candy-shop-name { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.2rem; }
@@ -623,6 +623,10 @@ async function buyCandy(type) {
   msg.style.color = '#4ade80';
   const label = {'trail_mix':'Trail Mix','sweet_berry':'Sweet Berry','golden_apple':'Golden Apple'}[type];
   msg.textContent = `Bought 1x ${label}! Ryo remaining: ${data.ryo.toLocaleString()}`;
+
+  // Update Ryo display in nav and sidebar
+  const ryoStr = data.ryo.toLocaleString();
+  document.querySelectorAll('#nav-ryo-amount, #sidebar-ryo-amount').forEach(el => el.textContent = ryoStr);
 }
 </script>
 {% endblock %}

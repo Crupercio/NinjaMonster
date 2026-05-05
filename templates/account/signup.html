@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Collector's Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg-void:#080810; --bg-surface:#111122; --bg-card:#161628;
+      --border-md:rgba(255,255,255,.08); --border-hi:rgba(255,255,255,.13);
+      --text-1:#f0f0f8; --text-2:#a8a8c0; --text-3:#666680;
+      --accent-gold:#e8b84b; --gold-light:#f5d980; --gold-dark:#8a6520;
+      --radius-sm:4px; --radius-md:6px; --radius-xl:16px;
+    }
+    html, body { min-height:100%; background:var(--bg-void); color:var(--text-1); font-family:"Plus Jakarta Sans",sans-serif; }
+    body::before {
+      content:""; position:fixed; inset:0;
+      background-image:linear-gradient(rgba(232,184,75,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,75,.018) 1px,transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    .auth-topbar { position:fixed; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold-dark),var(--accent-gold),var(--gold-light),var(--accent-gold),var(--gold-dark)); z-index:100; }
+    .auth-shell { position:relative; z-index:1; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:4rem 1.5rem; }
+    .auth-card {
+      width:100%; max-width:440px;
+      background:linear-gradient(160deg,var(--bg-surface),var(--bg-card));
+      border:1px solid var(--border-hi); border-radius:var(--radius-xl);
+      padding:2.75rem 2.25rem; position:relative; overflow:hidden;
+    }
+    .auth-card::before {
+      content:""; position:absolute; top:0; left:12%; right:12%; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(232,184,75,.5),transparent);
+    }
+    .auth-logo { display:block; width:72px; height:72px; object-fit:contain; margin:0 auto 1.5rem; filter:drop-shadow(0 0 20px rgba(232,184,75,.3)); }
+    .auth-card-title { font-family:"Chakra Petch",sans-serif; font-size:1.35rem; font-weight:700; color:var(--accent-gold); letter-spacing:.05em; text-align:center; margin-bottom:.3rem; }
+    .auth-card-sub { font-size:.8rem; color:var(--text-3); text-align:center; margin-bottom:2rem; }
+    .form-field { display:flex; flex-direction:column; gap:.35rem; margin-bottom:1.1rem; }
+    .form-field label { font-family:"Chakra Petch",sans-serif; font-size:.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; color:var(--text-3); }
+    .form-field input {
+      width:100%; padding:.72rem 1rem; background:var(--bg-void); border:1px solid var(--border-md);
+      border-radius:var(--radius-sm); color:var(--text-1); font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:.95rem; outline:none; transition:border-color .2s,box-shadow .2s;
+    }
+    .form-field input:focus { border-color:rgba(232,184,75,.55); box-shadow:0 0 0 3px rgba(232,184,75,.1); }
+    .msg-error {
+      background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25);
+      border-radius:var(--radius-md); color:#f87171; font-size:.8rem; padding:.55rem .8rem; margin-top:.25rem;
+    }
+    .btn-auth {
+      width:100%; margin-top:.5rem; padding:.85rem;
+      background:linear-gradient(135deg,var(--gold-dark),var(--accent-gold));
+      color:var(--bg-void); font-family:"Chakra Petch",sans-serif; font-size:.9rem; font-weight:700;
+      letter-spacing:.1em; text-transform:uppercase; border:none; border-radius:var(--radius-md);
+      cursor:pointer; transition:opacity .15s,transform .12s;
+    }
+    .btn-auth:hover { opacity:.9; transform:translateY(-1px); }
+    .auth-link-row { text-align:center; font-size:.85rem; color:var(--text-2); margin-top:1.25rem; }
+    .auth-link-row a { color:var(--accent-gold); text-decoration:none; font-weight:600; }
+    .auth-link-row a:hover { text-decoration:underline; }
+    /* style allauth auto-rendered inputs */
+    .form-field input[type="text"],
+    .form-field input[type="email"],
+    .form-field input[type="password"] {
+      width:100%; padding:.72rem 1rem; background:var(--bg-void); border:1px solid var(--border-md);
+      border-radius:var(--radius-sm); color:var(--text-1); font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:.95rem; outline:none; transition:border-color .2s,box-shadow .2s;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-topbar"></div>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <img src="{% static 'images/logo.png' %}" alt="" class="auth-logo">
+      <div class="auth-card-title">Almost There</div>
+      <div class="auth-card-sub">Choose a username to complete your account.</div>
+
+      <form method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="msg-error">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+        {% endfor %}
+        {% if form.non_field_errors %}<div class="msg-error">{{ form.non_field_errors.0 }}</div>{% endif %}
+        <button type="submit" class="btn-auth">Create Account</button>
+      </form>
+
+      <div class="auth-link-row"><a href="{% url 'account_login' %}">&larr; Back to login</a></div>
+    </div>
+  </div>
+</body>
+</html>

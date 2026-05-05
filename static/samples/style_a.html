@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style A — TCG Premium Unified</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ── STYLE A: TCG Premium Unified ──────────────────────────
+   Same DNA as current interior, landing brought in line.
+   Fixes: unified tokens, intentional logo treatment,
+   SVG nav icons, subtle zone tinting, tighter spacing.
+────────────────────────────────────────────────────────── */
+
+:root {
+  --bg-void:     #080810;
+  --bg-primary:  #0e0e20;
+  --bg-felt:     #0b1628;
+  --bg-card:     #111830;
+  --bg-surface:  #172040;
+  --bg-raised:   #1e2d50;
+
+  --accent-gold:  #e8b84b;
+  --gold-light:   #f5d980;
+  --gold-dark:    #8a6520;
+  --accent-purple:#9d6fff;
+  --accent-green: #4ade80;
+  --combo-blue:   #38bdf8;
+  --accent-red:   #e94560;
+
+  --text-1:  #e8eaf6;
+  --text-2:  #7a8aaa;
+  --text-3:  #344060;
+
+  --border-lo: rgba(232,184,75,.06);
+  --border-md: rgba(232,184,75,.14);
+  --border-hi: rgba(232,184,75,.35);
+
+  --radius-sm: 6px; --radius-md: 10px;
+  --radius-lg: 14px; --radius-xl: 20px;
+  --shadow: 0 4px 24px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  background: var(--bg-void);
+  color: var(--text-1);
+  min-height:100vh;
+  /* Subtle cool-toned radial on body — games zone tint */
+  background-image:
+    radial-gradient(ellipse 120% 40% at 50% 0%, rgba(30,45,80,.45) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.008'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E");
+}
+h1,h2,h3,h4{font-family:'Chakra Petch',system-ui,sans-serif}
+a{color:var(--accent-gold);text-decoration:none}
+
+/* ── NAV ──────────────────────────────────────────────── */
+nav {
+  background: linear-gradient(180deg,rgba(6,6,14,.98),rgba(8,8,16,.95));
+  padding: 0 1.25rem;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: sticky; top:0; z-index:200;
+  border-top: 1px solid rgba(232,184,75,.45);
+  border-bottom: 1px solid rgba(232,184,75,.1);
+  box-shadow: 0 4px 32px rgba(0,0,0,.7);
+  backdrop-filter: blur(20px);
+}
+/* Logo — intentional overflow with glow */
+.nav-brand {
+  display:flex;align-items:center;gap:.5rem;
+  margin-right:.75rem; flex-shrink:0;
+}
+.nav-logo-wrap {
+  width:68px;height:68px;border-radius:50%;
+  background: radial-gradient(circle, rgba(232,184,75,.18), transparent 70%);
+  box-shadow: 0 0 32px rgba(232,184,75,.22), 0 0 0 1px rgba(232,184,75,.15);
+  display:flex;align-items:center;justify-content:center;
+  /* This overflow is intentional — logo bleeds 4px above nav */
+  margin-top:-4px;
+  font-size:2rem;
+}
+.nav-divider {width:1px;height:22px;background:linear-gradient(180deg,transparent,rgba(232,184,75,.28),transparent);margin-right:.75rem;}
+
+.nav-tabs{display:flex;align-items:stretch;flex:1;gap:0}
+.nav-tab{
+  display:flex;align-items:center;gap:.45rem;
+  padding:0 .9rem; height:72px;
+  font-size:.82rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  font-family:'Chakra Petch',system-ui,sans-serif;
+  color:var(--text-2);text-decoration:none;white-space:nowrap;
+  border-bottom:2px solid transparent;border-top:2px solid transparent;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.nav-tab:hover{color:var(--text-1);background:rgba(232,184,75,.04);border-bottom-color:rgba(232,184,75,.3);}
+.nav-tab.active{color:var(--accent-gold);border-bottom-color:var(--accent-gold);}
+/* SVG nav icon — thin stroke, consistent weight */
+.nav-icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+
+.nav-end{display:flex;align-items:center;gap:.6rem;margin-left:auto;}
+.nav-ryo{
+  display:inline-flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,rgba(232,184,75,.12),rgba(232,184,75,.06));
+  border:1px solid rgba(232,184,75,.3);border-radius:var(--radius-lg);
+  padding:4px 10px;font-size:.72rem;font-family:'JetBrains Mono',monospace;
+  color:var(--accent-gold);font-weight:600;white-space:nowrap;
+}
+.nav-ryo::before{
+  content:'';display:inline-block;width:12px;height:12px;
+  background:radial-gradient(circle at 35% 30%,var(--gold-light),var(--gold-dark));
+  border-radius:50%;box-shadow:0 0 6px rgba(232,184,75,.5);flex-shrink:0;
+}
+.nav-username{font-size:.85rem;font-family:'Chakra Petch',sans-serif;font-weight:600;color:var(--text-2);}
+.nav-btn{
+  padding:.3rem .8rem;border-radius:var(--radius-md);border:none;cursor:pointer;
+  font-size:.72rem;font-weight:700;font-family:'Chakra Petch',sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  background:linear-gradient(135deg,#c8982a,#e8b84b);color:#06060e;
+}
+
+/* ── CONTAINER ────────────────────────────────────────── */
+.container{max-width:1280px;margin:0 auto;padding:1.5rem 1.25rem 2.5rem;}
+
+/* ── HERO ────────────────────────────────────────────── */
+.hub-hero{
+  display:grid;grid-template-columns:1fr auto;align-items:center;
+  gap:1rem;margin-bottom:1.5rem;
+  padding:1.4rem 1.5rem;
+  background:linear-gradient(160deg,rgba(25,38,78,.7),rgba(12,18,38,.8));
+  border:1px solid var(--border-md);border-radius:26px;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  position:relative;overflow:hidden;
+}
+.hub-hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 50%,rgba(91,129,255,.08),transparent 60%);
+  pointer-events:none;
+}
+.hub-eyebrow{font-size:.68rem;text-transform:uppercase;letter-spacing:.18em;color:var(--accent-gold);font-weight:700;margin-bottom:.35rem;}
+.hub-title{font-size:clamp(1.8rem,3vw,2.6rem);line-height:1;margin-bottom:.5rem;color:var(--text-1);}
+.hub-sub{color:var(--text-2);font-size:.9rem;line-height:1.55;max-width:520px;}
+.hub-stats{display:flex;gap:1.5rem;margin-top:1rem;}
+.hub-stat span{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);font-weight:700;}
+.hub-stat strong{font-family:'JetBrains Mono',monospace;font-size:1.15rem;color:var(--text-1);}
+
+/* Season ring */
+.season-ring{
+  width:120px;height:120px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--accent-gold) 0% 68%, rgba(232,184,75,.12) 68% 100%);
+  display:flex;align-items:center;justify-content:center;position:relative;z-index:1;
+}
+.season-inner{
+  width:96px;height:96px;border-radius:50%;
+  background:linear-gradient(160deg,rgba(25,38,78,.96),rgba(12,18,38,.96));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
+}
+.season-inner strong{font-family:'JetBrains Mono',monospace;font-size:1.3rem;color:var(--accent-gold);line-height:1;}
+.season-inner span{font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);}
+
+/* ── DAILY CHALLENGE ─────────────────────────────────── */
+.daily-challenge{
+  background:linear-gradient(160deg,rgba(18,26,53,.96),rgba(10,15,29,.96));
+  border:1px solid rgba(91,129,255,.22);border-radius:22px;
+  padding:1rem 1.15rem;margin-bottom:1.25rem;
+}
+.dc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.dc-kicker{font-size:.65rem;text-transform:uppercase;letter-spacing:.18em;color:var(--accent-gold);font-weight:700;}
+.dc-progress-wrap{width:160px;height:6px;background:rgba(232,184,75,.08);border-radius:100px;overflow:hidden;}
+.dc-progress{height:100%;width:42%;background:linear-gradient(90deg,var(--gold-dark),var(--accent-gold));border-radius:100px;}
+.dc-tasks{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;}
+.dc-task{
+  padding:.7rem .8rem;border-radius:14px;
+  border:1px solid rgba(232,184,75,.1);background:rgba(10,15,29,.48);
+  display:flex;align-items:flex-start;gap:.55rem;
+}
+.dc-task.done{border-color:rgba(74,222,128,.25);background:rgba(22,101,52,.12);}
+.dc-check{
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  border:1.5px solid rgba(91,129,255,.35);background:rgba(10,15,29,.6);
+  display:flex;align-items:center;justify-content:center;font-size:.65rem;
+}
+.dc-task.done .dc-check{background:rgba(74,222,128,.2);border-color:rgba(74,222,128,.5);color:#86efac;}
+.dc-task-name{font-size:.78rem;font-weight:700;color:var(--text-1);line-height:1.2;margin-bottom:.15rem;}
+.dc-task-sub{font-size:.66rem;color:var(--text-3);}
+
+/* ── GAME CARDS GRID ──────────────────────────────────── */
+.section-head{margin-bottom:.85rem;}
+.section-title{font-size:1.15rem;color:var(--text-1);margin-bottom:.15rem;}
+.section-sub{font-size:.84rem;color:var(--text-2);}
+
+.games-grid{
+  display:grid;
+  grid-template-columns:1.45fr 1fr 1fr;
+  gap:.85rem;margin-bottom:1.25rem;
+}
+.game-card{
+  background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));
+  border:1px solid var(--border-md);border-radius:24px;
+  overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;
+  cursor:pointer;position:relative;
+  display:flex;flex-direction:column;
+}
+.game-card:hover{transform:translateY(-5px);border-color:var(--border-hi);box-shadow:0 28px 52px rgba(0,0,0,.42),0 0 0 1px rgba(232,184,75,.08);}
+.game-card.featured{grid-row:span 1;}
+
+.card-art{
+  min-height:180px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.card-art-silhouette{
+  background:radial-gradient(ellipse at 50% 40%,rgba(56,189,248,.18),transparent 65%),
+    linear-gradient(180deg,rgba(15,23,42,.95),rgba(8,12,24,.98));
+}
+.card-art-memory{
+  background:radial-gradient(ellipse at 50% 40%,rgba(167,139,250,.15),transparent 65%),
+    linear-gradient(180deg,rgba(20,15,42,.95),rgba(8,8,24,.98));
+}
+.card-art-loteria{
+  background:radial-gradient(ellipse at 50% 40%,rgba(251,146,60,.14),transparent 65%),
+    linear-gradient(180deg,rgba(35,12,8,.95),rgba(12,8,4,.98));
+}
+/* Art placeholder — big icon */
+.card-art-icon{font-size:3.5rem;opacity:.7;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5));}
+.game-card.featured .card-art{min-height:220px;}
+.game-card.featured .card-art-icon{font-size:4.5rem;}
+
+.card-body{padding:.9rem 1rem 1rem;flex:1;display:flex;flex-direction:column;}
+.card-tag{
+  display:inline-flex;align-items:center;gap:.3rem;
+  border-radius:999px;padding:.28rem .65rem;font-size:.65rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.12em;margin-bottom:.55rem;
+  background:rgba(10,15,29,.55);border:1px solid rgba(91,129,255,.22);color:var(--text-2);
+}
+.card-tag.live{color:#86efac;border-color:rgba(74,222,128,.28);}
+.card-name{font-size:1.1rem;color:var(--text-1);margin-bottom:.2rem;}
+.game-card.featured .card-name{font-size:1.4rem;}
+.card-desc{font-size:.82rem;color:var(--text-2);line-height:1.5;flex:1;margin-bottom:.85rem;}
+.card-meta{display:flex;gap:.55rem;flex-wrap:wrap;margin-bottom:.75rem;}
+.card-pill{
+  border-radius:999px;border:1px solid var(--border-md);background:rgba(10,15,29,.46);
+  color:var(--text-2);padding:.28rem .6rem;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+}
+.card-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:.5rem 1rem;border-radius:var(--radius-md);border:none;cursor:pointer;
+  font-size:.78rem;font-weight:700;font-family:'Chakra Petch',sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  background:linear-gradient(135deg,#c8982a,#e8b84b);color:#06060e;
+  transition:filter .15s,box-shadow .18s;
+}
+.card-btn:hover{filter:brightness(1.08);box-shadow:0 4px 16px rgba(232,184,75,.3);}
+.card-btn-sec{
+  background:rgba(255,255,255,.06);border:1px solid var(--border-md);
+  color:var(--text-2);
+}
+.card-btn-sec:hover{border-color:var(--border-hi);color:var(--accent-gold);}
+
+/* ── LEADERBOARD ──────────────────────────────────────── */
+.lb-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.25rem;}
+.lb-card{
+  background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));
+  border:1px solid rgba(232,184,75,.22);border-radius:20px;
+  padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;
+}
+.lb-medal{font-size:1.8rem;flex-shrink:0;}
+.lb-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-gold);font-weight:700;margin-bottom:.18rem;}
+.lb-score{font-family:'Chakra Petch',sans-serif;font-size:1.35rem;font-weight:800;line-height:1;color:var(--text-1);}
+.lb-meta{font-size:.75rem;color:var(--text-2);margin-top:.2rem;}
+
+/* ── WALLET ───────────────────────────────────────────── */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+.wallet-panel{
+  background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));
+  border:1px solid var(--border-md);border-radius:22px;padding:1rem 1.1rem;
+}
+.wallet-kicker{font-size:.65rem;text-transform:uppercase;letter-spacing:.18em;color:var(--text-3);font-weight:700;margin-bottom:.7rem;}
+.candy-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.55rem;}
+.candy-card{
+  border-radius:14px;border:1px solid rgba(232,184,75,.1);background:rgba(10,15,29,.5);
+  padding:.65rem .75rem;display:flex;align-items:center;gap:.5rem;
+}
+.candy-icon{font-size:1.4rem;}
+.candy-name{font-size:.75rem;font-weight:700;color:var(--text-1);}
+.candy-count{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:#c4b5fd;font-weight:600;}
+
+.quest-panel{
+  background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));
+  border:1px solid var(--border-md);border-radius:22px;padding:1rem 1.1rem;
+}
+.quest-item{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.65rem 0;border-bottom:1px solid rgba(232,184,75,.06);
+}
+.quest-item:last-child{border-bottom:none;}
+.quest-icon{width:32px;height:32px;border-radius:10px;background:rgba(91,129,255,.14);border:1px solid rgba(91,129,255,.22);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.quest-name{font-size:.8rem;font-weight:700;color:var(--text-1);}
+.quest-prog{font-size:.7rem;color:var(--text-2);margin-top:.1rem;}
+.quest-track{height:3px;background:rgba(232,184,75,.08);border-radius:100px;overflow:hidden;margin-top:.25rem;}
+.quest-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--accent-gold));border-radius:100px;}
+.quest-reward{margin-left:auto;font-size:.72rem;color:var(--accent-gold);font-weight:700;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+
+/* ── STYLE A LABEL ────────────────────────────────────── */
+.style-label{
+  text-align:center;padding:.5rem;
+  font-size:.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.2em;
+  border-top:1px solid var(--border-lo);margin-top:2rem;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo-wrap">🎴</div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-tabs">
+    <a class="nav-tab active" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+      Fun
+      <span style="font-size:.4rem;opacity:.35;">▾</span>
+    </a>
+    <a class="nav-tab" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+      Amigo
+      <span style="font-size:.4rem;opacity:.35;">▾</span>
+    </a>
+    <a class="nav-tab" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M4 19h16"/><rect x="8" y="11" width="8" height="8"/></svg>
+      Collect
+      <span style="font-size:.4rem;opacity:.35;">▾</span>
+    </a>
+    <a class="nav-tab" href="#">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      Community
+      <span style="font-size:.4rem;opacity:.35;">▾</span>
+    </a>
+  </div>
+  <div class="nav-end">
+    <div class="nav-ryo">12,480</div>
+    <span class="nav-username">Trainer_Luis</span>
+    <a class="nav-btn" href="#">Login</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hub-hero">
+    <div>
+      <div class="hub-eyebrow">◆ Collector Arcade</div>
+      <h1 class="hub-title">Fun Hub</h1>
+      <p class="hub-sub">Three cabinets. Daily quests. Ryo, Dust, and Candy rewards. Pick your game and keep the streak alive.</p>
+      <div class="hub-stats">
+        <div class="hub-stat"><span>Daily Streak</span><strong>7</strong></div>
+        <div class="hub-stat"><span>Ryo Balance</span><strong>12,480</strong></div>
+        <div class="hub-stat"><span>Floor Record</span><strong>FL 14</strong></div>
+      </div>
+    </div>
+    <div class="season-ring">
+      <div class="season-inner">
+        <strong>S3</strong>
+        <span>Season</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAILY CHALLENGE -->
+  <div class="daily-challenge">
+    <div class="dc-head">
+      <div class="dc-kicker">◆ Daily Challenge — Sunday</div>
+      <div style="display:flex;align-items:center;gap:.65rem;">
+        <span style="font-size:.72rem;color:var(--text-3);">1 of 3 done</span>
+        <div class="dc-progress-wrap"><div class="dc-progress"></div></div>
+      </div>
+    </div>
+    <div class="dc-tasks">
+      <div class="dc-task done">
+        <div class="dc-check">✓</div>
+        <div><div class="dc-task-name">Tower Scout</div><div class="dc-task-sub">Play 1 Silhouette run → 400 Ryo</div></div>
+      </div>
+      <div class="dc-task">
+        <div class="dc-check"></div>
+        <div><div class="dc-task-name">Memory Streak</div><div class="dc-task-sub">Clear 3 boards → 800 Ryo</div></div>
+      </div>
+      <div class="dc-task">
+        <div class="dc-check"></div>
+        <div><div class="dc-task-name">Loteria Night</div><div class="dc-task-sub">Play 3 rounds → 750 Ryo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAMES GRID -->
+  <div class="section-head">
+    <h2 class="section-title">Choose Your Cabinet</h2>
+    <div class="section-sub">All three cabinets open now. Rewards reset daily.</div>
+  </div>
+  <div class="games-grid">
+
+    <!-- Silhouette Tower — FEATURED -->
+    <div class="game-card featured">
+      <div class="card-art card-art-silhouette">
+        <div class="card-art-icon">🗼</div>
+      </div>
+      <div class="card-body">
+        <div class="card-tag live">● Open Now</div>
+        <h3 class="card-name">Silhouette Tower</h3>
+        <p class="card-desc">Name the Pokemon from its shadow and climb as high as you can. Four towers, rising stakes, and a Ryo bank that cashes out when you want.</p>
+        <div class="card-meta">
+          <span class="card-pill">Rookie · Regional · Master · National</span>
+          <span class="card-pill">905 Pokemon</span>
+        </div>
+        <a class="card-btn" href="#">Play Now</a>
+      </div>
+    </div>
+
+    <!-- Memory -->
+    <div class="game-card">
+      <div class="card-art card-art-memory">
+        <div class="card-art-icon">🃏</div>
+      </div>
+      <div class="card-body">
+        <div class="card-tag live">● Open Now</div>
+        <h3 class="card-name">Sticker Memory</h3>
+        <p class="card-desc">Classic pair-matching. Pick a board size and clear every pair. Fewer turns → better grade → bigger payout.</p>
+        <div class="card-meta">
+          <span class="card-pill">4 boards</span>
+        </div>
+        <a class="card-btn card-btn-sec" href="#">Open Board</a>
+      </div>
+    </div>
+
+    <!-- Loteria -->
+    <div class="game-card">
+      <div class="card-art card-art-loteria">
+        <div class="card-art-icon">🎴</div>
+      </div>
+      <div class="card-body">
+        <div class="card-tag live" style="color:#fb923c;border-color:rgba(251,146,60,.3);">● 3 playing</div>
+        <h3 class="card-name">Pokemon Loteria</h3>
+        <p class="card-desc">Fill your tabla before anyone else does. Live multiplayer rooms, real-time caller, and pattern bonuses.</p>
+        <div class="card-meta">
+          <span class="card-pill">Multiplayer</span>
+          <span class="card-pill">Live</span>
+        </div>
+        <a class="card-btn card-btn-sec" href="#">Join Room</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="section-head">
+    <h2 class="section-title">This Device · Top Runs</h2>
+    <div class="section-sub">Best scores saved locally.</div>
+  </div>
+  <div class="lb-strip">
+    <div class="lb-card"><div class="lb-medal">🥇</div><div><div class="lb-label">Silhouette Tower</div><div class="lb-score">Floor 14</div><div class="lb-meta">National · 2,800 Ryo banked</div></div></div>
+    <div class="lb-card"><div class="lb-medal">🥈</div><div><div class="lb-label">Sticker Memory</div><div class="lb-score">Perfect</div><div class="lb-meta">Master Board · 38 turns</div></div></div>
+    <div class="lb-card"><div class="lb-medal">🥉</div><div><div class="lb-label">Pokemon Loteria</div><div class="lb-score">3,200 Ryo</div><div class="lb-meta">Full tabla win · Round 11</div></div></div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="bottom-grid">
+    <div class="wallet-panel">
+      <div class="wallet-kicker">Candy Wallet</div>
+      <div class="candy-grid">
+        <div class="candy-card"><div class="candy-icon">🍫</div><div><div class="candy-name">Trail Mix</div><div class="candy-count">x8</div></div></div>
+        <div class="candy-card"><div class="candy-icon">🍓</div><div><div class="candy-name">Sweet Berry</div><div class="candy-count">x3</div></div></div>
+        <div class="candy-card"><div class="candy-icon">🍎</div><div><div class="candy-name">Golden Apple</div><div class="candy-count">x1</div></div></div>
+        <div class="candy-card" style="border-style:dashed;opacity:.4;"><div class="candy-icon">🌟</div><div><div class="candy-name">Star Candy</div><div class="candy-count" style="color:var(--text-3);">Locked</div></div></div>
+      </div>
+    </div>
+    <div class="quest-panel">
+      <div class="wallet-kicker">Active Quests</div>
+      <div class="quest-item">
+        <div class="quest-icon">🗼</div>
+        <div style="flex:1;">
+          <div class="quest-name">Tower Climber</div>
+          <div class="quest-prog">2 / 3 runs</div>
+          <div class="quest-track"><div class="quest-fill" style="width:66%"></div></div>
+        </div>
+        <div class="quest-reward">900 Ryo</div>
+      </div>
+      <div class="quest-item">
+        <div class="quest-icon">🃏</div>
+        <div style="flex:1;">
+          <div class="quest-name">Memory Warm-Up</div>
+          <div class="quest-prog">0 / 1 boards</div>
+          <div class="quest-track"><div class="quest-fill" style="width:0%"></div></div>
+        </div>
+        <div class="quest-reward">350 Ryo</div>
+      </div>
+      <div class="quest-item">
+        <div class="quest-icon">🎴</div>
+        <div style="flex:1;">
+          <div class="quest-name">Loteria Round</div>
+          <div class="quest-prog">1 / 1 rounds ✓</div>
+          <div class="quest-track"><div class="quest-fill" style="width:100%;background:linear-gradient(90deg,#4ade80,#22d3ee)"></div></div>
+        </div>
+        <div class="quest-reward" style="color:#86efac;">Done!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="style-label">Style A — TCG Premium Unified · Same DNA, unified tokens, SVG icons, intentional logo treatment</div>
+</body>
+</html>

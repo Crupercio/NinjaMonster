@@ -27,10 +27,10 @@
 .team-side { display:flex; flex-direction:column; gap:0.5rem; }
 .team-side-label { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; margin-bottom:0.25rem; }
 .pokemon-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
-.pokemon-card { background:#16213e; border:2px solid #1e3a6e; border-radius:8px; padding:0.6rem 0.75rem; position:relative; min-width:0; }
+.pokemon-card { background:var(--bg-surface); border:2px solid var(--border-md); border-radius:8px; padding:0.6rem 0.75rem; position:relative; min-width:0; }
 .pokemon-card.fainted { opacity:0.4; border-color:#374151; }
 .pokemon-card.damage-flash { animation:damage-flash 0.5s ease-out; }
-@keyframes damage-flash { 0%,60% { background:#7f1d1d; } 100% { background:#16213e; } }
+@keyframes damage-flash { 0%,60% { background:#7f1d1d; } 100% { background:var(--bg-surface); } }
 .card-name { font-size:0.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card-pos-label { font-size:0.65rem; color:#6b7280; text-transform:uppercase; }
 .card-hp-text { font-size:0.7rem; color:#9ca3af; margin-top:2px; }

@@ -1,5 +1,10 @@
 """Development settings — debug mode, relaxed security, SQLite fallback allowed."""
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 from .base import *  # noqa: F401, F403
 
@@ -11,12 +16,12 @@ SECRET_KEY = os.environ.get(  # noqa: F811 — override base
 
 ALLOWED_HOSTS = ["*"]
 
-# Show all SQL queries in debug
-LOGGING["loggers"]["django.db.backends"] = {  # noqa: F405
-    "handlers": ["console"],
-    "level": "DEBUG",
-    "propagate": False,
-}
+# SQL query logging disabled — enable manually if debugging a specific query
+# LOGGING["loggers"]["django.db.backends"] = {
+#     "handlers": ["console"],
+#     "level": "DEBUG",
+#     "propagate": False,
+# }
 
 # Email backend — print to console during development
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

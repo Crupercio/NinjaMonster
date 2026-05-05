@@ -13,8 +13,8 @@
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
 .panel, .board-card, .seat-card {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 .layout { display:grid; grid-template-columns: 1.08fr .92fr; gap:1rem; margin-bottom:1rem; }
@@ -24,13 +24,13 @@
 .panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.7rem; }
 .panel-copy { color:var(--text-2); line-height:1.65; margin-bottom:1rem; }
 .status-chip {
-  display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
-  background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
+  display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md);
+  background:var(--bg-void); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
   letter-spacing:.08em; text-transform:uppercase;
 }
 .metric-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; }
 .metric {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.75rem .8rem;
 }
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
@@ -45,14 +45,14 @@
   padding:.75rem .85rem;
   border-radius:18px;
   border:1px solid rgba(232,184,75,.16);
-  background:rgba(10,15,29,.48);
+  background:var(--bg-void);
 }
 .room-code-copy { display:flex; gap:.55rem; align-items:center; flex-wrap:wrap; }
 .room-code-value {
   padding:.38rem .62rem;
   border-radius:999px;
-  background:rgba(91,129,255,.12);
-  border:1px solid rgba(91,129,255,.22);
+  background:var(--border-md);
+  border:1px solid var(--border-md);
   color:var(--accent-gold);
   font-family:"JetBrains Mono", monospace;
   font-size:.82rem;
@@ -97,11 +97,11 @@
 .board-card.starter { border-color: rgba(167,139,250,.26); box-shadow: inset 0 0 0 1px rgba(167,139,250,.12); }
 .board-preview {
   display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
-  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
+  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.65rem; margin-bottom:.85rem;
 }
 .board-cell {
-  aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
-  background:rgba(9,14,27,.86); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  aspect-ratio:1/1; border-radius:14px; border:1px solid var(--border-md);
+  background:var(--bg-void); display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
 .board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
 .board-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.15rem; }

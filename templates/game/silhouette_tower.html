@@ -16,8 +16,8 @@
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
 .tower-grid, .tower-panel, .option-btn, .empty-state, .result-banner {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 
@@ -34,14 +34,14 @@
 .panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.9rem,2.8vw,2.5rem); line-height:1; }
 .panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.4rem; }
 .panel-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.85rem; }
-.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md); background:var(--bg-void); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .panel-copy { color:var(--text-2); line-height:1.6; font-size:.92rem; margin-bottom:.95rem; }
 
 .metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
 .metric, .bank-box, .candy-row {
   border-radius:16px;
   border:1px solid rgba(232,184,75,.14);
-  background:rgba(10,15,29,.52);
+  background:var(--bg-void);
 }
 .metric { padding:.75rem .8rem; }
 .metric-label, .bank-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.2rem; }
@@ -51,7 +51,7 @@
   position:relative; overflow:hidden; min-height:455px;
   border-radius:26px; border:1px solid rgba(232,184,75,.16);
   background:
-    linear-gradient(180deg, rgba(9,13,27,.18), rgba(9,13,27,.84)),
+    linear-gradient(180deg, rgba(8,8,16,.18), rgba(8,8,16,.84)),
     url("{% static guess_background %}") center/cover no-repeat;
   padding:1rem;
   display:flex; flex-direction:column; justify-content:space-between;
@@ -115,7 +115,7 @@
 }
 .stage-top, .stage-foot { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap; }
 .stage-floor { color:var(--accent-gold); font-size:.78rem; text-transform:uppercase; letter-spacing:.16em; font-weight:700; }
-.stage-chip { border-radius:999px; border:1px solid rgba(91,129,255,.26); background:rgba(10,15,29,.72); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
+.stage-chip { border-radius:999px; border:1px solid var(--border-md); background:var(--bg-void); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
 
 .silhouette-wrap {
   flex:1;
@@ -194,7 +194,7 @@
 @media (max-width: 900px) { .metric-grid, .option-grid { grid-template-columns:1fr; } }
 
 /* Run history log */
-.run-log { margin-top:1rem; border-radius:22px; border:1px solid rgba(91,129,255,.22); background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96)); box-shadow:0 20px 40px rgba(0,0,0,.28); padding:.9rem 1rem; }
+.run-log { margin-top:1rem; border-radius:22px; border:1px solid var(--border-md); background:linear-gradient(180deg,var(--bg-surface),var(--bg-void)); box-shadow:0 20px 40px rgba(0,0,0,.28); padding:.9rem 1rem; }
 .run-log-title { color:var(--text-3); font-size:.68rem; text-transform:uppercase; letter-spacing:.16em; font-weight:700; margin-bottom:.65rem; }
 .run-log-list { display:flex; gap:.55rem; flex-wrap:wrap; align-items:center; }
 .run-log-chip { display:inline-flex; align-items:center; gap:.35rem; border-radius:12px; padding:.35rem .6rem .35rem .4rem; border:1px solid transparent; font-size:.75rem; font-weight:700; }

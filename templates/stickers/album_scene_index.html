@@ -12,8 +12,8 @@
 }
 
 .scene-page-card {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-md);
   border-radius: 14px;
   overflow: hidden;
   transition: transform 0.15s, border-color 0.15s;
@@ -124,7 +124,7 @@
 </div>
 
 {% if not pages_summary %}
-<div style="background:#16213e;border:1px solid #1e3a6e;border-radius:10px;padding:1.5rem;text-align:center;color:#94a3b8;font-size:0.85rem;">
+<div style="background:var(--bg-surface);border:1px solid var(--border-md);border-radius:10px;padding:1.5rem;text-align:center;color:#94a3b8;font-size:0.85rem;">
   No scene pages seeded yet for {{ region_label }}. Run <code>python manage.py seed_album_pages</code> to create them.
 </div>
 {% else %}

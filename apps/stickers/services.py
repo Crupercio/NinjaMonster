@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, F
+from django.db.models import Case, Count, F, IntegerField, Min, When
 
 from apps.pokemon.models import Pokemon
 from apps.users.services import deduct_ryo
@@ -483,8 +483,6 @@ class StickerService:
             raise ValueError("Cannot convert a favourited sticker — unfavourite it first")
         if sticker.is_album_placed:
             raise ValueError("Cannot convert a sticker that is placed in your album")
-        if hasattr(sticker, "guild_album_entry"):
-            raise ValueError("Cannot convert a sticker that is soul-bound to a guild album")
 
         copy_count = Sticker.objects.filter(
             owner=player,
@@ -510,12 +508,10 @@ class StickerService:
 
     def _build_duplicate_conversion_state(self, stickers: list[Sticker]) -> dict:
         protected_stickers = [
-            sticker for sticker in stickers
-            if sticker.is_album_placed or sticker.is_trading or sticker.is_favorite or hasattr(sticker, "guild_album_entry")
+            s for s in stickers if s.is_album_placed or s.is_trading or s.is_favorite
         ]
         free_stickers = [
-            sticker for sticker in stickers
-            if not sticker.is_album_placed and not sticker.is_trading and not sticker.is_favorite and not hasattr(sticker, "guild_album_entry")
+            s for s in stickers if not s.is_album_placed and not s.is_trading and not s.is_favorite
         ]
         safe_free_count = 0 if protected_stickers else (1 if free_stickers else 0)
         safe_free_stickers = free_stickers[:safe_free_count]
@@ -529,10 +525,10 @@ class StickerService:
             "protected_count": len(protected_stickers),
             "safe_count": len(protected_stickers) + len(safe_free_stickers),
             "convertible_count": len(convertible_stickers),
-            "placed_count": sum(1 for sticker in stickers if sticker.is_album_placed),
-            "trading_count": sum(1 for sticker in stickers if sticker.is_trading),
-            "favorite_count": sum(1 for sticker in stickers if sticker.is_favorite),
-            "guild_bound_count": sum(1 for sticker in stickers if hasattr(sticker, "guild_album_entry")),
+            "placed_count": sum(1 for s in stickers if s.is_album_placed),
+            "trading_count": sum(1 for s in stickers if s.is_trading),
+            "favorite_count": sum(1 for s in stickers if s.is_favorite),
+            "guild_bound_count": 0,
         }
 
     def _get_duplicate_conversion_state(
@@ -556,54 +552,140 @@ class StickerService:
         return self._build_duplicate_conversion_state(list(stickers_qs))
 
     def get_convertible_duplicate_groups(self, player: User) -> dict:
-        groups: dict[tuple[int, str, str], dict] = {}
-        stickers = (
+        # Single aggregation query — no Python-side grouping, no N+1.
+        # protected = placed + trading + favorite (guild_album_entry removed: relation doesn't exist on Sticker).
+        # free      = total - protected
+        # safe_free = 1 if protected == 0 else 0  (keep one unprotected copy)
+        # convertible = free - safe_free
+        rows = list(
             Sticker.objects.filter(owner=player)
-            .select_related("pokemon")
-            .order_by("pokemon__pokedex_number", "pokemon__name", "rarity", "variant", "date_caught", "pk")
+            .values("pokemon_id", "rarity", "variant")
+            .annotate(
+                total=Count("pk"),
+                placed_count=Count(Case(When(is_album_placed=True, then=1), output_field=IntegerField())),
+                trading_count=Count(Case(When(is_trading=True, then=1), output_field=IntegerField())),
+                favorite_count=Count(Case(When(is_favorite=True, then=1), output_field=IntegerField())),
+                # Lowest pk among free (unprotected) stickers — used for convert_one_id.
+                first_free_pk=Min(
+                    Case(
+                        When(is_album_placed=False, is_trading=False, is_favorite=False, then="pk"),
+                        output_field=IntegerField(),
+                    )
+                ),
+                # Second-lowest pk among free stickers — used when no protected copies exist
+                # (the first free copy is kept as the "safe" copy).
+                second_free_pk=Min(
+                    Case(
+                        When(is_album_placed=False, is_trading=False, is_favorite=False, then="pk"),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .filter(total__gt=1)
+            .order_by("pokemon_id", "rarity", "variant")
         )
 
-        grouped_stickers: dict[tuple[int, str, str], list[Sticker]] = {}
-        for sticker in stickers:
-            key = (sticker.pokemon_id, sticker.rarity, sticker.variant)
-            grouped_stickers.setdefault(key, []).append(sticker)
+        if not rows:
+            return {
+                "duplicate_groups": [],
+                "convertible_group_count": 0,
+                "convertible_copy_count": 0,
+                "convertible_dust_total": 0,
+            }
 
-        for (pokemon_id, rarity, variant), sticker_group in grouped_stickers.items():
-            state = self._build_duplicate_conversion_state(sticker_group)
-            if state["convertible_count"] <= 0:
+        # Fetch pokemon metadata in one query.
+        pokemon_ids = {row["pokemon_id"] for row in rows}
+        pokemon_map = {
+            p.pk: p
+            for p in Pokemon.objects.filter(pk__in=pokemon_ids).only("id", "name", "pokedex_number")
+        }
+
+        # For each group that has no protected copies, the safe-free copy is the
+        # lowest-pk free sticker. We need the *second* lowest pk for convert_one_id.
+        # Fetch those second-lowest PKs in bulk via a subquery exclusion.
+        # Simpler: for groups where protected == 0, exclude first_free_pk and find new min.
+        unprotected_group_keys = [
+            (row["pokemon_id"], row["rarity"], row["variant"])
+            for row in rows
+            if (row["placed_count"] + row["trading_count"] + row["favorite_count"]) == 0
+            and row["total"] > 1
+        ]
+        second_free_map: dict[tuple[int, str, str], int | None] = {}
+        if unprotected_group_keys:
+            from django.db.models import Q
+            for pokemon_id, rarity, variant in unprotected_group_keys:
+                first_pk = next(
+                    r["first_free_pk"] for r in rows
+                    if r["pokemon_id"] == pokemon_id and r["rarity"] == rarity and r["variant"] == variant
+                )
+                if first_pk is not None:
+                    second = (
+                        Sticker.objects.filter(
+                            owner=player,
+                            pokemon_id=pokemon_id,
+                            rarity=rarity,
+                            variant=variant,
+                            is_album_placed=False,
+                            is_trading=False,
+                            is_favorite=False,
+                        )
+                        .exclude(pk=first_pk)
+                        .order_by("pk")
+                        .values_list("pk", flat=True)
+                        .first()
+                    )
+                    second_free_map[(pokemon_id, rarity, variant)] = second
+
+        duplicate_groups = []
+        for row in rows:
+            pokemon_id = row["pokemon_id"]
+            rarity = row["rarity"]
+            variant = row["variant"]
+            protected = row["placed_count"] + row["trading_count"] + row["favorite_count"]
+            free = row["total"] - protected
+            safe_free = 1 if protected == 0 and free > 0 else 0
+            convertible_count = free - safe_free
+            if convertible_count <= 0:
                 continue
 
-            sample = sticker_group[0]
+            key = (pokemon_id, rarity, variant)
+            if protected == 0:
+                convert_one_id = second_free_map.get(key)
+            else:
+                convert_one_id = row["first_free_pk"]
+
+            if convert_one_id is None:
+                continue
+
             dust_value = DUST_VALUES.get(rarity, 5)
-            groups[(pokemon_id, rarity, variant)] = {
+            poke = pokemon_map.get(pokemon_id)
+            duplicate_groups.append({
                 "pokemon_id": pokemon_id,
-                "pokemon_name": sample.pokemon.name,
-                "pokedex_number": sample.pokemon.pokedex_number,
+                "pokemon_name": poke.name if poke else str(pokemon_id),
+                "pokedex_number": poke.pokedex_number if poke else 0,
                 "rarity": rarity,
                 "rarity_label": StickerRarity(rarity).label,
                 "variant": variant,
                 "variant_label": StickerVariant(variant).label,
-                "owned_count": len(sticker_group),
-                "safe_count": state["safe_count"],
-                "convertible_count": state["convertible_count"],
-                "placed_count": state["placed_count"],
-                "trading_count": state["trading_count"],
-                "favorite_count": state["favorite_count"],
-                "guild_bound_count": state["guild_bound_count"],
+                "owned_count": row["total"],
+                "safe_count": protected + safe_free,
+                "convertible_count": convertible_count,
+                "placed_count": row["placed_count"],
+                "trading_count": row["trading_count"],
+                "favorite_count": row["favorite_count"],
+                "guild_bound_count": 0,
                 "dust_value": dust_value,
-                "total_dust_value": dust_value * state["convertible_count"],
-                "convert_one_id": state["convertible_stickers"][0].pk,
-                "can_convert_all": state["convertible_count"] > 1,
-            }
+                "total_dust_value": dust_value * convertible_count,
+                "convert_one_id": convert_one_id,
+                "can_convert_all": convertible_count > 1,
+            })
 
-        duplicate_groups = list(groups.values())
-        summary = {
+        return {
             "duplicate_groups": duplicate_groups,
             "convertible_group_count": len(duplicate_groups),
-            "convertible_copy_count": sum(group["convertible_count"] for group in duplicate_groups),
-            "convertible_dust_total": sum(group["total_dust_value"] for group in duplicate_groups),
+            "convertible_copy_count": sum(g["convertible_count"] for g in duplicate_groups),
+            "convertible_dust_total": sum(g["total_dust_value"] for g in duplicate_groups),
         }
-        return summary
 
     @transaction.atomic
     def convert_all_duplicates(

@@ -18,8 +18,8 @@
 .called-card,
 .board-card,
 .seat-card {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 
@@ -45,14 +45,14 @@
 .panel-copy { color:var(--text-2); line-height:1.55; margin-bottom:.7rem; }
 .status-row { display:flex; flex-wrap:wrap; gap:.55rem; margin-bottom:.2rem; }
 .status-chip {
-  display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
-  background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
+  display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md);
+  background:var(--bg-void); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
   letter-spacing:.08em; text-transform:uppercase;
 }
 .status-chip.live { color:#86efac; border-color:rgba(74,222,128,.28); }
 .metric-grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:.65rem; min-width:min(100%, 720px); }
 .metric {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.75rem .8rem;
 }
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
@@ -61,8 +61,8 @@
   margin-top:.2rem;
   padding:.58rem .78rem;
   border-radius:14px;
-  border:1px solid rgba(91,129,255,.18);
-  background:rgba(10,15,29,.38);
+  border:1px solid rgba(232,184,75,.06);
+  background:var(--bg-void);
   color:var(--text-3);
   font-size:.76rem;
   line-height:1.4;
@@ -80,7 +80,7 @@
   margin:0 auto;
   border-radius:14px;
   border:1px solid rgba(232,184,75,.16);
-  background: radial-gradient(circle at center, rgba(91,129,255,.14), rgba(9,14,27,.94) 72%);
+  background: radial-gradient(circle at center, var(--border-md), var(--bg-void) 72%);
   min-height:210px;
   display:flex;
   align-items:center;
@@ -105,7 +105,7 @@
   padding:.32rem .24rem;
   border-radius:12px;
   border:1px solid rgba(232,184,75,.14);
-  background:rgba(10,15,29,.52);
+  background:var(--bg-void);
   text-align:center;
 }
 .call-recent-pill img {
@@ -126,7 +126,7 @@
   padding:.7rem .82rem;
   border-radius:16px;
   border:1px solid rgba(232,184,75,.18);
-  background:rgba(10,15,29,.44);
+  background:var(--bg-void);
   color:var(--text-2);
   text-align:center;
 }
@@ -161,8 +161,8 @@
 .board-subtitle { color:#a78bfa; font-size:.8rem; text-transform:uppercase; letter-spacing:.12em; }
 .board-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.38rem; }
 .board-cell {
-  position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
-  background:rgba(9,14,27,.9); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid var(--border-md);
+  background:var(--bg-void); display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
 .board-cell.hit-flash { animation:loteriaCellFlash .62s ease 1.55s both; }
 .board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 10px 18px rgba(0,0,0,.28)); }
@@ -191,8 +191,8 @@
 .marker-pool-lane {
   min-height:68px;
   border-radius:20px;
-  border:1px solid rgba(91,129,255,.18);
-  background:rgba(10,15,29,.42);
+  border:1px solid rgba(232,184,75,.06);
+  background:var(--bg-void);
   padding:.75rem .8rem;
 }
 .marker-pool-head {
@@ -246,7 +246,7 @@
 .called-card { margin-top:1rem; }
 .called-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:.55rem; }
 .called-pill {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void);
   padding:.5rem .4rem; text-align:center;
 }
 .called-pill.latest {
@@ -260,8 +260,8 @@
 .pattern-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.35rem; }
 .pattern-card {
   border-radius:18px;
-  border:1px solid rgba(91,129,255,.22);
-  background:rgba(10,15,29,.46);
+  border:1px solid var(--border-md);
+  background:var(--bg-void);
   padding:.48rem .48rem;
 }
 .pattern-card.claimed {
@@ -276,7 +276,7 @@
   max-width:64px; margin-bottom:.24rem;
 }
 .pattern-mini-cell {
-  aspect-ratio:1/1; border-radius:6px; border:1px solid rgba(91,129,255,.16); background:rgba(9,14,27,.88);
+  aspect-ratio:1/1; border-radius:6px; border:1px solid var(--border-md); background:var(--bg-void);
 }
 .pattern-mini-cell.marked { background:linear-gradient(180deg, rgba(251,191,36,.9), rgba(245,158,11,.9)); border-color:rgba(251,191,36,.32); }
 .pattern-status { color:var(--text-2); font-size:.62rem; line-height:1.18; min-height:1rem; }
@@ -285,7 +285,7 @@
   padding:.4rem .46rem;
   border-radius:12px;
   border:1px solid rgba(251,191,36,.14);
-  background:rgba(10,15,29,.48);
+  background:var(--bg-void);
 }
 .pattern-winner.claimed { border-color:rgba(74,222,128,.24); }
 
@@ -1095,7 +1095,7 @@ function loteriaRoom(config) {
 
   function addEvent(msg) {
     const el = document.createElement('div');
-    el.style.cssText = 'display:flex;align-items:center;gap:.45rem;padding:.38rem .65rem;border-radius:12px;background:rgba(10,15,29,.55);border:1px solid rgba(91,129,255,.14);font-size:.8rem;color:var(--text-2);opacity:0;transition:opacity .35s ease;';
+    el.style.cssText = 'display:flex;align-items:center;gap:.45rem;padding:.38rem .65rem;border-radius:12px;background:var(--bg-void);border:1px solid var(--border-md);font-size:.8rem;color:var(--text-2);opacity:0;transition:opacity .35s ease;';
     el.innerHTML = '<span style="font-size:.9rem;">👾</span><span>' + msg + '</span>';
     feed.insertBefore(el, feed.firstChild);
     requestAnimationFrame(() => { el.style.opacity = '1'; });

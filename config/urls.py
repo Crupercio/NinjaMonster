@@ -17,7 +17,7 @@ urlpatterns = [
     path("", user_views.landing, name="landing"),
     path("dashboard/", user_views.dashboard, name="dashboard"),
     path("admin/", admin.site.urls),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/", include("allauth.urls")),
     path("accounts/", include("apps.users.urls", namespace="users")),
     path("pokemon/", include("apps.pokemon.urls", namespace="pokemon")),
     path("battle/", include("apps.game.urls", namespace="game")),

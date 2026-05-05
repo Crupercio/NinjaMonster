@@ -15,8 +15,8 @@
   display: grid; grid-template-columns: 1.35fr .95fr; gap: 1rem; margin-bottom: 1.45rem;
 }
 .hero-panel, .wallet-panel, .game-card {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   border-radius: 26px;
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
@@ -41,7 +41,7 @@
 .wallet-grid { display: grid; gap: .65rem; }
 .wallet-card {
   border-radius: 18px; border: 1px solid rgba(232,184,75,.14);
-  background: rgba(10,15,29,.52); padding: .8rem .9rem;
+  background: var(--bg-void); padding: .8rem .9rem;
 }
 .wallet-card strong { display:block; color: var(--text-1); font-size: .9rem; margin-bottom: .15rem; }
 .wallet-card span { color: var(--text-3); font-size: .75rem; }
@@ -70,7 +70,7 @@
   height: 220px; border-radius: 20px; border: 1px solid rgba(167,139,250,.18);
   background:
     radial-gradient(circle at 50% 30%, rgba(139,92,246,.22), transparent 55%),
-    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+    linear-gradient(180deg, var(--bg-surface), var(--bg-void));
   display: flex; align-items: center; justify-content: center;
   margin-bottom: .95rem; position: relative; overflow: hidden;
 }
@@ -103,16 +103,16 @@
   margin: 0; color: var(--text-1); font-size: 1.28rem; font-family: 'Chakra Petch', sans-serif;
 }
 .game-status {
-  border-radius: 999px; border: 1px solid rgba(91,129,255,.28);
-  background: rgba(18,26,53,.9); color: var(--text-2);
+  border-radius: 999px; border: 1px solid var(--border-md);
+  background: var(--bg-surface); color: var(--text-2);
   padding: .34rem .65rem; font-size: .72rem; font-weight: 700;
 }
 .game-status.live { color: #86efac; border-color: rgba(74,222,128,.32); }
 .game-logo {
   height: 220px; border-radius: 20px; border: 1px solid rgba(232,184,75,.14);
   background:
-    radial-gradient(circle at top, rgba(91,129,255,.18), rgba(10,15,29,.92) 68%),
-    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+    radial-gradient(circle at top, rgba(232,184,75,.08), var(--bg-void) 68%),
+    linear-gradient(180deg, var(--bg-surface), var(--bg-void));
   display: flex; align-items: center; justify-content: center;
   margin-bottom: .95rem; padding: 1.2rem;
 }
@@ -122,7 +122,7 @@
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-bottom: 1rem;
 }
 .meta-box {
-  border-radius: 16px; border: 1px solid rgba(232,184,75,.14); background: rgba(10,15,29,.48);
+  border-radius: 16px; border: 1px solid rgba(232,184,75,.14); background: var(--bg-void);
   padding: .7rem .8rem;
 }
 .meta-label { display:block; color: var(--text-3); font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; margin-bottom: .18rem; }
@@ -132,7 +132,7 @@
 
 /* ── Daily Challenge Widget ─────────────────────────────────── */
 .daily-challenge {
-  background: linear-gradient(135deg, rgba(232,184,75,.10) 0%, rgba(25,38,78,.96) 40%);
+  background: linear-gradient(135deg, rgba(232,184,75,.10) 0%, var(--bg-surface) 40%);
   border: 1px solid rgba(232,184,75,.32);
   border-radius: 22px;
   padding: 1rem 1.3rem;
@@ -154,18 +154,29 @@
 .dc-task.done { color: var(--text-3); text-decoration: line-through; }
 .dc-check {
   width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
-  border: 2px solid rgba(232,184,75,.45); background: rgba(10,15,29,.7);
+  border: 2px solid rgba(232,184,75,.45); background: var(--bg-void);
   display: flex; align-items: center; justify-content: center; font-size: .72rem;
 }
 .dc-task.done .dc-check { background: rgba(74,222,128,.22); border-color: rgba(74,222,128,.55); }
 .dc-reward {
   display: flex; flex-direction: column; align-items: center; gap: .2rem;
-  background: rgba(10,15,29,.65); border: 1px solid rgba(232,184,75,.22);
+  background: var(--bg-void); border: 1px solid rgba(232,184,75,.22);
   border-radius: 16px; padding: .65rem .9rem; text-align: center; flex-shrink: 0;
 }
 .dc-reward-label { font-size: .64rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .14em; }
 .dc-reward-val { font-size: 1.35rem; font-weight: 800; color: var(--accent-gold); font-family: 'Chakra Petch', sans-serif; }
 .dc-reward-val.claimed { color: #86efac; font-size: 1rem; }
+.dc-reward-val.ready { color: #4ade80; animation: dc-pulse 1.8s ease-in-out infinite; }
+@keyframes dc-pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+.dc-claim-btn {
+  margin-top: .5rem; width: 100%; padding: .55rem;
+  background: linear-gradient(135deg, #166534, #4ade80);
+  color: #052e16; font-family: 'Chakra Petch', sans-serif; font-size: .78rem;
+  font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  border: none; border-radius: 4px; cursor: pointer; transition: opacity .15s;
+}
+.dc-claim-btn:hover { opacity: .85; }
+.dc-claim-btn:disabled { opacity: .4; cursor: not-allowed; }
 .dc-progress-bar { margin-top: .55rem; height: 5px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
 .dc-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-gold), #f97316); transition: width .6s ease; }
 
@@ -219,17 +230,36 @@
   </section>
 
   <!-- ── Daily Challenge Widget ────────────────────────────────── -->
-  <div class="daily-challenge" id="daily-challenge" style="display:none">
+  <div class="daily-challenge" id="dc-widget">
     <div class="dc-icon">🎯</div>
     <div class="dc-body">
-      <div class="dc-label">Daily Challenge · <span id="dc-date-label"></span></div>
-      <div class="dc-title" id="dc-title">Today's Duo</div>
-      <div class="dc-tasks" id="dc-tasks"></div>
-      <div class="dc-progress-bar"><div class="dc-progress-fill" id="dc-progress-fill" style="width:0%"></div></div>
+      <div class="dc-label">Daily Challenge · <span id="dc-date-label">{{ daily_challenge.date_label }}</span></div>
+      <div class="dc-title" id="dc-title">{{ daily_challenge.title }}</div>
+      <div class="dc-tasks" id="dc-tasks">
+        {% for task in daily_challenge.tasks %}
+        <div class="dc-task{% if task.done %} done{% endif %}" data-key="{{ task.key }}">
+          <div class="dc-check">{% if task.done %}✓{% endif %}</div>
+          <span>{{ task.label }}</span>
+          <span class="dc-progress-text" style="margin-left:auto; color:var(--text-3); font-size:.78rem;">{{ task.progress_text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="dc-progress-bar"><div class="dc-progress-fill" id="dc-progress-fill" style="width:{{ daily_challenge.progress_percent }}%"></div></div>
     </div>
     <div class="dc-reward">
       <div class="dc-reward-label">Bonus</div>
-      <div class="dc-reward-val" id="dc-reward-val">+200 Ryo</div>
+      <div class="dc-reward-val{% if daily_challenge.is_complete and not daily_challenge.claimed %} ready{% endif %}{% if daily_challenge.claimed %} claimed{% endif %}" id="dc-reward-val">
+        {% if daily_challenge.claimed %}
+          ✓ Claimed!
+        {% elif daily_challenge.is_complete %}
+          {{ daily_challenge.reward }} — Ready!
+        {% else %}
+          {{ daily_challenge.reward }}
+        {% endif %}
+      </div>
+      {% if daily_challenge.is_complete and not daily_challenge.claimed %}
+      <button class="dc-claim-btn" id="dc-claim-btn" onclick="claimDailyChallenge()">Claim</button>
+      {% endif %}
     </div>
   </div>
 
@@ -363,98 +393,95 @@
 
 {% block extra_js %}
 <script>
-(function() {
-  // Rotating daily challenges — keyed by day-of-week (0=Sun … 6=Sat)
-  const CHALLENGES = [
-    { title: "Tower & Memory Sunday", tasks: [
-        { label: "Reach Floor 3 in Silhouette Tower", key: "silhouette_floor3" },
-        { label: "Clear any Memory board", key: "memory_clear" }
-      ], reward: "+200 Ryo" },
-    { title: "Monday Grind", tasks: [
-        { label: "Play 2 Silhouette Tower runs", key: "silhouette_2runs" },
-        { label: "Play a Loteria round", key: "loteria_round" }
-      ], reward: "+180 Ryo" },
-    { title: "Memory Tuesday", tasks: [
-        { label: "Clear 2 Memory boards", key: "memory_2clears" },
-        { label: "Reach Floor 5 in Silhouette Tower", key: "silhouette_floor5" }
-      ], reward: "+250 Ryo" },
-    { title: "Wild Wednesday", tasks: [
-        { label: "Play all 3 games today", key: "play_all_3" },
-        { label: "Clear any Memory board in under 90s", key: "memory_speed" }
-      ], reward: "+300 Ryo" },
-    { title: "Tower Thursday", tasks: [
-        { label: "Cash out with 3+ correct in Silhouette", key: "silhouette_cashout3" },
-        { label: "Mark 8+ cells in a Loteria round", key: "loteria_8cells" }
-      ], reward: "+220 Ryo" },
-    { title: "Friday Frenzy", tasks: [
-        { label: "Play 3 Silhouette Tower runs", key: "silhouette_3runs" },
-        { label: "Clear the 6×6 Memory board", key: "memory_6x6" }
-      ], reward: "+280 Ryo" },
-    { title: "Weekend Collector", tasks: [
-        { label: "Play a full Loteria round (Buena!)", key: "loteria_buena" },
-        { label: "Reach Floor 4 in Silhouette Tower", key: "silhouette_floor4" }
-      ], reward: "+240 Ryo" },
-  ];
+// ── Daily Challenge — server-driven live refresh ──────────────
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+const DC_PROGRESS_URL = '{% url "users:arcade_challenge_progress" %}';
+const DC_CLAIM_URL    = '{% url "users:arcade_challenge_claim" %}';
 
-  const today = new Date();
-  const dateKey = today.toISOString().slice(0, 10);
-  const dow = today.getDay();
-  const challenge = CHALLENGES[dow];
-  const storageKey = 'dc_progress_' + dateKey;
-
-  let progress = {};
-  try { progress = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch(e) {}
-
-  function save() { localStorage.setItem(storageKey, JSON.stringify(progress)); }
-
-  function render() {
-    const widget = document.getElementById('daily-challenge');
-    widget.style.display = 'flex';
-    document.getElementById('dc-date-label').textContent = today.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
-    document.getElementById('dc-title').textContent = challenge.title;
-    document.getElementById('dc-reward-val').textContent = challenge.reward;
-
-    const tasksEl = document.getElementById('dc-tasks');
+function dcApplyData(data) {
+  // Tasks
+  const tasksEl = document.getElementById('dc-tasks');
+  if (tasksEl && data.tasks) {
     tasksEl.innerHTML = '';
-    let doneCount = 0;
-
-    challenge.tasks.forEach(function(task) {
-      const done = !!progress[task.key];
-      if (done) doneCount++;
+    data.tasks.forEach(function(task) {
       const row = document.createElement('div');
-      row.className = 'dc-task' + (done ? ' done' : '');
+      row.className = 'dc-task' + (task.done ? ' done' : '');
+      row.dataset.key = task.key;
       row.innerHTML =
-        '<div class="dc-check">' + (done ? '✓' : '') + '</div>' +
-        '<span>' + task.label + '</span>';
+        '<div class="dc-check">' + (task.done ? '✓' : '') + '</div>' +
+        '<span>' + task.label + '</span>' +
+        '<span class="dc-progress-text" style="margin-left:auto;color:var(--text-3);font-size:.78rem;">' + task.progress_text + '</span>';
       tasksEl.appendChild(row);
     });
-
-    const pct = Math.round(doneCount / challenge.tasks.length * 100);
-    document.getElementById('dc-progress-fill').style.width = pct + '%';
-
-    if (doneCount === challenge.tasks.length) {
-      document.getElementById('dc-reward-val').textContent = '✓ Complete!';
-      document.getElementById('dc-reward-val').classList.add('claimed');
-    }
   }
 
-  // Expose so game pages can call window.dcComplete('key') on relevant events
-  window.dcComplete = function(taskKey) {
-    const today2 = new Date().toISOString().slice(0, 10);
-    const sk = 'dc_progress_' + today2;
-    let p = {};
-    try { p = JSON.parse(localStorage.getItem(sk) || '{}'); } catch(e) {}
-    if (!p[taskKey]) {
-      p[taskKey] = true;
-      localStorage.setItem(sk, JSON.stringify(p));
-      if (typeof showToast === 'function') {
-        showToast('Daily challenge task completed! 🎯', 'success');
-      }
-    }
-  };
+  // Progress bar
+  const fill = document.getElementById('dc-progress-fill');
+  if (fill) fill.style.width = (data.progress_percent || 0) + '%';
 
-  render();
-})();
+  // Reward value + claim button
+  const rewardEl = document.getElementById('dc-reward-val');
+  const claimBtn = document.getElementById('dc-claim-btn');
+  if (rewardEl) {
+    if (data.claimed) {
+      rewardEl.className = 'dc-reward-val claimed';
+      rewardEl.textContent = '✓ Claimed!';
+      if (claimBtn) claimBtn.remove();
+    } else if (data.is_complete) {
+      rewardEl.className = 'dc-reward-val ready';
+      rewardEl.textContent = data.reward + ' — Ready!';
+      if (!claimBtn) {
+        const btn = document.createElement('button');
+        btn.className = 'dc-claim-btn';
+        btn.id = 'dc-claim-btn';
+        btn.textContent = 'Claim';
+        btn.onclick = claimDailyChallenge;
+        rewardEl.parentElement.appendChild(btn);
+      }
+    } else {
+      rewardEl.className = 'dc-reward-val';
+      rewardEl.textContent = data.reward;
+      if (claimBtn) claimBtn.remove();
+    }
+  }
+}
+
+async function refreshDailyChallenge() {
+  try {
+    const resp = await fetch(DC_PROGRESS_URL);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    dcApplyData(data);
+  } catch(e) {}
+}
+
+async function claimDailyChallenge() {
+  const btn = document.getElementById('dc-claim-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Claiming…'; }
+  try {
+    const resp = await fetch(DC_CLAIM_URL, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    });
+    const data = await resp.json();
+    if (data.error) {
+      if (typeof showToast === 'function') showToast(data.error, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Claim'; }
+      return;
+    }
+    // Update Ryo in nav/sidebar
+    const ryoStr = data.ryo.toLocaleString();
+    document.querySelectorAll('#nav-ryo-amount, #sidebar-ryo-amount').forEach(el => el.textContent = ryoStr);
+    if (typeof showToast === 'function') showToast('Challenge complete! +' + data.reward_ryo + ' Ryo claimed 🎯', 'success');
+    await refreshDailyChallenge();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Claim'; }
+  }
+}
+
+// Poll every 30 seconds while on this page
+refreshDailyChallenge();
+setInterval(refreshDailyChallenge, 30000);
 
 // ── Featured game rotation (day-of-week) ─────────────────────
 (function() {

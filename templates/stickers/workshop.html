@@ -31,7 +31,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: #16213e;
+  background: var(--bg-surface);
   border: 1px solid #a78bfa44;
   border-radius: 999px;
   padding: 0.35rem 0.95rem;
@@ -58,7 +58,7 @@
 .ws-tabs {
   display: flex;
   gap: 0;
-  border-bottom: 2px solid #1e3a6e;
+  border-bottom: 2px solid var(--border-md);
   margin: 1.25rem 0 2rem;
 }
 
@@ -98,8 +98,8 @@
 }
 
 .dup-summary-card {
-  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
-  border: 1px solid #1e3a6e;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-card));
+  border: 1px solid var(--border-md);
   border-radius: 12px;
   padding: 0.85rem 1rem;
 }
@@ -132,8 +132,8 @@
   gap: 0.9rem;
   align-items: center;
   padding: 0.8rem 0.9rem;
-  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
-  border: 1px solid #1e3a6e;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-card));
+  border: 1px solid var(--border-md);
   border-radius: 12px;
   position: relative;
   overflow: hidden;
@@ -206,7 +206,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border: 1px solid rgba(126, 150, 196, 0.14);
-  background: rgba(10, 18, 36, 0.52);
+  background: var(--bg-void);
   color: #9fb0d2;
 }
 
@@ -260,8 +260,8 @@
 }
 
 .craft-form {
-  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
-  border: 1px solid #1e3a6e;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-card));
+  border: 1px solid var(--border-md);
   border-radius: 14px;
   padding: 1rem;
 }
@@ -288,8 +288,8 @@
 
 .craft-search-input {
   width: 100%;
-  background: #16213e;
-  border: 1px solid #1e3a6e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-md);
   border-radius: 10px;
   color: #f1f5f9;
   padding: 0.8rem 0.95rem;
@@ -304,7 +304,7 @@
 
 .craft-search-panel {
   margin-top: 0.55rem;
-  background: linear-gradient(160deg, rgba(14, 24, 46, 0.98), rgba(10, 18, 36, 0.98));
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-void));
   border: 1px solid rgba(30, 58, 110, 0.9);
   border-radius: 12px;
   overflow: hidden;
@@ -360,7 +360,7 @@
 
 .craft-result:hover,
 .craft-result.active {
-  background: rgba(30, 58, 110, 0.28);
+  background: rgba(255,255,255,.04);
 }
 
 .craft-result-art {
@@ -414,7 +414,7 @@
 .variant-pill {
   border: 1px solid rgba(126, 150, 196, 0.16);
   border-radius: 999px;
-  background: rgba(10, 18, 36, 0.52);
+  background: var(--bg-void);
   color: #9fb0d2;
   padding: 0.48rem 0.8rem;
   font-size: 0.76rem;
@@ -468,8 +468,8 @@
 }
 
 .craft-preview {
-  background: linear-gradient(160deg, rgba(22, 33, 62, 0.94), rgba(13, 23, 45, 0.96));
-  border: 1px solid #1e3a6e;
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-card));
+  border: 1px solid var(--border-md);
   border-radius: 14px;
   padding: 1rem;
   display: flex;
@@ -547,7 +547,7 @@
 .craft-cost-panel {
   display: grid;
   gap: 0.6rem;
-  background: rgba(10, 18, 36, 0.44);
+  background: rgba(8,8,16,.44);
   border: 1px solid rgba(126, 150, 196, 0.12);
   border-radius: 12px;
   padding: 0.9rem 1rem;
@@ -618,7 +618,7 @@
 }
 
 .phase3-banner {
-  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  background: linear-gradient(135deg, var(--bg-surface), var(--bg-felt));
   border: 1px solid #3730a3;
   border-radius: 12px;
   padding: 1.5rem;
@@ -654,7 +654,7 @@
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid #1e3a6e;
+  border-bottom: 1px solid var(--border-md);
 }
 
 .badge-tier-table td {
@@ -684,11 +684,11 @@
 .coming-soon-overlay {
   display: inline-block;
   background: #111827;
-  border: 1px dashed #1e3a6e;
+  border: 1px dashed var(--border-hi);
   border-radius: 6px;
   padding: 0.2rem 0.6rem;
   font-size: 0.7rem;
-  color: #1e3a6e;
+  color: var(--text-3);
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -730,8 +730,6 @@
 
 <div class="ws-links">
   <a href="{% url 'stickers:album' %}" class="back-link">&larr; Back to My Collection</a>
-  <span style="color:#1e3a6e;">&middot;</span>
-  <a href="{% url 'stickers:generator' %}" class="back-link">&#9733; AI Sticker Generator</a>
 </div>
 
 {% if error %}
@@ -746,7 +744,7 @@
     &#9999; Craft Sticker
   </button>
   <button class="ws-tab phase3" title="Coming in Phase 3">
-    &#9670; Forge Badge &nbsp;<span style="font-size:0.65rem;color:#1e3a6e;">SOON</span>
+    &#9670; Forge Badge &nbsp;<span style="font-size:0.65rem;color:var(--text-3);">SOON</span>
   </button>
 </div>
 
@@ -1012,7 +1010,7 @@
     </tbody>
   </table>
 
-  <p style="color:#1e3a6e;font-size:0.75rem;margin-top:1.25rem;text-align:center;">
+  <p style="color:var(--text-3);font-size:0.75rem;margin-top:1.25rem;text-align:center;">
     Badge effects wire into battle during Phase 3. Accumulate dust and rare stickers now.
   </p>
 </div>

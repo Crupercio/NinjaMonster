@@ -4,409 +4,1265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MPKM - Collect. Explore. Share.</title>
-  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  <title>Collector's Edition — Collect. Explore. Share.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+  /* ── STYLE D LANDING ─────────────────────────────────────
+     TCG Premium color system (navy void + gold foil)
+     Style C layout (persistent sidebar, slim top nav)
+     Sharper edges: radius 4-12px
+  ─────────────────────────────────────────────────────── */
+  :root {
+    --bg-void:      #080810;
+    --bg-primary:   #0e0e20;
+    --bg-felt:      #0b1628;
+    --bg-card:      #111830;
+    --bg-surface:   #172040;
+    --bg-raised:    #1e2d50;
+    --accent-gold:  #e8b84b;
+    --gold-light:   #f5d980;
+    --gold-dark:    #8a6520;
+    --accent-purple:#9d6fff;
+    --accent-green: #4ade80;
+    --combo-blue:   #38bdf8;
+    --accent-red:   #e94560;
+    --text-1:  #e8eaf6;
+    --text-2:  #7a8aaa;
+    --text-3:  #344060;
+    --border-lo: rgba(232,184,75,.06);
+    --border-md: rgba(232,184,75,.14);
+    --border-hi: rgba(232,184,75,.35);
+    --radius-sm:   4px;
+    --radius-md:   6px;
+    --radius-lg:   8px;
+    --radius-xl:   10px;
+    --radius-card: 12px;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body {
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    background:var(--bg-void);
+    color:var(--text-1);
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    background-image:
+      radial-gradient(ellipse 120% 40% at 50% 0%, rgba(30,45,80,.45) 0%, transparent 55%),
+      url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.008'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  h1,h2,h3,h4,h5{font-family:'Chakra Petch',system-ui,sans-serif}
+  a{text-decoration:none;color:inherit}
+
+  /* ── TOP NAV ─────────────────────────────────────────── */
+  .top-nav {
+    background:linear-gradient(180deg,rgba(6,6,14,.98),rgba(8,8,16,.96));
+    border-top:2px solid var(--accent-gold);
+    border-bottom:1px solid rgba(232,184,75,.1);
+    height:56px;
+    display:flex;align-items:center;
+    position:sticky;top:0;z-index:200;
+    box-shadow:0 4px 32px rgba(0,0,0,.7);
+    backdrop-filter:blur(20px);
+    flex-shrink:0;
+  }
+  .nav-brand-block {
+    width:220px;flex-shrink:0;height:56px;
+    display:flex;align-items:center;gap:.65rem;
+    padding:0 1.1rem;
+    border-right:1px solid rgba(232,184,75,.1);
+  }
+  .nav-logo-img{width:32px;height:32px;object-fit:contain;flex-shrink:0;}
+  .brand-name {
+    font-family:'Chakra Petch',sans-serif;font-size:.88rem;font-weight:700;
+    color:var(--accent-gold);letter-spacing:.08em;
+    line-height:1.1;
+  }
+  .brand-sub{font-size:.46rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.16em;display:block;}
+  .nav-center{flex:1;display:flex;align-items:center;padding:0 1.5rem;gap:1.5rem;}
+  .nav-link{font-size:.78rem;font-weight:600;color:var(--text-2);letter-spacing:.04em;transition:color .15s;}
+  .nav-link:hover{color:var(--accent-gold);}
+  .nav-link.active{color:var(--accent-gold);}
+  .nav-actions{display:flex;align-items:center;gap:.55rem;padding-right:1.1rem;margin-left:auto;}
+  .btn {
+    display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+    padding:.44rem 1rem;border-radius:var(--radius-sm);border:none;cursor:pointer;
+    font-size:.76rem;font-weight:700;font-family:'Chakra Petch',sans-serif;
+    letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+    transition:filter .15s,box-shadow .18s,border-color .15s;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,#c8982a,#e8b84b);color:#06060e;
+    box-shadow:0 2px 0 var(--gold-dark),0 3px 12px rgba(232,184,75,.22);
+  }
+  .btn-primary:hover{filter:brightness(1.07);box-shadow:0 2px 0 var(--gold-dark),0 6px 20px rgba(232,184,75,.4);color:#06060e;}
+  .btn-outline {
+    background:rgba(255,255,255,.04);border:1px solid var(--border-md);color:var(--text-2);
+  }
+  .btn-outline:hover{border-color:var(--border-hi);color:var(--accent-gold);}
+  .btn-lg{padding:.6rem 1.5rem;font-size:.84rem;}
+  .btn-xl{padding:.75rem 2rem;font-size:.9rem;}
+
+  /* ── APP SHELL ────────────────────────────────────────── */
+  .app-shell{display:flex;flex:1;}
+
+  /* ── SIDEBAR ──────────────────────────────────────────── */
+  .sidebar {
+    width:220px;flex-shrink:0;
+    background:linear-gradient(180deg,rgba(8,8,18,.98),rgba(6,6,14,.98));
+    border-right:1px solid rgba(232,184,75,.1);
+    padding:1.1rem 0;
+    display:flex;flex-direction:column;
+    position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
+  }
+  .sidebar-section{margin-bottom:1.25rem;}
+  .sidebar-label{
+    font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.2em;
+    color:var(--text-3);padding:0 1.1rem .4rem;
+    font-family:'Chakra Petch',sans-serif;
+  }
+  .sidebar-link{
+    display:flex;align-items:center;gap:.6rem;
+    padding:.5rem 1.1rem;
+    font-size:.82rem;font-weight:600;color:var(--text-2);
+    transition:color .12s,background .12s;
+    border-left:2px solid transparent;
+    text-decoration:none;
+    font-family:'Plus Jakarta Sans',sans-serif;
+  }
+  .sidebar-link:hover{color:var(--text-1);background:rgba(232,184,75,.04);}
+  .sidebar-link.active{color:var(--accent-gold);background:rgba(232,184,75,.06);border-left-color:var(--accent-gold);}
+  .sidebar-icon{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.7;}
+  .sidebar-link.active .sidebar-icon,.sidebar-link:hover .sidebar-icon{opacity:1;}
+  .sidebar-divider{height:1px;background:rgba(232,184,75,.08);margin:.25rem 1.1rem .55rem;}
+  .sidebar-footer{margin-top:auto;padding:.85rem 1.1rem 0;border-top:1px solid rgba(232,184,75,.08);}
+  .sidebar-cta{padding:.7rem .85rem;margin:.5rem .65rem;background:linear-gradient(135deg,rgba(232,184,75,.12),rgba(232,184,75,.05));border:1px solid rgba(232,184,75,.22);border-radius:var(--radius-lg);}
+  .sidebar-cta-text{font-size:.72rem;color:var(--text-2);margin-bottom:.55rem;line-height:1.4;}
+  .sidebar-cta .btn{width:100%;justify-content:center;}
+
+  /* ── MAIN CONTENT ─────────────────────────────────────── */
+  .main{flex:1;overflow-y:auto;}
+
+  /* ── HERO ─────────────────────────────────────────────── */
+  .hero {
+    min-height:calc(100vh - 56px);
+    display:flex;align-items:center;
+    padding:4rem 420px 3rem 3rem;
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 65% 50%, rgba(157,111,255,.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 20% 30%, rgba(232,184,75,.05) 0%, transparent 55%);
+  }
+  .hero::before{
+    content:'';position:absolute;inset:0;
+    background:url("{% static 'images/games/guess_background_3.png' %}") center/cover no-repeat;
+    opacity:.05;
+  }
+  .hero-inner{
+    max-width:680px;position:relative;z-index:1;
+  }
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:.45rem;
+    background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.25);
+    border-radius:var(--radius-sm);
+    padding:.3rem .75rem;
+    font-size:.68rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent-gold);margin-bottom:1.5rem;
+    font-family:'Chakra Petch',sans-serif;
+  }
+  .hero-eyebrow::before{content:'◆';font-size:.5rem;}
+  .hero-logo-img{
+    width:240px;height:240px;object-fit:contain;
+    display:block;margin-bottom:1.5rem;
+    filter:drop-shadow(0 0 24px rgba(232,184,75,.3));
+  }
+  .hero h1{
+    font-size:clamp(2.8rem,5vw,4.2rem);line-height:1;
+    color:var(--text-1);margin-bottom:1.5rem;
+  }
+  .hero h1 span{color:var(--accent-gold);}
+  .hero-divider{
+    display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;
+  }
+  .hero-divider::before,.hero-divider::after{
+    content:'';flex:1;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(232,184,75,.3));
+  }
+  .hero-divider::after{background:linear-gradient(270deg,transparent,rgba(232,184,75,.3));}
+  .divider-dot{color:var(--gold-dark);font-size:.55rem;}
+  .hero p{font-size:1rem;color:var(--text-2);line-height:1.7;max-width:520px;margin-bottom:2.5rem;}
+  .hero-cta{display:flex;gap:.85rem;flex-wrap:wrap;}
+
+  /* Hero carousel */
+  .hero-visual{
+    position:absolute;right:3rem;top:50%;transform:translateY(-50%);
+    width:360px;
+  }
+  .pack-carousel{
+    width:360px;
+    background:linear-gradient(160deg,rgba(23,32,64,.92),rgba(11,18,38,.92));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    padding:1.75rem 1.5rem 1.25rem;text-align:center;overflow:hidden;
+    box-shadow:0 32px 64px rgba(0,0,0,.6);
+  }
+  .carousel-track{
+    position:relative;height:300px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .carousel-slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;
+    opacity:0;transition:opacity .5s ease,transform .5s ease;
+    transform:translateX(40px);
+    pointer-events:none;
+  }
+  .carousel-slide.active{opacity:1;transform:translateX(0);pointer-events:auto;}
+  .carousel-slide.prev{opacity:0;transform:translateX(-40px);}
+  .carousel-img{width:220px;height:220px;object-fit:contain;filter:drop-shadow(0 12px 28px rgba(0,0,0,.6));}
+  .carousel-label{font-size:.9rem;font-weight:700;color:var(--text-1);font-family:'Chakra Petch',sans-serif;text-transform:uppercase;letter-spacing:.1em;}
+  .carousel-sublabel{font-size:.7rem;color:var(--text-2);letter-spacing:.06em;}
+  .carousel-dots{display:flex;justify-content:center;gap:.45rem;margin-top:1rem;}
+  .carousel-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:rgba(232,184,75,.2);border:none;padding:0;cursor:pointer;
+    transition:background .3s,width .3s;
+  }
+  .carousel-dot.active{background:var(--accent-gold);width:20px;border-radius:3px;}
+
+  /* Stats bar */
+  .stats-bar{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid rgba(232,184,75,.08);
+  }
+  .stat-item{
+    padding:1.1rem 1.5rem;
+    border-right:1px solid rgba(232,184,75,.06);
+    position:relative;
+  }
+  .stat-item:last-child{border-right:none;}
+  .stat-item::after{
+    content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent-gold),transparent);
+    opacity:.2;
+  }
+  .stat-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);font-weight:700;margin-bottom:.2rem;}
+  .stat-value{font-family:'JetBrains Mono',monospace;font-size:1.25rem;font-weight:600;color:var(--text-1);line-height:1;}
+  .stat-value.gold{color:var(--accent-gold);}
+  .stat-sub{font-size:.68rem;color:var(--text-3);margin-top:.18rem;}
+
+  /* ── SECTION BASE ─────────────────────────────────────── */
+  .section{padding:4rem 3rem;}
+  .section-alt{background:linear-gradient(180deg,rgba(11,22,40,.5),rgba(8,8,16,.5));}
+  .section-eyebrow{
+    display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;
+    font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.18em;
+    color:var(--accent-gold);font-family:'Chakra Petch',sans-serif;
+  }
+  .section-eyebrow::before{content:'◆';font-size:.45rem;color:var(--gold-dark);}
+  .section h2{font-size:1.9rem;color:var(--text-1);margin-bottom:.75rem;line-height:1.1;}
+  .section-body{font-size:.94rem;color:var(--text-2);line-height:1.7;max-width:600px;margin-bottom:2.5rem;}
+
+  /* ── FEATURED PULLS ──────────────────────────────────── */
+  .featured-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    gap:.75rem;margin-bottom:2.5rem;
+  }
+  .feature-pull-card{
+    background:linear-gradient(160deg,rgba(23,32,64,.9),rgba(11,18,38,.9));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    overflow:hidden;cursor:pointer;
+    transition:transform .2s,border-color .2s,box-shadow .2s;
+    text-decoration:none;color:inherit;display:block;
+  }
+  .feature-pull-card:hover{transform:translateY(-5px);border-color:var(--border-hi);box-shadow:0 20px 40px rgba(0,0,0,.45);}
+  .feature-pull-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:.45rem .65rem;border-bottom:1px solid rgba(232,184,75,.07);
+  }
+  .card-dex-num{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-3);}
+  .feature-pull-rarity{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:.18rem .45rem;border-radius:3px;}
+  .feature-pull-rarity-common{background:rgba(148,163,184,.12);color:#94a3b8;}
+  .feature-pull-rarity-uncommon{background:rgba(74,222,128,.12);color:#4ade80;}
+  .feature-pull-rarity-rare{background:rgba(56,189,248,.12);color:#38bdf8;}
+  .feature-pull-rarity-epic{background:rgba(157,111,255,.12);color:#9d6fff;}
+  .feature-pull-rarity-legendary{background:rgba(232,184,75,.15);color:#e8b84b;}
+  .feature-pull-rarity-secret{background:rgba(233,69,96,.15);color:#e94560;}
+  .feature-pull-stage{
+    min-height:130px;display:flex;align-items:center;justify-content:center;
+    padding:.75rem;position:relative;
+    background:radial-gradient(ellipse 70% 60% at 50% 50%, rgba(157,111,255,.08), transparent);
+  }
+  .feature-pull-sprite{width:90px;height:90px;object-fit:contain;image-rendering:pixelated;position:relative;z-index:1;}
+  .feature-pull-body{padding:.5rem .65rem .75rem;}
+  .feature-pull-name-row{display:flex;align-items:baseline;justify-content:space-between;gap:.3rem;margin-bottom:.25rem;}
+  .poke-name{font-size:.82rem;font-weight:700;color:var(--text-1);}
+  .feature-pull-variant{font-size:.6rem;color:var(--text-3);}
+  .poke-types{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.3rem;}
+  .type-badge{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .4rem;border-radius:3px;border:1px solid;}
+  .type-normal{background:rgba(148,163,184,.1);border-color:rgba(148,163,184,.2);color:#94a3b8;}
+  .type-fire{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.25);color:#fb923c;}
+  .type-water{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25);color:#38bdf8;}
+  .type-grass{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25);color:#4ade80;}
+  .type-electric{background:rgba(250,204,21,.1);border-color:rgba(250,204,21,.25);color:#facc15;}
+  .type-psychic{background:rgba(233,69,96,.1);border-color:rgba(233,69,96,.25);color:#e94560;}
+  .type-ice{background:rgba(125,211,252,.1);border-color:rgba(125,211,252,.25);color:#7dd3fc;}
+  .type-dragon{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.25);color:#818cf8;}
+  .type-dark{background:rgba(52,64,96,.2);border-color:rgba(52,64,96,.4);color:#64748b;}
+  .type-fairy{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.25);color:#f472b6;}
+  .type-fighting{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#f87171;}
+  .type-rock{background:rgba(120,113,108,.1);border-color:rgba(120,113,108,.25);color:#a8a29e;}
+  .type-ground{background:rgba(180,140,80,.1);border-color:rgba(180,140,80,.25);color:#ca8a04;}
+  .type-bug{background:rgba(101,163,13,.1);border-color:rgba(101,163,13,.25);color:#84cc16;}
+  .type-poison{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.25);color:#a855f7;}
+  .type-ghost{background:rgba(99,80,180,.1);border-color:rgba(99,80,180,.25);color:#9d6fff;}
+  .type-steel{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.2);color:#94a3b8;}
+  .type-flying{background:rgba(125,211,252,.1);border-color:rgba(125,211,252,.2);color:#7dd3fc;}
+  .poke-combo{font-size:.67rem;color:var(--text-3);font-style:italic;line-height:1.4;}
+
+  /* Album preview */
+  .album-preview-shell{
+    background:linear-gradient(160deg,rgba(17,24,48,.95),rgba(11,18,38,.95));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+  .album-preview-head{
+    padding:.9rem 1.25rem;border-bottom:1px solid rgba(232,184,75,.08);
+    display:flex;align-items:center;justify-content:space-between;
+    position:relative;
+  }
+  .album-preview-head::before{
+    content:'';position:absolute;top:0;left:15%;right:15%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(232,184,75,.35),transparent);
+  }
+  .album-preview-kicker{font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;color:var(--accent-gold);font-weight:700;margin-bottom:.2rem;}
+  .album-preview-title{font-size:1rem;color:var(--text-1);}
+  .album-preview-pill{font-size:.65rem;padding:.25rem .65rem;background:rgba(232,184,75,.08);border:1px solid rgba(232,184,75,.18);border-radius:var(--radius-sm);color:var(--text-3);}
+  .album-preview-body{padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.85rem;}
+  .album-preview-row{display:flex;align-items:center;gap:1.25rem;}
+  .album-preview-mon{display:flex;align-items:center;gap:.75rem;min-width:180px;}
+  .album-preview-mon-sprite{width:48px;height:48px;object-fit:contain;}
+  .album-preview-mon-name{font-size:.82rem;font-weight:700;color:var(--text-1);}
+  .album-preview-mon-meta{font-size:.65rem;color:var(--text-3);margin-top:.12rem;}
+  .album-preview-slots{display:flex;gap:.5rem;flex-wrap:wrap;}
+  .album-slot{
+    width:64px;border-radius:var(--radius-md);
+    border:1px solid var(--border-md);overflow:hidden;
+    transition:border-color .15s;
+  }
+  .album-slot.is-collected{border-color:rgba(74,222,128,.3);}
+  .album-slot.is-missing{opacity:.45;filter:grayscale(.6);}
+  .album-slot-stage{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 50%, rgba(157,111,255,.06), transparent);
+    padding:.35rem;
+  }
+  .album-slot-sprite{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;}
+  .album-slot-label{font-size:.5rem;text-align:center;color:var(--text-3);padding:.25rem .2rem;border-top:1px solid rgba(232,184,75,.06);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+
+  /* ── RARITY SYSTEM ───────────────────────────────────── */
+  .rarity-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1.25rem;
+    justify-content:center;
+  }
+  /* ── CARD HOVER REVEAL (crossfade — no 3D, works everywhere) ── */
+  .rarity-card{
+    position:relative;
+    border-radius:var(--radius-card);
+    cursor:pointer;
+    width:200px;
+    height:300px;
+    overflow:hidden;
+  }
+  .rarity-card-common   {box-shadow:0 6px 22px rgba(148,163,184,.18);}
+  .rarity-card-uncommon {box-shadow:0 6px 22px rgba(74,222,128,.22);}
+  .rarity-card-rare     {box-shadow:0 6px 22px rgba(56,189,248,.24);}
+  .rarity-card-epic     {box-shadow:0 6px 22px rgba(157,111,255,.26);}
+  .rarity-card-legendary{box-shadow:0 6px 22px rgba(232,184,75,.32);}
+  .rarity-card-fullart  {box-shadow:0 6px 22px rgba(157,111,255,.24);}
+  .rarity-card-secret   {box-shadow:0 6px 22px rgba(233,69,96,.28);}
+
+  .rarity-card-inner{position:absolute;inset:0;}
+
+  /* Both faces fill the card, transition opacity */
+  .card-face{
+    position:absolute;inset:0;
+    border-radius:var(--radius-card);
+    overflow:hidden;
+    transition:opacity .4s ease;
+  }
+
+  /* Front visible by default, back hidden */
+  .card-front{opacity:1;}
+  .card-back {opacity:0;pointer-events:none;}
+
+  /* On hover: swap */
+  .rarity-card:hover .card-front{opacity:0;}
+  .rarity-card:hover .card-back {opacity:1;pointer-events:auto;}
+
+  /* ── FRONT ── */
+  .card-front{
+    background:linear-gradient(160deg,rgba(11,18,40,.95),rgba(7,11,24,.95));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .rarity-card-frame{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:fill;pointer-events:none;z-index:1;
+  }
+  .rarity-card-sprite{
+    width:51%;height:51%;object-fit:contain;image-rendering:pixelated;
+    position:relative;z-index:2;
+    margin-bottom:6%;
+  }
+
+  /* ── BACK — text only, no sprite, no frame ── */
+  .card-back{
+    background:linear-gradient(160deg,rgba(14,20,50,.97),rgba(8,12,30,.97));
+    border:1px solid var(--border-md);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card-back-content{
+    display:flex;flex-direction:column;align-items:center;
+    gap:.55rem;padding:1.25rem;text-align:center;
+  }
+  .card-back-rarity{
+    font-family:'Chakra Petch',sans-serif;font-size:.6rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.2em;color:var(--accent-gold);
+  }
+  .card-back-name{
+    font-family:'Chakra Petch',sans-serif;font-size:1.3rem;font-weight:700;
+    color:var(--text-1);line-height:1.1;
+  }
+  .card-back-variant{
+    font-size:.7rem;color:var(--text-2);text-transform:uppercase;
+    letter-spacing:.12em;
+  }
+  .card-back-dust{
+    font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;
+    color:var(--accent-gold);
+    background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.22);
+    border-radius:var(--radius-sm);padding:.28rem .75rem;margin-top:.25rem;
+  }
+
+
+  /* ── REGION SECTION ──────────────────────────────────── */
+  .regions-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+  .regions-intro{}
+  .regions-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+  .region-card{
+    background:linear-gradient(160deg,rgba(23,32,64,.9),rgba(11,18,38,.9));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    padding:.85rem 1rem;overflow:hidden;position:relative;
+    transition:border-color .2s;
+  }
+  .region-card:hover{border-color:var(--border-hi);}
+  .region-pack-img{width:52px;height:52px;object-fit:contain;float:right;margin-left:.5rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));}
+  .region-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-bottom:.2rem;}
+  .region-name{font-size:.88rem;color:var(--text-1);font-weight:700;}
+  .region-count{font-size:.7rem;color:var(--text-2);margin-bottom:.65rem;}
+  .region-bar{height:3px;background:rgba(232,184,75,.08);border-radius:0;overflow:hidden;clear:both;}
+  .region-fill{height:100%;border-radius:0;transition:width .5s;}
+
+  /* ── GUILD LOOP ──────────────────────────────────────── */
+  .guild-layout{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;}
+  .guild-features{list-style:none;display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.5rem;}
+  .guild-features li{
+    display:flex;align-items:flex-start;gap:.65rem;
+    font-size:.88rem;color:var(--text-2);line-height:1.5;
+    padding:.55rem .7rem;
+    background:rgba(232,184,75,.03);border:1px solid rgba(232,184,75,.07);
+    border-radius:var(--radius-md);
+  }
+  .guild-features li::before{content:'◆';color:var(--gold-dark);font-size:.45rem;margin-top:.4rem;flex-shrink:0;}
+  .guild-chain{
+    background:linear-gradient(160deg,rgba(23,32,64,.95),rgba(11,18,38,.95));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    overflow:hidden;
+  }
+  .guild-chain-head{
+    padding:.8rem 1.1rem;border-bottom:1px solid rgba(232,184,75,.08);
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--accent-gold);
+  }
+  .chain-step{
+    display:flex;align-items:flex-start;gap:.75rem;
+    padding:.8rem 1.1rem;border-bottom:1px solid rgba(232,184,75,.05);
+  }
+  .chain-step:last-child{border-bottom:none;}
+  .chain-num{
+    width:22px;height:22px;border-radius:var(--radius-sm);flex-shrink:0;
+    background:linear-gradient(135deg,rgba(232,184,75,.15),rgba(232,184,75,.06));
+    border:1px solid rgba(232,184,75,.22);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.65rem;font-weight:700;color:var(--accent-gold);
+    font-family:'Chakra Petch',sans-serif;
+  }
+  .chain-text{font-size:.82rem;color:var(--text-2);line-height:1.55;}
+  .chain-text strong{color:var(--text-1);}
+  .chain-result{
+    margin:.65rem 1.1rem .85rem;
+    padding:.6rem .9rem;
+    background:linear-gradient(135deg,rgba(232,184,75,.1),rgba(232,184,75,.04));
+    border:1px solid rgba(232,184,75,.2);border-radius:var(--radius-md);
+    font-size:.78rem;color:var(--accent-gold);font-weight:600;text-align:center;
+    font-family:'Chakra Petch',sans-serif;
+  }
+
+  /* ── QUESTS ──────────────────────────────────────────── */
+  .quest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;}
+  .quest-card{
+    background:linear-gradient(160deg,rgba(23,32,64,.9),rgba(11,18,38,.9));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    padding:1rem 1.1rem;
+    position:relative;overflow:hidden;
+    transition:transform .2s,border-color .2s;
+  }
+  .quest-card:hover{transform:translateY(-3px);border-color:var(--border-hi);}
+  .quest-type-badge{
+    font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+    padding:.2rem .55rem;border-radius:var(--radius-sm);margin-bottom:.6rem;
+    display:inline-block;
+  }
+  .quest-card-icon{font-size:1.6rem;margin-bottom:.5rem;display:block;}
+  .quest-card-name{font-size:.92rem;color:var(--text-1);margin-bottom:.35rem;}
+  .quest-card-desc{font-size:.78rem;color:var(--text-2);line-height:1.55;}
+
+  /* ── ARCADE SECTION ──────────────────────────────────── */
+  .arcade-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:.85rem;}
+  .arcade-card{
+    background:linear-gradient(180deg,rgba(23,32,64,.96),rgba(11,18,38,.96));
+    border:1px solid var(--border-md);border-radius:var(--radius-card);
+    overflow:hidden;
+    transition:transform .2s,box-shadow .2s,border-color .2s;
+    text-decoration:none;color:inherit;display:flex;flex-direction:column;
+  }
+  .arcade-card:hover{transform:translateY(-5px);border-color:var(--border-hi);box-shadow:0 24px 48px rgba(0,0,0,.45);}
+  .arcade-card.featured::before{
+    content:'';display:block;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent-gold),var(--gold-light),transparent);
+  }
+  .arcade-art{
+    position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    min-height:165px;
+  }
+  .arcade-card.featured .arcade-art{min-height:200px;}
+  .arcade-art-bg{
+    position:absolute;inset:0;object-fit:cover;width:100%;height:100%;
+    opacity:.25;
+  }
+  .arcade-art-logo{
+    position:relative;z-index:1;
+    width:110px;height:auto;object-fit:contain;
+    filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));
+  }
+  .arcade-card.featured .arcade-art-logo{width:140px;}
+  .arcade-body{padding:.85rem 1rem 1rem;flex:1;display:flex;flex-direction:column;}
+  .arcade-tag{
+    display:inline-flex;align-items:center;gap:.25rem;
+    border-radius:var(--radius-sm);padding:.22rem .55rem;
+    font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+    margin-bottom:.45rem;color:#86efac;border:1px solid rgba(74,222,128,.28);
+    background:rgba(22,101,52,.12);
+  }
+  .arcade-tag::before{content:'●';font-size:.4rem;}
+  .arcade-card-name{font-size:1rem;color:var(--text-1);margin-bottom:.22rem;}
+  .arcade-card.featured .arcade-card-name{font-size:1.28rem;}
+  .arcade-card-desc{font-size:.79rem;color:var(--text-2);line-height:1.55;flex:1;margin-bottom:.8rem;}
+  .arcade-pills{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;}
+  .arcade-pill{
+    border-radius:var(--radius-sm);border:1px solid var(--border-md);
+    background:rgba(10,15,29,.46);color:var(--text-3);
+    padding:.22rem .52rem;font-size:.65rem;font-weight:600;
+  }
+
+  /* ── PROGRESS LOOP ────────────────────────────────────── */
+  .progress-layout{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;}
+  .tier-ladder{display:flex;flex-direction:column;gap:.5rem;}
+  .tier-rung{
+    display:flex;align-items:center;gap:1rem;
+    padding:.7rem 1rem;
+    background:linear-gradient(135deg,rgba(23,32,64,.9),rgba(11,18,38,.9));
+    border:1px solid var(--border-md);border-radius:var(--radius-lg);
+    border-left:3px solid var(--tier-color,var(--border-md));
+    transition:border-color .2s;
+  }
+  .tier-icon-img{width:28px;height:28px;object-fit:contain;flex-shrink:0;}
+  .tier-name{font-size:.85rem;font-weight:700;color:var(--text-1);flex:1;}
+  .tier-pts{font-size:.72rem;color:var(--text-2);}
+  .tier-rung.champion{
+    border-color:var(--accent-gold);
+    background:linear-gradient(135deg,rgba(232,184,75,.1),rgba(232,184,75,.04));
+  }
+  .tier-rung.champion .tier-name{color:var(--accent-gold);}
+
+  /* ── CTA BANNER ──────────────────────────────────────── */
+  .cta-banner{
+    padding:5rem 3rem;text-align:center;
+    background:
+      linear-gradient(180deg,rgba(11,22,40,.8),rgba(8,8,16,.8)),
+      radial-gradient(ellipse 60% 80% at 50% 50%, rgba(232,184,75,.06) 0%, transparent 65%);
+    border-top:1px solid rgba(232,184,75,.1);
+  }
+  .cta-logo{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 1.5rem;filter:drop-shadow(0 0 24px rgba(232,184,75,.3));}
+  .cta-banner h2{font-size:2.4rem;color:var(--text-1);margin-bottom:.75rem;}
+  .cta-banner p{font-size:1rem;color:var(--text-2);max-width:480px;margin:0 auto 2.5rem;}
+  .cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+  /* ── FOOTER ──────────────────────────────────────────── */
+  footer{
+    padding:1.25rem 3rem;
+    border-top:1px solid rgba(232,184,75,.08);
+    font-size:.72rem;color:var(--text-3);
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:.5rem;
+  }
+
+  /* ── RESPONSIVE ──────────────────────────────────────── */
+  @media (max-width:900px){
+    .sidebar{display:none;}
+    .hero-visual{display:none;}
+    .regions-layout,.guild-layout,.progress-layout{grid-template-columns:1fr;}
+    .arcade-grid{grid-template-columns:1fr;}
+    .section{padding:3rem 1.5rem;}
+    .hero{padding:3rem 1.5rem;}
+  }
+  @media (max-width:600px){
+    .stats-bar{grid-template-columns:1fr 1fr;}
+    .stat-item:nth-child(2){border-right:none;}
+    .regions-grid{grid-template-columns:1fr;}
+    .featured-grid{grid-template-columns:repeat(2,1fr);}
+    .rarity-grid{grid-template-columns:repeat(2,1fr);}
+    .rarity-grid > article:nth-child(n){grid-column:auto;}
+  }
+  </style>
 </head>
 <body>
 
-<nav>
-  <span class="nav-brand">
-    <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="nav-logo">
-    <span class="nav-brand-sub">Collector's Edition</span>
-  </span>
+<!-- ── TOP NAV ─────────────────────────────────────────── -->
+<nav class="top-nav">
+  <div class="nav-brand-block">
+    <img src="{% static 'images/logo.png' %}" alt="Collector's Edition" class="nav-logo-img">
+    <div>
+      <span class="brand-sub">Collector's Edition</span>
+    </div>
+  </div>
+  <div class="nav-center">
+    <a class="nav-link active" href="#featured">Collection</a>
+    <a class="nav-link" href="#arcade">Arcade</a>
+    <a class="nav-link" href="#guilds">Guilds</a>
+    <a class="nav-link" href="#quests">Quests</a>
+  </div>
   <div class="nav-actions">
-    <a href="{% url 'login' %}" class="btn btn-outline">Login</a>
+    <a href="{% url 'account_login' %}" class="btn btn-outline">Login</a>
     <a href="{% url 'users:register' %}" class="btn btn-primary">Sign Up Free</a>
   </div>
 </nav>
 
-<section class="hero">
-  <div class="container">
-    <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="hero-logo-img">
-    <div class="hero-eyebrow">Now in Beta</div>
-    <h1>Collect.<br><span>Explore.</span><br>Share.</h1>
-    <div class="hero-divider">
-      <span class="divider-dot">&#9670;</span>
-      <span class="divider-dot">&#9670;</span>
-      <span class="divider-dot">&#9670;</span>
-    </div>
-    <p>
-      Build your album, open sticker packs, train your Amigo level, and help your guild
-      fill a shared collection. The live game is all about collecting momentum.
-    </p>
-    <div class="hero-cta">
-      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Start Your Album</a>
-      <a href="{% url 'login' %}" class="btn btn-outline btn-lg">I Have an Account</a>
-    </div>
-  </div>
-</section>
+<!-- ── APP SHELL ───────────────────────────────────────── -->
+<div class="app-shell">
 
-<div class="stats-bar">
-  <div class="container stats-bar-inner">
-    <div class="stat-item">
-      <div class="stat-dot dot-green"></div>
-      <div>
-        <div class="stat-label">Balance</div>
-        <div class="stat-value">Ryo</div>
-        <div class="stat-sub">In-game currency</div>
-      </div>
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <a class="sidebar-link active" href="#featured">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M4 19h16"/><rect x="8" y="11" width="8" height="8"/></svg>
+        Collection
+      </a>
+      <a class="sidebar-link" href="#arcade">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+        Arcade
+      </a>
+      <a class="sidebar-link" href="#guilds">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Guilds
+      </a>
+      <a class="sidebar-link" href="#quests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Quests
+      </a>
     </div>
-    <div class="stat-divider"></div>
-    <div class="stat-item">
-      <div class="stat-dot dot-blue"></div>
-      <div>
-        <div class="stat-label">Pokedex</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Regions</div>
+      <a class="sidebar-link" href="#regions">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Kanto–Galar
+      </a>
+      <a class="sidebar-link" href="#rarity">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        7 Rarity Tiers
+      </a>
+    </div>
+    <div class="sidebar-cta">
+      <div class="sidebar-cta-text">Join players building albums and growing guilds.</div>
+      <a href="{% url 'users:register' %}" class="btn btn-primary" style="font-size:.68rem;">Create Free Account</a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ───────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ── HERO ───────────────────────────────────────────── -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-eyebrow">Now in Beta</div>
+        <img src="{% static 'images/logo.png' %}" alt="Collector's Edition" class="hero-logo-img">
+        <h1>Collect.<br><span>Explore.</span><br>Share.</h1>
+        <div class="hero-divider">
+          <span class="divider-dot">&#9670;</span>
+          <span class="divider-dot">&#9670;</span>
+          <span class="divider-dot">&#9670;</span>
+        </div>
+        <p>Build your album, open sticker packs, train your Amigo level, and help your guild
+          fill a shared collection. The live game is all about collecting momentum.</p>
+        <div class="hero-cta">
+          <a href="{% url 'users:register' %}" class="btn btn-primary btn-xl">Start Your Album</a>
+          <a href="{% url 'account_login' %}" class="btn btn-outline btn-xl">I Have an Account</a>
+        </div>
+      </div>
+      <!-- pack carousel -->
+      <div class="hero-visual">
+        <div class="pack-carousel">
+          <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-slide active">
+              <img src="{% static 'images/kanto_pack.png' %}" alt="Kanto Pack" class="carousel-img">
+              <div class="carousel-label">Kanto Pack</div>
+              <div class="carousel-sublabel">Generation I · 151 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/kanto_bundle_pack.png' %}" alt="Kanto Bundle" class="carousel-img">
+              <div class="carousel-label">Kanto Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/johto_pack.png' %}" alt="Johto Pack" class="carousel-img">
+              <div class="carousel-label">Johto Pack</div>
+              <div class="carousel-sublabel">Generation II · 100 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/johto_bundle_pack.png' %}" alt="Johto Bundle" class="carousel-img">
+              <div class="carousel-label">Johto Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/hoenn_pack.png' %}" alt="Hoenn Pack" class="carousel-img">
+              <div class="carousel-label">Hoenn Pack</div>
+              <div class="carousel-sublabel">Generation III · 135 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/hoenn_bundle_pack.png' %}" alt="Hoenn Bundle" class="carousel-img">
+              <div class="carousel-label">Hoenn Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/sinnoh_pack.png' %}" alt="Sinnoh Pack" class="carousel-img">
+              <div class="carousel-label">Sinnoh Pack</div>
+              <div class="carousel-sublabel">Generation IV · 107 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/sinnoh_bundle_pack.png' %}" alt="Sinnoh Bundle" class="carousel-img">
+              <div class="carousel-label">Sinnoh Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/unova_pack.png' %}" alt="Unova Pack" class="carousel-img">
+              <div class="carousel-label">Unova Pack</div>
+              <div class="carousel-sublabel">Generation V · 156 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/unova_bundle_pack.png' %}" alt="Unova Bundle" class="carousel-img">
+              <div class="carousel-label">Unova Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/kalos_pack.png' %}" alt="Kalos Pack" class="carousel-img">
+              <div class="carousel-label">Kalos Pack</div>
+              <div class="carousel-sublabel">Generation VI · 72 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/kalos_bundle_pack.png' %}" alt="Kalos Bundle" class="carousel-img">
+              <div class="carousel-label">Kalos Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/alola_pack.png' %}" alt="Alola Pack" class="carousel-img">
+              <div class="carousel-label">Alola Pack</div>
+              <div class="carousel-sublabel">Generation VII · 88 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/alola_bundle_pack.png' %}" alt="Alola Bundle" class="carousel-img">
+              <div class="carousel-label">Alola Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/galar_pack.png' %}" alt="Galar Pack" class="carousel-img">
+              <div class="carousel-label">Galar Pack</div>
+              <div class="carousel-sublabel">Generation VIII · 96 Pokemon</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="{% static 'images/galar_bundle_pack.png' %}" alt="Galar Bundle" class="carousel-img">
+              <div class="carousel-label">Galar Bundle</div>
+              <div class="carousel-sublabel">5× packs · bonus Ryo</div>
+            </div>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STATS BAR ─────────────────────────────────────── -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-label">Currency</div>
+        <div class="stat-value gold">Ryo</div>
+        <div class="stat-sub">Earn from games &amp; quests</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Pokédex</div>
         <div class="stat-value">{{ pokedex_total }}</div>
         <div class="stat-sub">Pokemon to collect</div>
       </div>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-item">
-      <div class="stat-dot dot-green"></div>
-      <div>
+      <div class="stat-item">
         <div class="stat-label">Guilds</div>
         <div class="stat-value">Shared</div>
-        <div class="stat-sub">Albums and quests</div>
+        <div class="stat-sub">Albums &amp; quests</div>
       </div>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-item">
-      <div class="stat-dot dot-gold"></div>
-      <div>
+      <div class="stat-item">
         <div class="stat-label">Arcade</div>
-        <div class="stat-value">Daily</div>
-        <div class="stat-sub">Mini-games and quests</div>
+        <div class="stat-value">3 Games</div>
+        <div class="stat-sub">Daily rewards</div>
       </div>
     </div>
-  </div>
-</div>
 
-<section class="featured">
-  <div class="container">
-    <div class="section-header-bar">
-      <span class="section-header-diamond">&#9670;</span>
-      <span class="section-header-text">FEATURED PULLS</span>
-      <span class="section-header-diamond">&#9670;</span>
-    </div>
-    <div class="section-title">Build Your Collection</div>
-    <div class="section-body">
-      Seven rarity tiers, a deep variant pool, and plenty of reasons to keep opening packs.
-      Chase Prismatic, Full Art, and Secret Rare highlights, then craft the missing pieces with Sticker Dust.
-    </div>
-    <div class="featured-showcase-grid">
-      {% for card in featured_showcase_cards %}
-      <a class="feature-pull-card rarity-{{ card.rarity }}" href="{% url 'pokemon:detail' card.pokemon.pk %}">
-        <div class="feature-pull-head">
-          <span class="card-dex-num">#{{ card.pokemon.pokedex_number|stringformat:'03d' }}</span>
-          <span class="feature-pull-rarity feature-pull-rarity-{{ card.rarity }}">{{ card.rarity_label }}</span>
-        </div>
-        <div class="feature-pull-stage feature-pull-stage-{{ card.rarity }}">
-          <img class="feature-pull-sprite {{ card.fit|default:'' }}"
-               src="{{ card.pokemon.pokedex_number|sticker_sprite:card.variant }}"
-               alt="{{ card.pokemon.name }} {{ card.variant_label }}"
-               onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
-          <img class="feature-pull-frame"
-               src="/static/img/frames/{{ card.rarity }}.png"
-               alt="">
-        </div>
-        <div class="feature-pull-body">
-          <div class="feature-pull-name-row">
-            <span class="poke-name">{{ card.pokemon.name }}</span>
-            <span class="feature-pull-variant">{{ card.variant_label }}</span>
+    <!-- ── FEATURED PULLS ─────────────────────────────────── -->
+    <section class="section" id="featured">
+      <div class="section-eyebrow">Featured Pulls</div>
+      <h2>Build Your Collection</h2>
+      <p class="section-body">
+        Seven rarity tiers, a deep variant pool, and plenty of reasons to keep opening packs.
+        Chase Prismatic, Full Art, and Secret Rare highlights, then craft the missing pieces with Sticker Dust.
+      </p>
+      <div class="featured-grid">
+        {% for card in featured_showcase_cards %}
+        <a class="feature-pull-card rarity-{{ card.rarity }}" href="{% url 'pokemon:detail' card.pokemon.pk %}">
+          <div class="feature-pull-head">
+            <span class="card-dex-num">#{{ card.pokemon.pokedex_number|stringformat:'03d' }}</span>
+            <span class="feature-pull-rarity feature-pull-rarity-{{ card.rarity }}">{{ card.rarity_label }}</span>
           </div>
-          <div class="card-meta-row">
+          <div class="feature-pull-stage">
+            <img class="feature-pull-sprite {{ card.fit|default:'' }}"
+                 src="{{ card.pokemon.pokedex_number|sticker_sprite:card.variant }}"
+                 alt="{{ card.pokemon.name }} {{ card.variant_label }}"
+                 onerror="this.src='{{ card.pokemon.pokedex_number|official_artwork }}'">
+          </div>
+          <div class="feature-pull-body">
+            <div class="feature-pull-name-row">
+              <span class="poke-name">{{ card.pokemon.name }}</span>
+              <span class="feature-pull-variant">{{ card.variant_label }}</span>
+            </div>
             <div class="poke-types">
               <span class="type-badge type-{{ card.pokemon.primary_type.name|lower }}">{{ card.pokemon.primary_type.name }}</span>
               {% if card.pokemon.secondary_type %}
                 <span class="type-badge type-{{ card.pokemon.secondary_type.name|lower }}">{{ card.pokemon.secondary_type.name }}</span>
               {% endif %}
             </div>
+            <div class="poke-combo">{{ card.caption }}</div>
           </div>
-          <div class="poke-combo">{{ card.caption }}</div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    <div class="album-preview-shell">
-      <div class="album-preview-top">
-        <div>
-          <div class="album-preview-kicker">Mini Album Preview</div>
-          <h3 class="album-preview-title">Three Pokemon, a few hits, and a few missing slots to chase.</h3>
-        </div>
-        <div class="album-preview-pill">Collected and missing variants</div>
+        </a>
+        {% endfor %}
       </div>
-      <div class="album-preview-grid">
-        {% for row in album_preview_rows %}
-        <article class="album-preview-row">
-          <div class="album-preview-mon">
-            <img class="album-preview-mon-sprite"
-                 src="{{ row.pokemon.pokedex_number|official_artwork }}"
-                 alt="{{ row.pokemon.name }}">
-            <div>
-              <div class="album-preview-mon-name">{{ row.pokemon.name }}</div>
-              <div class="album-preview-mon-meta">{{ row.rarity_label }} row · {{ row.slots|length }} variant slots shown</div>
+
+      <!-- Mini album preview -->
+      <div class="album-preview-shell">
+        <div class="album-preview-head">
+          <div>
+            <div class="album-preview-kicker">Mini Album Preview</div>
+            <h3 class="album-preview-title">Three Pokemon, a few hits, and a few missing slots to chase.</h3>
+          </div>
+          <div class="album-preview-pill">Collected and missing variants</div>
+        </div>
+        <div class="album-preview-body">
+          {% for row in album_preview_rows %}
+          <div class="album-preview-row">
+            <div class="album-preview-mon">
+              <img class="album-preview-mon-sprite"
+                   src="{{ row.pokemon.pokedex_number|official_artwork }}"
+                   alt="{{ row.pokemon.name }}">
+              <div>
+                <div class="album-preview-mon-name">{{ row.pokemon.name }}</div>
+                <div class="album-preview-mon-meta">{{ row.rarity_label }} · {{ row.slots|length }} variants shown</div>
+              </div>
+            </div>
+            <div class="album-preview-slots">
+              {% for slot in row.slots %}
+              <div class="album-slot album-slot-{{ row.rarity }}{% if slot.collected %} is-collected{% else %} is-missing{% endif %}">
+                <div class="album-slot-stage">
+                  <img class="album-slot-sprite {{ row.fit|default:'' }}"
+                       src="{{ row.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
+                       alt="{{ row.pokemon.name }} {{ slot.variant_label }}"
+                       onerror="this.src='{{ row.pokemon.pokedex_number|official_artwork }}'">
+                </div>
+                <div class="album-slot-label">{{ slot.variant_label }}</div>
+              </div>
+              {% endfor %}
             </div>
           </div>
-          <div class="album-preview-slots">
-            {% for slot in row.slots %}
-            <div class="album-slot album-slot-{{ row.rarity }}{% if slot.collected %} is-collected{% else %} is-missing{% endif %}">
-              <div class="album-slot-stage">
-                <img class="album-slot-sprite {{ row.fit|default:'' }}"
-                     src="{{ row.pokemon.pokedex_number|sticker_sprite:slot.variant }}"
-                     alt="{{ row.pokemon.name }} {{ slot.variant_label }}"
-                     onerror="this.src='{{ row.pokemon.pokedex_number|official_artwork }}'">
-                <img class="album-slot-frame" src="/static/img/frames/{{ row.rarity }}.png" alt="">
-              </div>
-              <div class="album-slot-label">{{ slot.variant_label }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RARITY SECTION ─────────────────────────────────── -->
+    <section class="section section-alt" id="rarity">
+      <div class="section-eyebrow">Rarity System</div>
+      <h2>7 Tiers of Rarity</h2>
+      <p class="section-body">
+        From easy album staples to true chase pulls, every rarity tier changes how a pack feels and how fast your collection grows.
+      </p>
+      <div class="rarity-grid">
+        {% for sample in rarity_showcase_cards %}
+        <article class="rarity-card rarity-card-{{ sample.rarity }}">
+          <div class="rarity-card-inner">
+            <!-- FRONT: frame + full sprite -->
+            <div class="card-face card-front">
+              <img class="rarity-card-frame" src="/static/img/frames/{{ sample.rarity }}.png" alt="" onerror="this.style.display='none'">
+              {% if sample.pokemon.pokedex_number %}
+              <img class="rarity-card-sprite {{ sample.fit|default:'' }}"
+                   src="{{ sample.pokemon.pokedex_number|sticker_sprite:sample.variant }}"
+                   alt="{{ sample.pokemon.name }}"
+                   onerror="this.src='{{ sample.pokemon.pokedex_number|official_artwork }}'">
+              {% elif sample.pokemon.sprite_url %}
+              <img class="rarity-card-sprite {{ sample.fit|default:'' }}" src="{{ sample.pokemon.sprite_url }}" alt="{{ sample.pokemon.name }}">
+              {% endif %}
             </div>
-            {% endfor %}
+            <!-- BACK: rarity, name, variant, dust -->
+            <div class="card-face card-back">
+              <div class="card-back-content">
+                <div class="card-back-rarity">{{ sample.label }}</div>
+                <div class="card-back-name">{{ sample.pokemon.name }}</div>
+                <div class="card-back-variant">{{ sample.variant_label }}</div>
+                <div class="card-back-dust">{{ sample.craft_cost }} Dust</div>
+              </div>
+            </div>
           </div>
         </article>
         {% endfor %}
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<section class="rarity-section">
-  <div class="container">
-    <div class="section-header-bar">
-      <span class="section-header-diamond">&#9670;</span>
-      <span class="section-header-text">RARITY SYSTEM</span>
-      <span class="section-header-diamond">&#9670;</span>
-    </div>
-    <div class="section-title">7 Tiers of Rarity</div>
-    <div class="section-body">
-      From easy album staples to true chase pulls, every rarity tier changes how a pack feels and how fast your collection grows.
-    </div>
-    <div class="rarity-showcase-grid">
-      {% for sample in rarity_showcase_cards %}
-      <article class="rarity-card rarity-card-{{ sample.rarity }}">
-        <div class="rarity-card-top">
-          <div>
-            <div class="rarity-card-kicker">{{ sample.badge }}</div>
-            <h3 class="rarity-card-title">{{ sample.label }}</h3>
+    <!-- ── COLLECTOR'S ALBUM / REGIONS ───────────────────── -->
+    <section class="section" id="regions">
+      <div class="regions-layout">
+        <div class="regions-intro">
+          <div class="section-eyebrow">Collector's Album</div>
+          <h2>Complete Every Region</h2>
+          <p class="section-body">
+            Organize your stickers by generation and fill every slot from Kanto through Galar.
+            Every placed sticker pushes your personal album and your guild progress forward.
+          </p>
+          <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Open Your First Pack</a>
+        </div>
+        <div class="regions-grid">
+          <div class="region-card">
+            <img src="{% static 'images/kanto_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#facc15;">&#9632; KANTO</div>
+            <div class="region-name">Generation I</div>
+            <div class="region-count">151 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:27%;background:#facc15;"></div></div>
           </div>
-          <span class="rarity-card-cost">{{ sample.craft_cost }} Dust</span>
+          <div class="region-card">
+            <img src="{% static 'images/johto_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#ef4444;">&#9632; JOHTO</div>
+            <div class="region-name">Generation II</div>
+            <div class="region-count">100 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:5%;background:#ef4444;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/hoenn_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#3b82f6;">&#9632; HOENN</div>
+            <div class="region-name">Generation III</div>
+            <div class="region-count">135 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#3b82f6;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/sinnoh_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#22c55e;">&#9632; SINNOH</div>
+            <div class="region-name">Generation IV</div>
+            <div class="region-count">107 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#22c55e;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/unova_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#e879f9;">&#9632; UNOVA</div>
+            <div class="region-name">Generation V</div>
+            <div class="region-count">156 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#e879f9;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/kalos_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#38bdf8;">&#9632; KALOS</div>
+            <div class="region-name">Generation VI</div>
+            <div class="region-count">72 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#38bdf8;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/alola_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#e8b84b;">&#9632; ALOLA</div>
+            <div class="region-name">Generation VII</div>
+            <div class="region-count">88 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#e8b84b;"></div></div>
+          </div>
+          <div class="region-card">
+            <img src="{% static 'images/galar_pack.png' %}" alt="" class="region-pack-img">
+            <div class="region-label" style="color:#f97316;">&#9632; GALAR</div>
+            <div class="region-name">Generation VIII</div>
+            <div class="region-count">96 Pokemon</div>
+            <div class="region-bar"><div class="region-fill" style="width:0%;background:#f97316;"></div></div>
+          </div>
         </div>
-        <div class="rarity-card-stage">
-          {% if sample.pokemon.pokedex_number %}
-          <img
-            class="rarity-card-sprite {{ sample.fit|default:'' }}"
-            src="{{ sample.pokemon.pokedex_number|sticker_sprite:sample.variant }}"
-            alt="{{ sample.pokemon.name }} {{ sample.variant_label }}"
-            onerror="this.src='{{ sample.pokemon.pokedex_number|official_artwork }}'"
-          >
-          {% elif sample.pokemon.sprite_url %}
-          <img class="rarity-card-sprite {{ sample.fit|default:'' }}" src="{{ sample.pokemon.sprite_url }}" alt="{{ sample.pokemon.name }}">
-          {% endif %}
-          <img class="rarity-card-frame" src="/static/img/frames/{{ sample.rarity }}.png" alt="">
-        </div>
-        <div class="rarity-card-name">{{ sample.pokemon.name }}</div>
-        <div class="rarity-card-variant">{{ sample.variant_label }}</div>
-        <p class="rarity-card-copy">{{ sample.description }}</p>
-      </article>
-      {% endfor %}
-    </div>
-  </div>
-</section>
+      </div>
+    </section>
 
-<section class="album-section">
-  <div class="container">
-    <div class="section-header-bar">
-      <span class="section-header-diamond">&#9670;</span>
-      <span class="section-header-text">COLLECTOR'S ALBUM</span>
-      <span class="section-header-diamond">&#9670;</span>
-    </div>
-    <div class="section-title">Complete Every Region</div>
-    <div class="section-body">
-      Organize your stickers by generation and fill every slot from Kanto through Galar.
-      Every placed sticker pushes your personal album and your guild progress forward.
-    </div>
-    <div class="album-regions">
-      <div class="region-card">
-        <div class="region-label" style="color:#ef4444;">&#9632; KANTO REGION</div>
-        <div class="region-name">Generation I</div>
-        <div class="region-count">151 Pokemon</div>
-        <div class="region-bar"><div class="region-fill" style="width:27%;background:#ef4444;"></div></div>
+    <!-- ── GUILD LOOP ─────────────────────────────────────── -->
+    <section class="section section-alt" id="guilds">
+      <div class="section-eyebrow">Community Loop</div>
+      <h2>The Guild Album Loop</h2>
+      <div class="guild-layout">
+        <div>
+          <p class="section-body">
+            Stickers matter more when you decide where they live. Keep them for your personal album,
+            place them permanently in your guild collection, and grow your guild level through daily
+            contributions and weekly goals.
+          </p>
+          <ul class="guild-features">
+            <li>Donate stickers into a guild album and make them guild soul-bound</li>
+            <li>Earn guild XP from donations, rows, columns, and quest completions</li>
+            <li>Unlock perks like bonus Ryo from mini-games and extra board utility</li>
+            <li>Track progress by rarity, rows, columns, and completed generations</li>
+            <li>Give every member a reason to contribute each day and week</li>
+          </ul>
+        </div>
+        <div class="guild-chain">
+          <div class="guild-chain-head">◆ Live Guild Example</div>
+          <div class="chain-step">
+            <div class="chain-num">1</div>
+            <div class="chain-text">A member donates a <strong>Rare Pikachu sticker</strong> to the guild album.</div>
+          </div>
+          <div class="chain-step">
+            <div class="chain-num">2</div>
+            <div class="chain-text">The donation finishes a <strong>row</strong> and grants guild XP.</div>
+          </div>
+          <div class="chain-step">
+            <div class="chain-num">3</div>
+            <div class="chain-text">That row completion helps finish the <strong>weekly guild quest</strong>.</div>
+          </div>
+          <div class="chain-step">
+            <div class="chain-num">4</div>
+            <div class="chain-text">The guild levels up and unlocks a <strong>mini-game Ryo bonus</strong>.</div>
+          </div>
+          <div class="chain-result">Shared progress → better perks → stronger collector identity</div>
+        </div>
       </div>
-      <div class="region-card">
-        <div class="region-label" style="color:#22c55e;">&#9632; JOHTO REGION</div>
-        <div class="region-name">Generation II</div>
-        <div class="region-count">100 Pokemon</div>
-        <div class="region-bar"><div class="region-fill" style="width:5%;background:#22c55e;"></div></div>
-      </div>
-      <div class="region-card">
-        <div class="region-label" style="color:#3b82f6;">&#9632; HOENN REGION</div>
-        <div class="region-name">Generation III</div>
-        <div class="region-count">135 Pokemon</div>
-        <div class="region-bar"><div class="region-fill" style="width:0%;background:#3b82f6;"></div></div>
-      </div>
-      <div class="region-card">
-        <div class="region-label" style="color:#a855f7;">&#9632; SINNOH REGION</div>
-        <div class="region-name">Generation IV</div>
-        <div class="region-count">107 Pokemon</div>
-        <div class="region-bar"><div class="region-fill" style="width:0%;background:#a855f7;"></div></div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<section class="combo-section">
-  <div class="container">
-    <div class="combo-layout">
-      <div>
-        <div class="section-header-bar" style="justify-content:flex-start;gap:0.5rem;margin-bottom:0.75rem;">
-          <span class="section-header-diamond">&#9670;</span>
-          <span class="section-header-text">COMMUNITY LOOP</span>
+    <!-- ── QUESTS ─────────────────────────────────────────── -->
+    <section class="section" id="quests">
+      <div class="section-eyebrow">Quests &amp; Exploration</div>
+      <h2>Always Something to Do</h2>
+      <p class="section-body">
+        Daily missions, weekly challenges, guild goals, and zone expeditions keep your roster growing
+        and your wallet full of Ryo.
+      </p>
+      <div class="quest-grid">
+        <div class="quest-card">
+          <span class="quest-card-icon">☀️</span>
+          <div class="quest-type-badge" style="background:rgba(250,204,21,.1);color:#facc15;border:1px solid rgba(250,204,21,.2);">Daily Mission</div>
+          <h4 class="quest-card-name">Album Builder</h4>
+          <p class="quest-card-desc">Place soul-bound stickers in your album. Reward: Ryo + Amigo XP.</p>
         </div>
-        <div class="section-title">The Guild Album Loop</div>
-        <div class="section-body">
-          Stickers matter more when you decide where they live. Keep them for your personal
-          album, place them permanently in your guild collection, and grow your guild level
-          through daily contributions and weekly goals.
+        <div class="quest-card">
+          <span class="quest-card-icon">🎯</span>
+          <div class="quest-type-badge" style="background:rgba(56,189,248,.1);color:#38bdf8;border:1px solid rgba(56,189,248,.2);">Weekly Challenge</div>
+          <h4 class="quest-card-name">Pack Hunter</h4>
+          <p class="quest-card-desc">Open 5 sticker packs this week. Reward: Sticker Pack + Ryo bonus.</p>
         </div>
-        <ul class="combo-features">
-          <li>Donate stickers into a guild album and make them guild soul-bound</li>
-          <li>Earn guild XP from donations, rows, columns, and quest completions</li>
-          <li>Unlock perks like bonus Ryo from mini-games and extra board utility</li>
-          <li>Track progress by rarity, rows, columns, and completed generations</li>
-          <li>Give every member a reason to contribute each day and week</li>
-        </ul>
-      </div>
-      <div class="combo-chain-demo">
-        <h4>LIVE GUILD EXAMPLE</h4>
-        <div class="chain-step">
-          <div class="chain-num">1</div>
-          <div class="chain-text">A member donates a <strong>Rare Pikachu sticker</strong> to the guild album.</div>
+        <div class="quest-card">
+          <span class="quest-card-icon">🏅</span>
+          <div class="quest-type-badge" style="background:rgba(157,111,255,.1);color:#9d6fff;border:1px solid rgba(157,111,255,.2);">Guild Quest</div>
+          <h4 class="quest-card-name">Guild Welcome</h4>
+          <p class="quest-card-desc">Join a guild, donate your first sticker, and push the shared album toward its next perk.</p>
         </div>
-        <div class="chain-step">
-          <div class="chain-num">2</div>
-          <div class="chain-text">The donation finishes a <strong>row</strong> and grants guild XP.</div>
-        </div>
-        <div class="chain-step">
-          <div class="chain-num">3</div>
-          <div class="chain-text">That row completion helps finish the <strong>weekly guild quest</strong>.</div>
-        </div>
-        <div class="chain-step">
-          <div class="chain-num">4</div>
-          <div class="chain-text">The guild levels up and unlocks a <strong>mini-game Ryo bonus</strong>.</div>
-        </div>
-        <div class="combo-result">
-          Shared progress, better perks, stronger collector identity
+        <div class="quest-card">
+          <span class="quest-card-icon">🧭</span>
+          <div class="quest-type-badge" style="background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2);">Expedition</div>
+          <h4 class="quest-card-name">Zone Exploration</h4>
+          <p class="quest-card-desc">Spend Ryo to explore zones, bond Pokemon, and earn rare stickers from encounters.</p>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<section class="quests-section">
-  <div class="container">
-    <div class="section-header-bar">
-      <span class="section-header-diamond">&#9670;</span>
-      <span class="section-header-text">QUESTS &amp; EXPLORATION</span>
-      <span class="section-header-diamond">&#9670;</span>
-    </div>
-    <div class="section-title">Always Something to Do</div>
-    <div class="section-body">
-      Daily missions, weekly challenges, guild goals, and zone expeditions keep your roster growing
-      and your wallet full of Ryo.
-    </div>
-    <div class="quest-cards">
-      <div class="quest-card">
-        <div class="quest-icon" style="color:#facc15;">&#9728;</div>
-        <div class="quest-type" style="color:#facc15;">DAILY MISSION</div>
-        <div class="quest-name">Album Builder</div>
-        <div class="quest-desc">Place soul-bound stickers in your album. Reward: Ryo + Amigo XP.</div>
+    <!-- ── ARCADE ─────────────────────────────────────────── -->
+    <section class="section section-alt" id="arcade">
+      <div class="section-eyebrow">Play for Progress</div>
+      <h2>Arcade Energy, Collector Rewards</h2>
+      <p class="section-body">
+        Every minute in the arcade feeds back into your album loop.
+        Earn Ryo, unlock better placements, and keep your sticker progress moving forward every session.
+      </p>
+      <div class="arcade-grid">
+        <!-- Silhouette Tower — featured -->
+        <a class="arcade-card featured" href="{% url 'game:silhouette_hub' %}">
+          <div class="arcade-art">
+            <img src="{% static 'images/games/guess_background_4.png' %}" alt="" class="arcade-art-bg">
+            <img src="{% static 'images/games/guess_game_logo.png' %}" alt="Silhouette Tower" class="arcade-art-logo">
+          </div>
+          <div class="arcade-body">
+            <div class="arcade-tag">Open Now</div>
+            <h3 class="arcade-card-name">Silhouette Tower</h3>
+            <p class="arcade-card-desc">Name the Pokemon from its shadow and climb as high as you can. Four towers, rising stakes, and a Ryo bank you control.</p>
+            <div class="arcade-pills">
+              <span class="arcade-pill">Rookie</span>
+              <span class="arcade-pill">Regional</span>
+              <span class="arcade-pill">Master</span>
+              <span class="arcade-pill">National</span>
+            </div>
+            <span class="btn btn-primary">Play Now</span>
+          </div>
+        </a>
+        <!-- Memory -->
+        <a class="arcade-card" href="{% url 'game:memory_game' %}">
+          <div class="arcade-art" style="background:radial-gradient(ellipse at 50% 35%,rgba(157,111,255,.12),transparent 65%),linear-gradient(180deg,rgba(15,12,32,.95),rgba(6,6,18,.98));">
+            <img src="{% static 'images/games/memory_game_logo.png' %}" alt="Memory" class="arcade-art-logo">
+          </div>
+          <div class="arcade-body">
+            <div class="arcade-tag">Open Now</div>
+            <h3 class="arcade-card-name">Sticker Memory</h3>
+            <p class="arcade-card-desc">Classic pair-matching. Fewer turns earns a better grade and bigger payout.</p>
+            <div class="arcade-pills">
+              <span class="arcade-pill">4 Boards</span>
+              <span class="arcade-pill">Trail Mix</span>
+            </div>
+            <span class="btn btn-outline">Open Board</span>
+          </div>
+        </a>
+        <!-- Loteria -->
+        <a class="arcade-card" href="{% url 'game:loteria_game' %}">
+          <div class="arcade-art" style="background:radial-gradient(ellipse at 50% 35%,rgba(232,184,75,.1),transparent 65%),linear-gradient(180deg,rgba(22,16,8,.95),rgba(10,8,4,.98));">
+            <img src="{% static 'images/games/loteria_game_logo.png' %}" alt="Loteria" class="arcade-art-logo">
+          </div>
+          <div class="arcade-body">
+            <div class="arcade-tag" style="color:#fb923c;border-color:rgba(251,146,60,.28);background:rgba(251,146,60,.08);">Live Multiplayer</div>
+            <h3 class="arcade-card-name">Pokemon Loteria</h3>
+            <p class="arcade-card-desc">Fill your tabla before anyone else. Live multiplayer, real-time caller, pattern bonuses.</p>
+            <div class="arcade-pills">
+              <span class="arcade-pill">Multiplayer</span>
+              <span class="arcade-pill">WebSocket</span>
+            </div>
+            <span class="btn btn-outline">Join Room</span>
+          </div>
+        </a>
       </div>
-      <div class="quest-card">
-        <div class="quest-icon" style="color:#38bdf8;">&#9876;</div>
-        <div class="quest-type" style="color:#38bdf8;">WEEKLY CHALLENGE</div>
-        <div class="quest-name">Pack Hunter</div>
-        <div class="quest-desc">Open 5 sticker packs this week. Reward: Sticker Pack + Ryo bonus.</div>
-      </div>
-      <div class="quest-card">
-        <div class="quest-icon" style="color:#a855f7;">&#10022;</div>
-        <div class="quest-type" style="color:#a855f7;">GUILD QUEST</div>
-        <div class="quest-name">Guild Welcome</div>
-        <div class="quest-desc">Join a guild, donate your first sticker, and push the shared album toward its next perk.</div>
-      </div>
-      <div class="quest-card">
-        <div class="quest-icon" style="color:#4ade80;">&#11035;</div>
-        <div class="quest-type" style="color:#4ade80;">EXPEDITION</div>
-        <div class="quest-name">Zone Exploration</div>
-        <div class="quest-desc">Spend Ryo to explore zones, bond Pokemon, and earn rare stickers from encounters.</div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<section class="ranked-section">
-  <div class="container">
-    <div class="ranked-layout">
-      <div>
-        <div class="section-header-bar" style="justify-content:flex-start;gap:0.5rem;margin-bottom:0.75rem;">
-          <span class="section-header-diamond">&#9670;</span>
-          <span class="section-header-text">PLAY FOR PROGRESS</span>
+    <!-- ── PROGRESS LOOP ──────────────────────────────────── -->
+    <section class="section">
+      <div class="progress-layout">
+        <div>
+          <div class="section-eyebrow">The Loop</div>
+          <h2>Everything Feeds Back</h2>
+          <p class="section-body">
+            Your time in mini-games, expeditions, quests, and Loteria always feeds back into the album loop.
+            Earn Ryo, unlock better placements, and keep your sticker progress moving every session.
+          </p>
+          <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Start Collecting</a>
         </div>
-        <div class="section-title">Arcade Energy, Collector Rewards</div>
-        <div class="section-body">
-          Your time in mini-games, expeditions, quests, and Loteria should always feed
-          back into the album loop. Earn Ryo, unlock better placements, and keep your
-          sticker progress moving forward every session.
-        </div>
-      </div>
-      <div class="tier-ladder">
-        <div class="tier-rung" style="--tier-color: #22c55e;">
-          <span class="tier-icon">Pack</span>
-          <span class="tier-name">Sticker Packs</span>
-          <span class="tier-pts">Open, place, donate</span>
-        </div>
-        <div class="tier-rung" style="--tier-color: #38bdf8;">
-          <span class="tier-icon">Quest</span>
-          <span class="tier-name">Daily Quests</span>
-          <span class="tier-pts">Ryo + Amigo XP</span>
-        </div>
-        <div class="tier-rung" style="--tier-color: #a855f7;">
-          <span class="tier-icon">Guild</span>
-          <span class="tier-name">Guild Album</span>
-          <span class="tier-pts">Shared contribution</span>
-        </div>
-        <div class="tier-rung" style="--tier-color: #f97316;">
-          <span class="tier-icon">Play</span>
-          <span class="tier-name">Mini-Games</span>
-          <span class="tier-pts">Bonus Ryo loops</span>
-        </div>
-        <div class="tier-rung tier-champion" style="--tier-color: #e8b84b;">
-          <span class="tier-icon">Album</span>
-          <span class="tier-name">Completion</span>
-          <span class="tier-pts">Rows, columns, generations</span>
+        <div class="tier-ladder">
+          <div class="tier-rung" style="--tier-color:#22c55e;">
+            <img src="{% static 'images/pack.png' %}" alt="" class="tier-icon-img">
+            <span class="tier-name">Sticker Packs</span>
+            <span class="tier-pts">Open, place, donate</span>
+          </div>
+          <div class="tier-rung" style="--tier-color:#38bdf8;">
+            <img src="{% static 'images/explore.png' %}" alt="" class="tier-icon-img">
+            <span class="tier-name">Daily Quests</span>
+            <span class="tier-pts">Ryo + Amigo XP</span>
+          </div>
+          <div class="tier-rung" style="--tier-color:#a855f7;">
+            <img src="{% static 'images/guild.png' %}" alt="" class="tier-icon-img">
+            <span class="tier-name">Guild Album</span>
+            <span class="tier-pts">Shared contribution</span>
+          </div>
+          <div class="tier-rung" style="--tier-color:#f97316;">
+            <img src="{% static 'images/battle_icon.png' %}" alt="" class="tier-icon-img">
+            <span class="tier-name">Mini-Games</span>
+            <span class="tier-pts">Bonus Ryo loops</span>
+          </div>
+          <div class="tier-rung champion" style="--tier-color:var(--accent-gold);">
+            <img src="{% static 'images/collect.png' %}" alt="" class="tier-icon-img">
+            <span class="tier-name">Album Completion</span>
+            <span class="tier-pts">Rows, columns, generations</span>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<section class="cta-banner">
-  <div class="container">
-    <img src="{% static 'images/logo.png' %}" alt="MPKM Logo" class="cta-logo-img">
-    <h2>Ready to Start Collecting?</h2>
-    <p>Join players already building albums, finishing quests, and growing their guilds.</p>
-    <div class="hero-divider" style="margin-bottom:2rem;">
-      <span class="divider-dot">&#9670;</span>
-      <span class="divider-dot">&#9670;</span>
-      <span class="divider-dot">&#9670;</span>
-    </div>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
-      <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg">Create Free Account</a>
-      <a href="{% url 'login' %}" class="btn btn-outline btn-lg">Sign In</a>
-    </div>
-  </div>
-</section>
+    <!-- ── CTA BANNER ─────────────────────────────────────── -->
+    <section class="cta-banner">
+      <img src="{% static 'images/logo.png' %}" alt="Collector's Edition" class="cta-logo">
+      <h2>Ready to Start Collecting?</h2>
+      <p>Join players already building albums, finishing quests, and growing their guilds.</p>
+      <div class="cta-actions">
+        <a href="{% url 'users:register' %}" class="btn btn-primary btn-xl">Create Free Account</a>
+        <a href="{% url 'account_login' %}" class="btn btn-outline btn-xl">Sign In</a>
+      </div>
+    </section>
 
-<footer>
-  &copy; 2026 MPKM Collector's Edition &mdash; Fan project, not affiliated with Nintendo or Game Freak.
-</footer>
+    <!-- ── FOOTER ─────────────────────────────────────────── -->
+    <footer>
+      <span>&copy; 2026 Collector's Edition</span>
+      <span>Fan project &mdash; not affiliated with Nintendo or Game Freak.</span>
+    </footer>
 
+  </main>
+</div>
+
+<script>
+(function(){
+  const slides = document.querySelectorAll('.carousel-slide');
+  const dotsEl = document.getElementById('carouselDots');
+  let cur = 0, timer;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => go(i));
+    dotsEl.appendChild(d);
+  });
+
+  function go(next) {
+    const dots = dotsEl.querySelectorAll('.carousel-dot');
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('prev');
+    dots[cur].classList.remove('active');
+    setTimeout(() => slides[cur].classList.remove('prev'), 500);
+    cur = (next + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    dots[cur].classList.add('active');
+    resetTimer();
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => go(cur + 1), 2800);
+  }
+
+  resetTimer();
+})();
+</script>
 </body>
 </html>

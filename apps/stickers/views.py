@@ -541,69 +541,86 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
                 "convertible_dust_total": 0,
             })
 
-        # Craft tab
-        pokemon_list = list(
-            Pokemon.objects.only("id", "name", "pokedex_number")
-            .order_by("pokedex_number", "name")
-        )
-        selected_pokemon_id = self._selected_craft_pokemon_id()
-        if selected_pokemon_id and any(pokemon.pk == selected_pokemon_id for pokemon in pokemon_list):
-            selected_pokemon = next(pokemon for pokemon in pokemon_list if pokemon.pk == selected_pokemon_id)
+        # Craft tab — skip expensive queries when not needed
+        if active_tab == "craft":
+            pokemon_list = list(
+                Pokemon.objects.only("id", "name", "pokedex_number")
+                .order_by("pokedex_number", "name")
+            )
+            selected_pokemon_id = self._selected_craft_pokemon_id()
+            if selected_pokemon_id and any(pokemon.pk == selected_pokemon_id for pokemon in pokemon_list):
+                selected_pokemon = next(pokemon for pokemon in pokemon_list if pokemon.pk == selected_pokemon_id)
+            else:
+                selected_pokemon = pokemon_list[0] if pokemon_list else None
+
+            selected_rarity = self._selected_craft_rarity()
+            selected_variant = self._selected_craft_variant()
+            if selected_variant == StickerVariant.ANIME and selected_rarity != StickerRarity.SECRET_RARE:
+                selected_variant = StickerVariant.BASE
+
+            owned_slot_keys = {
+                f"{pokemon_id}|{rarity}|{variant}"
+                for pokemon_id, rarity, variant in Sticker.objects.filter(
+                    owner=self.request.user
+                ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
+            }
+            placed_slot_keys = {
+                f"{pokemon_id}|{rarity}|{variant}"
+                for pokemon_id, rarity, variant in Sticker.objects.filter(
+                    owner=self.request.user,
+                    is_album_placed=True,
+                ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
+            }
+
+            context["pokemon_list"] = pokemon_list
+            context["pokemon_picker_data"] = [
+                {
+                    "id": pokemon.pk,
+                    "name": pokemon.name,
+                    "dex": pokemon.pokedex_number or 0,
+                }
+                for pokemon in pokemon_list
+            ]
+            context["craft_selected_pokemon"] = selected_pokemon
+            context["craft_selected_rarity"] = selected_rarity
+            context["craft_selected_variant"] = selected_variant
+            context["craft_selected_cost"] = craft_cost_for(selected_rarity, selected_variant)
+            context["craft_missing_only"] = self.request.GET.get("missing_only") == "1"
+            context["craft_owned_slot_keys"] = sorted(owned_slot_keys)
+            context["craft_placed_slot_keys"] = sorted(placed_slot_keys)
+            context["craft_costs"] = CRAFT_COSTS
+            context["craft_variant_multipliers"] = CRAFT_VARIANT_MULTIPLIERS
+            context["craft_rarity_choices"] = StickerRarity.choices
+            context["craft_variant_groups"] = [
+                {
+                    "label": group_label,
+                    "variants": [
+                        {
+                            "value": variant,
+                            "label": StickerVariant(variant).label,
+                            "multiplier": CRAFT_VARIANT_MULTIPLIERS[variant],
+                        }
+                        for variant in variants
+                    ],
+                }
+                for group_label, variants in CRAFT_VARIANT_GROUPS
+            ]
         else:
-            selected_pokemon = pokemon_list[0] if pokemon_list else None
-
-        selected_rarity = self._selected_craft_rarity()
-        selected_variant = self._selected_craft_variant()
-        if selected_variant == StickerVariant.ANIME and selected_rarity != StickerRarity.SECRET_RARE:
-            selected_variant = StickerVariant.BASE
-
-        owned_slot_keys = {
-            f"{pokemon_id}|{rarity}|{variant}"
-            for pokemon_id, rarity, variant in Sticker.objects.filter(
-                owner=self.request.user
-            ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
-        }
-        placed_slot_keys = {
-            f"{pokemon_id}|{rarity}|{variant}"
-            for pokemon_id, rarity, variant in Sticker.objects.filter(
-                owner=self.request.user,
-                is_album_placed=True,
-            ).order_by().values_list("pokemon_id", "rarity", "variant").distinct()
-        }
-
-        context["pokemon_list"] = pokemon_list
-        context["pokemon_picker_data"] = [
-            {
-                "id": pokemon.pk,
-                "name": pokemon.name,
-                "dex": pokemon.pokedex_number or 0,
-            }
-            for pokemon in pokemon_list
-        ]
-        context["craft_selected_pokemon"] = selected_pokemon
-        context["craft_selected_rarity"] = selected_rarity
-        context["craft_selected_variant"] = selected_variant
-        context["craft_selected_cost"] = craft_cost_for(selected_rarity, selected_variant)
-        context["craft_missing_only"] = self.request.GET.get("missing_only") == "1"
-        context["craft_owned_slot_keys"] = sorted(owned_slot_keys)
-        context["craft_placed_slot_keys"] = sorted(placed_slot_keys)
-        context["craft_costs"] = CRAFT_COSTS
-        context["craft_variant_multipliers"] = CRAFT_VARIANT_MULTIPLIERS
-        context["craft_rarity_choices"] = StickerRarity.choices
-        context["craft_variant_groups"] = [
-            {
-                "label": group_label,
-                "variants": [
-                    {
-                        "value": variant,
-                        "label": StickerVariant(variant).label,
-                        "multiplier": CRAFT_VARIANT_MULTIPLIERS[variant],
-                    }
-                    for variant in variants
-                ],
-            }
-            for group_label, variants in CRAFT_VARIANT_GROUPS
-        ]
+            selected_rarity = self._selected_craft_rarity()
+            selected_variant = self._selected_craft_variant()
+            context["pokemon_list"] = []
+            context["pokemon_picker_data"] = []
+            context["craft_selected_pokemon"] = None
+            context["craft_selected_rarity"] = selected_rarity
+            context["craft_selected_variant"] = selected_variant
+            context["craft_selected_cost"] = craft_cost_for(selected_rarity, selected_variant)
+            context["craft_missing_only"] = False
+            context["craft_owned_slot_keys"] = []
+            context["craft_placed_slot_keys"] = []
+            context["craft_costs"] = CRAFT_COSTS
+            context["craft_variant_multipliers"] = CRAFT_VARIANT_MULTIPLIERS
+            context["craft_rarity_choices"] = StickerRarity.choices
+            context["craft_variant_groups"] = []
 
         # Badge Forge tab (Phase 3 — display only)
         context["badge_requirements"] = BADGE_CRAFT_REQUIREMENTS
@@ -673,36 +690,6 @@ class DustWorkshopView(LoginRequiredMixin, TemplateView):
 
 
 # ---------------------------------------------------------------------------
-# Sticker Generator (AI preview via Pollinations.ai)
-# ---------------------------------------------------------------------------
-
-class StickerGeneratorView(LoginRequiredMixin, TemplateView):
-    """
-    Interactive AI sticker preview tool.
-
-    Uses Pollinations.ai as a free image source — URLs are built client-side
-    in Alpine.js. No API key, no backend call, no cost.
-    Prompts are tuned to the Naruto-online / chakra-ninja theme of the game.
-    """
-
-    template_name = "stickers/sticker_generator.html"
-
-    def get_context_data(self, **kwargs):
-        from apps.pokemon.models import ChakraElement
-
-        context = super().get_context_data(**kwargs)
-        context["pokemon_list"] = (
-            Pokemon.objects.select_related("primary_type__chakra_element")
-            .filter(pokedex_number__isnull=False)
-            .order_by("pokedex_number")
-            .values("pk", "name", "pokedex_number", "primary_type__name", "primary_type__chakra_element__name")
-        )
-        context["variants"] = StickerVariant.choices
-        context["rarities"] = StickerRarity.choices
-        context["chakra_elements"] = ChakraElement.Name.choices
-        return context
-
-
 # ---------------------------------------------------------------------------
 # Regional Album views
 # ---------------------------------------------------------------------------

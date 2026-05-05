@@ -124,7 +124,7 @@
 </div>
 {% endfor %}
 {% else %}
-<div style="background:#0f1a2e;border:1px dashed #1e3a6e;border-radius:8px;padding:2rem;text-align:center;color:#6b7280;">
+<div style="background:#0f1a2e;border:1px dashed var(--border-md);border-radius:8px;padding:2rem;text-align:center;color:#6b7280;">
   No guilds yet. <a href="{% url 'guilds:create' %}">Create the first one!</a>
 </div>
 {% endif %}

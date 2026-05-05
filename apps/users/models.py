@@ -66,6 +66,11 @@ class User(AbstractUser):
         default=False,
         help_text="Automatically place newly earned stickers into empty album slots when possible.",
     )
+    arcade_daily_progress = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Per-day collector arcade progress used by the Fun Hub daily challenge widget.",
+    )
 
     # ── Achievement badge tracking (GDD §14.4) ────────────────────────────────
     perfect_victories = models.PositiveIntegerField(default=0)

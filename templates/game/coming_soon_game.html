@@ -25,8 +25,8 @@
   gap: 1rem;
 }
 .cs-panel, .cs-side {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   border-radius: 26px;
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
@@ -39,9 +39,9 @@
   border-radius: 22px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 30%, rgba(91,129,255,.22) 0%, transparent 65%),
-    linear-gradient(180deg, rgba(18,28,58,.97), rgba(8,12,24,.99));
-  border: 1px solid rgba(91,129,255,.26);
+    radial-gradient(ellipse at 50% 30%, var(--border-md) 0%, transparent 65%),
+    linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -59,8 +59,8 @@
     0deg,
     transparent,
     transparent 3px,
-    rgba(91,129,255,.04) 3px,
-    rgba(91,129,255,.04) 4px
+    var(--border-md) 3px,
+    var(--border-md) 4px
   );
   pointer-events: none;
 }
@@ -69,7 +69,7 @@
   position: absolute;
   left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(91,129,255,.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-md), transparent);
   animation: csScan 3.2s ease-in-out infinite;
   top: 0;
 }
@@ -87,17 +87,17 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(10,15,29,.72);
-  border: 2px solid rgba(91,129,255,.35);
+  background: var(--bg-void);
+  border: 2px solid var(--border-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 8px rgba(91,129,255,.07), 0 0 0 16px rgba(91,129,255,.04);
+  box-shadow: 0 0 0 8px var(--border-md), 0 0 0 16px var(--border-md);
   animation: csPulse 2.8s ease-in-out infinite;
 }
 @keyframes csPulse {
-  0%, 100% { box-shadow: 0 0 0 8px rgba(91,129,255,.07), 0 0 0 16px rgba(91,129,255,.04); }
-  50%       { box-shadow: 0 0 0 12px rgba(91,129,255,.12), 0 0 0 24px rgba(91,129,255,.06); }
+  0%, 100% { box-shadow: 0 0 0 8px var(--border-md), 0 0 0 16px var(--border-md); }
+  50%       { box-shadow: 0 0 0 12px var(--border-md), 0 0 0 24px var(--border-md); }
 }
 .cs-lock-wrap svg {
   width: 42px;
@@ -181,8 +181,8 @@
   letter-spacing: .14em;
 }
 .cs-badge.staged {
-  background: rgba(91,129,255,.14);
-  border: 1px solid rgba(91,129,255,.3);
+  background: var(--border-md);
+  border: 1px solid var(--border-md);
   color: #7ca3ff;
 }
 .cs-badge.staged::before {
@@ -245,8 +245,8 @@
 }
 .cs-feature {
   border-radius: 18px;
-  border: 1px solid rgba(91,129,255,.18);
-  background: rgba(10,15,29,.46);
+  border: 1px solid rgba(232,184,75,.06);
+  background: var(--bg-void);
   padding: .8rem .9rem;
 }
 .cs-feature span {
@@ -266,8 +266,8 @@
 .cs-dev-note {
   border-radius: 18px;
   padding: .85rem 1rem;
-  border: 1px solid rgba(91,129,255,.16);
-  background: rgba(10,15,29,.44);
+  border: 1px solid var(--border-md);
+  background: var(--bg-void);
   color: var(--text-3);
   font-size: .82rem;
   line-height: 1.55;
@@ -295,7 +295,7 @@
 .wallet-card {
   border-radius: 18px;
   border: 1px solid rgba(232,184,75,.14);
-  background: rgba(10,15,29,.52);
+  background: var(--bg-void);
   padding: .8rem .9rem;
 }
 .wallet-card strong { display:block; color:var(--text-1); font-size:.9rem; margin-bottom:.15rem; }

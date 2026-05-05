@@ -32,8 +32,8 @@
 
 /* ── Region card ─────────────────────────────────────────────── */
 .region-card {
-  background: #16213e;
-  border: 1px solid #1e3a6e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-md);
   border-radius: 14px;
   overflow: hidden;
   transition: border-color 0.2s;
@@ -54,7 +54,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(22,33,62,0.85), transparent);
+  background: linear-gradient(to top, var(--bg-surface), transparent);
   z-index: 1;
 }
 .region-banner-text {
@@ -104,7 +104,7 @@
 
 .region-progress-bar {
   height: 5px;
-  background: #1e3a6e;
+  background: var(--border-md);
   border-radius: 4px;
   margin-bottom: 0.7rem;
   overflow: hidden;
@@ -144,7 +144,7 @@
 .rarity-name { flex: 1; color: #e2e8f0; font-weight: 600; }
 .rarity-count { color: #94a3b8; white-space: nowrap; }
 
-.mini-bar-wrap { width: 60px; height: 4px; background: #1e3a6e; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.mini-bar-wrap { width: 60px; height: 4px; background: var(--border-md); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
 .mini-bar-fill { height: 100%; background: var(--rc, #3b82f6); border-radius: 3px; transition: width 0.3s; }
 
 .complete-badge {

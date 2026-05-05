@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style D — TCG Premium + Atlas Sidebar</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ── STYLE D: TCG Premium + Atlas Sidebar ──────────────────
+   Colors & atmosphere: Style A (cool navy void, gold foil)
+   Layout: Style C (persistent sidebar, slim top nav)
+   Edges: sharper — radius cut from 20-26px down to 8-12px
+   Logo: contained in sidebar brand, not overflowing nav
+   Icons: thin-stroke SVG, consistent 16px weight
+────────────────────────────────────────────────────────── */
+
+:root {
+  /* Style A color tokens — unchanged */
+  --bg-void:     #080810;
+  --bg-primary:  #0e0e20;
+  --bg-felt:     #0b1628;
+  --bg-card:     #111830;
+  --bg-surface:  #172040;
+  --bg-raised:   #1e2d50;
+
+  --accent-gold:  #e8b84b;
+  --gold-light:   #f5d980;
+  --gold-dark:    #8a6520;
+  --accent-purple:#9d6fff;
+  --accent-green: #4ade80;
+  --combo-blue:   #38bdf8;
+  --accent-red:   #e94560;
+
+  --text-1:  #e8eaf6;
+  --text-2:  #7a8aaa;
+  --text-3:  #344060;
+
+  --border-lo: rgba(232,184,75,.06);
+  --border-md: rgba(232,184,75,.14);
+  --border-hi: rgba(232,184,75,.35);
+
+  /* Sharper radii — D's key difference from A */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-card: 12px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body {
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  background:var(--bg-void);
+  color:var(--text-1);
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  background-image:
+    radial-gradient(ellipse 120% 40% at 50% 0%, rgba(30,45,80,.45) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.008'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E");
+}
+h1,h2,h3,h4{font-family:'Chakra Petch',system-ui,sans-serif}
+a{color:var(--accent-gold);text-decoration:none}
+
+/* ── TOP NAV — slim, sharp ────────────────────────────── */
+.top-nav {
+  background:linear-gradient(180deg,rgba(6,6,14,.98),rgba(8,8,16,.96));
+  border-top:1px solid rgba(232,184,75,.45);
+  border-bottom:1px solid rgba(232,184,75,.1);
+  height:56px;
+  display:flex;align-items:center;
+  padding:0;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 4px 32px rgba(0,0,0,.7);
+  backdrop-filter:blur(20px);
+  flex-shrink:0;
+}
+
+/* Brand block — same width as sidebar, separated by border */
+.top-nav-brand {
+  width:220px;flex-shrink:0;height:56px;
+  display:flex;align-items:center;gap:.65rem;
+  padding:0 1.1rem;
+  border-right:1px solid rgba(232,184,75,.1);
+}
+.brand-icon {
+  width:32px;height:32px;
+  background:linear-gradient(135deg,rgba(232,184,75,.2),rgba(232,184,75,.06));
+  border:1px solid rgba(232,184,75,.28);
+  /* Sharp — just 4px radius */
+  border-radius:var(--radius-sm);
+  box-shadow:0 0 16px rgba(232,184,75,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.brand-name {
+  font-family:'Chakra Petch',sans-serif;font-size:.9rem;font-weight:700;
+  color:var(--accent-gold);letter-spacing:.08em;
+}
+.brand-sub {
+  font-size:.48rem;color:var(--text-3);text-transform:uppercase;
+  letter-spacing:.16em;display:block;
+}
+
+/* Search */
+.top-search {
+  flex:1;max-width:380px;margin:0 1.25rem;
+  display:flex;align-items:center;gap:.55rem;
+  background:rgba(14,18,32,.7);border:1px solid rgba(232,184,75,.1);
+  border-radius:var(--radius-sm);
+  padding:.4rem .75rem;
+}
+.search-icon{opacity:.25;font-size:.85rem;}
+.search-input {
+  background:none;border:none;outline:none;color:var(--text-1);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.84rem;flex:1;
+}
+.search-input::placeholder{color:var(--text-3);}
+.search-kbd {
+  font-size:.58rem;font-family:'JetBrains Mono',monospace;color:var(--text-3);
+  border:1px solid rgba(232,184,75,.1);border-radius:3px;padding:.14rem .38rem;
+}
+
+.top-nav-end {
+  display:flex;align-items:center;gap:.6rem;margin-left:auto;padding-right:1.1rem;
+}
+.nav-ryo {
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:linear-gradient(135deg,rgba(232,184,75,.1),rgba(232,184,75,.05));
+  border:1px solid rgba(232,184,75,.28);
+  border-radius:var(--radius-sm);
+  padding:.32rem .85rem;
+  font-size:.72rem;font-family:'JetBrains Mono',monospace;
+  color:var(--accent-gold);font-weight:600;
+}
+.nav-ryo::before {
+  content:'';width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--gold-light),var(--gold-dark));
+  box-shadow:0 0 6px rgba(232,184,75,.5);flex-shrink:0;
+}
+.nav-avatar {
+  width:30px;height:30px;border-radius:var(--radius-sm);
+  background:var(--bg-surface);border:1px solid var(--border-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.68rem;font-weight:700;color:var(--text-2);cursor:pointer;
+  font-family:'Chakra Petch',sans-serif;
+}
+.nav-btn {
+  padding:.34rem .85rem;border-radius:var(--radius-sm);
+  border:1px solid var(--border-md);
+  font-size:.7rem;font-weight:700;font-family:'Chakra Petch',sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  color:var(--text-2);background:rgba(255,255,255,.04);
+  transition:border-color .15s,color .15s;
+}
+.nav-btn:hover{border-color:var(--border-hi);color:var(--accent-gold);}
+.nav-btn-primary {
+  background:linear-gradient(135deg,#c8982a,#e8b84b);
+  border:none;color:#06060e;
+  box-shadow:0 2px 12px rgba(232,184,75,.25);
+}
+.nav-btn-primary:hover{filter:brightness(1.08);color:#06060e;}
+
+/* ── APP SHELL ────────────────────────────────────────── */
+.app-shell {
+  display:flex;flex:1;min-height:calc(100vh - 56px);
+}
+
+/* ── SIDEBAR ──────────────────────────────────────────── */
+.sidebar {
+  width:220px;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(8,8,18,.98),rgba(6,6,14,.98));
+  border-right:1px solid rgba(232,184,75,.1);
+  padding:1.1rem 0;
+  display:flex;flex-direction:column;
+  position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
+}
+.sidebar-section{margin-bottom:1.35rem;}
+.sidebar-label {
+  font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.2em;
+  color:var(--text-3);padding:0 1.1rem .42rem;
+  font-family:'Chakra Petch',sans-serif;
+}
+.sidebar-link {
+  display:flex;align-items:center;gap:.6rem;
+  padding:.52rem 1.1rem;
+  font-size:.82rem;font-weight:600;color:var(--text-2);
+  transition:color .12s,background .12s;
+  border-left:2px solid transparent;
+  text-decoration:none;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.sidebar-link:hover{color:var(--text-1);background:rgba(232,184,75,.04);}
+.sidebar-link.active {
+  color:var(--accent-gold);
+  background:rgba(232,184,75,.06);
+  border-left-color:var(--accent-gold);
+}
+.sidebar-icon {
+  width:15px;height:15px;stroke:currentColor;fill:none;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;
+  opacity:.7;
+}
+.sidebar-link.active .sidebar-icon{opacity:1;}
+.sidebar-link:hover .sidebar-icon{opacity:.85;}
+
+.sidebar-badge {
+  margin-left:auto;font-size:.58rem;font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+  background:rgba(255,255,255,.06);border-radius:3px;
+  padding:.12rem .42rem;color:var(--text-3);
+}
+.sidebar-badge.new{background:rgba(232,184,75,.15);color:var(--accent-gold);}
+
+.sidebar-divider{height:1px;background:rgba(232,184,75,.08);margin:.25rem 1.1rem .6rem;}
+
+.sidebar-footer {
+  margin-top:auto;padding:.85rem 1.1rem 0;
+  border-top:1px solid rgba(232,184,75,.08);
+}
+.footer-user{display:flex;align-items:center;gap:.65rem;padding:.55rem 0;}
+.footer-avatar{
+  width:30px;height:30px;border-radius:var(--radius-sm);
+  background:var(--bg-surface);border:1px solid var(--border-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;color:var(--text-2);
+  font-family:'Chakra Petch',sans-serif;flex-shrink:0;
+}
+.footer-name{font-size:.78rem;font-weight:700;color:var(--text-2);font-family:'Chakra Petch',sans-serif;}
+.footer-sub{font-size:.62rem;color:var(--text-3);}
+
+/* ── MAIN CONTENT ─────────────────────────────────────── */
+.main{flex:1;padding:1.5rem 1.75rem 2.5rem;overflow-y:auto;}
+
+/* ── PAGE HEADER ──────────────────────────────────────── */
+.page-header {
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+  margin-bottom:1.35rem;padding-bottom:1.1rem;
+  border-bottom:1px solid rgba(232,184,75,.08);
+}
+.page-eyebrow {
+  font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;
+  color:var(--accent-gold);font-weight:700;margin-bottom:.3rem;
+  display:flex;align-items:center;gap:.4rem;
+}
+.page-eyebrow::before{content:'◆';font-size:.45rem;color:var(--gold-dark);}
+.page-title{font-size:1.6rem;line-height:1;color:var(--text-1);margin-bottom:.25rem;}
+.page-sub{font-size:.84rem;color:var(--text-2);}
+.page-actions{display:flex;gap:.55rem;align-items:center;flex-shrink:0;}
+
+.btn {
+  display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+  padding:.44rem 1rem;border-radius:var(--radius-sm);border:none;cursor:pointer;
+  font-size:.76rem;font-weight:700;font-family:'Chakra Petch',sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  transition:filter .15s,box-shadow .18s,border-color .15s;
+}
+.btn:hover{text-decoration:none;}
+.btn-primary {
+  background:linear-gradient(135deg,#c8982a,#e8b84b);color:#06060e;
+  box-shadow:0 2px 0 var(--gold-dark),0 3px 12px rgba(232,184,75,.22);
+}
+.btn-primary:hover{filter:brightness(1.07);box-shadow:0 2px 0 var(--gold-dark),0 6px 20px rgba(232,184,75,.4);}
+.btn-secondary {
+  background:rgba(255,255,255,.05);border:1px solid var(--border-md);color:var(--text-2);
+}
+.btn-secondary:hover{border-color:var(--border-hi);color:var(--accent-gold);}
+
+/* ── STAT ROW ────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1.35rem;}
+.stat-cell {
+  background:linear-gradient(160deg,rgba(23,32,64,.85),rgba(11,22,40,.85));
+  border:1px solid var(--border-md);border-radius:var(--radius-lg);
+  padding:.85rem 1rem;position:relative;overflow:hidden;
+}
+/* Gold bottom line — Style A signature */
+.stat-cell::after {
+  content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-gold),transparent);
+  opacity:.35;
+}
+.stat-cell-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);font-weight:700;margin-bottom:.25rem;}
+.stat-cell-val{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:600;color:var(--text-1);line-height:1;}
+.stat-cell-sub{font-size:.7rem;color:var(--text-3);margin-top:.18rem;}
+.stat-cell.ryo .stat-cell-val{color:var(--accent-gold);}
+
+/* ── DAILY CHALLENGE ─────────────────────────────────── */
+.daily-challenge {
+  background:linear-gradient(160deg,rgba(18,26,53,.95),rgba(10,15,29,.95));
+  border:1px solid rgba(91,129,255,.2);border-radius:var(--radius-card);
+  padding:.9rem 1.1rem;margin-bottom:1.35rem;
+}
+.dc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.dc-kicker{font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;color:var(--accent-gold);font-weight:700;}
+.dc-prog-wrap{display:flex;align-items:center;gap:.6rem;}
+.dc-prog-label{font-size:.68rem;color:var(--text-3);}
+.dc-bar-outer{width:120px;height:5px;background:rgba(232,184,75,.08);border-radius:0;overflow:hidden;}
+.dc-bar{height:100%;width:33%;background:linear-gradient(90deg,var(--gold-dark),var(--accent-gold));transition:width .5s;}
+.dc-tasks{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;}
+.dc-task {
+  padding:.65rem .8rem;
+  border:1px solid rgba(232,184,75,.1);border-radius:var(--radius-lg);
+  background:rgba(10,15,29,.48);
+  display:flex;align-items:flex-start;gap:.5rem;
+}
+.dc-task.done{border-color:rgba(74,222,128,.22);background:rgba(22,101,52,.1);}
+.dc-check {
+  width:16px;height:16px;border-radius:3px;flex-shrink:0;margin-top:2px;
+  border:1.5px solid rgba(91,129,255,.3);
+  display:flex;align-items:center;justify-content:center;font-size:.62rem;
+  background:rgba(10,15,29,.55);
+}
+.dc-task.done .dc-check{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.12);color:#86efac;}
+.dc-task-name{font-size:.76rem;font-weight:700;color:var(--text-1);line-height:1.25;margin-bottom:.1rem;}
+.dc-task-sub{font-size:.64rem;color:var(--text-3);}
+
+/* ── GAME CARDS ──────────────────────────────────────── */
+.section-head{margin-bottom:.75rem;}
+.section-title{font-size:1.05rem;color:var(--text-1);margin-bottom:.12rem;}
+.section-sub{font-size:.82rem;color:var(--text-2);}
+
+.games-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:.75rem;margin-bottom:1.35rem;}
+
+.game-card {
+  background:linear-gradient(180deg,rgba(23,32,64,.96),rgba(11,18,38,.96));
+  border:1px solid var(--border-md);
+  /* Sharper card corners — Style D key look */
+  border-radius:var(--radius-card);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:transform .2s,box-shadow .2s,border-color .2s;
+  cursor:pointer;position:relative;
+}
+.game-card:hover{transform:translateY(-4px);border-color:var(--border-hi);box-shadow:0 24px 48px rgba(0,0,0,.45),0 0 0 1px rgba(232,184,75,.07);}
+
+/* Gold top accent line on featured card */
+.game-card.featured::before{
+  content:'';display:block;height:2px;width:100%;
+  background:linear-gradient(90deg,transparent 0%,var(--accent-gold) 40%,var(--gold-light) 60%,transparent 100%);
+}
+
+.card-art {
+  min-height:175px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.game-card.featured .card-art{min-height:215px;}
+.art-silhouette{background:radial-gradient(ellipse at 50% 35%,rgba(56,189,248,.14),transparent 65%),linear-gradient(180deg,rgba(12,20,40,.95),rgba(6,10,20,.98));}
+.art-memory{background:radial-gradient(ellipse at 50% 35%,rgba(157,111,255,.12),transparent 65%),linear-gradient(180deg,rgba(15,12,32,.95),rgba(6,6,18,.98));}
+.art-loteria{background:radial-gradient(ellipse at 50% 35%,rgba(232,184,75,.1),transparent 65%),linear-gradient(180deg,rgba(22,16,8,.95),rgba(10,8,4,.98));}
+
+.art-icon{font-size:3.5rem;opacity:.75;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5));}
+.game-card.featured .art-icon{font-size:4.8rem;}
+
+.card-body{padding:.85rem 1rem 1rem;flex:1;display:flex;flex-direction:column;}
+.card-tag {
+  display:inline-flex;align-items:center;gap:.28rem;
+  border-radius:var(--radius-sm);padding:.25rem .6rem;
+  font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  margin-bottom:.5rem;
+  background:rgba(10,15,29,.55);border:1px solid rgba(91,129,255,.2);color:var(--text-2);
+}
+.card-tag.live{color:#86efac;border-color:rgba(74,222,128,.28);}
+.card-tag::before{content:'●';font-size:.45rem;}
+.card-name{font-size:1.05rem;color:var(--text-1);margin-bottom:.22rem;}
+.game-card.featured .card-name{font-size:1.35rem;}
+.card-desc{font-size:.8rem;color:var(--text-2);line-height:1.55;flex:1;margin-bottom:.8rem;}
+.card-meta{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.7rem;}
+.card-pill{
+  border-radius:var(--radius-sm);border:1px solid var(--border-md);
+  background:rgba(10,15,29,.46);color:var(--text-3);
+  padding:.24rem .56rem;font-size:.68rem;font-weight:600;
+}
+
+/* ── TWO-COL BOTTOM ──────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+
+/* ── PANEL (quests, records) ─────────────────────────── */
+.panel {
+  background:linear-gradient(160deg,rgba(23,32,64,.96),rgba(11,18,38,.96));
+  border:1px solid var(--border-md);border-radius:var(--radius-card);
+  overflow:hidden;position:relative;
+}
+/* Gold top ornament — Style A signature */
+.panel::before{
+  content:'';position:absolute;top:0;left:15%;right:15%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(232,184,75,.35),transparent);
+}
+.panel-head{
+  padding:.8rem 1.1rem;border-bottom:1px solid rgba(232,184,75,.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--text-1);}
+.panel-link{font-size:.7rem;color:var(--text-3);transition:color .15s;}
+.panel-link:hover{color:var(--accent-gold);}
+
+/* Quest rows */
+.quest-row {
+  display:flex;align-items:center;gap:.8rem;
+  padding:.8rem 1.1rem;border-bottom:1px solid rgba(232,184,75,.05);
+  transition:background .12s;
+}
+.quest-row:last-child{border-bottom:none;}
+.quest-row:hover{background:rgba(232,184,75,.025);}
+.quest-icon{
+  width:30px;height:30px;border-radius:var(--radius-md);
+  background:rgba(91,129,255,.12);border:1px solid rgba(91,129,255,.2);
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;
+}
+.quest-name{font-size:.8rem;font-weight:700;color:var(--text-1);}
+.quest-prog-text{font-size:.68rem;color:var(--text-2);margin-top:.08rem;}
+.quest-track{
+  width:60px;height:3px;background:rgba(232,184,75,.08);
+  border-radius:0;overflow:hidden;margin-top:.25rem;
+}
+.quest-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--accent-gold));}
+.quest-fill.done{background:linear-gradient(90deg,#4ade80,#22d3ee);}
+.quest-reward{margin-left:auto;font-size:.7rem;color:var(--accent-gold);font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.quest-reward.done{color:#86efac;}
+
+/* Record rows */
+.record-row {
+  display:flex;align-items:center;gap:.8rem;
+  padding:.8rem 1.1rem;border-bottom:1px solid rgba(232,184,75,.05);
+  transition:background .12s;
+}
+.record-row:last-child{border-bottom:none;}
+.record-row:hover{background:rgba(232,184,75,.025);}
+.record-medal{font-size:1.2rem;flex-shrink:0;}
+.record-game{font-size:.8rem;font-weight:700;color:var(--text-1);}
+.record-sub{font-size:.68rem;color:var(--text-3);margin-top:.06rem;}
+.record-val{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--text-1);text-align:right;}
+.record-date{font-size:.62rem;color:var(--text-3);text-align:right;}
+
+/* ── STYLE LABEL ──────────────────────────────────────── */
+.style-label{
+  text-align:center;padding:.5rem 0 0;margin-top:2rem;
+  font-size:.6rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.2em;
+  border-top:1px solid rgba(232,184,75,.06);
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="top-nav-brand">
+    <div class="brand-icon">🎴</div>
+    <div>
+      <div class="brand-name">Pokemon Amigo</div>
+      <span class="brand-sub">Collector's Edition</span>
+    </div>
+  </div>
+  <div class="top-search">
+    <span class="search-icon">⌕</span>
+    <input class="search-input" type="text" placeholder="Search Pokemon, quests, albums…">
+    <span class="search-kbd">⌘K</span>
+  </div>
+  <div class="top-nav-end">
+    <div class="nav-ryo">12,480</div>
+    <div class="nav-avatar">TL</div>
+    <a class="nav-btn" href="#">Login</a>
+    <a class="nav-btn nav-btn-primary" href="#">Sign Up</a>
+  </div>
+</nav>
+
+<!-- APP SHELL -->
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Arcade</div>
+      <a class="sidebar-link active" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+        Fun Hub
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Quests
+        <span class="sidebar-badge new">3</span>
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Events
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Collection</div>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M4 19h16"/><rect x="8" y="11" width="8" height="8"/></svg>
+        Sticker Album
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Pokédex
+        <span class="sidebar-badge">905</span>
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        Mi Casa
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Trade
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="13"/><path d="M7 21v-2a5 5 0 0 1 10 0v2"/><path d="M4 13c0-1.1.9-2 2-2h.5"/><path d="M19.5 11H20a2 2 0 0 1 2 2v0"/></svg>
+        Expedition
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Social</div>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Guilds
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg class="sidebar-icon" viewBox="0 0 24 24"><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/></svg>
+        Leaderboard
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="footer-user">
+        <div class="footer-avatar">TL</div>
+        <div>
+          <div class="footer-name">Trainer_Luis</div>
+          <div class="footer-sub">Lv. 24 · 12,480 Ryo</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Collector Arcade</div>
+        <h1 class="page-title">Fun Hub</h1>
+        <p class="page-sub">Three cabinets open. Daily quests reset in 11h 22m.</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn btn-secondary" href="#">View All Quests</a>
+        <a class="btn btn-primary" href="#">Claim Daily</a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-cell ryo">
+        <div class="stat-cell-label">Ryo Balance</div>
+        <div class="stat-cell-val">12,480</div>
+        <div class="stat-cell-sub">+400 earned today</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Day Streak</div>
+        <div class="stat-cell-val">7</div>
+        <div class="stat-cell-sub">Personal best: 14</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Tower Record</div>
+        <div class="stat-cell-val">FL 14</div>
+        <div class="stat-cell-sub">National tower</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Today's Quests</div>
+        <div class="stat-cell-val">1 / 3</div>
+        <div class="stat-cell-sub">2 remaining</div>
+      </div>
+    </div>
+
+    <!-- DAILY CHALLENGE -->
+    <div class="daily-challenge">
+      <div class="dc-head">
+        <div class="dc-kicker">◆ Daily Challenge — Sunday</div>
+        <div class="dc-prog-wrap">
+          <span class="dc-prog-label">1 of 3 complete</span>
+          <div class="dc-bar-outer"><div class="dc-bar"></div></div>
+        </div>
+      </div>
+      <div class="dc-tasks">
+        <div class="dc-task done">
+          <div class="dc-check">✓</div>
+          <div><div class="dc-task-name">Tower Scout</div><div class="dc-task-sub">1 run → 400 Ryo</div></div>
+        </div>
+        <div class="dc-task">
+          <div class="dc-check"></div>
+          <div><div class="dc-task-name">Memory Streak</div><div class="dc-task-sub">3 boards → 800 Ryo</div></div>
+        </div>
+        <div class="dc-task">
+          <div class="dc-check"></div>
+          <div><div class="dc-task-name">Loteria Night</div><div class="dc-task-sub">3 rounds → 750 Ryo</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAMES GRID -->
+    <div class="section-head">
+      <h2 class="section-title">Choose Your Cabinet</h2>
+      <div class="section-sub">All three cabinets open now. Rewards reset daily at midnight.</div>
+    </div>
+    <div class="games-grid">
+
+      <!-- Silhouette — FEATURED -->
+      <div class="game-card featured">
+        <div class="card-art art-silhouette">
+          <div class="art-icon">🗼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-tag live">Open Now</div>
+          <h3 class="card-name">Silhouette Tower</h3>
+          <p class="card-desc">Name the Pokemon from its shadow and climb as high as you can. Four towers, rising stakes, and a Ryo bank you control.</p>
+          <div class="card-meta">
+            <span class="card-pill">Rookie</span>
+            <span class="card-pill">Regional</span>
+            <span class="card-pill">Master</span>
+            <span class="card-pill">National</span>
+          </div>
+          <a class="btn btn-primary" href="#">Play Now</a>
+        </div>
+      </div>
+
+      <!-- Memory -->
+      <div class="game-card">
+        <div class="card-art art-memory">
+          <div class="art-icon">🃏</div>
+        </div>
+        <div class="card-body">
+          <div class="card-tag live">Open Now</div>
+          <h3 class="card-name">Sticker Memory</h3>
+          <p class="card-desc">Classic pair-matching. Fewer turns earns a better grade and bigger payout.</p>
+          <div class="card-meta">
+            <span class="card-pill">4 boards</span>
+            <span class="card-pill">Trail Mix entry</span>
+          </div>
+          <a class="btn btn-secondary" href="#">Open Board</a>
+        </div>
+      </div>
+
+      <!-- Loteria -->
+      <div class="game-card">
+        <div class="card-art art-loteria">
+          <div class="art-icon">🎴</div>
+        </div>
+        <div class="card-body">
+          <div class="card-tag live" style="color:#fb923c;border-color:rgba(251,146,60,.28);">3 playing now</div>
+          <h3 class="card-name">Pokemon Loteria</h3>
+          <p class="card-desc">Fill your tabla before anyone else. Live multiplayer, real-time caller, pattern bonuses.</p>
+          <div class="card-meta">
+            <span class="card-pill">Multiplayer</span>
+            <span class="card-pill">Live</span>
+          </div>
+          <a class="btn btn-secondary" href="#">Join Room</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TWO COL -->
+    <div class="two-col">
+
+      <!-- QUESTS -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Active Quests</div>
+          <a class="panel-link" href="#">View all →</a>
+        </div>
+        <div class="quest-row">
+          <div class="quest-icon">🗼</div>
+          <div style="flex:1;">
+            <div class="quest-name">Tower Climber</div>
+            <div class="quest-prog-text">2 / 3 runs</div>
+            <div class="quest-track"><div class="quest-fill" style="width:66%"></div></div>
+          </div>
+          <div class="quest-reward">900 Ryo</div>
+        </div>
+        <div class="quest-row">
+          <div class="quest-icon">🃏</div>
+          <div style="flex:1;">
+            <div class="quest-name">Memory Warm-Up</div>
+            <div class="quest-prog-text">0 / 1 boards</div>
+            <div class="quest-track"><div class="quest-fill" style="width:0%"></div></div>
+          </div>
+          <div class="quest-reward">350 Ryo</div>
+        </div>
+        <div class="quest-row">
+          <div class="quest-icon">🎴</div>
+          <div style="flex:1;">
+            <div class="quest-name">Loteria Round</div>
+            <div class="quest-prog-text">1 / 1 complete</div>
+            <div class="quest-track"><div class="quest-fill done" style="width:100%"></div></div>
+          </div>
+          <div class="quest-reward done">Done ✓</div>
+        </div>
+        <div class="quest-row">
+          <div class="quest-icon">📅</div>
+          <div style="flex:1;">
+            <div class="quest-name">Floor Grinder</div>
+            <div class="quest-prog-text">4 / 10 runs · Weekly</div>
+            <div class="quest-track"><div class="quest-fill" style="width:40%"></div></div>
+          </div>
+          <div class="quest-reward">3,500 Ryo</div>
+        </div>
+      </div>
+
+      <!-- RECORDS -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Personal Records</div>
+          <span class="panel-link">This device</span>
+        </div>
+        <div class="record-row">
+          <div class="record-medal">🥇</div>
+          <div style="flex:1;">
+            <div class="record-game">Silhouette Tower</div>
+            <div class="record-sub">National · 2,800 Ryo banked</div>
+          </div>
+          <div>
+            <div class="record-val">Floor 14</div>
+            <div class="record-date">Apr 28</div>
+          </div>
+        </div>
+        <div class="record-row">
+          <div class="record-medal">🥈</div>
+          <div style="flex:1;">
+            <div class="record-game">Sticker Memory</div>
+            <div class="record-sub">Master Board · 38 turns</div>
+          </div>
+          <div>
+            <div class="record-val">Perfect</div>
+            <div class="record-date">May 1</div>
+          </div>
+        </div>
+        <div class="record-row">
+          <div class="record-medal">🥉</div>
+          <div style="flex:1;">
+            <div class="record-game">Pokemon Loteria</div>
+            <div class="record-sub">Full tabla win · Round 11</div>
+          </div>
+          <div>
+            <div class="record-val" style="font-size:.8rem;">3,200 Ryo</div>
+            <div class="record-date">Apr 30</div>
+          </div>
+        </div>
+        <div class="record-row">
+          <div class="record-medal" style="font-size:.9rem;opacity:.4;">4</div>
+          <div style="flex:1;">
+            <div class="record-game">Silhouette Tower</div>
+            <div class="record-sub">Regional · 900 Ryo banked</div>
+          </div>
+          <div>
+            <div class="record-val" style="color:var(--text-2);">Floor 9</div>
+            <div class="record-date">Apr 22</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="style-label">Style D — TCG Premium + Atlas Sidebar · Style A colors, sharper edges, Style C persistent sidebar</div>
+
+  </main>
+</div>
+
+</body>
+</html>

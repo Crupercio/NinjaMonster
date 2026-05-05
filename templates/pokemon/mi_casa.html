@@ -14,8 +14,8 @@
 .filter-bar {
   background:
     radial-gradient(circle at top right, rgba(232, 184, 75, .08), transparent 34%),
-    linear-gradient(180deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .98));
-  border: 1px solid rgba(91, 129, 255, .22);
+    linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   border-radius: var(--radius-md);
   box-shadow: 0 18px 36px rgba(0, 0, 0, .24);
   padding: 1rem 1.1rem;
@@ -41,7 +41,7 @@
 }
 .filter-search {
   flex: 1; min-width: 220px; max-width: 360px;
-  background: rgba(15, 23, 42, .55); border: 1px solid #2d4a7a;
+  background: var(--bg-void); border: 1px solid var(--border-md);
   border-radius: 14px; padding: .62rem .9rem;
   font-size: .9rem; color: var(--text-1); outline: none;
   transition: border-color .2s, box-shadow .2s, background .2s;
@@ -49,7 +49,7 @@
 .filter-search:focus {
   border-color: rgba(232, 184, 75, .75);
   box-shadow: 0 0 0 3px rgba(232, 184, 75, .12);
-  background: rgba(15, 23, 42, .75);
+  background: var(--bg-surface);
 }
 
 /* Chip toggles */
@@ -61,8 +61,8 @@
 }
 .chip {
   font-size: .72rem; padding: .34rem .72rem; border-radius: 999px;
-  border: 1px solid rgba(91, 129, 255, .22); cursor: pointer; color: var(--text-2);
-  background: rgba(10, 15, 29, .42);
+  border: 1px solid var(--border-md); cursor: pointer; color: var(--text-2);
+  background: var(--bg-void);
   transition: border-color .15s, color .15s, background .15s, transform .15s;
   user-select: none;
 }
@@ -89,9 +89,9 @@
   align-items: center;
   gap: .5rem;
   padding: .36rem .42rem .36rem .65rem;
-  border: 1px solid rgba(91, 129, 255, .28);
+  border: 1px solid var(--border-hi);
   border-radius: 999px;
-  background: rgba(10, 15, 29, .46);
+  background: var(--bg-deep);
 }
 
 .level-field-label {
@@ -103,7 +103,7 @@
 
 .level-input {
   width: 64px;
-  border: 1px solid rgba(91, 129, 255, .22);
+  border: 1px solid var(--border-md);
   border-radius: 12px;
   background: rgba(30, 41, 59, .46);
   color: var(--text-1);
@@ -136,7 +136,7 @@
 
 .filter-clear {
   font-size: .74rem; color: var(--text-2); background: rgba(10, 15, 29, .42);
-  border: 1px solid rgba(91, 129, 255, .22); border-radius: 999px;
+  border: 1px solid var(--border-md); border-radius: 999px;
   cursor: pointer; padding: .45rem .8rem; margin-left: auto;
   transition: color .15s, border-color .15s, background .15s;
 }
@@ -183,7 +183,7 @@
 }
 .poke-level     { font-size: .95rem; font-weight: 700; color: var(--accent-red); }
 .poke-exp-label { font-size: .72rem; color: var(--text-3); margin-left: auto; }
-.poke-exp-bar-bg   { background: #1e3a6e; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: .75rem; }
+.poke-exp-bar-bg   { background: var(--border-md); border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: .75rem; }
 .poke-exp-bar-fill { height: 100%; border-radius: 4px; background: #7c3aed; }
 
 .max-level-badge {

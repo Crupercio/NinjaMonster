@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from apps.game.models import LoteriaMode, LoteriaRoom, LoteriaStatus
 from apps.quests.services import QuestService
-from apps.users.services import get_candy_inventory
+from apps.users.services import get_candy_inventory, record_arcade_daily_progress
 
 _quest_service = QuestService()
 
@@ -193,6 +193,12 @@ class MemoryMatchView(ComingSoonGameView):
             messages.success(
                 request,
                 f"{result['grade']} clear! You earned {result['reward_ryo']} Ryo and {result['reward_dust']} Dust.",
+            )
+            record_arcade_daily_progress(
+                request.user,
+                memory_clear=True,
+                memory_elapsed_seconds=elapsed_seconds,
+                memory_master_clear=self.board_config.key == "master_6x4",
             )
             _quest_service.on_memory_completed(request.user)
             return redirect(return_url)
@@ -927,6 +933,15 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
             }
             for entry in self.room.entries.filter(user=self.request.user).select_related("board_template").order_by("board_slot")
         ]
+        if player_boards:
+            best_marked = max(int(board["marked_count"]) for board in player_boards)
+            buena_hit = any(bool(board["is_complete"]) for board in player_boards)
+            record_arcade_daily_progress(
+                self.request.user,
+                loteria_room_id=self.room.pk,
+                loteria_marked_count=best_marked,
+                loteria_buena=buena_hit,
+            )
         winners = self.room.entries.filter(is_winner=True).select_related("board_template", "user").order_by("entered_at", "pk")
         winning_boards = [
             {
@@ -1215,6 +1230,13 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
                 messages.info(request, "There is no active tower run to cash out.")
                 return redirect(return_url)
             payout = cash_out_silhouette_run(request.user, request.session, tower_run)
+            current_floor = max(0, int(tower_run.get("current_floor", 1)))
+            record_arcade_daily_progress(
+                request.user,
+                silhouette_run=True,
+                silhouette_floor=current_floor,
+                silhouette_cashout_3plus=current_floor >= 4,
+            )
             messages.success(request, f"You cashed out {payout} Ryo from {self.tower_config.title}.")
             _quest_service.on_silhouette_played(request.user)
             return redirect(return_url)
@@ -1255,9 +1277,19 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
             correct_name = correct_species.name if correct_species else "that silhouette"
 
             if result["status"] == "cleared":
+                record_arcade_daily_progress(
+                    request.user,
+                    silhouette_run=True,
+                    silhouette_floor=int(tower_run.get("current_floor", 1)),
+                )
                 messages.success(request, f"Tower cleared! {correct_name} finished the climb. You earned {result['payout']} Ryo.")
                 _quest_service.on_silhouette_played(request.user)
             elif result["status"] == "wrong":
+                record_arcade_daily_progress(
+                    request.user,
+                    silhouette_run=True,
+                    silhouette_floor=int(tower_run.get("current_floor", 1)),
+                )
                 messages.error(request, f"Wrong. It was {correct_name}. You salvaged {result['payout']} Ryo from the run.")
                 _quest_service.on_silhouette_played(request.user)
             return redirect(return_url)

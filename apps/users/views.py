@@ -15,7 +15,7 @@ from django.views.generic import DetailView, FormView
 from apps.stickers.collection_stats import build_personal_collection_stats
 
 from .forms import RegistrationForm
-from .services import DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_daily_reward, get_candy_inventory
+from .services import DAILY_REWARD_RYO, buy_candy, can_claim_daily, claim_arcade_daily_challenge, claim_daily_reward, get_candy_inventory
 
 User = get_user_model()
 
@@ -277,7 +277,7 @@ class RegisterView(FormView):
             self.request,
             f"Account created! Welcome, {form.cleaned_data['username']}. Please log in.",
         )
-        return redirect("login")
+        return redirect("account_login")
 
     def form_invalid(self, form: RegistrationForm):
         return self.render_to_response(self.get_context_data(form=form))
@@ -482,6 +482,39 @@ class DailyClaimView(LoginRequiredMixin, View):
         except ValueError as exc:
             messages.error(request, str(exc))
         return redirect("users:daily_claim")
+
+
+class ArcadeDailyChallengeProgressAPI(LoginRequiredMixin, View):
+    """GET — return current arcade daily challenge state as JSON."""
+
+    def get(self, request):
+        from apps.game.fun import build_fun_hub_daily_challenge
+        challenge = build_fun_hub_daily_challenge(request.user)
+        return JsonResponse(challenge)
+
+
+class ArcadeDailyChallengeClaim(LoginRequiredMixin, View):
+    """POST — claim the arcade daily challenge Ryo reward."""
+
+    def post(self, request):
+        import json
+        from apps.game.fun import build_fun_hub_daily_challenge
+
+        challenge = build_fun_hub_daily_challenge(request.user)
+        if not challenge["is_complete"]:
+            return JsonResponse({"error": "Complete all tasks first."}, status=400)
+
+        try:
+            reward_ryo = int(challenge["reward"].replace("+", "").replace(" Ryo", "").strip())
+        except (ValueError, AttributeError):
+            reward_ryo = 0
+
+        try:
+            result = claim_arcade_daily_challenge(request.user, reward_ryo)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+
+        return JsonResponse({"ryo": result["ryo"], "reward_ryo": reward_ryo})
 
 
 class BuyCandyAPI(LoginRequiredMixin, View):

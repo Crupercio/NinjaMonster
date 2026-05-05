@@ -21,7 +21,13 @@ from apps.game.models import (
     LoteriaStatus,
 )
 from apps.pokemon.models import Pokemon
-from apps.users.services import award_ryo, deduct_ryo, get_candy_inventory, use_candy
+from apps.users.services import (
+    award_ryo,
+    deduct_ryo,
+    get_arcade_daily_progress,
+    get_candy_inventory,
+    use_candy,
+)
 
 SILHOUETTE_SESSION_KEY = "fun_silhouette_run"
 SILHOUETTE_REVEAL_SESSION_KEY = "fun_silhouette_reveal"
@@ -464,6 +470,154 @@ def clear_memory_result_state(session) -> None:
         session.modified = True
 
 
+# Indexed by Python's weekday(): 0=Monday … 5=Saturday, 6=Sunday
+# JS template uses getDay() (0=Sun … 6=Sat) — kept in sync manually.
+FUN_HUB_DAILY_CHALLENGES: tuple[dict[str, object], ...] = (
+    {   # Monday — weekday 0
+        "title": "Monday Grind",
+        "reward": "+180 Ryo",
+        "tasks": (
+            {"label": "Play 2 Silhouette Tower runs", "key": "silhouette_2runs"},
+            {"label": "Play a Loteria round", "key": "loteria_round"},
+        ),
+    },
+    {   # Tuesday — weekday 1
+        "title": "Memory Tuesday",
+        "reward": "+250 Ryo",
+        "tasks": (
+            {"label": "Clear 2 Memory boards", "key": "memory_2clears"},
+            {"label": "Reach Floor 5 in Silhouette Tower", "key": "silhouette_floor5"},
+        ),
+    },
+    {   # Wednesday — weekday 2
+        "title": "Wild Wednesday",
+        "reward": "+300 Ryo",
+        "tasks": (
+            {"label": "Play all 3 games today", "key": "play_all_3"},
+            {"label": "Clear any Memory board in under 90s", "key": "memory_speed"},
+        ),
+    },
+    {   # Thursday — weekday 3
+        "title": "Tower Thursday",
+        "reward": "+220 Ryo",
+        "tasks": (
+            {"label": "Cash out with 3+ correct in Silhouette", "key": "silhouette_cashout3"},
+            {"label": "Mark 8+ cells in a Loteria round", "key": "loteria_8cells"},
+        ),
+    },
+    {   # Friday — weekday 4
+        "title": "Friday Frenzy",
+        "reward": "+280 Ryo",
+        "tasks": (
+            {"label": "Play 3 Silhouette Tower runs", "key": "silhouette_3runs"},
+            {"label": "Clear the Master Memory board", "key": "memory_6x6"},
+        ),
+    },
+    {   # Saturday — weekday 5
+        "title": "Weekend Collector",
+        "reward": "+240 Ryo",
+        "tasks": (
+            {"label": "Play a full Loteria round (Buena!)", "key": "loteria_buena"},
+            {"label": "Reach Floor 4 in Silhouette Tower", "key": "silhouette_floor4"},
+        ),
+    },
+    {   # Sunday — weekday 6
+        "title": "Tower & Memory Sunday",
+        "reward": "+200 Ryo",
+        "tasks": (
+            {"label": "Reach Floor 3 in Silhouette Tower", "key": "silhouette_floor3"},
+            {"label": "Clear any Memory board", "key": "memory_clear"},
+        ),
+    },
+)
+
+
+def _evaluate_fun_hub_daily_task(task_key: str, progress: dict[str, object]) -> tuple[bool, str]:
+    """Return completion state and progress text for one Fun Hub task."""
+    silhouette_runs = int(progress.get("silhouette_runs", 0) or 0)
+    silhouette_floor = int(progress.get("silhouette_best_floor", 0) or 0)
+    silhouette_cashout = int(progress.get("silhouette_cashout_3plus", 0) or 0)
+    memory_clears = int(progress.get("memory_clears", 0) or 0)
+    memory_best_seconds = int(progress.get("memory_best_seconds", 0) or 0)
+    memory_master_clears = int(progress.get("memory_master_clears", 0) or 0)
+    loteria_rounds = int(progress.get("loteria_rounds", 0) or 0)
+    loteria_best_marked = int(progress.get("loteria_best_marked", 0) or 0)
+    loteria_buena = int(progress.get("loteria_buena_rounds", 0) or 0)
+
+    if task_key == "silhouette_2runs":
+        return silhouette_runs >= 2, f"{min(silhouette_runs, 2)}/2"
+    if task_key == "silhouette_3runs":
+        return silhouette_runs >= 3, f"{min(silhouette_runs, 3)}/3"
+    if task_key == "silhouette_floor3":
+        return silhouette_floor >= 3, f"Best {min(silhouette_floor, 3)}/3"
+    if task_key == "silhouette_floor4":
+        return silhouette_floor >= 4, f"Best {min(silhouette_floor, 4)}/4"
+    if task_key == "silhouette_floor5":
+        return silhouette_floor >= 5, f"Best {min(silhouette_floor, 5)}/5"
+    if task_key == "silhouette_cashout3":
+        return silhouette_cashout >= 1, "Done" if silhouette_cashout else "0/1"
+    if task_key == "memory_clear":
+        return memory_clears >= 1, f"{min(memory_clears, 1)}/1"
+    if task_key == "memory_2clears":
+        return memory_clears >= 2, f"{min(memory_clears, 2)}/2"
+    if task_key == "memory_speed":
+        done = memory_best_seconds > 0 and memory_best_seconds <= 90
+        return done, (f"{memory_best_seconds}s" if memory_best_seconds > 0 else "--")
+    if task_key == "memory_6x6":
+        return memory_master_clears >= 1, f"{min(memory_master_clears, 1)}/1"
+    if task_key == "loteria_round":
+        return loteria_rounds >= 1, f"{min(loteria_rounds, 1)}/1"
+    if task_key == "loteria_8cells":
+        return loteria_best_marked >= 8, f"Best {min(loteria_best_marked, 8)}/8"
+    if task_key == "loteria_buena":
+        return loteria_buena >= 1, f"{min(loteria_buena, 1)}/1"
+    if task_key == "play_all_3":
+        games_done = sum(
+            (
+                1 if silhouette_runs > 0 else 0,
+                1 if memory_clears > 0 else 0,
+                1 if loteria_rounds > 0 else 0,
+            )
+        )
+        return games_done >= 3, f"{games_done}/3"
+    return False, "--"
+
+
+def build_fun_hub_daily_challenge(user) -> dict[str, object]:
+    """Build the collector arcade daily challenge state for the Fun Hub."""
+    progress = get_arcade_daily_progress(user)
+    today = timezone.localdate()
+    config = FUN_HUB_DAILY_CHALLENGES[today.weekday()]
+    tasks = []
+    done_count = 0
+    for task in config["tasks"]:
+        done, progress_text = _evaluate_fun_hub_daily_task(task["key"], progress)
+        if done:
+            done_count += 1
+        tasks.append(
+            {
+                "label": task["label"],
+                "key": task["key"],
+                "done": done,
+                "progress_text": progress_text,
+            }
+        )
+    total_tasks = len(tasks) or 1
+    is_complete = done_count == total_tasks
+    claimed = bool(progress.get("challenge_claimed", False))
+    return {
+        "date_label": f"{today.strftime('%A')}, {today.strftime('%b')} {today.day}",
+        "title": config["title"],
+        "reward": config["reward"],
+        "tasks": tasks,
+        "completed_count": done_count,
+        "total_tasks": total_tasks,
+        "progress_percent": int(round(done_count / total_tasks * 100)),
+        "is_complete": is_complete,
+        "claimed": claimed,
+    }
+
+
 def get_fun_hub_context(user) -> dict:
     """Shared hub context for the Fun home page."""
     candy = get_candy_inventory(user)
@@ -471,6 +625,7 @@ def get_fun_hub_context(user) -> dict:
     return {
         "candy_inventory": candy,
         "active_silhouette_run": active_run,
+        "daily_challenge": build_fun_hub_daily_challenge(user),
     }
 
 

@@ -8,8 +8,8 @@
 .memory-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--accent-gold); margin-bottom:1rem; font-weight:700; }
 .memory-top { display:grid; grid-template-columns: 1.2fr .9fr; gap:1rem; margin-bottom:1.15rem; }
 .memory-hero, .wallet-panel, .board-card, .hub-note {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   border-radius: 26px;
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
@@ -22,7 +22,7 @@
 .wallet-panel { padding:1rem 1.05rem; }
 .wallet-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-3); margin-bottom:.8rem; font-weight:700; }
 .wallet-grid { display:grid; gap:.65rem; }
-.wallet-card { border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52); padding:.8rem .9rem; }
+.wallet-card { border-radius:18px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.8rem .9rem; }
 .wallet-card strong { display:block; color:var(--text-1); font-size:.9rem; margin-bottom:.15rem; }
 .wallet-card span { color:var(--text-3); font-size:.75rem; }
 .wallet-card em { display:block; margin-top:.35rem; font-style:normal; color:#c4b5fd; font-size:1.08rem; font-weight:800; }
@@ -32,23 +32,23 @@
 .board-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:.85rem; }
 .board-card { padding:.95rem; display:flex; flex-direction:column; }
 .board-card.current { border-color: rgba(232,184,75,.42); box-shadow:0 0 0 1px rgba(232,184,75,.18), 0 20px 40px rgba(0,0,0,.28); }
-.board-status { display:inline-flex; align-items:center; border-radius:999px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; background:rgba(18,26,53,.9); border:1px solid rgba(91,129,255,.22); color:var(--text-2); }
+.board-status { display:inline-flex; align-items:center; border-radius:999px; padding:.3rem .6rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.75rem; background:var(--bg-surface); border:1px solid var(--border-md); color:var(--text-2); }
 .board-status.live { color:#86efac; border-color:rgba(74,222,128,.3); }
 .board-status.current { color:var(--accent-gold); border-color:rgba(232,184,75,.34); }
 .board-art {
   min-height: 186px; margin-bottom:.85rem; border-radius:20px; border:1px solid rgba(232,184,75,.14);
   background:
-    radial-gradient(circle at top, rgba(91,129,255,.18), rgba(10,15,29,.92) 70%),
-    linear-gradient(180deg, rgba(18,28,58,.96), rgba(8,12,24,.98));
+    radial-gradient(circle at top, rgba(232,184,75,.06), var(--bg-void) 70%),
+    linear-gradient(180deg, var(--bg-surface), var(--bg-void));
   display:flex; align-items:center; justify-content:center; padding:1rem;
 }
 .board-art img { max-width:100%; max-height:150px; object-fit:contain; filter:drop-shadow(0 12px 24px rgba(0,0,0,.38)); }
 .board-title { margin:0 0 .25rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.08rem; }
 .board-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.55rem; }
-.board-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.board-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md); background:var(--bg-void); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .board-copy { color:var(--text-2); font-size:.84rem; line-height:1.5; min-height:104px; }
 .board-meta { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.55rem; margin:auto 0 .85rem; }
-.board-box { border-radius:14px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.6rem .65rem; }
+.board-box { border-radius:14px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.6rem .65rem; }
 .board-box span { display:block; color:var(--text-3); font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
 .board-box strong { color:var(--text-1); font-size:.84rem; }
 .board-actions { display:flex; gap:.55rem; flex-wrap:wrap; }
@@ -210,7 +210,7 @@
 
   lbStrip.innerHTML = top3.map(function(b, i) {
     var gc = gradeColors[b.grade] || '#94a3b8';
-    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
+    return '<div style="background:linear-gradient(180deg,var(--bg-surface),var(--bg-void));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
       '<div style="font-size:2rem;flex-shrink:0;">' + medals[i] + '</div>' +
       '<div>' +
         '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.2rem;">' + (b.board || 'Board') + '</div>' +
@@ -237,7 +237,7 @@
   grid.innerHTML = keys.map(function(key) {
     var b = bests[key];
     var gc = gradeColors[b.grade] || '#94a3b8';
-    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.22);border-radius:20px;padding:.9rem 1rem;">' +
+    return '<div style="background:linear-gradient(180deg,var(--bg-surface),var(--bg-void));border:1px solid rgba(232,184,75,.22);border-radius:20px;padding:.9rem 1rem;">' +
       '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.35rem;">' + (b.board || key) + '</div>' +
       '<div style="color:' + gc + ';font-family:\'Chakra Petch\',sans-serif;font-size:1.3rem;font-weight:800;line-height:1.1;">' + b.grade + '</div>' +
       '<div style="color:var(--text-2);font-size:.82rem;margin-top:.3rem;">' + b.turns + ' turns · ' + b.seconds + 's</div>' +

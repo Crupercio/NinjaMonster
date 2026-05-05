@@ -13,8 +13,8 @@
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
 .panel, .mode-card, .board-card, .result-card, .wallet-card {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 .hero-grid { display:grid; grid-template-columns: 1.15fr .85fr; gap:1rem; margin-bottom:1.1rem; }
@@ -29,8 +29,8 @@
 .hero-actions, .mode-actions, .board-actions { display:flex; gap:.7rem; flex-wrap:wrap; }
 
 .status-chip, .mini-chip {
-  display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.25);
-  background:rgba(10,15,29,.55); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
+  display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md);
+  background:var(--bg-void); color:var(--text-2); padding:.34rem .64rem; font-size:.72rem; font-weight:700;
   letter-spacing:.08em; text-transform:uppercase;
 }
 .status-chip.live { color:#86efac; border-color:rgba(74,222,128,.28); }
@@ -53,14 +53,14 @@
 .mode-copy, .board-copy { color:var(--text-2); line-height:1.55; margin-bottom:.85rem; }
 .mode-metrics { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.65rem; margin-bottom:.9rem; }
 .metric {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem;
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.75rem .8rem;
 }
 .metric-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.14em; margin-bottom:.18rem; }
 .metric-value { color:var(--text-1); font-weight:800; font-size:1rem; }
 
 .board-preview {
   display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.45rem;
-  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.44); padding:.65rem; margin-bottom:.85rem;
+  border-radius:18px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.65rem; margin-bottom:.85rem;
 }
 .board-preview.empty {
   min-height: 230px;
@@ -71,11 +71,11 @@
   border-color:rgba(232,184,75,.22);
   background:
     radial-gradient(circle at top, rgba(251,191,36,.08), transparent 46%),
-    rgba(10,15,29,.42);
+    var(--bg-void);
 }
 .board-cell {
-  position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid rgba(91,129,255,.16);
-  background:rgba(9,14,27,.86); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  position:relative; aspect-ratio:1/1; border-radius:14px; border:1px solid var(--border-md);
+  background:var(--bg-void); display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
 .board-cell img { width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
 .empty-board-copy {
@@ -395,19 +395,19 @@
 
 <!-- ── Loteria Rules Modal ─────────────────────────────────── -->
 <div id="loteria-rules-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(5,8,20,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:linear-gradient(180deg,rgba(25,38,78,.98),rgba(12,18,38,.98));border:1px solid rgba(232,184,75,.28);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.55);max-width:760px;width:100%;padding:1.5rem 1.6rem;max-height:90vh;overflow-y:auto;position:relative;">
+  <div style="background:linear-gradient(180deg,var(--bg-surface),var(--bg-void));border:1px solid rgba(232,184,75,.28);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.55);max-width:760px;width:100%;padding:1.5rem 1.6rem;max-height:90vh;overflow-y:auto;position:relative;">
     <button onclick="document.getElementById('loteria-rules-modal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:999px;color:var(--text-2);width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
 
     <div style="color:var(--accent-gold);font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;font-weight:700;margin-bottom:.4rem;">◆ How to Play</div>
     <h2 style="margin:0 0 .35rem;color:var(--text-1);font-family:'Chakra Petch',sans-serif;font-size:1.8rem;line-height:1;">Pokemon Loteria</h2>
     <p style="color:var(--text-2);line-height:1.6;margin-bottom:1.25rem;">Like Mexican Bingo — a caller draws Pokemon cards one at a time every 4 seconds. Mark them on your board. First to complete a pattern wins that prize. All 4 patterns can be won in the same game.</p>
 
-    {% with on="background:linear-gradient(135deg,rgba(96,165,250,.9),rgba(59,130,246,.9))" off="background:rgba(9,14,27,.88);border:1px solid rgba(91,129,255,.16)" %}
+    {% with on="background:linear-gradient(135deg,rgba(96,165,250,.9),rgba(59,130,246,.9))" off="background:var(--bg-void);border:1px solid var(--border-md)" %}
     {% with pon="background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(139,92,246,.9))" oon="background:linear-gradient(135deg,rgba(249,115,22,.9),rgba(234,88,12,.9))" gon="background:linear-gradient(135deg,rgba(232,184,75,.9),rgba(200,152,42,.9))" %}
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem;margin-bottom:1.2rem;">
 
       <!-- Chorro: top row highlighted -->
-      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+      <div style="border-radius:20px;border:1px solid var(--border-md);background:var(--bg-void);padding:.9rem 1rem;">
         <div style="color:#60a5fa;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Chorro</div>
         <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">Any full row, column, or diagonal</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
@@ -420,7 +420,7 @@
       </div>
 
       <!-- Centrito: center 2×2 (cells 5,6,9,10) -->
-      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+      <div style="border-radius:20px;border:1px solid var(--border-md);background:var(--bg-void);padding:.9rem 1rem;">
         <div style="color:#a78bfa;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Centrito</div>
         <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">The 2×2 center block (cells 5, 6, 9, 10)</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
@@ -433,7 +433,7 @@
       </div>
 
       <!-- Cuatro Esquinas: corners (0,3,12,15) -->
-      <div style="border-radius:20px;border:1px solid rgba(91,129,255,.22);background:rgba(10,15,29,.52);padding:.9rem 1rem;">
+      <div style="border-radius:20px;border:1px solid var(--border-md);background:var(--bg-void);padding:.9rem 1rem;">
         <div style="color:#f97316;font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">Cuatro Esquinas</div>
         <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">All 4 corners (cells 0, 3, 12, 15)</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
@@ -446,7 +446,7 @@
       </div>
 
       <!-- Buena: full board -->
-      <div style="border-radius:20px;border:1px solid rgba(232,184,75,.3);background:rgba(10,15,29,.52);padding:.9rem 1rem;box-shadow:inset 0 0 0 1px rgba(232,184,75,.1);">
+      <div style="border-radius:20px;border:1px solid rgba(232,184,75,.3);background:var(--bg-void);padding:.9rem 1rem;box-shadow:inset 0 0 0 1px rgba(232,184,75,.1);">
         <div style="color:var(--accent-gold);font-family:'Chakra Petch',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;">¡Buena! 🏆</div>
         <div style="color:var(--text-3);font-size:.78rem;margin-bottom:.65rem;">Full board — all 16 cells marked</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:100px;margin-bottom:.5rem;">
@@ -461,7 +461,7 @@
     {% endwith %}
     {% endwith %}
 
-    <div style="border-radius:18px;border:1px solid rgba(232,184,75,.18);background:rgba(10,15,29,.44);padding:.9rem 1rem;margin-bottom:1rem;">
+    <div style="border-radius:18px;border:1px solid rgba(232,184,75,.18);background:var(--bg-void);padding:.9rem 1rem;margin-bottom:1rem;">
       <div style="color:var(--accent-gold);font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.5rem;">Your Board = Your Pokemon</div>
       <p style="color:var(--text-2);font-size:.85rem;line-height:1.6;margin:0;">Your Loteria board is built from Pokemon you own at <strong style="color:var(--text-1);">Level 20 or higher</strong>. The board is a 4×4 grid of 16 Pokemon. When a Pokemon is called and it matches one of yours, your board is automatically marked. You don't tap anything — just watch it fill up.</p>
     </div>
@@ -490,7 +490,7 @@
 
   lbStrip.innerHTML = top3.map(function(r, i) {
     var prizes = r.prizes ? r.prizes.join(' · ') : '';
-    return '<div style="background:linear-gradient(180deg,rgba(25,38,78,.96),rgba(12,18,38,.96));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
+    return '<div style="background:linear-gradient(180deg,var(--bg-surface),var(--bg-void));border:1px solid rgba(232,184,75,.28);border-radius:20px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;">' +
       '<div style="font-size:2rem;flex-shrink:0;">' + medals[i] + '</div>' +
       '<div>' +
         '<div style="color:var(--accent-gold);font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-bottom:.2rem;">Round ' + (r.round || '—') + '</div>' +

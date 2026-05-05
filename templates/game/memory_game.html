@@ -20,8 +20,8 @@
 .msg.info { background:rgba(30,41,59,.65); border-color:rgba(148,163,184,.18); color:#cbd5e1; }
 
 .memory-layout, .panel, .board-stage, .stat-card, .wallet-card, .finish-panel, .empty-state {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 .memory-layout { display:grid; grid-template-columns: 1fr minmax(0, 1.75fr) .86fr; gap:1rem; border-radius:28px; padding:1rem; align-items:stretch; }
@@ -30,11 +30,11 @@
 .panel-title { margin:0 0 .35rem; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:clamp(1.9rem,2.8vw,2.5rem); line-height:1; }
 .panel-subtitle { color:#a78bfa; font-size:.84rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.4rem; }
 .panel-tags { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.85rem; }
-.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid rgba(91,129,255,.22); background:rgba(10,15,29,.46); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.panel-tag { display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--border-md); background:var(--bg-void); color:var(--text-2); padding:.34rem .6rem; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .panel-copy { color:var(--text-2); line-height:1.6; font-size:.92rem; margin-bottom:.95rem; }
 .metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
 .metric, .wallet-card, .stat-card {
-  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.52);
+  border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void);
 }
 .metric, .stat-card, .wallet-card { padding:.75rem .8rem; }
 .metric-label, .stat-label { color:var(--text-3); font-size:.66rem; text-transform:uppercase; letter-spacing:.15em; margin-bottom:.2rem; }
@@ -43,11 +43,11 @@
 .board-stage { display:flex; flex-direction:column; min-height: 360px; }
 .stage-head { display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:.95rem; }
 .stage-title { margin:0; color:var(--text-1); font-family:"Chakra Petch",sans-serif; font-size:1.2rem; }
-.stage-chip { border-radius:999px; border:1px solid rgba(91,129,255,.26); background:rgba(10,15,29,.72); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
+.stage-chip { border-radius:999px; border:1px solid var(--border-md); background:var(--bg-void); color:var(--text-2); padding:.42rem .72rem; font-size:.75rem; font-weight:700; }
 .stage-copy { color:var(--text-2); font-size:.88rem; margin-bottom:.9rem; }
 .memory-grid-shell, .memory-grid-panel {
-  background: linear-gradient(180deg, rgba(25,38,78,.96), rgba(12,18,38,.96));
-  border: 1px solid rgba(91,129,255,.22);
+  background: linear-gradient(180deg, var(--bg-surface), var(--bg-void));
+  border: 1px solid var(--border-md);
   box-shadow: 0 20px 40px rgba(0,0,0,.28);
 }
 .memory-grid-shell {
@@ -146,7 +146,7 @@
 }
 .memory-face.front {
   transform:rotateY(180deg);
-  background:linear-gradient(180deg, rgba(10,15,29,.12), rgba(10,15,29,.2)), rgba(12,18,38,.98);
+  background:linear-gradient(180deg, var(--bg-void), var(--bg-void)), var(--bg-void);
   display:flex; align-items:center; justify-content:center; padding:.85rem;
 }
 .memory-face.front img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 10px 20px rgba(0,0,0,.28)); }
@@ -173,7 +173,7 @@
 .mc-name { color:#a78bfa; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; flex-shrink:0; }
 .mc-line { color:var(--text-2); font-size:.86rem; font-style:italic; }
 .finish-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin-bottom:.9rem; }
-.finish-box { border-radius:16px; border:1px solid rgba(232,184,75,.14); background:rgba(10,15,29,.48); padding:.75rem .8rem; }
+.finish-box { border-radius:16px; border:1px solid rgba(232,184,75,.14); background:var(--bg-void); padding:.75rem .8rem; }
 .finish-box span { display:block; color:var(--text-3); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.15rem; }
 .finish-box strong { color:var(--text-1); font-size:1rem; }
 .finish-actions, .panel-actions { display:flex; gap:.65rem; flex-wrap:wrap; margin-top:1rem; }
@@ -645,6 +645,24 @@
       finishBoard() {
         this.completed = true;
         this.stopTimer();
+
+        // Record daily challenge progress in localStorage
+        (function(elapsedSeconds) {
+          try {
+            var today = new Date().toISOString().slice(0, 10);
+            var sk = 'dc_progress_' + today;
+            var p = {};
+            try { p = JSON.parse(localStorage.getItem(sk) || '{}'); } catch(e) {}
+            p['memory_clear'] = true;
+            // Track count for memory_2clears
+            var clears = (parseInt(localStorage.getItem('dc_memory_clears_' + today) || '0')) + 1;
+            localStorage.setItem('dc_memory_clears_' + today, clears);
+            if (clears >= 2) p['memory_2clears'] = true;
+            if (elapsedSeconds > 0 && elapsedSeconds <= 90) p['memory_speed'] = true;
+            if ('{{ board.key }}' === 'master_6x4') p['memory_6x6'] = true;
+            localStorage.setItem(sk, JSON.stringify(p));
+          } catch(e) {}
+        })(this.elapsedSeconds);
 
         // Save personal best to localStorage
         (function(turns, seconds, streak, pairCount, boardKey, boardTitle) {

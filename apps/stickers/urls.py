@@ -3,8 +3,6 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from .views import (
-    AlbumPageIndexView,
-    AlbumScenePageView,
     AlbumView,
     BuyMultiPackView,
     BuyPackView,
@@ -19,7 +17,6 @@ from .views import (
     RegionalAlbumIndexView,
     RemoveStickerView,
     StickerDetailView,
-    StickerGeneratorView,
     TradeCreateView,
     TradeDetailView,
     TradeListView,
@@ -39,9 +36,9 @@ urlpatterns = [
     path("album/regional/place/", PlaceStickerView.as_view(), name="place_sticker"),
     path("album/regional/remove/", RemoveStickerView.as_view(), name="remove_sticker"),
     path("album/regional/claim/", ClaimPageRewardView.as_view(), name="claim_page_reward"),
-    # Pokédex Pages (formerly "Scene Album")
-    path("album/pages/<str:region>/", AlbumPageIndexView.as_view(), name="album_scene_index"),
-    path("album/pages/<str:region>/<int:page_number>/<str:rarity>/", AlbumScenePageView.as_view(), name="album_scene_page"),
+    # Scene album — deprecated, redirect to regional album
+    path("album/pages/<str:region>/", RedirectView.as_view(pattern_name="stickers:regional_album_detail", permanent=False), name="album_scene_index"),
+    path("album/pages/<str:region>/<int:page_number>/<str:rarity>/", RedirectView.as_view(pattern_name="stickers:regional_album_detail", permanent=False), name="album_scene_page"),
     # Shop & packs
     path("shop/buy/", BuyPackView.as_view(), name="buy_pack"),
     path("shop/buy/10/", BuyMultiPackView.as_view(), name="buy_10_packs"),
@@ -53,8 +50,6 @@ urlpatterns = [
     path("trade/<int:pk>/", TradeDetailView.as_view(), name="trade_detail"),
     # Dust Workshop (unified economy hub — replaces separate dust/craft/dismantle pages)
     path("workshop/", DustWorkshopView.as_view(), name="workshop"),
-    # AI Sticker Generator
-    path("generator/", StickerGeneratorView.as_view(), name="generator"),
     # Legacy redirects so old bookmarks still work
     path("dust/", RedirectView.as_view(url="/stickers/workshop/?tab=convert"), name="dust_convert"),
     path("craft/", RedirectView.as_view(url="/stickers/workshop/?tab=craft"), name="craft"),
