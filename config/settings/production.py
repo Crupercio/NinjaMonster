@@ -21,7 +21,7 @@ SECRET_KEY = _secret  # noqa: F811
 # Hosts & Origins
 # ---------------------------------------------------------------------------
 _hosts = os.environ.get("ALLOWED_HOSTS", "")
-ALLOWED_HOSTS = [h.strip() for h in _hosts.split(",") if h.strip()]  # noqa: F811
+ALLOWED_HOSTS = [h.strip() for h in _hosts.split(",") if h.strip()] or ["*"]  # noqa: F811
 
 # Required for HTMX POST requests and any AJAX behind HTTPS
 _origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
@@ -33,7 +33,9 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in _origins.split(",") if o.strip()]
 SECURE_HSTS_SECONDS = 31_536_000       # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-SECURE_SSL_REDIRECT = True
+# Railway terminates SSL at its proxy — don't redirect inside the container
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
