@@ -38,8 +38,11 @@ COPY --chown=app:app . .
 # Collect static files
 RUN python manage.py collectstatic --noinput || true
 
+# Make startup script executable
+RUN chmod +x start.sh
+
 USER app
 
-EXPOSE ${PORT}
+EXPOSE 8000
 
-CMD daphne -b 0.0.0.0 -p ${PORT:-8000} config.asgi:application
+CMD ["/app/start.sh"]
