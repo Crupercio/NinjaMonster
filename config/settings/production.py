@@ -6,7 +6,7 @@ from .base import *  # noqa: F401, F403
 # ---------------------------------------------------------------------------
 # Core
 # ---------------------------------------------------------------------------
-DEBUG = False  # noqa: F811
+DEBUG = os.environ.get("DJANGO_DEBUG", "").lower() in ("1", "true", "yes")  # noqa: F811
 
 # Fail fast if SECRET_KEY is missing or still the insecure dev default
 _secret = os.environ.get("SECRET_KEY", "")
