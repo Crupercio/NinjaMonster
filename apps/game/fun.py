@@ -168,11 +168,7 @@ class LoteriaDeckConfig:
         return fee_map.get(npc_count, fee_map[max(fee_map)])
 
 
-ROOKIE_25_DEXES: tuple[int, ...] = (
-    1, 4, 7, 10, 16, 19, 25, 39, 52, 54,
-    58, 63, 66, 74, 81, 92, 95, 104, 113, 120,
-    123, 129, 131, 133, 150,
-)
+KANTO_DEXES: tuple[int, ...] = tuple(range(1, 152))
 
 
 def build_floor_rewards(total_floors: int, base_reward: int, step_reward: int, milestone_every: int, milestone_bonus: int) -> tuple[int, ...]:
@@ -187,13 +183,13 @@ SILHOUETTE_TOWERS: dict[str, SilhouetteTowerConfig] = {
     "rookie": SilhouetteTowerConfig(
         key="rookie",
         title="Rookie Tower",
-        subtitle="25 iconic Pokemon",
+        subtitle="25 random Kanto Pokemon",
         scope_label="Kanto only",
         description=(
             "Climb a beginner-friendly silhouette tower built from the most recognizable faces "
             "in the collection. Cash out after any correct guess or push your luck for a bigger prize."
         ),
-        pool_dex_numbers=ROOKIE_25_DEXES,
+        pool_dex_numbers=KANTO_DEXES,
         pool_target_size=25,
         floor_rewards=(
             20, 25, 30, 35, 40,
@@ -1647,6 +1643,8 @@ def build_tower_pool_dex_numbers(config: SilhouetteTowerConfig) -> list[int]:
         pool_dex_numbers = sorted(config.pool_dex_numbers)
         if len(pool_dex_numbers) < 6:
             raise ValueError("This tower needs at least 6 configured Pokemon before it can open.")
+        if config.pool_target_size and len(pool_dex_numbers) > config.pool_target_size:
+            return sorted(random.sample(pool_dex_numbers, k=config.pool_target_size))
         return pool_dex_numbers
 
     available_dex_numbers = list(

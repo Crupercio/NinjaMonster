@@ -114,7 +114,7 @@ else:
 # ---------------------------------------------------------------------------
 # Database — PostgreSQL via DATABASE_URL env var
 # ---------------------------------------------------------------------------
-_db_url = os.environ.get("DATABASE_URL", "")
+_db_url = os.environ.get("DATABASE_PUBLIC_URL") or os.environ.get("DATABASE_URL", "")
 
 if _db_url:
     import urllib.parse

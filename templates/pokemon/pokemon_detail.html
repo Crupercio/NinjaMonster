@@ -177,6 +177,14 @@
   .moves-table tr:last-child td { border-bottom: none; }
   .moves-table tr:hover td { background: rgba(232, 184, 75, 0.03); }
   .move-name { font-weight: 600; }
+
+  @media (max-width: 540px) {
+    .moves-table { font-size: 0.78rem; }
+    .moves-table th, .moves-table td { padding: 0.45rem 0.4rem; }
+    /* Hide Cat column on very small screens — least essential column */
+    .moves-table th:nth-child(4),
+    .moves-table td:nth-child(4) { display: none; }
+  }
 </style>
 {% endblock %}
 

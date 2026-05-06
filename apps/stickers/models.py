@@ -239,17 +239,30 @@ GEN_PACK_GEN_NUMBER: dict[str, int] = {
     "gen5": 5, "gen6": 6, "gen7": 7, "gen8": 8,
 }
 
+_CLOUDINARY_CLOUD = "djaj8fwjh"
+_CLOUDINARY_PACK_FOLDER = "ui/packs"
+_CLOUDINARY_TRANSFORMS = "f_auto,q_auto,w_280"  # 2× retina of 140 px display size
+
+
+def _pack_img(stem: str) -> str:
+    """Return Cloudinary URL for a pack image (auto-format, auto-quality, 2× retina)."""
+    return (
+        f"https://res.cloudinary.com/{_CLOUDINARY_CLOUD}/image/upload"
+        f"/{_CLOUDINARY_TRANSFORMS}/{_CLOUDINARY_PACK_FOLDER}/{stem}"
+    )
+
+
 PACK_IMAGE_PATHS: dict[str, str] = {
-    PackType.STANDARD: "images/pack.png",
-    PackType.BUNDLE: "images/bundle_pack.png",
-    PackType.GEN1: "images/kanto_pack.png",
-    PackType.GEN2: "images/johto_pack.png",
-    PackType.GEN3: "images/hoenn_pack.png",
-    PackType.GEN4: "images/sinnoh_pack.png",
-    PackType.GEN5: "images/unova_pack.png",
-    PackType.GEN6: "images/kalos_pack.png",
-    PackType.GEN7: "images/alola_pack.png",
-    PackType.GEN8: "images/galar_pack.png",
+    PackType.STANDARD: _pack_img("pack"),
+    PackType.BUNDLE:   _pack_img("bundle_pack"),
+    PackType.GEN1:     _pack_img("kanto_pack"),
+    PackType.GEN2:     _pack_img("johto_pack"),
+    PackType.GEN3:     _pack_img("hoenn_pack"),
+    PackType.GEN4:     _pack_img("sinnoh_pack"),
+    PackType.GEN5:     _pack_img("unova_pack"),
+    PackType.GEN6:     _pack_img("kalos_pack"),
+    PackType.GEN7:     _pack_img("alola_pack"),
+    PackType.GEN8:     _pack_img("galar_pack"),
 }
 
 

@@ -35,7 +35,7 @@
 }
 .room-bar-copy { flex:1 1 420px; }
 .room-bar-actions { display:flex; align-items:stretch; gap:.75rem; flex-wrap:wrap; }
-.play-layout { display:grid; grid-template-columns:minmax(0, .86fr) minmax(420px, .68fr); gap:.75rem; margin-bottom:.75rem; align-items:start; }
+.play-layout { display:grid; grid-template-columns:minmax(0, .86fr) minmax(min(420px, 100%), .68fr); gap:.75rem; margin-bottom:.75rem; align-items:start; }
 .panel, .call-card, .called-card, .board-card, .seat-card { border-radius:26px; padding:1.05rem 1.1rem; }
 .panel-kicker {
   display:inline-flex; align-items:center; gap:.45rem; color:var(--accent-gold); text-transform:uppercase;
@@ -334,6 +334,25 @@
   .call-copy-row { grid-template-columns:1fr; }
   .call-recent { justify-content:flex-start; }
   .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); min-width:100%; }
+}
+
+@media (max-width: 640px) {
+  .room-shell { padding:.65rem 0 2rem; }
+  .room-bar { border-radius:16px; padding:.8rem .9rem; }
+  .room-bar-copy { flex-basis:100%; }
+  .panel, .call-card, .called-card, .board-card, .seat-card { border-radius:16px; padding:.8rem .85rem; }
+  .panel-title { font-size:clamp(1.5rem,6vw,2rem); }
+  .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:.45rem; }
+  .call-stage { min-height:160px; }
+  .call-stage img { max-height:130px; }
+  .boards-grid { grid-template-columns:1fr; }
+  .pattern-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:.28rem; }
+  .pattern-card { padding:.4rem; }
+  .called-grid { grid-template-columns:repeat(auto-fit, minmax(80px,1fr)); gap:.35rem; }
+  .called-pill img { width:36px; height:36px; }
+  .seat-grid { grid-template-columns:1fr; }
+  .marker-pool-lanes { grid-template-columns:1fr; }
+  #win-announce { white-space:normal; max-width:calc(100vw - 2rem); padding:.65rem 1rem; }
 }
 
 /* ── Win announcement banner ─────────────────────────────────── */
@@ -660,7 +679,8 @@ function loteriaRoom(config) {
         try {
           const msg = JSON.parse(event.data);
           if (msg.type === 'redirect') {
-            window.location.assign(msg.url);
+            // Delay navigation so name audio + win sound can finish playing
+            setTimeout(() => window.location.assign(msg.url), 2500);
           } else if (msg.type === 'state') {
             this.applyState(msg.payload);
             this.scheduleSync();
@@ -760,7 +780,7 @@ function loteriaRoom(config) {
         if (!response.ok) throw new Error('Failed to load room state');
         const payload = await response.json();
         if (payload.redirect_url) {
-          window.location.assign(payload.redirect_url);
+          setTimeout(() => window.location.assign(payload.redirect_url), 2500);
           return;
         }
         this.applyState(payload);
@@ -1210,7 +1230,9 @@ function speakPokemonName(dexNumber, name) {
   var num = String(dexNumber).padStart(3, '0');
   var filename = num + ' - ' + name + '.wav';
   var encodedFilename = filename.split('').map(function(c) {
-    return c === ' ' ? '%20' : c;
+    if (c === ' ') return '%20';
+    if (c === "'") return '%27';
+    return c;
   }).join('');
   var url = 'https://res.cloudinary.com/djaj8fwjh/video/upload/pokemon/audio/name/Kanto/' + encodedFilename;
 

@@ -53,15 +53,16 @@ PLACEMENT_VIEW_CHOICES: tuple[tuple[str, str], ...] = (
     ("all", "All Slots"),
 )
 
+from apps.stickers.models import _pack_img  # noqa: E402
 REGION_BUNDLE_IMAGE_PATHS = {
-    PackType.GEN1: "images/kanto_bundle_pack.png",
-    PackType.GEN2: "images/johto_bundle_pack.png",
-    PackType.GEN3: "images/hoenn_bundle_pack.png",
-    PackType.GEN4: "images/sinnoh_bundle_pack.png",
-    PackType.GEN5: "images/unova_bundle_pack.png",
-    PackType.GEN6: "images/kalos_bundle_pack.png",
-    PackType.GEN7: "images/alola_bundle_pack.png",
-    PackType.GEN8: "images/galar_bundle_pack.png",
+    PackType.GEN1: _pack_img("kanto_bundle_pack"),
+    PackType.GEN2: _pack_img("johto_bundle_pack"),
+    PackType.GEN3: _pack_img("hoenn_bundle_pack"),
+    PackType.GEN4: _pack_img("sinnoh_bundle_pack"),
+    PackType.GEN5: _pack_img("unova_bundle_pack"),
+    PackType.GEN6: _pack_img("kalos_bundle_pack"),
+    PackType.GEN7: _pack_img("alola_bundle_pack"),
+    PackType.GEN8: _pack_img("galar_bundle_pack"),
 }
 _trade_service = TradeService()
 

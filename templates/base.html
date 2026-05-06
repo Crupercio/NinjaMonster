@@ -264,24 +264,16 @@
   @keyframes toastIn{from{opacity:0;transform:translateX(60px) scale(.94)}to{opacity:1;transform:translateX(0) scale(1)}}
   @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1);max-height:80px}to{opacity:0;transform:translateX(60px) scale(.9);max-height:0;margin-bottom:-.55rem}}
 
-  /* ── SOUND TOGGLE ─────────────────────────────────────── */
-  #sound-toggle{
-    position:fixed;bottom:1.2rem;right:1.2rem;z-index:9998;
-    width:36px;height:36px;border-radius:var(--radius-sm);
-    background:rgba(18,28,58,.92);border:1px solid rgba(91,129,255,.3);
-    color:var(--text-2);font-size:1rem;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,.3);
-  }
-  #sound-toggle:hover{background:rgba(25,38,78,.96);border-color:rgba(232,184,75,.4);color:var(--accent-gold);}
-  #sound-toggle.muted{opacity:.45;}
-
   /* ── RESPONSIVE ───────────────────────────────────────── */
   @media(max-width:860px){
     .sidebar{display:none;}
     .top-nav-search{display:none;}
     .nav-burger{display:flex;}
     .page-main{padding:1.25rem 1rem 2.5rem;}
+    /* Ensure touch targets meet 44px minimum */
+    .nav-avatar{width:36px;height:36px;font-size:.7rem;}
+    .nav-btn,.nav-logout-btn{padding:.55rem 1rem;font-size:.72rem;}
+    .nav-ryo-badge{padding:.5rem .9rem;}
   }
   </style>
 </head>
@@ -510,9 +502,6 @@
 <!-- Toast stack -->
 <div id="toast-stack" aria-live="polite" aria-atomic="false"></div>
 
-<!-- Sound toggle -->
-<button id="sound-toggle" title="Toggle sound" aria-label="Toggle game sounds">🔊</button>
-
 <script src="{% static 'js/games.js' %}"></script>
 
 <script>
@@ -554,28 +543,6 @@
   }
   window.showToast = showToast;
 
-  // Sound toggle
-  (function initSoundToggle(){
-    var btn = document.getElementById('sound-toggle');
-    if (!btn) return;
-    function upd(){
-      if (!window.GameSounds) return;
-      var m = GameSounds.isMuted();
-      btn.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A';
-      btn.classList.toggle('muted', m);
-      btn.title = m ? 'Sound off — click to unmute' : 'Sound on — click to mute';
-    }
-    // Wire click regardless of GameSounds load state
-    btn.addEventListener('click', function(){
-      if (!window.GameSounds) return;
-      GameSounds.mute();
-      upd();
-      if (!GameSounds.isMuted()) GameSounds.play('place');
-    });
-    // Init state now and after a short delay as fallback
-    upd();
-    setTimeout(upd, 500);
-  })();
 })();
 </script>
 

@@ -343,7 +343,7 @@
   <div class="shop-shelf">
     <div class="offer-card offer-card--highlight">
       <div class="offer-art">
-        <img src="{% static 'images/pack.png' %}" alt="Standard Pack">
+        <img src="https://res.cloudinary.com/djaj8fwjh/image/upload/f_auto,q_auto,w_280/ui/packs/pack" alt="Standard Pack" loading="lazy">
       </div>
       <div class="offer-body">
         <div class="offer-title">Standard Pack</div>
@@ -366,7 +366,7 @@
 
     <div class="offer-card">
       <div class="offer-art">
-        <img src="{% static 'images/bundle_pack.png' %}" alt="Mega Bundle">
+        <img src="https://res.cloudinary.com/djaj8fwjh/image/upload/f_auto,q_auto,w_280/ui/packs/bundle_pack" alt="Mega Bundle" loading="lazy">
       </div>
       <div class="offer-body">
         <div class="offer-title">Mega Bundle</div>
@@ -402,7 +402,7 @@
         <div class="region-row">
           <div class="offer-card">
             <div class="offer-art">
-              <img src="{% static region.image_path %}" alt="{{ region.label }}">
+              <img src="{{ region.image_path }}" alt="{{ region.label }}" loading="lazy">
             </div>
             <div class="offer-body">
               <div class="offer-title">{{ region.label }}</div>
@@ -425,7 +425,7 @@
 
           <div class="offer-card">
             <div class="offer-art">
-              <img src="{% static region.bundle_image_path %}" alt="{{ region.bundle_name }}">
+              <img src="{{ region.bundle_image_path }}" alt="{{ region.bundle_name }}" loading="lazy">
             </div>
             <div class="offer-body">
               <div class="offer-title">{{ region.bundle_name }}</div>
