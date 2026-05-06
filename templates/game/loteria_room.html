@@ -1144,7 +1144,7 @@ function speakPokemonName(dexNumber, name) {
   var encodedFilename = filename.split('').map(function(c) {
     return c === ' ' ? '%20' : c;
   }).join('');
-  var url = '/media/pokemon/audio/name/Kanto/' + encodedFilename;
+  var url = 'https://res.cloudinary.com/djaj8fwjh/video/upload/pokemon/audio/name/Kanto/' + encodedFilename;
 
   if (window.GameSounds && GameSounds.playUrl) {
     GameSounds.playUrl(url);
