@@ -198,7 +198,7 @@
     </div>
     <div class="detail-hero-img">
       {% if pokemon.pokedex_number %}
-        <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:'03d' }}.png" alt="{{ pokemon.name }}">
+        <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
       {% elif pokemon.sprite_url %}
         <img src="{{ pokemon.sprite_url }}" alt="{{ pokemon.name }}">
       {% else %}

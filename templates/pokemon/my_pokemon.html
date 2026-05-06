@@ -745,7 +745,7 @@
       <a href="{% url 'pokemon:owned_detail' op.pk %}" class="poke-sprite-link">
         <div class="poke-sprite-wrap">
           {% if op.species.pokedex_number %}
-            <img src="/media/pokemon/sprites/{{ op.species.pokedex_number|stringformat:'03d' }}.png" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
+            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
           {% elif op.species.sprite_url %}
             <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
           {% else %}

@@ -374,9 +374,7 @@ const CASA_POKEMON = [
         {# Sprite + name → owned detail page #}
         <a :href="op.detail_url" class="poke-sprite-link">
           <div class="poke-sprite-wrap">
-            <img :src="op.pokedex_number
-                        ? '/media/pokemon/sprites/' + String(op.pokedex_number).padStart(3,'0') + '.png'
-                        : (op.sprite_url || '')"
+            <img :src="op.sprite_url || ''"
                  :alt="op.name"
                  @error="$el.style.opacity='.2'">
           </div>

@@ -228,7 +228,7 @@
 
   <div class="owned-hero">
     {% if owned.species.pokedex_number %}
-      <img src="/media/pokemon/sprites/{{ owned.species.pokedex_number|stringformat:'03d' }}.png" alt="{{ owned.species.name }}">
+      <img src="{{ owned.species.sprite_url }}" alt="{{ owned.species.name }}">
     {% elif owned.species.sprite_url %}
       <img src="{{ owned.species.sprite_url }}" alt="{{ owned.species.name }}">
     {% else %}

@@ -280,7 +280,7 @@ function pokedex() {
       {% if pokemon.pokedex_number %}
         <span class="pdex-num">#{{ pokemon.pokedex_number|stringformat:"03d" }}</span>
         <div class="pdex-img-wrap">
-          <img src="/media/pokemon/sprites/{{ pokemon.pokedex_number|stringformat:"03d" }}.png"
+          <img src="{{ pokemon.sprite_url }}"
                alt="{{ pokemon.name }}" loading="lazy"
                onerror="this.style.display='none'">
         </div>
