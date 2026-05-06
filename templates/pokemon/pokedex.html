@@ -164,12 +164,11 @@ function pokedex() {
     search: '',
     activeTypes: [],
     activeGen: '',
-    activeRole: '',
     visibleCount: {{ pokemon_list|length }},
     totalCount:   {{ pokemon_list|length }},
 
     init() {
-      ['search','activeTypes','activeGen','activeRole'].forEach(k => {
+      ['search','activeTypes','activeGen'].forEach(k => {
         this.$watch(k, () => this.$nextTick(() => this.recount()));
       });
     },
@@ -187,7 +186,6 @@ function pokedex() {
         if (!this.activeTypes.some(t => t === p || t === s)) return false;
       }
       if (this.activeGen  && el.dataset.gen  !== this.activeGen)  return false;
-      if (this.activeRole && el.dataset.role !== this.activeRole)  return false;
       return true;
     },
 
@@ -197,7 +195,7 @@ function pokedex() {
     },
 
     clearAll() {
-      this.search = ''; this.activeTypes = []; this.activeGen = ''; this.activeRole = '';
+      this.search = ''; this.activeTypes = []; this.activeGen = '';
     },
 
     genLabel(n) {
@@ -228,15 +226,6 @@ function pokedex() {
         {% endfor %}
       </select>
 
-      <select class="pdex-select" x-model="activeRole">
-        <option value="">All Roles</option>
-        <option value="dps">DPS</option>
-        <option value="assassin">Assassin</option>
-        <option value="tank">Tank</option>
-        <option value="support">Support</option>
-        <option value="control">Control</option>
-        <option value="bruiser">Bruiser</option>
-      </select>
     </div>
 
     <div class="type-chips">
@@ -257,7 +246,7 @@ function pokedex() {
       Showing <strong x-text="visibleCount"></strong> of <strong>{{ pokemon_list|length }}</strong> Pokémon
     </p>
     <button type="button" class="pdex-clear"
-            x-show="search || activeTypes.length || activeGen || activeRole"
+            x-show="search || activeTypes.length || activeGen"
             style="display:none"
             @click="clearAll()">
       ✕ Clear filters
@@ -275,7 +264,6 @@ function pokedex() {
        data-primary="{{ pokemon.primary_type.name }}"
        data-secondary="{{ pokemon.secondary_type.name|default:'' }}"
        data-gen="{{ pokemon.generation.number|default:'' }}"
-       data-role="{{ pokemon.primary_role }}">
 
       {% if pokemon.pokedex_number %}
         <span class="pdex-num">#{{ pokemon.pokedex_number|stringformat:"03d" }}</span>
