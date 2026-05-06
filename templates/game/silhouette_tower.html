@@ -183,6 +183,7 @@
 .option-btn.wrong { border-color: rgba(248,113,113,.42); box-shadow: 0 0 0 1px rgba(248,113,113,.12), 0 12px 24px rgba(0,0,0,.24); }
 .option-btn.locked { cursor:default; pointer-events:none; }
 .option-kicker { display:block; color:var(--text-3); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; margin-bottom:.25rem; }
+.option-sprite { display:block; width:56px; height:56px; object-fit:contain; image-rendering:pixelated; margin:.2rem 0; }
 .option-name { display:block; font-family:"Chakra Petch",sans-serif; font-size:1.05rem; font-weight:700; }
 .option-dex { display:block; margin-top:.22rem; color:#a78bfa; font-size:.78rem; }
 
@@ -386,6 +387,7 @@
           <span class="option-kicker">
             {% if option.is_correct %}Correct{% elif option.is_selected %}Your Pick{% else %}Choice{% endif %}
           </span>
+          {% if option.image_url %}<img src="{{ option.image_url }}" alt="{{ option.name }}" class="option-sprite">{% endif %}
           <span class="option-name">{{ option.name }}</span>
           <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
         </div>
@@ -397,6 +399,7 @@
         <input type="hidden" name="selected_dex" value="{{ option.dex }}">
         <button type="submit" class="option-btn">
           <span class="option-kicker">Pick {{ forloop.counter }}</span>
+          {% if option.image_url %}<img src="{{ option.image_url }}" alt="{{ option.name }}" class="option-sprite">{% endif %}
           <span class="option-name">{{ option.name }}</span>
           <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
         </button>

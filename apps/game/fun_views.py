@@ -1149,6 +1149,7 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
                     {
                         "dex": pokemon.pokedex_number,
                         "name": pokemon.name,
+                        "image_url": _pokemon_image_url(pokemon),
                         "is_correct": pokemon.pokedex_number == tower_reveal.get("correct_dex"),
                         "is_selected": pokemon.pokedex_number == tower_reveal.get("selected_dex"),
                     }
@@ -1180,6 +1181,7 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
                     {
                         "dex": pokemon.pokedex_number,
                         "name": pokemon.name,
+                        "image_url": _pokemon_image_url(pokemon),
                         "is_correct": False,
                         "is_selected": False,
                     }
