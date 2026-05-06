@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+*.pyc
+__pycache__
+.pytest_cache
+allure-results
+media
+static/images/pokemon
+staticfiles
+node_modules
