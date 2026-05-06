@@ -35,8 +35,8 @@ COPY --from=builder /install /usr/local
 # Copy project source
 COPY --chown=app:app . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || true
+# Collect static files (use dummy SECRET_KEY — not used at runtime)
+RUN SECRET_KEY=buildtime-dummy python manage.py collectstatic --noinput
 
 # Make startup script executable
 RUN chmod +x start.sh
