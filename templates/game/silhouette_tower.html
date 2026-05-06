@@ -379,7 +379,15 @@
   {% endif %}
 
   {% if tower_run or tower_reveal %}
-  <section class="option-grid">
+  {% if not reveal_mode and tower_run %}
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+    <button id="hint-btn" type="button" onclick="useHint()" class="btn btn-secondary btn-sm" style="font-size:.78rem;">
+      💡 Eliminate 3 Wrong Answers
+    </button>
+    <span id="hint-used-label" style="display:none;font-size:.75rem;color:#a78bfa;font-weight:600;">Hint used — 3 eliminated</span>
+  </div>
+  {% endif %}
+  <section class="option-grid" id="option-grid">
     {% for option in option_cards %}
       {% if reveal_mode %}
       <div class="option-form">
@@ -387,19 +395,20 @@
           <span class="option-kicker">
             {% if option.is_correct %}Correct{% elif option.is_selected %}Your Pick{% else %}Choice{% endif %}
           </span>
-          {% if option.image_url %}<img src="{{ option.image_url }}" alt="{{ option.name }}" class="option-sprite">{% endif %}
+          {% if option.is_correct or option.is_selected %}
+            <img src="{{ option.image_url }}" alt="{{ option.name }}" class="option-sprite">
+          {% endif %}
           <span class="option-name">{{ option.name }}</span>
           <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
         </div>
       </div>
       {% else %}
-      <form method="post" class="option-form">
+      <form method="post" class="option-form" data-dex="{{ option.dex }}">
         {% csrf_token %}
         <input type="hidden" name="action" value="guess">
         <input type="hidden" name="selected_dex" value="{{ option.dex }}">
         <button type="submit" class="option-btn">
           <span class="option-kicker">Pick {{ forloop.counter }}</span>
-          {% if option.image_url %}<img src="{{ option.image_url }}" alt="{{ option.name }}" class="option-sprite">{% endif %}
           <span class="option-name">{{ option.name }}</span>
           <span class="option-dex">#{{ option.dex|stringformat:"03d" }}</span>
         </button>
@@ -620,5 +629,40 @@
     if (btn && !fired) btn.style.display = 'inline-block';
   }, 3000);
 })();
+
+// ── Hint: Eliminate 3 wrong answers ───────────────────────────
+{% if tower_run and question_card %}
+var _correctDex = {{ question_card.dex }};
+{% else %}
+var _correctDex = null;
+{% endif %}
+var _hintUsed = false;
+function useHint() {
+  if (_hintUsed) return;
+  _hintUsed = true;
+
+  var grid = document.getElementById('option-grid');
+  if (!grid) return;
+
+  // Separate correct from wrong options
+  var forms = Array.from(grid.querySelectorAll('.option-form[data-dex]'));
+  var wrongForms = forms.filter(function(f) {
+    return parseInt(f.getAttribute('data-dex')) !== _correctDex;
+  });
+
+  // Shuffle wrong options and disable 3 of them
+  wrongForms.sort(function() { return Math.random() - 0.5; });
+  wrongForms.slice(0, 3).forEach(function(form) {
+    var btn = form.querySelector('button');
+    btn.disabled = true;
+    btn.style.opacity = '0.2';
+    btn.style.pointerEvents = 'none';
+    btn.style.filter = 'grayscale(1)';
+  });
+
+  document.getElementById('hint-btn').style.display = 'none';
+  document.getElementById('hint-used-label').style.display = 'inline';
+  if (window.GameSounds) GameSounds.play('click');
+}
 </script>
 {% endblock %}
