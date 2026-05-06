@@ -9,3 +9,4 @@ django-allauth==65.16.1
 PyJWT>=2.8,<3
 python-dotenv>=1.0,<2
 whitenoise==6.7.0
+requests>=2.31,<3
