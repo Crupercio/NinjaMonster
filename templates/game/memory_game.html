@@ -8,6 +8,7 @@
   --memory-card-width: 120px;
   --memory-card-height: 166px;
   --memory-mascot-size: 148px;
+  --board-cols: 4; /* overridden inline per board */
   max-width: 1360px;
   margin: 0 auto;
   padding: 1rem 0 2.25rem;
@@ -192,12 +193,32 @@
   .memory-grid-head { min-height: 50px; }
   .memory-grid-mascot { top: 10px; }
 }
+@media (max-width: 640px) {
+  .memory-shell {
+    /* Card width = available viewport / col count, clamped between 52px and 98px.
+       Available ≈ 100vw minus page padding (2rem) minus panel padding (2.3rem) minus gaps. */
+    --memory-card-width: clamp(52px, calc((100vw - 4.5rem - (var(--board-cols) - 1) * 0.85rem) / var(--board-cols)), 98px);
+    --memory-card-height: calc(var(--memory-card-width) * 1.38);
+    --memory-mascot-size: 80px;
+  }
+  .memory-grid-panel { padding: 4.5rem .75rem .75rem; }
+  .memory-grid-mascot { top: 6px; }
+  .memory-grid-head { min-height: 40px; margin-bottom: .6rem; }
+  .memory-grid { gap: .45rem; }
+  .memory-layout { padding: .75rem; gap: .75rem; border-radius: 20px; }
+  .panel, .board-stage, .finish-panel, .empty-state { border-radius: 18px; padding: .85rem .9rem; }
+  .finish-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); gap: .45rem; }
+  .finish-metrics .finish-box:first-child { grid-column: span 2; }
+  .memory-grid-shell { border-radius: 20px; padding: .75rem; }
+  .stage-chip { font-size: .68rem; padding: .32rem .55rem; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div
   class="memory-shell"
+  style="--board-cols: {{ board.cols }}"
   {% if board_run %}
   x-data="memoryBoard({
     cardsId: 'memory-board-data',
@@ -525,6 +546,7 @@
   </section>
   {% endif %}
 </div>
+
 {% endblock %}
 
 {% block extra_js %}

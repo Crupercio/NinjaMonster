@@ -264,6 +264,29 @@
   @keyframes toastIn{from{opacity:0;transform:translateX(60px) scale(.94)}to{opacity:1;transform:translateX(0) scale(1)}}
   @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1);max-height:80px}to{opacity:0;transform:translateX(60px) scale(.9);max-height:0;margin-bottom:-.55rem}}
 
+  /* ── ROTATE PROMPT ───────────────────────────────────── */
+  #rotate-prompt{
+    display:none;position:fixed;inset:0;z-index:10000;
+    background:rgba(6,6,14,.96);
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:1.25rem;text-align:center;padding:2rem;
+  }
+  @media(max-width:640px) and (orientation:portrait){
+    #rotate-prompt{display:flex;}
+  }
+  #rotate-prompt .rp-icon{font-size:3.5rem;animation:rotateHint 1.8s ease-in-out infinite;}
+  #rotate-prompt .rp-title{font-family:"Chakra Petch",sans-serif;font-size:1.2rem;color:var(--accent-gold);font-weight:700;}
+  #rotate-prompt .rp-body{color:var(--text-2);font-size:.9rem;line-height:1.5;max-width:260px;}
+  #rotate-prompt .rp-skip{
+    margin-top:.5rem;background:none;border:1px solid var(--border-md);color:var(--text-3);
+    border-radius:999px;padding:.45rem 1.1rem;font-size:.75rem;cursor:pointer;
+    font-family:"Chakra Petch",sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  }
+  @keyframes rotateHint{
+    0%,100%{transform:rotate(0deg);}
+    40%,60%{transform:rotate(90deg);}
+  }
+
   /* ── RESPONSIVE ───────────────────────────────────────── */
   @media(max-width:860px){
     .sidebar{display:none;}
@@ -632,6 +655,14 @@ document.addEventListener('DOMContentLoaded', function(){
 function closeDailyModal(){var b=document.getElementById('daily-modal-backdrop');if(!b)return;b.classList.remove('visible');setTimeout(function(){b.remove();},400);}
 </script>
 {% endif %}
+
+<!-- Rotate prompt — CSS shows this on portrait phones only -->
+<div id="rotate-prompt">
+  <div class="rp-icon">&#x1F4F1;</div>
+  <div class="rp-title">Rotate for best experience</div>
+  <p class="rp-body">Calcas plays better in landscape mode. Turn your phone sideways!</p>
+  <button class="rp-skip" onclick="document.getElementById('rotate-prompt').style.display='none'">Continue portrait</button>
+</div>
 
 </body>
 </html>
