@@ -387,6 +387,47 @@
   color: var(--text-3);
 }
 
+.card-view-link {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  text-decoration: none;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.card-view-link:hover {
+  color: var(--accent-gold);
+  background: rgba(232,184,75,0.08);
+}
+
+.batch-preset-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-md);
+  background: var(--bg-raised);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.batch-preset-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: rgba(232,184,75,0.06);
+}
+.batch-preset-btn.active {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: rgba(232,184,75,0.1);
+}
+
+.poke-card { cursor: pointer; }
+.poke-card.is-training,
+.poke-card.is-ready { cursor: default; }
+
 .poke-sprite-link {
   display: block;
   text-decoration: none;
@@ -697,12 +738,25 @@
       </div>
       <div class="batch-actions">
         <button type="submit" class="btn btn-primary" id="bulk-train-button" {% if available_training_slots == 0 %}disabled{% endif %}>Start Training</button>
-        <button type="button" class="btn btn-secondary" id="clear-selection-button">Clear Selection</button>
+        <button type="button" class="btn btn-secondary" id="clear-selection-button">Clear</button>
       </div>
     </div>
 
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;padding:0 0 0.25rem;align-items:center;">
+      <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);white-space:nowrap;">Quick Select:</span>
+      <button type="button" class="batch-preset-btn" id="preset-rush20" title="Select lowest-level idle Pokémon under Lv.20 (Lotería ready)">
+        ⚡ Rush to Lv.20
+      </button>
+      <button type="button" class="batch-preset-btn" id="preset-rush100" title="Select highest-level idle Pokémon Lv.20+ to finish them first">
+        🏆 Rush to Lv.100
+      </button>
+      <button type="button" class="batch-preset-btn" id="preset-all" title="Select all idle Pokémon up to free slot limit">
+        ✦ All Idle
+      </button>
+    </div>
+
     <div class="batch-note">
-      Selection is limited by your current free slots. XP rules stay the same, but the available session lengths are now 15 minutes, 30 minutes, and 8 hours.
+      Click any card to select it. Quick Select fills up to your free slot count automatically.
     </div>
   </form>
 
@@ -725,7 +779,7 @@
           {% elif op.level >= 100 %}
             <span class="max-level-badge">Max Level</span>
           {% else %}
-            <label class="select-label">
+            <label class="select-label" onclick="event.stopPropagation()">
               <input
                 type="checkbox"
                 class="batch-select"
@@ -737,16 +791,12 @@
             </label>
           {% endif %}
         </div>
-        {% if not op.is_training and op.level < 100 %}
-          <span class="selection-hint">Use batch bar</span>
-        {% endif %}
+        <a href="{% url 'pokemon:owned_detail' op.pk %}" class="card-view-link" onclick="event.stopPropagation()" title="View {{ op.species.name }}">↗</a>
       </div>
 
-      <a href="{% url 'pokemon:owned_detail' op.pk %}" class="poke-sprite-link">
+      <div class="poke-sprite-link">
         <div class="poke-sprite-wrap">
-          {% if op.species.pokedex_number %}
-            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
-          {% elif op.species.sprite_url %}
+          {% if op.species.sprite_url %}
             <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}" onerror="this.style.opacity='.2'">
           {% else %}
             <div style="width:104px;height:104px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:3rem;">?</div>
@@ -754,7 +804,7 @@
         </div>
         <div class="poke-name">{{ op.species.name }}</div>
         <div class="poke-meta">#{{ op.species.pokedex_number }} · {{ op.species.primary_type }}{% if op.species.secondary_type %} / {{ op.species.secondary_type }}{% endif %}</div>
-      </a>
+      </div>
 
       <div class="poke-level-row">
         <span class="poke-level">Lv.{{ op.level }}</span>
@@ -817,6 +867,7 @@
   const cards = Array.from(document.querySelectorAll('[data-card]'));
   const checkboxes = Array.from(document.querySelectorAll('.batch-select'));
   const maxSelectable = {{ available_training_slots }};
+  const presetBtns = document.querySelectorAll('.batch-preset-btn');
 
   const SEARCH_KEY = 'my_pokemon_search';
   const HIDE_MAX_KEY = 'my_pokemon_hide_max';
@@ -874,14 +925,67 @@
   });
 
   checkboxes.forEach((checkbox) => {
-    checkbox.addEventListener('change', updateSelection);
+    checkbox.addEventListener('change', () => {
+      presetBtns.forEach(b => b.classList.remove('active'));
+      updateSelection();
+    });
+  });
+
+  // Click anywhere on an idle card to toggle its checkbox
+  cards.forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('a, button, input, label, form')) return;
+      const checkbox = card.querySelector('.batch-select');
+      if (!checkbox) return;
+      checkbox.checked = !checkbox.checked;
+      presetBtns.forEach(b => b.classList.remove('active'));
+      updateSelection();
+    });
   });
 
   clearSelectionButton.addEventListener('click', () => {
-    checkboxes.forEach((checkbox) => {
-      checkbox.checked = false;
-    });
+    checkboxes.forEach((cb) => { cb.checked = false; });
+    presetBtns.forEach(b => b.classList.remove('active'));
     updateSelection();
+  });
+
+  // Smart preset: fill up to maxSelectable slots sorted by strategy
+  function applyPreset(filter, sorter) {
+    checkboxes.forEach((cb) => { cb.checked = false; });
+    const eligible = checkboxes
+      .filter(cb => {
+        const card = cb.closest('[data-card]');
+        const lv = Number(card?.dataset.level || 0);
+        return filter(lv) && card?.style.display !== 'none';
+      })
+      .sort((a, b) => {
+        const lvA = Number(a.closest('[data-card]')?.dataset.level || 0);
+        const lvB = Number(b.closest('[data-card]')?.dataset.level || 0);
+        return sorter(lvA, lvB);
+      });
+    eligible.slice(0, maxSelectable).forEach(cb => { cb.checked = true; });
+    updateSelection();
+  }
+
+  document.getElementById('preset-rush20').addEventListener('click', function () {
+    presetBtns.forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // Lowest-level idle Pokémon under Lv.20 first (get them Lotería-ready)
+    applyPreset(lv => lv < 20, (a, b) => a - b);
+  });
+
+  document.getElementById('preset-rush100').addEventListener('click', function () {
+    presetBtns.forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // Highest-level idle Pokémon Lv.20+ first (finish them soonest)
+    applyPreset(lv => lv >= 20 && lv < 100, (a, b) => b - a);
+  });
+
+  document.getElementById('preset-all').addEventListener('click', function () {
+    presetBtns.forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // All idle under 100, no level filter, original order
+    applyPreset(lv => lv < 100, () => 0);
   });
 
   applyFilters();
