@@ -51,7 +51,7 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
     <div class="gp-progress-fill" style="width:{{ guide_progress_pct }}%"></div>
   </div>
 
-  <!-- Steps list -->
+  <!-- Steps checklist -->
   <div class="gp-steps">
     {% for s in guide_steps %}
     <div class="gp-step {% if s.step < guide_step %}gp-step--done{% elif s.step == guide_step %}gp-step--active{% else %}gp-step--locked{% endif %}">
@@ -64,16 +64,13 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
         <div class="gp-step-desc">{{ s.description }}</div>
         {% endif %}
       </div>
-      <div class="gp-step-ryo {% if s.step <= guide_step %}gp-gold{% endif %}">
-        +{{ s.ryo|floatformat:0 }}
-      </div>
     </div>
     {% endfor %}
   </div>
 
   <div class="gp-footer">
-    <span class="gp-earned">Earned: <strong class="gp-gold">{{ guide_earned|floatformat:0 }} Ryo</strong></span>
-    <span class="gp-total">Total: <strong>{{ guide_total_ryo|floatformat:0 }}</strong></span>
+    <span class="gp-earned" style="font-size:0.7rem;color:var(--text-3);">Claim rewards on your profile page</span>
+    <a href="{% url 'users:profile' request.user.username %}" class="btn btn-primary btn-sm" style="font-size:0.68rem;padding:0.2rem 0.55rem;">Profile →</a>
   </div>
   {% endif %}
 

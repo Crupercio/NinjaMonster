@@ -123,59 +123,62 @@ def get_guide_context(user: User) -> dict[str, Any]:
 
 
 @transaction.atomic
-def advance_guide(user: User, to_step: int) -> int:
+def advance_guide(user: User, to_step: int) -> None:
     """
-    Advance the user's guide to `to_step` if it's higher than current.
-    Awards 10,000 Ryo for each newly completed step.
-    Returns ryo awarded this call (0 if already past this step).
+    Advance guide_step to `to_step` if higher than current. No ryo awarded here —
+    ryo is claimed manually via claim_guide_step() on the profile page.
     """
-    user = User.objects.select_for_update().get(pk=user.pk)
-    current = user.guide_step
-
-    # Only advance forward, never back
-    if to_step <= current:
-        return 0
-
-    # Ryo awarded for each step completed (moving past it, not entering it).
-    # Steps between old position and new position, excluding step 0 (not started).
-    completed_steps = to_step - 1 - (current - 1 if current > 0 else 0)
-    ryo_awarded = max(0, completed_steps) * STEP_RYO
-
-    if ryo_awarded:
-        User.objects.filter(pk=user.pk).update(
-            guide_step=to_step,
-            ryo=F("ryo") + ryo_awarded,
-        )
-        logger.info(
-            "Guide advance: user=%s step=%d ryo_awarded=%d",
-            user, to_step, ryo_awarded,
-        )
-        return ryo_awarded
-
-    User.objects.filter(pk=user.pk).update(guide_step=to_step)
-    return 0
+    updated = User.objects.filter(pk=user.pk, guide_step__lt=to_step).update(guide_step=to_step)
+    if updated:
+        user.guide_step = to_step  # update in-memory so context processor sees new value
+        logger.info("Guide advance: user=%s step=%d", user, to_step)
 
 
 @transaction.atomic
-def complete_guide(user: User) -> int:
+def claim_guide_step(user: User) -> dict[str, int]:
     """
-    Mark guide as fully complete and award the 130,000 completion bonus.
-    Returns bonus ryo awarded (0 if already complete).
+    Claim ryo for the next unclaimed guide step. Called from profile page.
+    Returns {"ryo": N, "bonus": N, "claimed_step": N, "all_done": bool}.
     """
-    user = User.objects.select_for_update().get(pk=user.pk)
-    if user.guide_step >= GUIDE_COMPLETE_STEP:
-        return 0
+    user_db = User.objects.select_for_update().get(pk=user.pk)
+    visited = user_db.guide_step
+    claimed = user_db.guide_claimed_step
+
+    if claimed >= visited or visited == 0:
+        return {"ryo": 0, "bonus": 0, "claimed_step": claimed, "all_done": False}
+
+    # Claim the next unclaimed step
+    next_claimed = claimed + 1
+    ryo = STEP_RYO
+
+    bonus = 0
+    all_done = False
+
+    # If claiming step 7 AND all pages visited, also grant completion bonus
+    if next_claimed == len(GUIDE_STEPS) and visited >= GUIDE_COMPLETE_STEP:
+        bonus = COMPLETION_BONUS
+        all_done = True
 
     User.objects.filter(pk=user.pk).update(
-        guide_step=GUIDE_COMPLETE_STEP,
-        ryo=F("ryo") + COMPLETION_BONUS,
+        guide_claimed_step=next_claimed,
+        ryo=F("ryo") + ryo + bonus,
     )
-    logger.info("Guide complete: user=%s bonus_ryo=%d", user, COMPLETION_BONUS)
-    return COMPLETION_BONUS
+    logger.info(
+        "Guide claim: user=%s claimed_step=%d ryo=%d bonus=%d",
+        user, next_claimed, ryo, bonus,
+    )
+    return {"ryo": ryo, "bonus": bonus, "claimed_step": next_claimed, "all_done": all_done}
+
+
+@transaction.atomic
+def dismiss_guide(user: User) -> None:
+    """Permanently dismiss the guide without awarding remaining rewards."""
+    User.objects.filter(pk=user.pk).update(guide_step=GUIDE_COMPLETE_STEP)
+    user.guide_step = GUIDE_COMPLETE_STEP
+    logger.info("Guide dismissed: user=%s", user)
 
 
 # Map each step number to the URL names that count as "visiting" that step.
-# When the user GETs any of these URLs, the guide auto-advances past that step.
 _STEP_URL_TRIGGERS: dict[int, list[str]] = {
     1: ["users:daily_claim"],
     2: ["stickers:buy_pack"],
@@ -186,7 +189,6 @@ _STEP_URL_TRIGGERS: dict[int, list[str]] = {
     7: ["quests:quest_list"],
 }
 
-# Reverse map: url_name → step it unlocks
 _URL_TO_STEP: dict[str, int] = {
     url: step
     for step, urls in _STEP_URL_TRIGGERS.items()
@@ -194,36 +196,68 @@ _URL_TO_STEP: dict[str, int] = {
 }
 
 
-def maybe_advance_from_url(user: User, url_name: str) -> int:
+def maybe_advance_from_url(user: User, url_name: str) -> None:
     """
-    Called from view GET handlers. If `url_name` matches the current guide step,
-    advance to the next step and return ryo awarded (0 if not applicable).
+    Called from view GET/POST handlers. Marks the page as visited and advances
+    guide_step. No ryo is awarded — user claims it manually on the profile page.
     """
     if not user.is_authenticated:
-        return 0
+        return
     step = getattr(user, "guide_step", 0)
     if step == 0 or step >= GUIDE_COMPLETE_STEP:
-        return 0
+        return
 
     expected_step = _URL_TO_STEP.get(url_name)
     if expected_step is None or expected_step != step:
-        return 0
+        return
 
     next_step = step + 1
-    ryo = advance_guide(user, next_step)
-
-    # If that was the last step, award the completion bonus directly.
-    # complete_guide() would bail because advance_guide already set guide_step=8.
-    if next_step > len(GUIDE_STEPS):
-        User.objects.filter(pk=user.pk).update(ryo=F("ryo") + COMPLETION_BONUS)
-        ryo += COMPLETION_BONUS
-        logger.info("Guide complete: user=%s bonus_ryo=%d", user, COMPLETION_BONUS)
-
-    return ryo
+    advance_guide(user, next_step)
 
 
-@transaction.atomic
-def dismiss_guide(user: User) -> None:
-    """Permanently dismiss the guide without awarding remaining rewards."""
-    User.objects.filter(pk=user.pk).update(guide_step=GUIDE_COMPLETE_STEP)
-    logger.info("Guide dismissed: user=%s", user)
+def get_guide_profile_context(user: User) -> dict:
+    """
+    Build the profile-page tutorial rewards section context.
+    Shows each step with visited/claimed state and a claim button.
+    """
+    if not user.is_authenticated:
+        return {"guide_profile_active": False}
+
+    visited = getattr(user, "guide_step", 0)
+    claimed = getattr(user, "guide_claimed_step", 0)
+
+    if visited == 0:
+        return {"guide_profile_active": False}
+
+    steps_display = []
+    for s in GUIDE_STEPS:
+        n = s["step"]
+        is_visited = visited >= n + 1 or visited >= GUIDE_COMPLETE_STEP
+        is_claimed = claimed >= n
+        steps_display.append({
+            **s,
+            "visited": is_visited,
+            "claimed": is_claimed,
+            "claimable": is_visited and not is_claimed and claimed == n - 1,
+        })
+
+    # Bonus: claimable when all 7 steps claimed and all pages visited
+    bonus_visited = visited >= GUIDE_COMPLETE_STEP
+    bonus_claimed = claimed >= GUIDE_COMPLETE_STEP
+    bonus_claimable = bonus_visited and not bonus_claimed and claimed == len(GUIDE_STEPS)
+
+    total_earned = claimed * STEP_RYO + (COMPLETION_BONUS if bonus_claimed else 0)
+
+    return {
+        "guide_profile_active": True,
+        "guide_profile_steps": steps_display,
+        "guide_profile_bonus_visited": bonus_visited,
+        "guide_profile_bonus_claimed": bonus_claimed,
+        "guide_profile_bonus_claimable": bonus_claimable,
+        "guide_profile_total_earned": total_earned,
+        "guide_profile_total_ryo": TOTAL_RYO,
+        "guide_profile_visited": visited,
+        "guide_profile_claimed": claimed,
+    }
+
+

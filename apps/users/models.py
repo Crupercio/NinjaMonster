@@ -49,6 +49,7 @@ class User(AbstractUser):
     tutorial_starter = models.CharField(max_length=50, blank=True, null=True)
     # Guided onboarding (0 = not started, 1–7 = step reached, 8 = fully complete)
     guide_step = models.PositiveSmallIntegerField(default=0)
+    guide_claimed_step = models.PositiveSmallIntegerField(default=0)
 
     # ── Bonding candies (expedition consumables) ─────────────────────────────
     # Used during expeditions to boost the bond rate with wild Pokémon.

@@ -355,6 +355,9 @@ class TrainerProfileView(LoginRequiredMixin, DetailView):
             context["pending_loteria_claims"] = pending_loteria_claims
             context["pending_loteria_total"] = sum(claim.reward_ryo for claim in pending_loteria_claims)
 
+            from apps.users.guide_service import get_guide_profile_context
+            context.update(get_guide_profile_context(profile_user))
+
         return context
 
 
@@ -540,56 +543,39 @@ class AchievementsView(LoginRequiredMixin, View):
 
 
 class GuideAdvanceAPI(LoginRequiredMixin, View):
-    """POST — advance the onboarding guide step and return updated state as JSON."""
+    """POST — start or dismiss the onboarding guide (Alpine panel)."""
 
     def post(self, request):
         from apps.users.guide_service import (
-            advance_guide, complete_guide, dismiss_guide,
-            get_guide_context, GUIDE_COMPLETE_STEP, GUIDE_STEPS,
+            advance_guide, dismiss_guide,
+            get_guide_context, GUIDE_STEPS,
         )
-        action = request.POST.get("action", "advance")
+        action = request.POST.get("action", "start")
 
         if action == "dismiss":
             dismiss_guide(request.user)
             return JsonResponse({"ok": True, "dismissed": True})
 
         if action == "start":
-            ryo = advance_guide(request.user, 1)
-            request.user.refresh_from_db(fields=["guide_step"])
+            advance_guide(request.user, 1)
             ctx = get_guide_context(request.user)
-            return JsonResponse({"ok": True, "ryo_awarded": ryo, **ctx})
+            return JsonResponse({"ok": True, **ctx})
 
-        if action == "complete":
-            # Award any remaining step ryo then the completion bonus
-            step_ryo = advance_guide(request.user, len(GUIDE_STEPS) + 1)
-            request.user.refresh_from_db(fields=["guide_step"])
-            bonus = complete_guide(request.user)
-            return JsonResponse({"ok": True, "ryo_awarded": step_ryo + bonus, "bonus": bonus, "complete": True})
+        return JsonResponse({"ok": False, "error": "unknown action"}, status=400)
 
-        # Default: mark current step visited → advance to next
-        try:
-            to_step = int(request.POST.get("step", 1))
-        except (ValueError, TypeError):
-            return JsonResponse({"ok": False, "error": "invalid step"}, status=400)
 
-        ryo = advance_guide(request.user, to_step)
-        request.user.refresh_from_db(fields=["guide_step", "ryo"])
+class GuideClaimStepView(LoginRequiredMixin, View):
+    """POST — claim the next unclaimed guide step reward on the profile page."""
 
-        # If this was the last step, also fire completion bonus
-        bonus = 0
-        complete = False
-        if to_step > len(GUIDE_STEPS):
-            bonus = complete_guide(request.user)
-            complete = True
-
-        ctx = get_guide_context(request.user)
-        return JsonResponse({
-            "ok": True,
-            "ryo_awarded": ryo,
-            "bonus": bonus,
-            "complete": complete,
-            **ctx,
-        })
+    def post(self, request):
+        from apps.users.guide_service import claim_guide_step
+        result = claim_guide_step(request.user)
+        messages.success(
+            request,
+            f"+{result['ryo']:,} Ryo claimed!"
+            + (f" + {result['bonus']:,} Ryo completion bonus!" if result["bonus"] else ""),
+        )
+        return redirect("users:profile", username=request.user.username)
 
 
 class ArcadeDailyChallengeProgressAPI(LoginRequiredMixin, View):

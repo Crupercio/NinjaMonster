@@ -415,6 +415,71 @@
   </section>
   {% endif %}
 
+  {% if is_own_profile and guide_profile_active %}
+  <section class="profile-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+      <h2 class="panel-title" style="margin:0;">Tutorial Rewards</h2>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent-gold);">
+        {{ guide_profile_total_earned|floatformat:0 }} / {{ guide_profile_total_ryo|floatformat:0 }} Ryo
+      </span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.45rem;">
+      {% for s in guide_profile_steps %}
+      <div style="display:grid;grid-template-columns:1.8rem minmax(0,1fr) auto;gap:0.6rem;align-items:center;padding:0.55rem 0.75rem;border-radius:10px;border:1px solid {% if s.claimed %}rgba(52,211,153,0.2){% elif s.claimable %}rgba(232,184,75,0.35){% elif s.visited %}rgba(232,184,75,0.15){% else %}var(--border-md){% endif %};background:{% if s.claimed %}rgba(52,211,153,0.05){% elif s.claimable %}rgba(232,184,75,0.06){% else %}transparent{% endif %};">
+        <div style="font-size:1rem;text-align:center;">
+          {% if s.claimed %}✓{% elif s.visited %}{{ s.icon }}{% else %}{{ s.icon }}{% endif %}
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:0.84rem;color:{% if s.claimed %}var(--text-3){% elif s.claimable %}var(--text-1){% elif s.visited %}var(--text-2){% else %}var(--text-3){% endif %};">{{ s.title }}</div>
+          {% if not s.visited and not s.claimed %}
+          <div style="font-size:0.72rem;color:var(--text-3);">{{ s.description }}</div>
+          {% endif %}
+        </div>
+        <div style="text-align:right;white-space:nowrap;">
+          {% if s.claimed %}
+            <span style="font-size:0.72rem;color:var(--text-3);">+{{ s.ryo|floatformat:0 }} ✓</span>
+          {% elif s.claimable %}
+            <form method="post" action="{% url 'users:guide_claim_step' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.72rem;padding:0.25rem 0.65rem;">
+                Claim +{{ s.ryo|floatformat:0 }}
+              </button>
+            </form>
+          {% elif s.visited %}
+            <span style="font-size:0.72rem;color:var(--text-3);">Claim prev. first</span>
+          {% else %}
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-3);">+{{ s.ryo|floatformat:0 }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      {# Completion bonus row #}
+      <div style="display:grid;grid-template-columns:1.8rem minmax(0,1fr) auto;gap:0.6rem;align-items:center;padding:0.65rem 0.75rem;border-radius:10px;border:1px solid {% if guide_profile_bonus_claimed %}rgba(52,211,153,0.2){% elif guide_profile_bonus_claimable %}rgba(232,184,75,0.5){% else %}var(--border-md){% endif %};background:{% if guide_profile_bonus_claimed %}rgba(52,211,153,0.05){% elif guide_profile_bonus_claimable %}rgba(232,184,75,0.08){% else %}transparent{% endif %};margin-top:0.25rem;">
+        <div style="font-size:1rem;text-align:center;">🏆</div>
+        <div>
+          <div style="font-weight:700;font-size:0.84rem;color:{% if guide_profile_bonus_claimed %}var(--text-3){% elif guide_profile_bonus_claimable %}var(--accent-gold){% else %}var(--text-3){% endif %};">Completion Bonus</div>
+          <div style="font-size:0.72rem;color:var(--text-3);">Finish all 7 steps to unlock</div>
+        </div>
+        <div style="text-align:right;white-space:nowrap;">
+          {% if guide_profile_bonus_claimed %}
+            <span style="font-size:0.72rem;color:var(--text-3);">+130,000 ✓</span>
+          {% elif guide_profile_bonus_claimable %}
+            <form method="post" action="{% url 'users:guide_claim_step' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.72rem;padding:0.25rem 0.65rem;">
+                Claim +130,000
+              </button>
+            </form>
+          {% else %}
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-3);">+130,000</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="profile-grid">
     <div style="display:grid; gap:1.1rem;">
       <section class="profile-panel">
