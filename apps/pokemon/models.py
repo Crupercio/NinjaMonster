@@ -344,6 +344,14 @@ class Pokemon(models.Model):
     )
     sprite_url = models.TextField(blank=True, default="")
     pokedex_number = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    learnset = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "PokeAPI learnset. List of dicts: "
+            "{name, type, power, accuracy, pp, damage_class, learn_methods: [level-up|machine|egg|tutor], level}."
+        ),
+    )
     primary_role = models.TextField(
         choices=TacticalRole.choices,
         default=TacticalRole.BURST,

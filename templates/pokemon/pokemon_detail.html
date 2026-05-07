@@ -303,52 +303,104 @@
   </div>
 
   <div class="panel">
-    <div class="panel-title">Move Pool</div>
-    {% if move_pool_by_slot %}
-      {% for slot_label, slot_desc, slot_moves in move_pool_by_slot %}
-        <div style="margin-bottom:1.75rem;">
-          <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:0.2rem;">
-            {{ slot_label }}
-          </div>
-          <div class="slot-desc">{{ slot_desc }}</div>
-          {% if slot_moves %}
-          <div style="overflow-x:auto;">
-            <table class="moves-table">
-              <thead>
-                <tr>
-                  <th>Move</th>
-                  <th>Type</th>
-                  <th>Power</th>
-                  <th>Acc</th>
-                  <th>PP</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for move in slot_moves %}
-                <tr>
-                  <td class="move-name">{{ move.name }}</td>
-                  <td>
-                    <span class="type-pill type-{{ move.move_type.name|lower }}" style="padding:2px 8px;font-size:0.7rem;">
-                      {{ move.move_type.name }}
-                    </span>
-                  </td>
-                  <td>{% if move.power %}{{ move.power }}{% else %}<span class="dash">-</span>{% endif %}</td>
-                  <td>{% if move.accuracy %}{{ move.accuracy }}%{% else %}<span class="dash">-</span>{% endif %}</td>
-                  <td>{{ move.pp }}</td>
-                  <td style="font-size:0.78rem;color:var(--text-2);">{{ move.description|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% else %}
-            <p style="color:#4b5563;font-size:0.85rem;margin:0;">No moves assigned for this slot.</p>
-          {% endif %}
-        </div>
-      {% endfor %}
+    <div class="panel-title">Moves</div>
+    {% if learnset_empty %}
+      <p style="color:#6b7280;font-size:.88rem;">Learnset not yet loaded for this species.</p>
     {% else %}
-      <p style="color:#6b7280;">No move pool data for this species yet.</p>
+
+      {% if learnset_levelup %}
+      <div style="margin-bottom:1.75rem;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent-gold);margin-bottom:.6rem;">Level-Up Moves</div>
+        <div style="overflow-x:auto;">
+          <table class="moves-table">
+            <thead><tr><th>Lv</th><th>Move</th><th>Type</th><th>Cat</th><th>Power</th><th>Acc</th><th>PP</th></tr></thead>
+            <tbody>
+              {% for m in learnset_levelup %}
+              <tr>
+                <td style="color:var(--text-3);font-size:.8rem;">{{ m.level }}</td>
+                <td class="move-name">{{ m.name }}</td>
+                <td><span class="type-pill type-{{ m.type|lower }}" style="padding:2px 8px;font-size:.7rem;">{{ m.type }}</span></td>
+                <td style="font-size:.78rem;color:var(--text-2);">{{ m.damage_class|title }}</td>
+                <td>{% if m.power %}<strong>{{ m.power }}</strong>{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td>{% if m.accuracy %}{{ m.accuracy }}%{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td style="color:var(--text-2);">{{ m.pp }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if learnset_machine %}
+      <div style="margin-bottom:1.75rem;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent-gold);margin-bottom:.6rem;">TM / HM Moves</div>
+        <div style="overflow-x:auto;">
+          <table class="moves-table">
+            <thead><tr><th>Move</th><th>Type</th><th>Cat</th><th>Power</th><th>Acc</th><th>PP</th></tr></thead>
+            <tbody>
+              {% for m in learnset_machine %}
+              <tr>
+                <td class="move-name">{{ m.name }}</td>
+                <td><span class="type-pill type-{{ m.type|lower }}" style="padding:2px 8px;font-size:.7rem;">{{ m.type }}</span></td>
+                <td style="font-size:.78rem;color:var(--text-2);">{{ m.damage_class|title }}</td>
+                <td>{% if m.power %}<strong>{{ m.power }}</strong>{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td>{% if m.accuracy %}{{ m.accuracy }}%{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td style="color:var(--text-2);">{{ m.pp }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if learnset_egg %}
+      <div style="margin-bottom:1.75rem;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent-gold);margin-bottom:.6rem;">Egg Moves</div>
+        <div style="overflow-x:auto;">
+          <table class="moves-table">
+            <thead><tr><th>Move</th><th>Type</th><th>Cat</th><th>Power</th><th>Acc</th><th>PP</th></tr></thead>
+            <tbody>
+              {% for m in learnset_egg %}
+              <tr>
+                <td class="move-name">{{ m.name }}</td>
+                <td><span class="type-pill type-{{ m.type|lower }}" style="padding:2px 8px;font-size:.7rem;">{{ m.type }}</span></td>
+                <td style="font-size:.78rem;color:var(--text-2);">{{ m.damage_class|title }}</td>
+                <td>{% if m.power %}<strong>{{ m.power }}</strong>{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td>{% if m.accuracy %}{{ m.accuracy }}%{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td style="color:var(--text-2);">{{ m.pp }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if learnset_tutor %}
+      <div style="margin-bottom:1.75rem;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent-gold);margin-bottom:.6rem;">Tutor Moves</div>
+        <div style="overflow-x:auto;">
+          <table class="moves-table">
+            <thead><tr><th>Move</th><th>Type</th><th>Cat</th><th>Power</th><th>Acc</th><th>PP</th></tr></thead>
+            <tbody>
+              {% for m in learnset_tutor %}
+              <tr>
+                <td class="move-name">{{ m.name }}</td>
+                <td><span class="type-pill type-{{ m.type|lower }}" style="padding:2px 8px;font-size:.7rem;">{{ m.type }}</span></td>
+                <td style="font-size:.78rem;color:var(--text-2);">{{ m.damage_class|title }}</td>
+                <td>{% if m.power %}<strong>{{ m.power }}</strong>{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td>{% if m.accuracy %}{{ m.accuracy }}%{% else %}<span class="dash">—</span>{% endif %}</td>
+                <td style="color:var(--text-2);">{{ m.pp }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
     {% endif %}
   </div>
 </div>

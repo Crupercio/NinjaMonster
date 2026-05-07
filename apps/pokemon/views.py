@@ -69,84 +69,22 @@ class PokemonDetailView(DetailView):
     }
 
     def get_queryset(self):
-        return Pokemon.objects.select_related(
-            "primary_type", "secondary_type"
-        ).prefetch_related(
-            "move_pool__move__move_type",
-            "move_pool__move__applies_status",
-            "move_pool__move__trigger_status",
-        )
+        return Pokemon.objects.select_related("primary_type", "secondary_type")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pool_entries = list(self.object.move_pool.all())
 
-        # Group by slot_type preserving display order.
-        by_slot: dict[str, list] = {slot: [] for slot, _ in self._SLOT_LABELS}
-        combo_moves: list = []
-        for entry in pool_entries:
-            by_slot.setdefault(entry.slot_type, []).append(entry.move)
-            if entry.move.applies_status or entry.move.trigger_status:
-                combo_moves.append(entry.move)
-
-        context["move_pool_by_slot"] = [
-            (label, self._SLOT_DESCRIPTIONS.get(slot, ""), by_slot[slot])
-            for slot, label in self._SLOT_LABELS
-        ]
-        context["combo_moves"] = combo_moves
-        context["is_battle_ready"] = self.object.is_battle_ready
-
-        # Pairing hints -------------------------------------------------------
-        # statuses this species can APPLY (via standard/mystery moves)
-        applies_ids = {
-            m.applies_status_id
-            for m in combo_moves
-            if m.applies_status_id and m.slot_type in ("standard", "mystery", "passive_1", "passive_2")
-        }
-        # statuses this species can CHASE (via chase moves)
-        triggers_on_ids = {
-            m.trigger_status_id
-            for m in combo_moves
-            if m.trigger_status_id and m.slot_type == "chase"
-        }
-
-        pairing_hints: list[dict] = []
-
-        if applies_ids:
-            # Find other species whose CHASE move triggers on a status we apply
-            from apps.pokemon.models import SpeciesMovePool  # local import
-            chase_partners = (
-                SpeciesMovePool.objects
-                .filter(slot_type="chase", move__trigger_status_id__in=applies_ids)
-                .exclude(species=self.object)
-                .select_related("species", "move__trigger_status")
-                .distinct()
-            )
-            for entry in chase_partners[:6]:
-                pairing_hints.append({
-                    "role": "primer",
-                    "partner": entry.species,
-                    "detail": f"This Pokemon primes {entry.move.trigger_status.get_name_display()} \u2192 {entry.species.name} can chain",
-                })
-
-        if triggers_on_ids:
-            # Find other species whose STANDARD move applies a status we chase
-            from apps.pokemon.models import SpeciesMovePool  # local import (already imported above if applies_ids set)
-            primer_partners = (
-                SpeciesMovePool.objects
-                .filter(slot_type__in=("standard", "mystery", "passive_1", "passive_2"), move__applies_status_id__in=triggers_on_ids)
-                .exclude(species=self.object)
-                .select_related("species", "move__applies_status")
-                .distinct()
-            )
-            for entry in primer_partners[:6]:
-                pairing_hints.append({
-                    "role": "chaser",
-                    "partner": entry.species,
-                    "detail": f"{entry.species.name} applies {entry.move.applies_status.get_name_display()} \u2192 this Pokemon chains",
-                })
-
-        context["pairing_hints"] = pairing_hints
+        # Classic learnset from PokeAPI
+        learnset = self.object.learnset or []
+        levelup = [m for m in learnset if "level-up" in m.get("learn_methods", [])]
+        machine = [m for m in learnset if "machine" in m.get("learn_methods", [])]
+        egg = [m for m in learnset if "egg" in m.get("learn_methods", [])]
+        tutor = [m for m in learnset if "tutor" in m.get("learn_methods", [])]
+        context["learnset_levelup"] = levelup
+        context["learnset_machine"] = machine
+        context["learnset_egg"] = egg
+        context["learnset_tutor"] = tutor
+        context["learnset_empty"] = not learnset
 
         # Expedition zones where this species can be encountered
         from apps.expedition.models import ZoneSpawnEntry
