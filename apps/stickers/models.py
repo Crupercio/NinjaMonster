@@ -579,13 +579,13 @@ REGION_LABELS: dict[str, str] = {
 
 # Rewards when a regional album page is completed (all Pokémon in region at that rarity placed)
 PAGE_REWARDS: dict[str, dict[str, int]] = {
-    StickerRarity.COMMON:      {"dust": 200,  "ryo": 0,     "packs": 0},
-    StickerRarity.UNCOMMON:    {"dust": 400,  "ryo": 0,     "packs": 0},
-    StickerRarity.RARE:        {"dust": 150,  "ryo": 0,     "packs": 1},
-    StickerRarity.EPIC:        {"dust": 300,  "ryo": 0,     "packs": 2},
-    StickerRarity.PRISMATIC: {"dust": 600,  "ryo": 1000,  "packs": 3},
-    StickerRarity.FULL_ART:    {"dust": 1000, "ryo": 2500,  "packs": 5},
-    StickerRarity.SECRET_RARE: {"dust": 2000, "ryo": 5000,  "packs": 10},
+    StickerRarity.COMMON:      {"dust": 200,   "ryo": 0,       "packs": 0},
+    StickerRarity.UNCOMMON:    {"dust": 400,   "ryo": 0,       "packs": 0},
+    StickerRarity.RARE:        {"dust": 150,   "ryo": 0,       "packs": 1},
+    StickerRarity.EPIC:        {"dust": 300,   "ryo": 0,       "packs": 2},
+    StickerRarity.PRISMATIC:   {"dust": 600,   "ryo": 100_000,  "packs": 3},
+    StickerRarity.FULL_ART:    {"dust": 1000,  "ryo": 250_000,  "packs": 5},
+    StickerRarity.SECRET_RARE: {"dust": 2000,  "ryo": 500_000,  "packs": 10},
 }
 
 

@@ -140,11 +140,11 @@ POKEMON_COMPLETION_SLOTS: int = len(_COMPLETION_RARITIES) * len(_COMPLETION_VARI
 
 # Rewards for completing all 42 slots of a single Pokemon
 POKEMON_COMPLETE_DUST: int = 500
-POKEMON_COMPLETE_RYO: int = 2_000
+POKEMON_COMPLETE_RYO: int = 200_000
 
 # Legendary reward for completing every Pokemon in the Pokedex
 FULL_DEX_DUST: int = 5_000
-FULL_DEX_RYO: int = 10_000
+FULL_DEX_RYO: int = 1_000_000
 FULL_DEX_PACKS: int = 3
 # ─────────────────────────────────────────────────────────────────────────────
 
