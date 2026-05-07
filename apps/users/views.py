@@ -479,9 +479,61 @@ class DailyClaimView(LoginRequiredMixin, View):
             if result["bundle_pack"]:
                 msg += " + Bundle Pack (7-day streak bonus!)"
             messages.success(request, msg)
+            from apps.users.achievement_service import AchievementService
+            user.refresh_from_db(fields=["daily_claim_streak"])
+            AchievementService().on_daily_claim(user, user.daily_claim_streak)
         except ValueError as exc:
             messages.error(request, str(exc))
         return redirect("users:daily_claim")
+
+
+class AchievementsView(LoginRequiredMixin, View):
+    """Achievements hub — shows all earned/locked achievements and lets users claim rewards."""
+
+    def get(self, request):
+        from apps.users.achievement_service import AchievementService, CATEGORY_ORDER, CATEGORY_LABELS
+        service = AchievementService()
+        all_achievements = service.get_all_for_user(request.user)
+        pending_count = sum(1 for a in all_achievements if a["earned"] and not a["claimed"])
+
+        by_category: list[dict] = []
+        for cat in CATEGORY_ORDER:
+            entries = [a for a in all_achievements if a["category"] == cat]
+            if entries:
+                by_category.append({
+                    "key": cat,
+                    "label": CATEGORY_LABELS[cat],
+                    "entries": entries,
+                    "earned_count": sum(1 for e in entries if e["earned"]),
+                    "total": len(entries),
+                })
+
+        return render(request, "users/achievements.html", {
+            "by_category": by_category,
+            "pending_count": pending_count,
+        })
+
+    def post(self, request):
+        from apps.users.achievement_service import AchievementService
+        action = request.POST.get("action", "")
+        service = AchievementService()
+
+        if action == "claim_all":
+            count, total_ryo = service.claim_all(request.user)
+            if count:
+                messages.success(request, f"Claimed {count} achievement reward{'s' if count != 1 else ''}! +{total_ryo:,} Ryo")
+            else:
+                messages.info(request, "No pending rewards to claim.")
+        elif action == "claim":
+            key = request.POST.get("key", "")
+            ryo = service.claim(request.user, key)
+            if ryo:
+                messages.success(request, f"Claimed! +{ryo:,} Ryo")
+            else:
+                messages.info(request, "Already claimed or not yet earned.")
+
+        return redirect("users:achievements")
+
 
 
 class ArcadeDailyChallengeProgressAPI(LoginRequiredMixin, View):

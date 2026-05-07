@@ -201,6 +201,8 @@ class MemoryMatchView(ComingSoonGameView):
                 memory_master_clear=self.board_config.key == "master_6x4",
             )
             _quest_service.on_memory_completed(request.user)
+            from apps.users.achievement_service import AchievementService
+            AchievementService().on_memory_complete(request.user, self.board_config.key, result["grade"])
             return redirect(return_url)
 
         messages.error(request, "Unknown memory board action.")
@@ -990,6 +992,8 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
             else:
                 messages.success(request, f"{claim.pattern_label} collected for {claim.reward_ryo} Ryo.")
                 _quest_service.on_loteria_played(request.user)
+                from apps.users.achievement_service import AchievementService
+                AchievementService().on_loteria_win(request.user, is_full_board=getattr(claim, "pattern_key", "") == "full_board")
             return redirect(next_url)
         if action == "claim_all_prizes":
             try:
@@ -999,6 +1003,9 @@ class LoteriaResultsView(LoginRequiredMixin, TemplateView):
             else:
                 messages.success(request, f"Collected {claim_count} Loteria prize{'' if claim_count == 1 else 's'} for {total_ryo} Ryo.")
                 _quest_service.on_loteria_played(request.user)
+                from apps.users.achievement_service import AchievementService
+                buena = any(bool(b.get("is_complete")) for b in (getattr(self, "_player_boards_cache", None) or []))
+                AchievementService().on_loteria_win(request.user, is_full_board=buena)
             return redirect(next_url)
         messages.error(request, "Unknown Loteria results action.")
         return redirect(next_url)
@@ -1288,6 +1295,8 @@ class SilhouetteTowerView(LoginRequiredMixin, TemplateView):
                 )
                 messages.success(request, f"Tower cleared! {correct_name} finished the climb. You earned {result['payout']} Ryo.")
                 _quest_service.on_silhouette_played(request.user)
+                from apps.users.achievement_service import AchievementService
+                AchievementService().on_silhouette_cleared(request.user, self.tower_config.key)
             elif result["status"] == "wrong":
                 record_arcade_daily_progress(
                     request.user,

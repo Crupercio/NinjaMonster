@@ -177,6 +177,8 @@ class GuildService:
 
         membership = GuildMembership.objects.create(user=user, guild=guild, role=GuildRole.MEMBER)
         logger.info("%s joined guild '%s'", user, guild.name)
+        from apps.users.achievement_service import AchievementService
+        AchievementService().on_join_guild(user)
         return membership
 
     @transaction.atomic
@@ -405,6 +407,8 @@ class GuildService:
 
         award_trainer_xp(user, reward_amigo_xp, source="guild_quest")
         self._award_guild_xp(guild, reward_guild_xp)
+        from apps.users.achievement_service import AchievementService
+        AchievementService().on_guild_quest_complete(user)
 
         return {
             "ryo": reward_ryo,

@@ -1,6 +1,7 @@
 """Custom User model for the Pokemon Battle game."""
 import logging
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -79,6 +80,9 @@ class User(AbstractUser):
     max_daily_claim_streak = models.PositiveIntegerField(default=0)
     trades_completed = models.PositiveIntegerField(default=0)
 
+    # ── Achievements tracking ─────────────────────────────────────────────────
+    guild_quests_completed = models.PositiveIntegerField(default=0)
+
     objects: UserManager = UserManager()  # type: ignore[assignment]
 
     REQUIRED_FIELDS = ["email"]
@@ -106,6 +110,36 @@ class User(AbstractUser):
         if lv <= 20:
             return 700 + (lv - 10) * 80   # 780–1,500 XP
         return 1600 + (lv - 20) * 150     # slow and steady after 20
+
+
+class GameAchievement(models.Model):
+    """
+    One-time claimable achievement earned by a player.
+
+    earned_at is set when the trigger fires.
+    claimed_at is set when the player clicks "Claim" — ryo is credited then.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="game_achievements",
+        db_index=True,
+    )
+    key = models.TextField(db_index=True)
+    ryo_reward = models.PositiveIntegerField(default=0)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("user", "key")]
+        ordering = ["-earned_at"]
+        verbose_name = "game achievement"
+        verbose_name_plural = "game achievements"
+
+    def __str__(self) -> str:
+        state = "claimed" if self.claimed_at else "unclaimed"
+        return f"{self.user} — {self.key} ({state})"
 
     @property
     def trainer_xp_percent(self) -> int:

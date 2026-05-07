@@ -759,6 +759,8 @@ class StickerService:
         player.sticker_dust += dust
         player.save(update_fields=["sticker_dust"])
 
+        from apps.users.achievement_service import AchievementService
+        AchievementService().on_dismantle(player)
         logger.info(
             "Player %s dismantled sticker #%d (%s %s) for %d dust",
             player,
@@ -813,6 +815,8 @@ class StickerService:
             awarded_from="craft",
         )
         self._maybe_auto_place_sticker(player, sticker)
+        from apps.users.achievement_service import AchievementService
+        AchievementService().on_craft(player)
         logger.info(
             "Player %s crafted %s [%s] %s for %d dust",
             player,
@@ -1186,6 +1190,10 @@ class TradeService:
             trades_completed=F("trades_completed") + 1
         )
 
+        from apps.users.achievement_service import AchievementService
+        _ach = AchievementService()
+        _ach.on_trade_complete(original_sender, User.objects.filter(pk=original_sender.pk).values_list("trades_completed", flat=True).first() or 0)
+        _ach.on_trade_complete(receiver, User.objects.filter(pk=receiver.pk).values_list("trades_completed", flat=True).first() or 0)
         logger.info(
             "Trade #%d completed: %s ↔ %s",
             offer.pk,

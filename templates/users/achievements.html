@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Achievements{% endblock %}
+
+{% block extra_css %}
+<style>
+.ach-shell {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ach-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-md);
+  position: relative;
+}
+
+.ach-header::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -1px;
+  width: 68px; height: 1px;
+  background: var(--accent-gold);
+}
+
+.ach-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ach-subtitle {
+  margin-top: 0.25rem;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.ach-claim-all {
+  flex-shrink: 0;
+}
+
+.ach-section {
+  margin-bottom: 2rem;
+}
+
+.ach-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.ach-section-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+
+.ach-section-progress {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-left: auto;
+}
+
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.7rem;
+}
+
+.ach-card {
+  background: linear-gradient(160deg, var(--bg-surface), var(--bg-felt));
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1rem;
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ach-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 18%; right: 18%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,184,75,0.22), transparent);
+}
+
+.ach-card--earned {
+  border-color: rgba(232,184,75,0.3);
+}
+
+.ach-card--pending {
+  border-color: rgba(56,189,248,0.35);
+  box-shadow: 0 0 0 1px rgba(56,189,248,0.12);
+}
+
+.ach-card--locked {
+  opacity: 0.5;
+}
+
+.ach-icon {
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-felt);
+}
+
+.ach-card--locked .ach-icon {
+  filter: grayscale(1);
+}
+
+.ach-body {}
+
+.ach-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.2;
+}
+
+.ach-desc {
+  margin-top: 0.18rem;
+  font-size: 0.75rem;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+.ach-reward {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+.ach-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.badge-claimed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(52,211,153,0.12);
+  color: var(--accent-green);
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.55rem;
+}
+
+.badge-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(100,116,139,0.12);
+  color: var(--text-3);
+  border: 1px solid var(--border-md);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.55rem;
+}
+
+.btn-claim-one {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 640px) {
+  .ach-grid {
+    grid-template-columns: 1fr;
+  }
+  .ach-card {
+    grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ach-shell">
+  <div class="ach-header">
+    <div>
+      <h2 class="ach-title">Achievements</h2>
+      <p class="ach-subtitle">Earn rewards by mastering every corner of Calcas.</p>
+    </div>
+    {% if pending_count %}
+      <form method="post" class="ach-claim-all">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="claim_all">
+        <button type="submit" class="btn btn-primary btn-sm">
+          Claim All ({{ pending_count }})
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="msg-{{ msg.tags }}" style="margin-bottom:1rem;">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% for section in by_category %}
+    <section class="ach-section">
+      <div class="ach-section-head">
+        <span class="ach-section-label">{{ section.label }}</span>
+        <span class="ach-section-progress">{{ section.earned_count }}/{{ section.total }}</span>
+      </div>
+
+      <div class="ach-grid">
+        {% for ach in section.entries %}
+          <div class="ach-card {% if ach.claimed %}ach-card--earned{% elif ach.earned %}ach-card--pending{% else %}ach-card--locked{% endif %}">
+            <div class="ach-icon">{{ ach.icon }}</div>
+
+            <div class="ach-body">
+              <div class="ach-name">{{ ach.title }}</div>
+              <div class="ach-desc">{{ ach.description }}</div>
+            </div>
+
+            <div class="ach-status">
+              <span class="ach-reward">{{ ach.ryo_reward|floatformat:0 }} Ryo</span>
+              {% if ach.claimed %}
+                <span class="badge-claimed">✓ Claimed</span>
+              {% elif ach.earned and not ach.claimable_from_album %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="claim">
+                  <input type="hidden" name="key" value="{{ ach.key }}">
+                  <button type="submit" class="btn btn-primary btn-sm btn-claim-one">Claim</button>
+                </form>
+              {% elif ach.earned and ach.claimable_from_album %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="claim_all">
+                  <button type="submit" class="btn btn-primary btn-sm btn-claim-one">Claim</button>
+                </form>
+              {% else %}
+                <span class="badge-locked">Locked</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</div>
+{% endblock %}
