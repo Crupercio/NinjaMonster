@@ -196,9 +196,7 @@
 }
 @media (max-width: 640px) {
   .memory-shell {
-    /* Card width = available viewport / col count, clamped between 52px and 98px.
-       Available ≈ 100vw minus page padding (2rem) minus panel padding (2.3rem) minus gaps. */
-    --memory-card-width: clamp(52px, calc((100vw - 4.5rem - (var(--board-cols) - 1) * 0.85rem) / var(--board-cols)), 98px);
+    --memory-card-width: clamp(52px, calc((100vw - 4.5rem - (var(--board-cols) - 1) * 0.45rem) / var(--board-cols)), 98px);
     --memory-card-height: calc(var(--memory-card-width) * 1.38);
     --memory-mascot-size: 80px;
   }
@@ -213,13 +211,22 @@
   .memory-grid-shell { border-radius: 20px; padding: .75rem; }
   .stage-chip { font-size: .68rem; padding: .32rem .55rem; }
 }
+/* Portrait phones: fit grid into available vertical space */
+@media (max-width: 640px) and (orientation: portrait) {
+  .memory-shell {
+    /* Fit card height so all rows fit in ~55dvh (leaving room for header/nav) */
+    --memory-card-height: clamp(60px, calc((55dvh - (var(--board-rows, 4) - 1) * 0.45rem - 7rem) / var(--board-rows, 4)), 120px);
+    --memory-card-width: calc(var(--memory-card-height) / 1.38);
+  }
+  .memory-grid-shell { max-height: 65dvh; overflow-y: auto; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div
   class="memory-shell"
-  style="--board-cols: {{ board.cols }}"
+  style="--board-cols: {{ board.cols }}; --board-rows: {{ board.rows }}"
   {% if board_run %}
   x-data="memoryBoard({
     cardsId: 'memory-board-data',
@@ -515,13 +522,24 @@
       {% if board_mascot %}
       <img class="memory-grid-mascot" src="{% static board_mascot %}" alt="">
       {% endif %}
+      <!-- Start button overlay -->
+      <div
+        x-show="notStarted"
+        style="position:absolute;inset:0;border-radius:24px;background:rgba(8,8,16,.82);display:flex;align-items:center;justify-content:center;z-index:10;flex-direction:column;gap:1rem;"
+      >
+        <div style="font-family:'Chakra Petch',sans-serif;font-size:1.1rem;font-weight:700;color:rgba(232,184,75,.7);letter-spacing:.14em;text-transform:uppercase;">Ready to memorize?</div>
+        <button
+          type="button"
+          @click="beginGame()"
+          style="background:linear-gradient(135deg,#e8b84b,#c49a28);color:#0b1628;font-family:'Chakra Petch',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;border:none;border-radius:14px;padding:.85rem 2.2rem;cursor:pointer;box-shadow:0 4px 20px rgba(232,184,75,.35);"
+        >▶ Start Game</button>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.35);letter-spacing:.1em;">Cards will reveal for 2 seconds</div>
+      </div>
+
       <!-- Preview countdown overlay -->
       <div
         x-show="previewing"
-        x-transition:leave="transition ease-in duration-300"
-        x-transition:leave-start="opacity:1"
-        x-transition:leave-end="opacity:0"
-        style="position:absolute;inset:0;border-radius:24px;background:rgba(8,8,16,.72);display:flex;align-items:center;justify-content:center;z-index:10;flex-direction:column;gap:.5rem;pointer-events:none;"
+        style="position:absolute;inset:0;border-radius:24px;background:rgba(8,8,16,.6);display:flex;align-items:center;justify-content:center;z-index:10;flex-direction:column;gap:.5rem;pointer-events:none;"
       >
         <div style="font-family:'Chakra Petch',sans-serif;font-size:3.5rem;font-weight:800;color:#e8b84b;line-height:1;" x-text="previewCountdown"></div>
         <div style="font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(232,184,75,.6);">Memorize!</div>
@@ -580,17 +598,23 @@
       completed: false,
       timerId: null,
       started: false,
-      previewing: true,
+      notStarted: true,
+      previewing: false,
       previewCountdown: 2,
       init() {
         const script = document.getElementById(config.cardsId);
         if (!script) return;
         this.cards = JSON.parse(script.textContent).map(card => ({
           ...card,
-          revealed: true,
+          revealed: false,
           matched: false,
         }));
-        // Countdown: 2 → 1 → flip
+      },
+      beginGame() {
+        this.notStarted = false;
+        this.previewing = true;
+        this.previewCountdown = 2;
+        this.cards.forEach(c => { c.revealed = true; });
         const tick = window.setInterval(() => {
           this.previewCountdown -= 1;
           if (this.previewCountdown <= 0) {
@@ -621,7 +645,7 @@
       },
       flip(index) {
         const card = this.cards[index];
-        if (!card || card.revealed || card.matched || this.resolving || this.completed || this.previewing) return;
+        if (!card || card.revealed || card.matched || this.resolving || this.completed || this.previewing || this.notStarted) return;
         this.startTimer();
         card.revealed = true;
 
