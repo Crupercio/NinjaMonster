@@ -14,7 +14,8 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
      x-transition:leave-start="gp-leave-end"
      x-transition:leave-end="gp-enter-start"
      class="guide-panel"
-     :class="{'guide-panel--intro': !started}"
+     :class="{'guide-panel--intro': !started, 'guide-panel--minimized': minimized}"
+     @mousedown="dragStart($event)"
      style="display:none">
 
   {% if not guide_started %}
@@ -27,7 +28,7 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
       <strong class="gp-gold">200,000 Ryo</strong> — yours to keep, forever.<br>
       <span class="gp-muted">10,000 Ryo per step · 130,000 Ryo completion bonus</span>
     </p>
-    <div class="gp-intro-actions">
+    <div class="gp-intro-actions" @mousedown.stop>
       <button class="btn btn-primary btn-sm" @click="startGuide()">Start Guide</button>
       <button class="btn btn-secondary btn-sm" @click="dismiss()">Maybe later</button>
     </div>
@@ -35,9 +36,14 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
 
   {% else %}
   <!-- ── Active step state ─────────────────────────────────────── -->
-  <div class="gp-header">
+  <div class="gp-header" @mousedown.stop>
     <span class="gp-label">Guide · Step {{ guide_step }}/{{ guide_total_steps }}</span>
-    <button class="gp-close" @click="dismiss()" title="Dismiss guide">✕</button>
+    <div style="display:flex;gap:0.25rem;align-items:center;">
+      <button class="gp-close" @click="minimized = !minimized" :title="minimized ? 'Expand' : 'Minimize'">
+        <span x-text="minimized ? '▲' : '▼'"></span>
+      </button>
+      <button class="gp-close" @click="dismiss()" title="Dismiss guide">✕</button>
+    </div>
   </div>
 
   <!-- Progress bar -->
@@ -90,7 +96,15 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
   z-index: 900;
   overflow: hidden;
   font-size: 0.82rem;
+  cursor: grab;
+  user-select: none;
 }
+.guide-panel:active { cursor: grabbing; }
+.guide-panel--minimized .gp-progress-track,
+.guide-panel--minimized .gp-steps,
+.guide-panel--minimized .gp-footer,
+.guide-panel--minimized .gp-intro-body,
+.guide-panel--minimized .gp-intro-actions { display: none !important; }
 
 .guide-panel--intro {
   width: 340px;
@@ -205,15 +219,45 @@ Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
 function guidePanel() {
   return {
     visible: true,
+    minimized: false,
     started: {{ guide_started|yesno:"true,false" }},
     toast: false,
     toastMsg: '',
+    _drag: null,
 
     init() {
-      // Auto-hide after 60s if user hasn't interacted yet and guide not started
       if (!this.started) {
         setTimeout(() => { if (this.visible) this.visible = false; }, 60000);
       }
+    },
+
+    dragStart(e) {
+      // Don't drag when clicking buttons/links
+      if (e.target.closest('button,a,input,select,textarea')) return;
+      const el = this.$el;
+      const rect = el.getBoundingClientRect();
+      this._drag = { startX: e.clientX, startY: e.clientY, origRight: window.innerWidth - rect.right, origBottom: window.innerHeight - rect.bottom };
+      el.style.right = this._drag.origRight + 'px';
+      el.style.bottom = this._drag.origBottom + 'px';
+      el.style.left = 'auto';
+      el.style.top = 'auto';
+
+      const onMove = (me) => {
+        if (!this._drag) return;
+        const dx = me.clientX - this._drag.startX;
+        const dy = me.clientY - this._drag.startY;
+        const newRight = Math.max(0, this._drag.origRight - dx);
+        const newBottom = Math.max(0, this._drag.origBottom - dy);
+        el.style.right = newRight + 'px';
+        el.style.bottom = newBottom + 'px';
+      };
+      const onUp = () => {
+        this._drag = null;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     },
 
     async post(action, extraData = {}) {
@@ -232,7 +276,6 @@ function guidePanel() {
       const data = await this.post('start');
       if (data.ok) {
         this.started = true;
-        // Reload to get fresh server-rendered step list
         window.location.reload();
       }
     },
