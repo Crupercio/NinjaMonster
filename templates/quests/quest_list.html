@@ -123,11 +123,9 @@
   background: linear-gradient(160deg, rgba(25, 38, 78, .96), rgba(12, 18, 38, .98));
   border: 1px solid var(--border-md);
   border-radius: 20px;
-  padding: .95rem 1rem;
+  padding: 1rem 1.1rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) 150px 140px 110px;
-  gap: 1rem;
-  align-items: center;
+  gap: .65rem;
   transition: border-color .18s, transform .18s;
 }
 
@@ -144,26 +142,31 @@
   opacity: .58;
 }
 
-.quest-info {
+/* Row 1: name + status pill */
+.quest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   min-width: 0;
 }
 
 .quest-name {
   font-weight: 800;
   font-size: .96rem;
-  margin-bottom: .16rem;
   color: var(--text-1);
+  min-width: 0;
 }
 
 .quest-desc {
   color: var(--text-2);
   font-size: .8rem;
   line-height: 1.5;
+  margin-top: .12rem;
 }
 
-.quest-progress-wrap {
-  width: 100%;
-}
+/* Row 2: progress bar */
+.quest-progress-wrap { width: 100%; }
 
 .quest-progress-label {
   font-size: .72rem;
@@ -177,7 +180,7 @@
 .quest-bar-bg {
   background: rgba(232, 184, 75, .08);
   border-radius: 999px;
-  height: 8px;
+  height: 7px;
   overflow: hidden;
 }
 
@@ -192,32 +195,62 @@
   background: linear-gradient(90deg, #22c55e, #4ade80);
 }
 
-.quest-reward {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .82rem;
-  color: var(--accent-gold);
-  white-space: nowrap;
-  text-align: right;
+/* Row 3: reward chips + action */
+.quest-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
 }
 
-.quest-action {
-  text-align: right;
+.quest-reward {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.quest-reward-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  background: rgba(232, 184, 75, .08);
+  border: 1px solid rgba(232, 184, 75, .18);
+  border-radius: 999px;
+  padding: .22rem .6rem;
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+.quest-reward-chip.dust {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, .08);
+  border-color: rgba(167, 139, 250, .2);
+}
+
+.quest-reward-chip.item {
+  color: #67e8f9;
+  background: rgba(103, 232, 249, .07);
+  border-color: rgba(103, 232, 249, .18);
 }
 
 .quest-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 90px;
-  padding: .3rem .65rem;
+  padding: .28rem .75rem;
   border-radius: 999px;
   font-size: .72rem;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .quest-status.in-progress {
   border: 1px solid var(--border-md);
-  color: var(--text-2);
+  color: var(--text-3);
   background: rgba(15, 23, 42, .48);
 }
 
@@ -263,16 +296,8 @@
   font-size: .88rem;
 }
 
-@media (max-width: 980px) {
-  .quest-card {
-    grid-template-columns: 1fr;
-    gap: .8rem;
-  }
-
-  .quest-reward,
-  .quest-action {
-    text-align: left;
-  }
+@media (max-width: 600px) {
+  .quest-footer { flex-direction: column; align-items: flex-start; }
 }
 </style>
 {% endblock %}
@@ -304,30 +329,37 @@
     <div class="quest-cards">
       {% for uq in daily %}
       <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
-        <div class="quest-info">
-          <div class="quest-name">{{ uq.template.name }}</div>
-          {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
+        <div class="quest-header">
+          <div>
+            <div class="quest-name">{{ uq.template.name }}</div>
+            {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
+          </div>
+          {% if uq.rewarded %}
+            <span class="quest-status claimed">✓ Claimed</span>
+          {% elif uq.completed %}
+            <span class="quest-status complete">✓ Complete</span>
+          {% else %}
+            <span class="quest-status in-progress">{{ uq.progress }}/{{ uq.template.condition_value }}</span>
+          {% endif %}
         </div>
         <div class="quest-progress-wrap">
-          <div class="quest-progress-label">
-            <span>Progress</span>
-            <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
-          </div>
           <div class="quest-bar-bg">
             <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
           </div>
         </div>
-        <div class="quest-reward">{{ uq.template.reward_summary }}</div>
-        <div class="quest-action">
-          {% if uq.rewarded %}
-            <span class="quest-status claimed">Claimed</span>
-          {% elif uq.completed %}
-            <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-primary btn-sm">Claim</button>
-            </form>
-          {% else %}
-            <span class="quest-status in-progress">In Progress</span>
+        <div class="quest-footer">
+          <div class="quest-reward">
+            {% for chip in uq.template.reward_chips %}
+            <span class="quest-reward-chip {{ chip.type }}">{{ chip.label }}</span>
+            {% empty %}
+            <span class="quest-reward-chip">{{ uq.template.reward_summary }}</span>
+            {% endfor %}
+          </div>
+          {% if uq.completed and not uq.rewarded %}
+          <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm">Claim Reward</button>
+          </form>
           {% endif %}
         </div>
       </div>
@@ -344,30 +376,37 @@
     <div class="quest-cards">
       {% for uq in weekly %}
       <div class="quest-card{% if uq.rewarded %} rewarded{% elif uq.completed %} completed{% endif %}">
-        <div class="quest-info">
-          <div class="quest-name">{{ uq.template.name }}</div>
-          {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
+        <div class="quest-header">
+          <div>
+            <div class="quest-name">{{ uq.template.name }}</div>
+            {% if uq.template.description %}<div class="quest-desc">{{ uq.template.description }}</div>{% endif %}
+          </div>
+          {% if uq.rewarded %}
+            <span class="quest-status claimed">✓ Claimed</span>
+          {% elif uq.completed %}
+            <span class="quest-status complete">✓ Complete</span>
+          {% else %}
+            <span class="quest-status in-progress">{{ uq.progress }}/{{ uq.template.condition_value }}</span>
+          {% endif %}
         </div>
         <div class="quest-progress-wrap">
-          <div class="quest-progress-label">
-            <span>Progress</span>
-            <span>{{ uq.progress }} / {{ uq.template.condition_value }}</span>
-          </div>
           <div class="quest-bar-bg">
             <div class="quest-bar-fill{% if uq.completed %} done{% endif %}" style="width:{{ uq.progress_percent }}%;"></div>
           </div>
         </div>
-        <div class="quest-reward">{{ uq.template.reward_summary }}</div>
-        <div class="quest-action">
-          {% if uq.rewarded %}
-            <span class="quest-status claimed">Claimed</span>
-          {% elif uq.completed %}
-            <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-primary btn-sm">Claim</button>
-            </form>
-          {% else %}
-            <span class="quest-status in-progress">In Progress</span>
+        <div class="quest-footer">
+          <div class="quest-reward">
+            {% for chip in uq.template.reward_chips %}
+            <span class="quest-reward-chip {{ chip.type }}">{{ chip.label }}</span>
+            {% empty %}
+            <span class="quest-reward-chip">{{ uq.template.reward_summary }}</span>
+            {% endfor %}
+          </div>
+          {% if uq.completed and not uq.rewarded %}
+          <form method="post" action="{% url 'quests:quest_claim' uq.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm">Claim Reward</button>
+          </form>
           {% endif %}
         </div>
       </div>

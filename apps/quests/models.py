@@ -120,6 +120,28 @@ class QuestTemplate(models.Model):
             parts.append(f"{qty} {label}" if qty == 1 else f"{qty} {label}s")
         return " + ".join(parts) if parts else "—"
 
+    @property
+    def reward_chips(self) -> list[dict]:
+        candy_labels = {
+            "trail_mix": "Trail Mix",
+            "sweet_berry": "Sweet Berry",
+            "golden_apple": "Golden Apple",
+        }
+        chips = []
+        if self.reward_type == RewardType.RYO:
+            chips.append({"type": "ryo", "label": f"{self.reward_value} Ryo"})
+        elif self.reward_type == RewardType.STICKER_DUST:
+            chips.append({"type": "dust", "label": f"{self.reward_value} Dust"})
+        elif self.reward_type == RewardType.STICKER_PACK:
+            chips.append({"type": "item", "label": "1 Sticker Pack"})
+        if self.reward_dust:
+            chips.append({"type": "dust", "label": f"{self.reward_dust} Dust"})
+        if self.reward_candy_qty and self.reward_candy_type:
+            label = candy_labels.get(self.reward_candy_type, "Candy")
+            qty = self.reward_candy_qty
+            chips.append({"type": "item", "label": f"{qty}× {label}"})
+        return chips
+
 
 class UserQuest(models.Model):
     """
