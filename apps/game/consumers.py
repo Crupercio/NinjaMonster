@@ -260,5 +260,6 @@ class LoteriaRoomConsumer(AsyncWebsocketConsumer):
             "pattern_prizes": state["pattern_prizes"],
             "next_tick_epoch_ms": state["next_tick_epoch_ms"],
             "seconds_until_next": state["seconds_until_next"],
+            "server_now_ms": state["server_now_ms"],
         }
         return payload, None

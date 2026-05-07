@@ -637,6 +637,8 @@ function loteriaRoom(config) {
     syncTimerId: null,
     syncing: false,
     _preScheduledAudioTimer: null,
+    _preScheduledAudioFired: false,
+    _clockSkewMs: 0, // server clock - client clock (positive = server ahead)
     init() {
       this.cacheDom();
       this.currentBoards = this.readInitialBoards();
@@ -729,7 +731,7 @@ function loteriaRoom(config) {
         this._hideCcoDigit();
         return;
       }
-      const diffMs = this.nextTickEpochMs - Date.now();
+      const diffMs = this.nextTickEpochMs - (Date.now() + this._clockSkewMs);
       if (diffMs <= 0) {
         this.nextCallEl.textContent = 'Calling...';
         this._hideCcoDigit();
@@ -771,7 +773,7 @@ function loteriaRoom(config) {
         return;
       }
       if (this.nextTickEpochMs === null || this.nextTickEpochMs === undefined) return;
-      const delay = Math.max(150, this.nextTickEpochMs - Date.now() + 180);
+      const delay = Math.max(150, this.nextTickEpochMs - (Date.now() + this._clockSkewMs) + 180);
       this.syncTimerId = window.setTimeout(() => this.syncState(), delay);
     },
     async syncState() {
@@ -808,15 +810,25 @@ function loteriaRoom(config) {
       }
     },
     applyState(payload) {
+      // Measure server-client clock skew from this response
+      if (payload.server_now_ms) {
+        this._clockSkewMs = payload.server_now_ms - Date.now();
+      }
+
       const hadNewCall = payload.room.called_count > this.currentCalledCount;
       const hitManifest = hadNewCall ? this.buildNewHitManifest(payload.player_boards) : [];
 
-      // Sound: new card drawn — play immediately on new call
+      // Sound: new card drawn
       if (hadNewCall && window.GameSounds) {
-        clearTimeout(this._preScheduledAudioTimer); // cancel pre-scheduled draw sound
-        GameSounds.play('loteriaDraw');
+        // Cancel the pre-scheduled timer if it hasn't fired yet
+        clearTimeout(this._preScheduledAudioTimer);
+        // Only play draw sound if pre-scheduled timer didn't already handle it
+        if (!this._preScheduledAudioFired) {
+          GameSounds.play('loteriaDraw');
+        }
+        this._preScheduledAudioFired = false;
+        // Speak name immediately (state arrival is the earliest we know the card)
         if (payload.latest_called) {
-          // Speak name right away (audio was already delayed by network; don't add more delay)
           speakPokemonName(
             payload.latest_called.pokedex_number,
             payload.latest_called.name
@@ -824,15 +836,17 @@ function loteriaRoom(config) {
         }
       }
 
-      // Pre-schedule audio for the NEXT call at the exact server tick time
-      if (payload.next_tick_epoch_ms && payload.latest_called && window.GameSounds) {
-        const msUntilNextTick = payload.next_tick_epoch_ms - Date.now();
+      // Pre-schedule the NEXT draw sound at exact server tick time, corrected for clock skew
+      if (payload.next_tick_epoch_ms && window.GameSounds) {
+        const correctedNow = Date.now() + this._clockSkewMs;
+        const msUntilNextTick = payload.next_tick_epoch_ms - correctedNow;
         if (msUntilNextTick > 500 && msUntilNextTick < 30000) {
           clearTimeout(this._preScheduledAudioTimer);
-          // We don't know the next card yet, so just schedule the draw sound
+          this._preScheduledAudioFired = false;
           this._preScheduledAudioTimer = setTimeout(() => {
+            this._preScheduledAudioFired = true;
             if (window.GameSounds) GameSounds.play('loteriaDraw');
-          }, msUntilNextTick - 80); // 80ms early to compensate for audio decode
+          }, msUntilNextTick - 80);
         }
       }
 

@@ -402,6 +402,7 @@ def _serialize_loteria_room_state(user, room, config):
         "pattern_prizes": build_loteria_pattern_tracker(room, config, viewer_user=user),
         "seconds_until_next": seconds_until_next,
         "next_tick_epoch_ms": next_tick_epoch_ms,
+        "server_now_ms": int(timezone.now().timestamp() * 1000),
         "called_count": len(room.called_species_ids),
         "is_paused": bool(room.paused_at),
         "pause_remaining_seconds": pause_remaining_seconds,
@@ -742,6 +743,7 @@ class LoteriaRoomStateView(LoginRequiredMixin, View):
             "pattern_prizes": state["pattern_prizes"],
             "next_tick_epoch_ms": state["next_tick_epoch_ms"],
             "seconds_until_next": state["seconds_until_next"],
+            "server_now_ms": state["server_now_ms"],
         }
 
         latest_called = state["latest_called"]
