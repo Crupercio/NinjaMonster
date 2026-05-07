@@ -264,7 +264,12 @@ const GameSounds = (() => {
   function mute() {
     muted = !muted;
     localStorage.setItem('gameSoundMuted', muted);
-    if (muted && window.speechSynthesis) window.speechSynthesis.cancel();
+    if (muted) {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    } else {
+      // Unmuting — unlock AudioContext so sounds can play immediately
+      getCtx();
+    }
     return muted;
   }
 

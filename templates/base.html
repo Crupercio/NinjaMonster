@@ -554,14 +554,24 @@
   }
   window.showToast = showToast;
 
-  // Sound toggle
-  document.addEventListener('DOMContentLoaded', function(){
+  // Sound toggle — init immediately (script is at end of body, DOM ready)
+  (function initSoundToggle(){
     var btn = document.getElementById('sound-toggle');
     if(!btn || !window.GameSounds) return;
-    function upd(){ btn.textContent = GameSounds.isMuted() ? '🔇' : '🔊'; btn.classList.toggle('muted', GameSounds.isMuted()); }
+    function upd(){
+      var m = GameSounds.isMuted();
+      btn.textContent = m ? '🔇' : '🔊';
+      btn.classList.toggle('muted', m);
+      btn.title = m ? 'Sound off — click to unmute' : 'Sound on — click to mute';
+    }
     upd();
-    btn.addEventListener('click', function(){ GameSounds.mute(); upd(); });
-  });
+    btn.addEventListener('click', function(){
+      GameSounds.mute();
+      upd();
+      // Play a tiny confirmation tone when unmuting so user knows audio is live
+      if (!GameSounds.isMuted()) GameSounds.play('place');
+    });
+  })();
 })();
 </script>
 
