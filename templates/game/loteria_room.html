@@ -334,10 +334,42 @@
   .call-recent { justify-content:flex-start; }
   .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); min-width:100%; }
 }
+
+/* ── Call countdown overlay ──────────────────────────────────── */
+#call-countdown-overlay {
+  position:fixed; inset:0; z-index:8000;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+  background:transparent;
+}
+#call-countdown-overlay .cco-digit {
+  font-family:"Chakra Petch",sans-serif;
+  font-size:clamp(5rem, 22vw, 14rem);
+  font-weight:900;
+  color:var(--accent-gold);
+  text-shadow:0 0 60px rgba(232,184,75,.6), 0 0 120px rgba(232,184,75,.25);
+  opacity:0;
+  transform:scale(1.4);
+  transition:opacity .15s ease, transform .15s ease;
+  user-select:none;
+  line-height:1;
+}
+#call-countdown-overlay .cco-digit.show {
+  opacity:1;
+  transform:scale(1);
+}
+#call-countdown-overlay .cco-digit.hide {
+  opacity:0;
+  transform:scale(0.6);
+  transition:opacity .2s ease, transform .2s ease;
+}
 </style>
 {% endblock %}
 
 {% block content %}
+<div id="call-countdown-overlay" aria-hidden="true">
+  <span class="cco-digit" id="cco-digit"></span>
+</div>
 <div
   class="room-shell"
   x-data="loteriaRoom({
@@ -604,6 +636,7 @@ function loteriaRoom(config) {
     countdownId: null,
     syncTimerId: null,
     syncing: false,
+    _preScheduledAudioTimer: null,
     init() {
       this.cacheDom();
       this.currentBoards = this.readInitialBoards();
@@ -688,18 +721,48 @@ function loteriaRoom(config) {
         } else {
           this.nextCallEl.textContent = 'Paused';
         }
+        this._hideCcoDigit();
         return;
       }
       if (this.nextTickEpochMs === null || this.nextTickEpochMs === undefined) {
         this.nextCallEl.textContent = '--';
+        this._hideCcoDigit();
         return;
       }
       const diffMs = this.nextTickEpochMs - Date.now();
       if (diffMs <= 0) {
         this.nextCallEl.textContent = 'Calling...';
+        this._hideCcoDigit();
         return;
       }
-      this.nextCallEl.textContent = `${Math.ceil(diffMs / 1000)}s`;
+      const secs = Math.ceil(diffMs / 1000);
+      this.nextCallEl.textContent = `${secs}s`;
+      // Big overlay for last 4 seconds
+      if (secs <= 4) {
+        this._showCcoDigit(secs);
+      } else {
+        this._hideCcoDigit();
+      }
+    },
+    _ccoLastDigit: null,
+    _showCcoDigit(n) {
+      const el = document.getElementById('cco-digit');
+      if (!el) return;
+      if (this._ccoLastDigit === n) return;
+      this._ccoLastDigit = n;
+      el.classList.remove('show', 'hide');
+      el.textContent = String(n);
+      void el.offsetWidth; // reflow
+      el.classList.add('show');
+    },
+    _hideCcoDigit() {
+      const el = document.getElementById('cco-digit');
+      if (!el) return;
+      if (!el.classList.contains('show')) return;
+      this._ccoLastDigit = null;
+      el.classList.remove('show');
+      el.classList.add('hide');
+      setTimeout(() => { el.classList.remove('hide'); }, 250);
     },
     scheduleSync() {
       window.clearTimeout(this.syncTimerId);
@@ -748,14 +811,28 @@ function loteriaRoom(config) {
       const hadNewCall = payload.room.called_count > this.currentCalledCount;
       const hitManifest = hadNewCall ? this.buildNewHitManifest(payload.player_boards) : [];
 
-      // Sound: new card drawn
+      // Sound: new card drawn — play immediately on new call
       if (hadNewCall && window.GameSounds) {
+        clearTimeout(this._preScheduledAudioTimer); // cancel pre-scheduled draw sound
         GameSounds.play('loteriaDraw');
         if (payload.latest_called) {
-          setTimeout(() => speakPokemonName(
+          // Speak name right away (audio was already delayed by network; don't add more delay)
+          speakPokemonName(
             payload.latest_called.pokedex_number,
             payload.latest_called.name
-          ), 350);
+          );
+        }
+      }
+
+      // Pre-schedule audio for the NEXT call at the exact server tick time
+      if (payload.next_tick_epoch_ms && payload.latest_called && window.GameSounds) {
+        const msUntilNextTick = payload.next_tick_epoch_ms - Date.now();
+        if (msUntilNextTick > 500 && msUntilNextTick < 30000) {
+          clearTimeout(this._preScheduledAudioTimer);
+          // We don't know the next card yet, so just schedule the draw sound
+          this._preScheduledAudioTimer = setTimeout(() => {
+            if (window.GameSounds) GameSounds.play('loteriaDraw');
+          }, msUntilNextTick - 80); // 80ms early to compensate for audio decode
         }
       }
 
