@@ -493,6 +493,7 @@ class AchievementsView(LoginRequiredMixin, View):
     def get(self, request):
         from apps.users.achievement_service import AchievementService, CATEGORY_ORDER, CATEGORY_LABELS
         service = AchievementService()
+        service.backfill_state_based(request.user)
         all_achievements = service.get_all_for_user(request.user)
         pending_count = sum(1 for a in all_achievements if a["earned"] and not a["claimed"])
 

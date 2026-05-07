@@ -396,6 +396,73 @@ class AchievementService:
 
         return result
 
+    def backfill_state_based(self, user: User) -> None:
+        """
+        Check current user state and auto-earn any achievements that are
+        already satisfied but were never triggered (e.g. pre-system guild join,
+        existing streak, existing trades). Safe to call on every page load —
+        get_or_create is a no-op when already earned.
+        """
+        # Guild membership
+        try:
+            if hasattr(user, "guild_membership") and user.guild_membership is not None:
+                self.earn(user, "join_guild")
+        except Exception:
+            pass
+
+        # Guild membership via DB query (safer)
+        try:
+            from apps.guilds.models import GuildMembership
+            if GuildMembership.objects.filter(user=user).exists():
+                self.earn(user, "join_guild")
+        except Exception:
+            pass
+
+        # Guild quests completed on membership model
+        try:
+            from apps.guilds.models import GuildMembership
+            membership = GuildMembership.objects.filter(user=user).first()
+            if membership and membership.guild_quests_completed >= 1:
+                self.earn(user, "guild_quest")
+        except Exception:
+            pass
+
+        # Login streak
+        streak = getattr(user, "daily_claim_streak", 0) or 0
+        if streak >= 7:
+            self.earn(user, "streak_7")
+        if streak >= 30:
+            self.earn(user, "streak_30")
+
+        # Trades
+        trades = getattr(user, "trades_completed", 0) or 0
+        if trades >= 1:
+            self.earn(user, "first_trade")
+        if trades >= 10:
+            self.earn(user, "trades_10")
+
+        # Album completions — check AlbumCompletionReward
+        try:
+            from apps.stickers.models import AlbumCompletionReward, AlbumRewardType
+            if AlbumCompletionReward.objects.filter(user=user, reward_type=AlbumRewardType.POKEMON_COMPLETE).exists():
+                self.earn(user, "album_pokemon_complete")
+            if AlbumCompletionReward.objects.filter(user=user, reward_type=AlbumRewardType.FULL_DEX).exists():
+                self.earn(user, "album_full_dex")
+        except Exception:
+            pass
+
+        # Regional page completions (prismatic/full_art/secret_rare)
+        try:
+            from apps.stickers.models import RegionalAlbumPage, StickerRarity
+            if RegionalAlbumPage.objects.filter(user=user, rarity=StickerRarity.PRISMATIC, reward_claimed=True).exists():
+                self.earn(user, "album_prismatic_page")
+            if RegionalAlbumPage.objects.filter(user=user, rarity=StickerRarity.FULL_ART, reward_claimed=True).exists():
+                self.earn(user, "album_full_art_page")
+            if RegionalAlbumPage.objects.filter(user=user, rarity=StickerRarity.SECRET_RARE, reward_claimed=True).exists():
+                self.earn(user, "album_secret_rare_page")
+        except Exception:
+            pass
+
     def pending_count(self, user: User) -> int:
         """Return count of unclaimed GameAchievements."""
         from apps.users.models import GameAchievement
