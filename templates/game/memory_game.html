@@ -83,6 +83,7 @@
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .32));
 }
 .memory-grid { display:grid; gap:.85rem; align-content:start; justify-content:center; }
+[x-cloak] { display:none !important; }
 .memory-card {
   position:relative; width:100%; height:100%; border:0; padding:0; background:transparent; cursor:pointer; perspective: 900px;
 }
@@ -509,7 +510,7 @@
   </section>
 
   {% if board_run %}
-  <section class="memory-grid-shell">
+  <section class="memory-grid-shell" x-cloak>
     <div class="memory-grid-panel">
       {% if board_mascot %}
       <img class="memory-grid-mascot" src="{% static board_mascot %}" alt="">
