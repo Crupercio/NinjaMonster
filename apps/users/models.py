@@ -113,36 +113,6 @@ class User(AbstractUser):
             return 700 + (lv - 10) * 80   # 780–1,500 XP
         return 1600 + (lv - 20) * 150     # slow and steady after 20
 
-
-class GameAchievement(models.Model):
-    """
-    One-time claimable achievement earned by a player.
-
-    earned_at is set when the trigger fires.
-    claimed_at is set when the player clicks "Claim" — ryo is credited then.
-    """
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="game_achievements",
-        db_index=True,
-    )
-    key = models.TextField(db_index=True)
-    ryo_reward = models.PositiveIntegerField(default=0)
-    earned_at = models.DateTimeField(auto_now_add=True)
-    claimed_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        unique_together = [("user", "key")]
-        ordering = ["-earned_at"]
-        verbose_name = "game achievement"
-        verbose_name_plural = "game achievements"
-
-    def __str__(self) -> str:
-        state = "claimed" if self.claimed_at else "unclaimed"
-        return f"{self.user} — {self.key} ({state})"
-
     @property
     def trainer_xp_percent(self) -> int:
         """Progress toward next level as integer 0–100."""
@@ -187,3 +157,33 @@ class GameAchievement(models.Model):
     def max_daily_expeditions(self) -> int:
         """Expedition attempts unlocked per day based on trainer level."""
         return min(6, 2 + self.trainer_level // 5)
+
+
+class GameAchievement(models.Model):
+    """
+    One-time claimable achievement earned by a player.
+
+    earned_at is set when the trigger fires.
+    claimed_at is set when the player clicks "Claim" — ryo is credited then.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="game_achievements",
+        db_index=True,
+    )
+    key = models.TextField(db_index=True)
+    ryo_reward = models.PositiveIntegerField(default=0)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("user", "key")]
+        ordering = ["-earned_at"]
+        verbose_name = "game achievement"
+        verbose_name_plural = "game achievements"
+
+    def __str__(self) -> str:
+        state = "claimed" if self.claimed_at else "unclaimed"
+        return f"{self.user} — {self.key} ({state})"
