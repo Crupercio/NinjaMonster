@@ -224,12 +224,13 @@
   pointer-events:none;
 }
 .marker-pool-grid {
-  display:grid;
-  grid-template-columns:repeat(16, 14px);
+  display:flex;
+  flex-wrap:wrap;
   gap:.28rem;
   align-items:center;
   align-content:start;
   min-height:28px;
+  overflow:hidden;
 }
 .marker-pool-token {
   width:14px;
@@ -335,40 +336,31 @@
   .metric-grid { grid-template-columns:repeat(2, minmax(0,1fr)); min-width:100%; }
 }
 
-/* ── Call countdown overlay ──────────────────────────────────── */
-#call-countdown-overlay {
-  position:fixed; inset:0; z-index:8000;
-  display:flex; align-items:center; justify-content:center;
-  pointer-events:none;
-  background:transparent;
-}
-#call-countdown-overlay .cco-digit {
-  font-family:"Chakra Petch",sans-serif;
-  font-size:clamp(5rem, 22vw, 14rem);
-  font-weight:900;
-  color:var(--accent-gold);
-  text-shadow:0 0 60px rgba(232,184,75,.6), 0 0 120px rgba(232,184,75,.25);
+/* ── Win announcement banner ─────────────────────────────────── */
+#win-announce {
+  position:fixed; top:1.5rem; left:50%; transform:translateX(-50%) translateY(-120%);
+  z-index:9000; pointer-events:none;
+  background:linear-gradient(135deg,var(--bg-card),var(--bg-surface));
+  border:1px solid rgba(232,184,75,.45);
+  border-radius:12px; padding:.75rem 1.5rem;
+  text-align:center; white-space:nowrap;
+  box-shadow:0 8px 32px rgba(0,0,0,.45), 0 0 0 1px rgba(232,184,75,.1);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
   opacity:0;
-  transform:scale(1.4);
-  transition:opacity .15s ease, transform .15s ease;
-  user-select:none;
-  line-height:1;
 }
-#call-countdown-overlay .cco-digit.show {
+#win-announce.show {
+  transform:translateX(-50%) translateY(0);
   opacity:1;
-  transform:scale(1);
 }
-#call-countdown-overlay .cco-digit.hide {
-  opacity:0;
-  transform:scale(0.6);
-  transition:opacity .2s ease, transform .2s ease;
-}
+#win-announce .wa-prize { font-family:"Chakra Petch",sans-serif; font-size:1rem; font-weight:700; color:var(--accent-gold); letter-spacing:.06em; }
+#win-announce .wa-who { font-size:.78rem; color:var(--text-2); margin-top:.18rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div id="call-countdown-overlay" aria-hidden="true">
-  <span class="cco-digit" id="cco-digit"></span>
+<div id="win-announce" aria-live="polite">
+  <div class="wa-prize" id="wa-prize"></div>
+  <div class="wa-who" id="wa-who"></div>
 </div>
 <div
   class="room-shell"
@@ -723,48 +715,19 @@ function loteriaRoom(config) {
         } else {
           this.nextCallEl.textContent = 'Paused';
         }
-        this._hideCcoDigit();
         return;
       }
       if (this.nextTickEpochMs === null || this.nextTickEpochMs === undefined) {
         this.nextCallEl.textContent = '--';
-        this._hideCcoDigit();
         return;
       }
       const diffMs = this.nextTickEpochMs - (Date.now() + this._clockSkewMs);
       if (diffMs <= 0) {
         this.nextCallEl.textContent = 'Calling...';
-        this._hideCcoDigit();
         return;
       }
       const secs = Math.ceil(diffMs / 1000);
       this.nextCallEl.textContent = `${secs}s`;
-      // Big overlay for last 4 seconds
-      if (secs <= 4) {
-        this._showCcoDigit(secs);
-      } else {
-        this._hideCcoDigit();
-      }
-    },
-    _ccoLastDigit: null,
-    _showCcoDigit(n) {
-      const el = document.getElementById('cco-digit');
-      if (!el) return;
-      if (this._ccoLastDigit === n) return;
-      this._ccoLastDigit = n;
-      el.classList.remove('show', 'hide');
-      el.textContent = String(n);
-      void el.offsetWidth; // reflow
-      el.classList.add('show');
-    },
-    _hideCcoDigit() {
-      const el = document.getElementById('cco-digit');
-      if (!el) return;
-      if (!el.classList.contains('show')) return;
-      this._ccoLastDigit = null;
-      el.classList.remove('show');
-      el.classList.add('hide');
-      setTimeout(() => { el.classList.remove('hide'); }, 250);
     },
     scheduleSync() {
       window.clearTimeout(this.syncTimerId);
@@ -957,34 +920,48 @@ function loteriaRoom(config) {
         </div>
       `).join('');
     },
+    _claimedPrizeKeys: new Set(),
+    _winAnnounceTimer: null,
+    showWinAnnounce(prizeLabel, winners, ryo) {
+      const el = document.getElementById('win-announce');
+      const prizeEl = document.getElementById('wa-prize');
+      const whoEl = document.getElementById('wa-who');
+      if (!el || !prizeEl || !whoEl) return;
+      prizeEl.textContent = `${prizeLabel} — ${ryo} Ryo`;
+      whoEl.textContent = winners;
+      clearTimeout(this._winAnnounceTimer);
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      this._winAnnounceTimer = setTimeout(() => { el.classList.remove('show'); }, 4000);
+    },
     renderPatternPrizes(patternPrizes) {
       if (!this.patternPrizeGridEl) return;
-      // Sound + leaderboard save: detect newly claimed prizes
-      const newWins = patternPrizes.filter(p => p.is_claimed && p.viewer_won && !p.viewer_claimed);
-      if (newWins.length > 0) {
+
+      // Detect newly claimed prizes (any winner, not just viewer)
+      patternPrizes.forEach(p => {
+        if (!p.is_claimed) return;
+        const key = p.label;
+        if (this._claimedPrizeKeys.has(key)) return;
+        this._claimedPrizeKeys.add(key);
+        // Show win banner
+        const winners = (p.winner_names || []).join(', ') || 'Someone';
+        this.showWinAnnounce(p.label, winners, p.reward_ryo);
+        // Sound
         if (window.GameSounds) {
           GameSounds.play('loteriaWin');
-          GameSounds.speak('¡Loteria!', { pitch: 1.3, rate: 0.75 });
-          var flash = document.createElement('div');
-          flash.className = 'victory-flash';
-          document.body.appendChild(flash);
-          setTimeout(function() { flash.remove(); }, 800);
+          if (p.viewer_won) GameSounds.speak('Loteria', { pitch: 1.3, rate: 0.75 });
         }
-        // Save to leaderboard
-        try {
-          const totalRyo = newWins.reduce((s, p) => s + (p.viewer_reward_ryo || 0), 0);
-          const prizeLabels = newWins.map(p => p.label);
-          const results = JSON.parse(localStorage.getItem('loteria_results') || '[]');
-          results.push({
-            ryo: totalRyo,
-            prizes: prizeLabels,
-            round: this.currentRound || '?',
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          });
-          results.sort((a, b) => (b.ryo || 0) - (a.ryo || 0));
-          localStorage.setItem('loteria_results', JSON.stringify(results.slice(0, 20)));
-        } catch(e) {}
-      }
+        // Save viewer wins to leaderboard
+        if (p.viewer_won) {
+          try {
+            const results = JSON.parse(localStorage.getItem('loteria_results') || '[]');
+            results.push({ ryo: p.viewer_reward_ryo || 0, prizes: [p.label], round: this.currentRound || '?', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+            results.sort((a, b) => (b.ryo || 0) - (a.ryo || 0));
+            localStorage.setItem('loteria_results', JSON.stringify(results.slice(0, 20)));
+          } catch(e) {}
+        }
+      });
       this.patternPrizeGridEl.innerHTML = patternPrizes.map((prize) => {
         const preview = Array.from({ length: 16 }, (_, index) => `
           <span class="pattern-mini-cell${(prize.preview_cells || []).includes(index) ? ' marked' : ''}"></span>

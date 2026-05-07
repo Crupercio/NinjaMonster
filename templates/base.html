@@ -554,23 +554,27 @@
   }
   window.showToast = showToast;
 
-  // Sound toggle — init immediately (script is at end of body, DOM ready)
+  // Sound toggle
   (function initSoundToggle(){
     var btn = document.getElementById('sound-toggle');
-    if(!btn || !window.GameSounds) return;
+    if (!btn) return;
     function upd(){
+      if (!window.GameSounds) return;
       var m = GameSounds.isMuted();
-      btn.textContent = m ? '🔇' : '🔊';
+      btn.textContent = m ? '\uD83D\uDD07' : '\uD83D\uDD0A';
       btn.classList.toggle('muted', m);
       btn.title = m ? 'Sound off — click to unmute' : 'Sound on — click to mute';
     }
-    upd();
+    // Wire click regardless of GameSounds load state
     btn.addEventListener('click', function(){
+      if (!window.GameSounds) return;
       GameSounds.mute();
       upd();
-      // Play a tiny confirmation tone when unmuting so user knows audio is live
       if (!GameSounds.isMuted()) GameSounds.play('place');
     });
+    // Init state now and after a short delay as fallback
+    upd();
+    setTimeout(upd, 500);
   })();
 })();
 </script>
