@@ -349,7 +349,10 @@
     <div id="encounter-section" style="display:none;">
       <div class="encounter-card">
         <img id="enc-sprite" src="" alt="" class="enc-sprite">
-        <div id="enc-name" class="enc-name"></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;">
+          <div id="enc-name" class="enc-name"></div>
+          <span id="enc-owned-badge" style="display:none;font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.4);color:#34d399;">✓ Owned</span>
+        </div>
         <div id="enc-dex" class="enc-dex"></div>
         <div id="enc-hint" class="enc-hint"></div>
         <div class="candy-bar" id="candy-bar">
@@ -475,10 +478,12 @@ async function nextEncounter(walking_text) {
   updateProgress(enc.encounters_remaining, null);
 
   // Populate encounter card
-  document.getElementById('enc-sprite').src = SPRITE_BASE + enc.pokedex_number + '.png';
+  document.getElementById('enc-sprite').src = enc.sprite_url || (SPRITE_BASE + enc.pokedex_number + '.png');
   document.getElementById('enc-sprite').alt = enc.species_name;
   document.getElementById('enc-name').textContent = enc.species_name;
   document.getElementById('enc-dex').textContent = '#' + String(enc.pokedex_number).padStart(3, '0');
+  const ownedBadge = document.getElementById('enc-owned-badge');
+  ownedBadge.style.display = enc.already_owned ? 'inline-block' : 'none';
   document.getElementById('enc-hint').textContent = 'It ' + enc.hint + '.';
 
   log(`A wild ${enc.species_name} appeared!`, 'encounter');

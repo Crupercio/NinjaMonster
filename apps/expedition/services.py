@@ -127,13 +127,20 @@ def draw_encounter(session: ExpeditionSession):
 
     base_rate = random.randint(BASE_BOND_MIN, BASE_BOND_MAX)
 
+    from apps.pokemon.models import OwnedPokemon
+    already_owned = OwnedPokemon.objects.filter(
+        owner=session.user, species=species
+    ).exists()
+
     return {
         "species_id": species.pk,
         "species_name": species.name,
         "pokedex_number": species.pokedex_number,
         "type": species.primary_type.name if species.primary_type else "",
+        "sprite_url": species.sprite_url or "",
         "base_bond_rate": base_rate,
         "hint": get_bond_hint(base_rate),
+        "already_owned": already_owned,
     }
 
 
