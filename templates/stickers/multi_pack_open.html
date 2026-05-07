@@ -217,7 +217,7 @@
           rarityLabel: '{{ s.get_rarity_display|escapejs }}',
           variant: '{{ s.get_variant_display|escapejs }}',
           ptype: '{{ s.pokemon.primary_type|escapejs }}',
-          sprite: '{{ s.pokemon.pokedex_number|sticker_sprite:s.variant|escapejs }}',
+          sprite: '{% if s.pokemon.sprite_url %}{{ s.pokemon.sprite_url|escapejs }}{% else %}{{ s.pokemon.pokedex_number|sticker_sprite:s.variant|escapejs }}{% endif %}',
           dexNum: '{% if s.pokemon.pokedex_number %}{{ s.pokemon.pokedex_number|stringformat:"03d" }}{% endif %}',
           wasOwned: {% if s.was_owned_before_bundle %}true{% else %}false{% endif %},
           premium: {% if s.rarity == 'holographic' or s.rarity == 'full_art' or s.rarity == 'secret_rare' %}true{% else %}false{% endif %},
