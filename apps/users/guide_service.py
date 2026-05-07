@@ -212,9 +212,12 @@ def maybe_advance_from_url(user: User, url_name: str) -> int:
     next_step = step + 1
     ryo = advance_guide(user, next_step)
 
-    # If that was the last step, also fire completion bonus
+    # If that was the last step, award the completion bonus directly.
+    # complete_guide() would bail because advance_guide already set guide_step=8.
     if next_step > len(GUIDE_STEPS):
-        complete_guide(user)
+        User.objects.filter(pk=user.pk).update(ryo=F("ryo") + COMPLETION_BONUS)
+        ryo += COMPLETION_BONUS
+        logger.info("Guide complete: user=%s bonus_ryo=%d", user, COMPLETION_BONUS)
 
     return ryo
 
