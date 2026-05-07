@@ -157,7 +157,7 @@ class User(AbstractUser):
     @property
     def max_daily_expeditions(self) -> int:
         """Expedition attempts unlocked per day based on trainer level."""
-        return min(6, 2 + self.trainer_level // 5)
+        return min(60, (2 + self.trainer_level // 5) * 10)
 
 
 class GameAchievement(models.Model):
