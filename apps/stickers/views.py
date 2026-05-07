@@ -291,6 +291,9 @@ class PackOpenView(LoginRequiredMixin, TemplateView):
         except ValueError as exc:
             return redirect("stickers:album")
 
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "stickers:pack_open")
+
         context = self.get_context_data(**kwargs)
         context["pack"] = pack
         context["revealed_stickers"] = stickers
