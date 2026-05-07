@@ -1,7 +1,7 @@
 """URL patterns for the users app."""
 from django.urls import path
 
-from .views import AchievementsView, ArcadeDailyChallengeClaim, ArcadeDailyChallengeProgressAPI, BuyCandyAPI, DailyClaimView, RegisterView, TrainerProfileView
+from .views import AchievementsView, ArcadeDailyChallengeClaim, ArcadeDailyChallengeProgressAPI, BuyCandyAPI, DailyClaimView, GuideAdvanceAPI, RegisterView, TrainerProfileView
 
 app_name = "users"
 
@@ -13,4 +13,5 @@ urlpatterns = [
     path("arcade-challenge/progress/", ArcadeDailyChallengeProgressAPI.as_view(), name="arcade_challenge_progress"),
     path("arcade-challenge/claim/", ArcadeDailyChallengeClaim.as_view(), name="arcade_challenge_claim"),
     path("achievements/", AchievementsView.as_view(), name="achievements"),
+    path("guide/advance/", GuideAdvanceAPI.as_view(), name="guide_advance"),
 ]

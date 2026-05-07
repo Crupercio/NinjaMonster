@@ -451,6 +451,8 @@ class DailyClaimView(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         user.refresh_from_db(fields=["ryo", "last_daily_claim", "daily_claim_streak"])
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(user, "users:daily_claim")
         from .services import WEEKLY_LOGIN_STREAK
 
         streak = user.daily_claim_streak
@@ -535,6 +537,59 @@ class AchievementsView(LoginRequiredMixin, View):
 
         return redirect("users:achievements")
 
+
+
+class GuideAdvanceAPI(LoginRequiredMixin, View):
+    """POST — advance the onboarding guide step and return updated state as JSON."""
+
+    def post(self, request):
+        from apps.users.guide_service import (
+            advance_guide, complete_guide, dismiss_guide,
+            get_guide_context, GUIDE_COMPLETE_STEP, GUIDE_STEPS,
+        )
+        action = request.POST.get("action", "advance")
+
+        if action == "dismiss":
+            dismiss_guide(request.user)
+            return JsonResponse({"ok": True, "dismissed": True})
+
+        if action == "start":
+            ryo = advance_guide(request.user, 1)
+            request.user.refresh_from_db(fields=["guide_step"])
+            ctx = get_guide_context(request.user)
+            return JsonResponse({"ok": True, "ryo_awarded": ryo, **ctx})
+
+        if action == "complete":
+            # Award any remaining step ryo then the completion bonus
+            step_ryo = advance_guide(request.user, len(GUIDE_STEPS) + 1)
+            request.user.refresh_from_db(fields=["guide_step"])
+            bonus = complete_guide(request.user)
+            return JsonResponse({"ok": True, "ryo_awarded": step_ryo + bonus, "bonus": bonus, "complete": True})
+
+        # Default: mark current step visited → advance to next
+        try:
+            to_step = int(request.POST.get("step", 1))
+        except (ValueError, TypeError):
+            return JsonResponse({"ok": False, "error": "invalid step"}, status=400)
+
+        ryo = advance_guide(request.user, to_step)
+        request.user.refresh_from_db(fields=["guide_step", "ryo"])
+
+        # If this was the last step, also fire completion bonus
+        bonus = 0
+        complete = False
+        if to_step > len(GUIDE_STEPS):
+            bonus = complete_guide(request.user)
+            complete = True
+
+        ctx = get_guide_context(request.user)
+        return JsonResponse({
+            "ok": True,
+            "ryo_awarded": ryo,
+            "bonus": bonus,
+            "complete": complete,
+            **ctx,
+        })
 
 
 class ArcadeDailyChallengeProgressAPI(LoginRequiredMixin, View):

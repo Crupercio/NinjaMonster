@@ -20,6 +20,11 @@ class QuestListView(LoginRequiredMixin, TemplateView):
 
     template_name = "quests/quest_list.html"
 
+    def get(self, request, *args, **kwargs):
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "quests:quest_list")
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         quests = _quest_service.get_quests_for_display(self.request.user)

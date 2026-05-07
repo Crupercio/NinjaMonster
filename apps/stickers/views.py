@@ -167,6 +167,11 @@ class AlbumView(LoginRequiredMixin, TemplateView):
 
     template_name = "stickers/album.html"
 
+    def get(self, request, *args, **kwargs):
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "stickers:album")
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         album_data = _sticker_service.get_album(self.request.user)
@@ -256,6 +261,8 @@ class MyPacksView(LoginRequiredMixin, TemplateView):
     template_name = "stickers/my_packs.html"
 
     def get(self, request, *args, **kwargs):
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "stickers:my_packs")
         packs = list(
             StickerPack.objects.filter(owner=request.user, opened=False).order_by("created_at")
         )
@@ -399,6 +406,11 @@ class BuyPackView(LoginRequiredMixin, TemplateView):
     """Buy a sticker pack with Ryo."""
 
     template_name = "stickers/buy_pack.html"
+
+    def get(self, request, *args, **kwargs):
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "stickers:buy_pack")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

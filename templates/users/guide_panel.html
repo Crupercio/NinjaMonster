@@ -1,0 +1,253 @@
+{% comment %}
+Floating onboarding guide panel — included in base.html when guide_active is True.
+Uses Alpine.js for show/hide and CSRF-safe POST via fetch.
+{% endcomment %}
+{% if guide_active %}
+<div id="guide-panel"
+     x-data="guidePanel()"
+     x-init="init()"
+     x-show="visible"
+     x-transition:enter="gp-enter"
+     x-transition:enter-start="gp-enter-start"
+     x-transition:enter-end="gp-enter-end"
+     x-transition:leave="gp-leave"
+     x-transition:leave-start="gp-leave-end"
+     x-transition:leave-end="gp-enter-start"
+     class="guide-panel"
+     :class="{'guide-panel--intro': !started}"
+     style="display:none">
+
+  {% if not guide_started %}
+  <!-- ── Intro state (never started) ─────────────────────────── -->
+  <div class="gp-intro">
+    <div class="gp-intro-emoji">🎁</div>
+    <div class="gp-intro-heading">One-time opportunity</div>
+    <p class="gp-intro-body">
+      Complete the 7-step guide and earn
+      <strong class="gp-gold">200,000 Ryo</strong> — yours to keep, forever.<br>
+      <span class="gp-muted">10,000 Ryo per step · 130,000 Ryo completion bonus</span>
+    </p>
+    <div class="gp-intro-actions">
+      <button class="btn btn-primary btn-sm" @click="startGuide()">Start Guide</button>
+      <button class="btn btn-secondary btn-sm" @click="dismiss()">Maybe later</button>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ── Active step state ─────────────────────────────────────── -->
+  <div class="gp-header">
+    <span class="gp-label">Guide · Step {{ guide_step }}/{{ guide_total_steps }}</span>
+    <button class="gp-close" @click="dismiss()" title="Dismiss guide">✕</button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="gp-progress-track">
+    <div class="gp-progress-fill" style="width:{{ guide_progress_pct }}%"></div>
+  </div>
+
+  <!-- Steps list -->
+  <div class="gp-steps">
+    {% for s in guide_steps %}
+    <div class="gp-step {% if s.step < guide_step %}gp-step--done{% elif s.step == guide_step %}gp-step--active{% else %}gp-step--locked{% endif %}">
+      <div class="gp-step-icon">
+        {% if s.step < guide_step %}✓{% else %}{{ s.icon }}{% endif %}
+      </div>
+      <div class="gp-step-body">
+        <div class="gp-step-title">{{ s.title }}</div>
+        {% if s.step == guide_step %}
+        <div class="gp-step-desc">{{ s.description }}</div>
+        {% endif %}
+      </div>
+      <div class="gp-step-ryo {% if s.step <= guide_step %}gp-gold{% endif %}">
+        +{{ s.ryo|floatformat:0 }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="gp-footer">
+    <span class="gp-earned">Earned: <strong class="gp-gold">{{ guide_earned|floatformat:0 }} Ryo</strong></span>
+    <span class="gp-total">Total: <strong>{{ guide_total_ryo|floatformat:0 }}</strong></span>
+  </div>
+  {% endif %}
+
+  <!-- Reward toast (shown after step advance) -->
+  <div class="gp-toast" x-show="toast" x-transition x-cloak>
+    <span x-text="toastMsg"></span>
+  </div>
+</div>
+
+<style>
+.guide-panel {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  width: 320px;
+  background: linear-gradient(160deg, var(--bg-surface), #0f1628);
+  border: 1px solid rgba(232,184,75,0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(232,184,75,0.08);
+  z-index: 900;
+  overflow: hidden;
+  font-size: 0.82rem;
+}
+
+.guide-panel--intro {
+  width: 340px;
+}
+
+/* transitions */
+.gp-enter { transition: opacity 0.25s ease, transform 0.25s ease; }
+.gp-enter-start { opacity: 0; transform: translateY(16px); }
+.gp-enter-end { opacity: 1; transform: translateY(0); }
+.gp-leave { transition: opacity 0.2s ease, transform 0.2s ease; }
+
+/* intro */
+.gp-intro { padding: 1.4rem 1.25rem 1.2rem; text-align: center; }
+.gp-intro-emoji { font-size: 2.2rem; margin-bottom: 0.5rem; }
+.gp-intro-heading {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+.gp-intro-body { color: var(--text-2); line-height: 1.5; margin-bottom: 1rem; }
+.gp-intro-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+.gp-muted { font-size: 0.72rem; color: var(--text-3); }
+
+/* header */
+.gp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.65rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--border-md);
+}
+.gp-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--accent-gold);
+}
+.gp-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); font-size: 0.75rem; padding: 0.1rem 0.3rem;
+  line-height: 1;
+}
+.gp-close:hover { color: var(--text-1); }
+
+/* progress */
+.gp-progress-track {
+  height: 3px; background: var(--border-md);
+}
+.gp-progress-fill {
+  height: 100%; background: var(--accent-gold);
+  transition: width 0.4s ease;
+}
+
+/* steps */
+.gp-steps { padding: 0.55rem 0; max-height: 280px; overflow-y: auto; }
+.gp-step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0,1fr) auto;
+  gap: 0.5rem; align-items: start;
+  padding: 0.45rem 1rem;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+.gp-step--done { opacity: 0.65; }
+.gp-step--active { opacity: 1; background: rgba(232,184,75,0.04); }
+.gp-step-icon {
+  font-size: 0.95rem; line-height: 1.4;
+  color: var(--text-3);
+}
+.gp-step--done .gp-step-icon { color: var(--accent-green); font-weight: 700; }
+.gp-step--active .gp-step-icon { color: var(--accent-gold); }
+.gp-step-title { font-weight: 600; color: var(--text-1); line-height: 1.3; }
+.gp-step-desc { font-size: 0.73rem; color: var(--text-2); margin-top: 0.15rem; line-height: 1.4; }
+.gp-step-ryo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; font-weight: 700;
+  color: var(--text-3); white-space: nowrap;
+  padding-top: 0.15rem;
+}
+
+/* footer */
+.gp-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.55rem 1rem 0.65rem;
+  border-top: 1px solid var(--border-md);
+  font-size: 0.72rem; color: var(--text-3);
+}
+
+/* shared */
+.gp-gold { color: var(--accent-gold) !important; }
+
+/* toast */
+.gp-toast {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(52,211,153,0.15);
+  border-top: 1px solid rgba(52,211,153,0.3);
+  color: var(--accent-green);
+  font-weight: 600; text-align: center;
+  padding: 0.45rem;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 480px) {
+  .guide-panel, .guide-panel--intro {
+    width: calc(100vw - 2rem);
+    right: 1rem; bottom: 1rem;
+  }
+}
+</style>
+
+<script>
+function guidePanel() {
+  return {
+    visible: true,
+    started: {{ guide_started|yesno:"true,false" }},
+    toast: false,
+    toastMsg: '',
+
+    init() {
+      // Auto-hide after 60s if user hasn't interacted yet and guide not started
+      if (!this.started) {
+        setTimeout(() => { if (this.visible) this.visible = false; }, 60000);
+      }
+    },
+
+    async post(action, extraData = {}) {
+      const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+        || '{{ csrf_token }}';
+      const body = new URLSearchParams({ action, ...extraData });
+      const res = await fetch('{% url "users:guide_advance" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+      return res.json();
+    },
+
+    async startGuide() {
+      const data = await this.post('start');
+      if (data.ok) {
+        this.started = true;
+        // Reload to get fresh server-rendered step list
+        window.location.reload();
+      }
+    },
+
+    async dismiss() {
+      await this.post('dismiss');
+      this.visible = false;
+    },
+
+    showToast(msg) {
+      this.toastMsg = msg;
+      this.toast = true;
+      setTimeout(() => { this.toast = false; }, 3000);
+    },
+  };
+}
+</script>
+{% endif %}

@@ -81,6 +81,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.guilds.context_processors.nav_guild",
                 "apps.users.context_processors.ach_pending",
+                "apps.users.context_processors.guide_context",
             ],
         },
     },

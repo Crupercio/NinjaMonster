@@ -456,6 +456,9 @@ class LoteriaHubView(LoginRequiredMixin, TemplateView):
         ensure_default_loteria_board(request.user, self.deck_config)
         self.open_room = get_user_open_loteria_room(request.user, self.deck_config)
         self.recent_finished_room = get_user_recent_finished_loteria_room(request.user, self.deck_config)
+        if request.method == "GET" and request.user.is_authenticated:
+            from apps.users.guide_service import maybe_advance_from_url
+            maybe_advance_from_url(request.user, "game:loteria_game")
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1055,6 +1058,11 @@ class SilhouetteHubView(LoginRequiredMixin, TemplateView):
     """Tower selection hub for the silhouette arcade."""
 
     template_name = "game/silhouette_hub.html"
+
+    def get(self, request, *args, **kwargs):
+        from apps.users.guide_service import maybe_advance_from_url
+        maybe_advance_from_url(request.user, "game:silhouette_hub")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
