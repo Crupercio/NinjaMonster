@@ -104,11 +104,19 @@ def _region_for_dex(dex_number: int | None) -> str | None:
 
 
 def _build_placement_ready_stash(user, *, selected_region: str, selected_rarity: str) -> tuple[list[dict], int]:
+    """
+    Build the ready-stash cards in 2 queries instead of N×5.
+
+    Query 1: count loose stickers per (pokemon_id, rarity) — tells us which pairs have supply.
+    Query 2: count empty slots per (pokemon_id, rarity) — tells us which pairs have demand.
+    A pair is "ready" when supply > 0 AND demand > 0.
+    """
     rarity_labels = {value: label for value, label in StickerRarity.choices}
     rarity_order = list(StickerRarity.values)
     region_order = list(REGION_LABELS.keys())
-    candidate_pairs: set[tuple[str, str]] = set()
-    loose_rows = (
+
+    # --- supply: loose stickers grouped by (pokemon_id, rarity) ---
+    supply_qs = (
         Sticker.objects.filter(
             owner=user,
             is_album_placed=False,
@@ -116,34 +124,55 @@ def _build_placement_ready_stash(user, *, selected_region: str, selected_rarity:
             guild_album_entry__isnull=True,
             variant__in=_COMPLETION_VARIANTS,
         )
-        .values("pokemon__pokedex_number", "rarity")
+        .values("pokemon_id", "pokemon__pokedex_number", "rarity", "variant")
         .annotate(copies=Count("id"))
     )
-    for row in loose_rows:
-        dex = row["pokemon__pokedex_number"]
-        if dex is None:
-            continue
-        region_name = _region_for_dex(int(dex))
+    # supply_map[(pokemon_id, rarity, variant)] = copies
+    supply_map: dict[tuple[int, str, str], int] = {}
+    dex_for: dict[int, int] = {}
+    for row in supply_qs:
+        pid, dex, rarity, variant = row["pokemon_id"], row["pokemon__pokedex_number"], row["rarity"], row["variant"]
+        if dex:
+            dex_for[pid] = dex
+        supply_map[(pid, rarity, variant)] = row["copies"]
+
+    # --- demand: already-placed stickers per (pokemon_id, rarity, variant) ---
+    placed_qs = (
+        Sticker.objects.filter(
+            owner=user,
+            is_album_placed=True,
+            variant__in=_COMPLETION_VARIANTS,
+        )
+        .values("pokemon_id", "rarity", "variant")
+        .annotate(n=Count("id"))
+    )
+    placed_set: set[tuple[int, str, str]] = {
+        (row["pokemon_id"], row["rarity"], row["variant"]) for row in placed_qs
+    }
+
+    # Count placeable slots per (region, rarity)
+    placeable_counts: dict[tuple[str, str], int] = defaultdict(int)
+    for (pid, rarity, variant), copies in supply_map.items():
+        if (pid, rarity, variant) in placed_set:
+            continue  # slot already filled
+        dex = dex_for.get(pid)
+        region_name = _region_for_dex(dex) if dex else None
         if region_name is None:
             continue
-        candidate_pairs.add((region_name, row["rarity"]))
+        placeable_counts[(region_name, rarity)] += 1
 
     stash_cards = []
-    for region_name, rarity_value in candidate_pairs:
-        placement_data = _album_service.get_placement_slots(user, region_name, rarity_value)
-        count = placement_data["slot_totals"]["placeable"]
+    for (region_name, rarity_value), count in placeable_counts.items():
         if count <= 0:
             continue
-        stash_cards.append(
-            {
-                "region": region_name,
-                "region_label": REGION_LABELS.get(region_name, region_name.title()),
-                "rarity": rarity_value,
-                "rarity_label": rarity_labels.get(rarity_value, rarity_value.replace("_", " ").title()),
-                "count": count,
-                "is_selected": region_name == selected_region and rarity_value == selected_rarity,
-            }
-        )
+        stash_cards.append({
+            "region": region_name,
+            "region_label": REGION_LABELS.get(region_name, region_name.title()),
+            "rarity": rarity_value,
+            "rarity_label": rarity_labels.get(rarity_value, rarity_value.replace("_", " ").title()),
+            "count": count,
+            "is_selected": region_name == selected_region and rarity_value == selected_rarity,
+        })
 
     stash_cards.sort(
         key=lambda item: (

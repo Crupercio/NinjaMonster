@@ -1394,7 +1394,7 @@ class AlbumService:
             Pokemon.objects.filter(
                 pokedex_number__gte=low,
                 pokedex_number__lte=high,
-            ).order_by("pokedex_number")
+            ).select_related("primary_type", "secondary_type").order_by("pokedex_number")
         )
 
         # Placed stickers per (pokemon_id, variant): each slot is (pokemon, rarity, variant)
@@ -1841,7 +1841,7 @@ class SceneAlbumService:
             Pokemon.objects.filter(
                 pokedex_number__gte=low,
                 pokedex_number__lte=high,
-            ).order_by("pokedex_number")
+            ).select_related("primary_type", "secondary_type").order_by("pokedex_number")
         )
 
         # Placed stickers: keyed by (pokemon_id, variant)
